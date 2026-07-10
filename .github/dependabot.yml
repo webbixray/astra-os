@@ -1,0 +1,44 @@
+version: 2
+updates:
+  - package-ecosystem: "pip"  # For Python dependencies
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "@your-org/maintainers"
+    labels:
+      - "dependencies"
+      - "backend"
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps"
+      include: "scope"
+
+  - package-ecosystem: "pnpm"  # For JavaScript/TypeScript dependencies
+    directory: "/apps/web"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "@your-org/maintainers"
+    labels:
+      - "dependencies"
+      - "frontend"
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps"
+      include: "scope"
+
+  - package-ecosystem: "github-actions"  # For GitHub Actions
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "ci/cd"
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps"
+      include: "scope"
