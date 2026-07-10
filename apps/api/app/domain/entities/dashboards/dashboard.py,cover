@@ -1,0 +1,94 @@
+> from dataclasses import dataclass, field
+> from datetime import datetime
+> from uuid import UUID, uuid4
+  
+> from app.domain.common import now
+> from app.domain.exceptions.domain_exceptions import ValidationError
+  
+> WIDGET_TYPES = [
+>     "kpi_card", "line_chart", "bar_chart", "pie_chart",
+>     "data_table", "trend_indicator",
+> ]
+  
+  
+> @dataclass
+> class DashboardWidget:
+>     id: UUID = field(default_factory=uuid4)
+>     dashboard_id: UUID = field(default_factory=uuid4)
+>     widget_type: str = "kpi_card"
+>     title: str = ""
+>     pos_x: int = 0
+>     pos_y: int = 0
+>     width: int = 1
+>     height: int = 1
+>     config: dict = field(default_factory=dict)
+>     created_at: datetime = field(default_factory=now)
+>     updated_at: datetime = field(default_factory=now)
+  
+>     @classmethod
+>     def create(
+>         cls,
+>         dashboard_id: UUID,
+>         widget_type: str,
+>         title: str,
+>         pos_x: int = 0,
+>         pos_y: int = 0,
+>         width: int = 1,
+>         height: int = 1,
+>         config: dict | None = None,
+>     ) -> "DashboardWidget":
+>         if widget_type not in WIDGET_TYPES:
+>             raise ValidationError(f"Invalid widget type: {widget_type}")
+>         if width < 1 or height < 1:
+>             raise ValidationError("Widget dimensions must be positive")
+>         return cls(
+>             dashboard_id=dashboard_id,
+>             widget_type=widget_type,
+>             title=title,
+>             pos_x=pos_x,
+>             pos_y=pos_y,
+>             width=width,
+>             height=height,
+>             config=config or {},
+>         )
+  
+  
+> @dataclass
+> class Dashboard:
+>     id: UUID = field(default_factory=uuid4)
+>     organization_id: UUID = field(default_factory=uuid4)
+>     name: str = ""
+>     description: str = ""
+>     layout_columns: int = 12
+>     is_default: bool = False
+>     widgets: list[DashboardWidget] = field(default_factory=list)
+>     created_by: UUID = field(default_factory=uuid4)
+>     created_at: datetime = field(default_factory=now)
+>     updated_at: datetime = field(default_factory=now)
+  
+>     @classmethod
+>     def create(
+>         cls,
+>         organization_id: UUID,
+>         name: str,
+>         created_by: UUID,
+>         description: str = "",
+>         layout_columns: int = 12,
+>     ) -> "Dashboard":
+>         if not name or not name.strip():
+>             raise ValidationError("Dashboard name is required")
+>         return cls(
+>             organization_id=organization_id,
+>             name=name,
+>             created_by=created_by,
+>             description=description,
+>             layout_columns=layout_columns,
+>         )
+  
+>     def add_widget(self, widget: DashboardWidget) -> None:
+>         self.widgets.append(widget)
+>         self.updated_at = now()
+  
+>     def remove_widget(self, widget_id: UUID) -> None:
+>         self.widgets = [w for w in self.widgets if w.id != widget_id]
+>         self.updated_at = now()

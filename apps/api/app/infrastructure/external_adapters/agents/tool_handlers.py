@@ -1,0 +1,96 @@
+from uuid import UUID, uuid4
+
+from app.application.use_cases.agents.tool_registry import Tool, ToolCategory
+from app.application.use_cases.campaigns.campaign_use_cases import (
+    CreateCampaignUseCase,
+    ListCampaignsUseCase,
+)
+from app.application.use_cases.content.content_use_cases import (
+    CreateContentUseCase,
+)
+from app.infrastructure.db.repositories.campaigns.campaign_repository import (
+    CampaignRepositoryImpl,
+)
+from app.infrastructure.db.repositories.content.content_repository import (
+    ContentRepositoryImpl,
+)
+
+
+async def create_campaign_handler(
+    db_session,
+    **kwargs,
+) -> dict:
+    org_id = kwargs.get("organization_id", "")
+    query = kwargs.get("query", "")
+    repo = CampaignRepositoryImpl(db_session)
+    use_case = CreateCampaignUseCase(repo)
+    try:
+        campaign = await use_case.execute(
+            organization_id=UUID(org_id),
+            name=f"AI: {query[:40]}",
+            created_by=uuid4(),
+            description=query,
+        )
+        return {
+            "response": f"Created campaign '{campaign.name}' (status: {campaign.status})",
+            "campaign_id": str(campaign.id),
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+async def list_campaigns_handler(db_session, **kwargs) -> dict:
+    org_id = kwargs.get("organization_id", "")
+    repo = CampaignRepositoryImpl(db_session)
+    use_case = ListCampaignsUseCase(repo)
+    campaigns = await use_case.execute(organization_id=UUID(org_id))
+    return {
+        "response": f"You have {len(campaigns)} campaigns. "
+        + ", ".join(f"'{c.name}' ({c.status})" for c in campaigns[:5])
+    }
+
+
+async def create_content_handler(db_session, **kwargs) -> dict:
+    org_id = kwargs.get("organization_id", "")
+    query = kwargs.get("query", "")
+    repo = ContentRepositoryImpl(db_session)
+    use_case = CreateContentUseCase(repo)
+    try:
+        content = await use_case.execute(
+            organization_id=UUID(org_id),
+            title=f"AI: {query[:40]}",
+            created_by=uuid4(),
+        )
+        return {
+            "response": f"Created content '{content.title}' (status: {content.status})",
+            "content_id": str(content.id),
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def register_tools(registry, db_session) -> None:
+    registry.register(
+        Tool(
+            name="create_campaign",
+            description="Create a new marketing campaign",
+            category=ToolCategory.CAMPAIGN,
+            handler=lambda **kw: create_campaign_handler(db_session, **kw),
+        )
+    )
+    registry.register(
+        Tool(
+            name="list_campaigns",
+            description="List all campaigns",
+            category=ToolCategory.CAMPAIGN,
+            handler=lambda **kw: list_campaigns_handler(db_session, **kw),
+        )
+    )
+    registry.register(
+        Tool(
+            name="create_content",
+            description="Create new content (blog, social, email, etc.)",
+            category=ToolCategory.CONTENT,
+            handler=lambda **kw: create_content_handler(db_session, **kw),
+        )
+    )

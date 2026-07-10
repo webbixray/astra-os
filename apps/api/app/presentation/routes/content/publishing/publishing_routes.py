@@ -1,0 +1,170 @@
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.application.use_cases.content.content_publishing_service import ContentPublishingService
+from app.domain.exceptions.domain_exceptions import EntityNotFoundError, ValidationError
+from app.infrastructure.db.repositories.content.content_publish_repository import (
+    ContentPublishRepository,
+)
+from app.infrastructure.db.repositories.content.content_repository import ContentRepositoryImpl
+from app.presentation.dependencies import get_db
+from app.presentation.middleware.auth import require_user_id
+from app.presentation.middleware.rbac import require_org_role
+
+router = APIRouter()
+
+
+class PublishRequest(BaseModel):
+    platform: str
+    scheduled_at: str | None = None
+    metadata: dict = {}
+
+
+class ScheduleRequest(BaseModel):
+    platform: str
+    scheduled_at: str
+    metadata: dict = {}
+
+
+async def get_pub_service(db: AsyncSession = Depends(get_db)) -> ContentPublishingService:
+    return ContentPublishingService(
+        ContentPublishRepository(db),
+        content_repo=ContentRepositoryImpl(db),
+    )
+
+
+@router.post("/content/{content_id}/publish", status_code=status.HTTP_201_CREATED, summary="Publish content to platform")
+async def publish_content(
+    content_id: UUID,
+    request: PublishRequest,
+    service: ContentPublishingService = Depends(get_pub_service),
+    user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    from app.infrastructure.db.repositories.content.content_repository import ContentRepositoryImpl
+    content_repo = ContentRepositoryImpl(db)
+    content = await content_repo.find_by_id(content_id)
+    if content:
+        await require_org_role(content.organization_id, "viewer", user_id, db)
+    try:
+        result = await service.publish(
+            content_id=content_id,
+            platform=request.platform,
+            scheduled_at=request.scheduled_at,
+            metadata=request.metadata,
+        )
+    except ValidationError as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
+    return {"id": str(result.id), "platform": result.platform, "status": result.status,
+            "external_url": result.external_url, "error_message": result.error_message,
+            "scheduled_at": result.scheduled_at.isoformat() if result.scheduled_at else None}
+
+
+@router.post("/content/{content_id}/schedule", status_code=status.HTTP_201_CREATED, summary="Schedule content for publishing")
+async def schedule_content(
+    content_id: UUID,
+    request: ScheduleRequest,
+    service: ContentPublishingService = Depends(get_pub_service),
+    user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    from app.infrastructure.db.repositories.content.content_repository import ContentRepositoryImpl
+    content_repo = ContentRepositoryImpl(db)
+    content = await content_repo.find_by_id(content_id)
+    if content:
+        await require_org_role(content.organization_id, "viewer", user_id, db)
+    try:
+        result = await service.schedule(
+            content_id=content_id,
+            platform=request.platform,
+            scheduled_at=request.scheduled_at,
+            metadata=request.metadata,
+        )
+    except ValidationError as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
+    return {"id": str(result.id), "platform": result.platform, "status": result.status,
+            "scheduled_at": result.scheduled_at.isoformat() if result.scheduled_at else None}
+
+
+@router.get("/content/publishing/queue", summary="Get publishing queue")
+async def get_publishing_queue(
+    organization_id: UUID = Query(...),
+    status: str | None = Query(None),
+    service: ContentPublishingService = Depends(get_pub_service),
+    user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
+) -> list[dict]:
+    await require_org_role(organization_id, "viewer", user_id, db)
+    return await service.get_queue(org_id=organization_id, status=status)
+
+
+@router.get("/content/{content_id}/publishing-history", summary="Get publishing history")
+async def get_publishing_history(
+    content_id: UUID,
+    service: ContentPublishingService = Depends(get_pub_service),
+    user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
+) -> list[dict]:
+    from app.infrastructure.db.repositories.content.content_repository import ContentRepositoryImpl
+    content_repo = ContentRepositoryImpl(db)
+    content = await content_repo.find_by_id(content_id)
+    if content:
+        await require_org_role(content.organization_id, "viewer", user_id, db)
+    return await service.get_history(content_id=content_id)
+
+
+@router.post("/content/publishing/{publish_id}/retry", summary="Retry a failed publish")
+async def retry_publish(
+    publish_id: UUID,
+    service: ContentPublishingService = Depends(get_pub_service),
+    user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    from app.infrastructure.db.repositories.content.content_publish_repository import (
+        ContentPublishRepository,
+    )
+    pub_repo = ContentPublishRepository(db)
+    publish_record = await pub_repo.find_by_id(publish_id)
+    if publish_record:
+        content_repo = ContentRepositoryImpl(db)
+        content = await content_repo.find_by_id(publish_record.content_id)
+        if content:
+            await require_org_role(content.organization_id, "viewer", user_id, db)
+    try:
+        result = await service.retry(publish_id=publish_id)
+    except (EntityNotFoundError, ValidationError) as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND if isinstance(e, EntityNotFoundError) else status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(e),
+        ) from None
+    return {"id": str(result.id), "status": result.status,
+            "external_url": result.external_url, "error_message": result.error_message}
+
+
+@router.delete("/content/publishing/{publish_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Cancel a publishing job")
+async def cancel_publish(
+    publish_id: UUID,
+    service: ContentPublishingService = Depends(get_pub_service),
+    user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    from app.infrastructure.db.repositories.content.content_publish_repository import (
+        ContentPublishRepository,
+    )
+    pub_repo = ContentPublishRepository(db)
+    publish_record = await pub_repo.find_by_id(publish_id)
+    if publish_record:
+        content_repo = ContentRepositoryImpl(db)
+        content = await content_repo.find_by_id(publish_record.content_id)
+        if content:
+            await require_org_role(content.organization_id, "viewer", user_id, db)
+    try:
+        await service.cancel(publish_id=publish_id)
+    except (EntityNotFoundError, ValidationError) as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND if isinstance(e, EntityNotFoundError) else status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(e),
+        ) from None

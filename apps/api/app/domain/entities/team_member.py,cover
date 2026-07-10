@@ -1,0 +1,3 @@
+> from app.domain.entities.organization import ORG_ROLES, OrganizationMember  # noqa: F401
+  
+> TeamMember = OrganizationMember

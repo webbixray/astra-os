@@ -1,0 +1,75 @@
+import random
+
+from app.domain.common import now
+from app.domain.entities.content.content import Content
+from app.domain.services.publishing.base_adapter import PublishingAdapter
+
+
+class WebsiteAdapter(PublishingAdapter):
+    def platform(self) -> str:
+        return "website"
+
+    async def publish(self, content: Content, metadata: dict | None = None) -> str:
+        slug = content.title.lower().replace(" ", "-").replace("/", "-")[:80]
+        base_url = (metadata or {}).get("site_url", "https://example.com")
+        return f"{base_url}/blog/{slug}"
+
+
+class TwitterAdapter(PublishingAdapter):
+    def platform(self) -> str:
+        return "twitter"
+
+    async def publish(self, content: Content, metadata: dict | None = None) -> str:
+        (content.body or "")[:280]
+        tweet_id = f"tweet_{now().strftime('%Y%m%d%H%M%S')}_{random.randint(1000,9999)}"
+        return f"https://twitter.com/status/{tweet_id}"
+
+
+class LinkedInAdapter(PublishingAdapter):
+    def platform(self) -> str:
+        return "linkedin"
+
+    async def publish(self, content: Content, metadata: dict | None = None) -> str:
+        post_id = f"post_{now().strftime('%Y%m%d%H%M%S')}_{random.randint(1000,9999)}"
+        return f"https://linkedin.com/feed/update/{post_id}"
+
+
+class FacebookAdapter(PublishingAdapter):
+    def platform(self) -> str:
+        return "facebook"
+
+    async def publish(self, content: Content, metadata: dict | None = None) -> str:
+        post_id = f"fb_{now().strftime('%Y%m%d%H%M%S')}_{random.randint(1000,9999)}"
+        return f"https://facebook.com/{post_id}"
+
+
+class InstagramAdapter(PublishingAdapter):
+    def platform(self) -> str:
+        return "instagram"
+
+    async def publish(self, content: Content, metadata: dict | None = None) -> str:
+        media_id = f"ig_{now().strftime('%Y%m%d%H%M%S')}_{random.randint(1000,9999)}"
+        return f"https://instagram.com/p/{media_id}"
+
+
+class EmailAdapter(PublishingAdapter):
+    def platform(self) -> str:
+        return "email"
+
+    async def publish(self, content: Content, metadata: dict | None = None) -> str:
+        campaign_id = f"email_{now().strftime('%Y%m%d%H%M%S')}_{random.randint(1000,9999)}"
+        return f"email://campaign/{campaign_id}"
+
+
+ADAPTER_REGISTRY: dict[str, PublishingAdapter] = {
+    "website": WebsiteAdapter(),
+    "twitter": TwitterAdapter(),
+    "linkedin": LinkedInAdapter(),
+    "facebook": FacebookAdapter(),
+    "instagram": InstagramAdapter(),
+    "email": EmailAdapter(),
+}
+
+
+def get_adapter(platform: str) -> PublishingAdapter | None:
+    return ADAPTER_REGISTRY.get(platform)

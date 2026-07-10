@@ -1,0 +1,66 @@
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from uuid import UUID, uuid4
+
+from app.domain.common import now
+
+
+class CreativeType(str, Enum):
+    IMAGE = "image"
+    VIDEO = "video"
+    CAROUSEL = "carousel"
+    TEXT = "text"
+    HTML = "html"
+
+
+class CreativeStatus(str, Enum):
+    DRAFT = "draft"
+    PENDING_REVIEW = "pending_review"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    ACTIVE = "active"
+    ARCHIVED = "archived"
+
+
+@dataclass
+class AdCreative:
+    id: UUID = field(default_factory=uuid4)
+    organization_id: UUID = field(default_factory=uuid4)
+    ad_campaign_id: UUID | None = None
+    name: str = ""
+    type: CreativeType = CreativeType.IMAGE
+    status: CreativeStatus = CreativeStatus.DRAFT
+    headline: str = ""
+    body: str = ""
+    destination_url: str = ""
+    asset_urls: list[str] = field(default_factory=list)
+    platform_creative_ids: dict = field(default_factory=dict)
+    dimensions: dict = field(default_factory=dict)
+    thumbnail_url: str | None = None
+    created_by: UUID = field(default_factory=uuid4)
+    created_at: datetime = field(default_factory=now)
+    updated_at: datetime = field(default_factory=now)
+
+    @classmethod
+    def create(
+        cls,
+        organization_id: UUID,
+        name: str,
+        type: CreativeType = CreativeType.IMAGE,
+        created_by: UUID | None = None,
+    ) -> "AdCreative":
+        return cls(
+            organization_id=organization_id,
+            name=name,
+            type=type,
+            created_by=created_by or uuid4(),
+        )
+
+    def approve(self) -> None:
+        self.status = CreativeStatus.APPROVED
+        self.updated_at = now()
+
+    def reject(self, reason: str = "") -> None:
+        self.status = CreativeStatus.REJECTED
+        self.updated_at = now()

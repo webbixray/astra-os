@@ -1,0 +1,281 @@
+> from __future__ import annotations
+  
+> from uuid import UUID
+  
+> from app.application.use_cases.agents.tool_registry import ToolCategory, ToolRegistry
+> from app.domain.entities.agents.agent import Agent, AgentRole, AgentStatus
+> from app.domain.entities.agents.communication import (
+>     MessageBus,
+> )
+> from app.domain.entities.agents.task import AgentTask
+  
+> PRESET_AGENTS: list[dict] = [
+>     {
+>         "name": "ASTRA-CEO",
+>         "role": AgentRole.CEO,
+>         "capabilities": [
+>             "strategic planning",
+>             "task delegation",
+>             "cross-domain coordination",
+>             "escalation handling",
+>         ],
+>     },
+>     {
+>         "name": "Campaign Director",
+>         "role": AgentRole.CAMPAIGN_DIRECTOR,
+>         "capabilities": [
+>             "campaign creation",
+>             "campaign optimization",
+>             "budget management",
+>             "channel strategy",
+>         ],
+>     },
+>     {
+>         "name": "Content Director",
+>         "role": AgentRole.CONTENT_DIRECTOR,
+>         "capabilities": [
+>             "content strategy",
+>             "content creation",
+>             "brand voice",
+>             "content calendar",
+>         ],
+>     },
+>     {
+>         "name": "Analytics Director",
+>         "role": AgentRole.ANALYTICS_DIRECTOR,
+>         "capabilities": [
+>             "performance analysis",
+>             "reporting",
+>             "insight generation",
+>             "forecasting",
+>         ],
+>     },
+>     {
+>         "name": "Workflow Director",
+>         "role": AgentRole.WORKFLOW_DIRECTOR,
+>         "capabilities": [
+>             "workflow design",
+>             "automation",
+>             "approval routing",
+>             "integration",
+>         ],
+>     },
+> ]
+  
+  
+> class AgentOrchestrator:
+>     def __init__(
+>         self,
+>         tool_registry: ToolRegistry | None = None,
+>         message_bus: MessageBus | None = None,
+>     ) -> None:
+>         self.tool_registry = tool_registry or ToolRegistry()
+>         self.message_bus = message_bus or MessageBus()
+>         self.agents: dict[str, Agent] = {}
+>         self.tasks: dict[str, AgentTask] = {}
+>         self._init_preset_agents()
+  
+>     def _init_preset_agents(self) -> None:
+>         for cfg in PRESET_AGENTS:
+>             agent = Agent.create(
+>                 name=cfg["name"],
+>                 role=cfg["role"],
+>                 capabilities=cfg["capabilities"],
+>             )
+>             self.agents[cfg["name"]] = agent
+  
+>     def get_ceo(self) -> Agent:
+>         return self.agents["ASTRA-CEO"]
+  
+>     def get_director_for_task(self, task: AgentTask) -> Agent:
+>         task_lower = task.title.lower() + " " + task.description.lower()
+>         if any(w in task_lower for w in ["campaign", "campaigns"]):
+>             return self.agents["Campaign Director"]
+>         if any(w in task_lower for w in ["content", "blog", "social", "email"]):
+>             return self.agents["Content Director"]
+>         if any(w in task_lower for w in ["analytics", "report", "metric", "performance"]):
+>             return self.agents["Analytics Director"]
+>         if any(w in task_lower for w in ["workflow", "automation", "approval"]):
+>             return self.agents["Workflow Director"]
+>         return self.agents["Campaign Director"]
+  
+>     async def process_user_request(
+>         self,
+>         user_id: UUID,
+>         organization_id: UUID,
+>         message: str,
+>     ) -> dict:
+>         ceo = self.get_ceo()
+>         ceo.set_status(AgentStatus.PROCESSING)
+  
+>         task = AgentTask.create(
+>             title=f"Process user request: {message[:50]}",
+>             description=message,
+>             assigned_by=user_id,
+>         )
+>         self.tasks[str(task.id)] = task
+  
+>         try:
+>             result = await self._route_task(task, organization_id)
+>             ceo.set_status(AgentStatus.IDLE)
+>             task.complete(result)
+>             return {
+>                 "task_id": str(task.id),
+>                 "response": result.get("response", ""),
+>                 "agents_involved": result.get("agents_involved", []),
+>                 "status": "completed",
+>             }
+>         except Exception as e:
+>             ceo.set_status(AgentStatus.ERROR)
+>             task.fail(str(e))
+>             return {
+>                 "task_id": str(task.id),
+>                 "response": f"I encountered an error processing your request: {e}",
+>                 "agents_involved": [],
+>                 "status": "failed",
+>             }
+  
+>     async def _route_task(
+>         self,
+>         task: AgentTask,
+>         organization_id: UUID,
+>     ) -> dict:
+>         director = self.get_director_for_task(task)
+>         director.set_status(AgentStatus.PROCESSING)
+>         task.assign(director.id)
+  
+>         tool_category = {
+>             "Campaign Director": ToolCategory.CAMPAIGN,
+>             "Content Director": ToolCategory.CONTENT,
+>             "Analytics Director": ToolCategory.ANALYTICS,
+>             "Workflow Director": ToolCategory.WORKFLOW,
+>         }.get(director.name, ToolCategory.COMMUNICATION)
+  
+>         subtasks = self._decompose_task(task, director.name)
+>         results = []
+  
+>         for subtask in subtasks:
+>             subtask_result = await self._execute_subtask(
+>                 subtask, tool_category, organization_id
+>             )
+>             results.append(subtask_result)
+  
+>         director.set_status(AgentStatus.IDLE)
+  
+>         return {
+>             "response": self._consolidate_results(results),
+>             "agents_involved": [director.name],
+>             "subtask_results": results,
+>         }
+  
+>     def _decompose_task(self, task: AgentTask, director_name: str) -> list[AgentTask]:
+>         subtasks = []
+>         desc = task.description.lower()
+  
+>         if "campaign" in director_name.lower():
+>             if "create" in desc or "new" in desc:
+>                 subtasks.append(
+>                     AgentTask.create(
+>                         title="Generate campaign suggestions",
+>                         description=f"Based on: {task.description}",
+>                         assigned_by=task.assigned_by or task.id,
+>                         parent_task_id=task.id,
+>                     )
+>                 )
+>             if "optimize" in desc or "improve" in desc:
+>                 subtasks.append(
+>                     AgentTask.create(
+>                         title="Analyze campaign performance",
+>                         description=f"Find optimization opportunities: {task.description}",
+>                         assigned_by=task.assigned_by or task.id,
+>                         parent_task_id=task.id,
+>                     )
+>                 )
+  
+>         elif "content" in director_name.lower():
+>             if "create" in desc or "write" in desc:
+>                 subtasks.append(
+>                     AgentTask.create(
+>                         title="Generate content outline",
+>                         description=f"Create outline for: {task.description}",
+>                         assigned_by=task.assigned_by or task.id,
+>                         parent_task_id=task.id,
+>                     )
+>                 )
+>             if "review" in desc:
+>                 subtasks.append(
+>                     AgentTask.create(
+>                         title="Review content quality",
+>                         description=f"Review and provide feedback: {task.description}",
+>                         assigned_by=task.assigned_by or task.id,
+>                         parent_task_id=task.id,
+>                     )
+>                 )
+  
+>         elif "analytics" in director_name.lower():
+>             subtasks.append(
+>                 AgentTask.create(
+>                     title="Gather performance data",
+>                     description=f"Analyze: {task.description}",
+>                     assigned_by=task.assigned_by or task.id,
+>                     parent_task_id=task.id,
+>                 )
+>             )
+  
+>         if not subtasks:
+>             subtasks.append(
+>                 AgentTask.create(
+>                     title="Process request",
+>                     description=task.description,
+>                     assigned_by=task.assigned_by or task.id,
+>                     parent_task_id=task.id,
+>                 )
+>             )
+  
+>         return subtasks
+  
+>     async def _execute_subtask(
+>         self,
+>         subtask: AgentTask,
+>         category: ToolCategory,
+>         organization_id: UUID,
+>     ) -> dict:
+>         subtask.start()
+>         tools = self.tool_registry.list_by_category(category)
+  
+>         for tool in tools:
+>             if any(kw in subtask.title.lower() for kw in tool.name.lower().split("_")):
+>                 try:
+>                     result = await tool.execute(
+>                         organization_id=str(organization_id),
+>                         query=subtask.description,
+>                     )
+>                     subtask.complete(result)
+>                     return {"tool": tool.name, "result": result}
+>                 except Exception as e:
+>                     subtask.fail(str(e))
+>                     return {"tool": tool.name, "error": str(e)}
+  
+>         subtask.complete({"note": "No specific tool matched. Request logged."})
+>         return {
+>             "tool": "default",
+>             "result": f"I've noted your request about: {subtask.description}",
+>         }
+  
+>     def _consolidate_results(self, results: list[dict]) -> str:
+>         parts = []
+>         for r in results:
+>             if "result" in r:
+>                 if isinstance(r["result"], dict):
+>                     if "response" in r["result"]:
+>                         parts.append(r["result"]["response"])
+>                     elif "error" in r["result"]:
+>                         parts.append(f"Issue: {r['result']['error']}")
+>                     else:
+>                         parts.append(str(r["result"]))
+>                 else:
+>                     parts.append(str(r["result"]))
+>             if "error" in r:
+>                 parts.append(f"Note: {r['error']}")
+  
+>         return "\n\n".join(parts) if parts else "I've processed your request."

@@ -1,0 +1,83 @@
+> from dataclasses import dataclass, field
+> from datetime import datetime
+> from uuid import UUID, uuid4
+  
+> from app.domain.common import now
+> from app.domain.exceptions.domain_exceptions import ValidationError
+  
+> EMAIL_CAMPAIGN_STATUSES = ["draft", "scheduled", "sending", "sent", "partially_sent", "failed"]
+  
+  
+> @dataclass
+> class EmailCampaign:
+>     id: UUID = field(default_factory=uuid4)
+>     organization_id: UUID = field(default_factory=uuid4)
+>     provider_id: UUID = field(default_factory=uuid4)
+>     name: str = ""
+>     subject: str = ""
+>     body: str = ""
+>     from_email: str = ""
+>     from_name: str = ""
+>     recipient_count: int = 0
+>     sent_count: int = 0
+>     open_count: int = 0
+>     click_count: int = 0
+>     bounce_count: int = 0
+>     status: str = "draft"
+>     scheduled_at: datetime | None = None
+>     sent_at: datetime | None = None
+>     metadata: dict = field(default_factory=dict)
+>     created_by: UUID = field(default_factory=uuid4)
+>     created_at: datetime = field(default_factory=now)
+>     updated_at: datetime = field(default_factory=now)
+  
+>     @classmethod
+>     def create(
+>         cls,
+>         organization_id: UUID,
+>         provider_id: UUID,
+>         name: str,
+>         subject: str,
+>         body: str,
+>         from_email: str,
+>         created_by: UUID,
+>         from_name: str = "",
+>         scheduled_at: datetime | None = None,
+>         metadata: dict | None = None,
+>     ) -> "EmailCampaign":
+>         if not name or not name.strip():
+>             raise ValidationError("Campaign name is required")
+>         if not subject or not subject.strip():
+>             raise ValidationError("Subject is required")
+>         if not body:
+>             raise ValidationError("Body is required")
+>         if not from_email or "@" not in from_email:
+>             raise ValidationError("Valid from email is required")
+>         return cls(
+>             organization_id=organization_id,
+>             provider_id=provider_id,
+>             name=name,
+>             subject=subject,
+>             body=body,
+>             from_email=from_email,
+>             from_name=from_name,
+>             scheduled_at=scheduled_at,
+>             created_by=created_by,
+>             metadata=metadata or {},
+>         )
+  
+>     def send(self) -> None:
+>         if self.status not in ("draft", "scheduled"):
+>             raise ValidationError(f"Cannot send campaign in status '{self.status}'")
+>         self.status = "sending"
+>         self.updated_at = now()
+  
+>     def complete(self, sent: int) -> None:
+>         self.status = "sent"
+>         self.sent_count = sent
+>         self.sent_at = now()
+>         self.updated_at = now()
+  
+>     def fail(self) -> None:
+>         self.status = "failed"
+>         self.updated_at = now()

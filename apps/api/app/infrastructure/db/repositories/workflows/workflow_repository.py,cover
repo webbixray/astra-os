@@ -1,0 +1,60 @@
+> from uuid import UUID
+  
+> from sqlalchemy import select
+> from sqlalchemy.ext.asyncio import AsyncSession
+  
+> from app.infrastructure.db.models.workflows.workflow_model import (
+>     WorkflowExecutionModel,
+>     WorkflowModel,
+> )
+  
+  
+> class WorkflowRepository:
+>     def __init__(self, db: AsyncSession):
+!         self.db = db
+  
+>     async def save(self, workflow: WorkflowModel) -> WorkflowModel:
+!         self.db.add(workflow)
+!         await self.db.commit()
+!         await self.db.refresh(workflow)
+!         return workflow
+  
+>     async def find_by_id(self, workflow_id: UUID) -> WorkflowModel | None:
+!         result = await self.db.execute(
+!             select(WorkflowModel).where(WorkflowModel.id == workflow_id)
+!         )
+!         return result.scalar_one_or_none()
+  
+>     async def find_by_organization(
+>         self, org_id: UUID, status: str | None = None
+>     ) -> list[WorkflowModel]:
+!         query = select(WorkflowModel).where(WorkflowModel.organization_id == org_id)
+!         if status:
+!             query = query.where(WorkflowModel.status == status)
+!         query = query.order_by(WorkflowModel.created_at.desc())
+!         result = await self.db.execute(query)
+!         return list(result.scalars().all())
+  
+>     async def delete(self, workflow_id: UUID) -> None:
+!         workflow = await self.find_by_id(workflow_id)
+!         if workflow:
+!             await self.db.delete(workflow)
+!             await self.db.commit()
+  
+>     async def save_execution(
+>         self, execution: WorkflowExecutionModel
+>     ) -> WorkflowExecutionModel:
+!         self.db.add(execution)
+!         await self.db.commit()
+!         await self.db.refresh(execution)
+!         return execution
+  
+>     async def find_executions_by_workflow(
+>         self, workflow_id: UUID
+>     ) -> list[WorkflowExecutionModel]:
+!         result = await self.db.execute(
+!             select(WorkflowExecutionModel)
+!             .where(WorkflowExecutionModel.workflow_id == workflow_id)
+!             .order_by(WorkflowExecutionModel.created_at.desc())
+!         )
+!         return list(result.scalars().all())

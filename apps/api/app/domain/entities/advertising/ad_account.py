@@ -1,0 +1,59 @@
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from uuid import UUID, uuid4
+
+from app.domain.common import now
+
+
+class Platform(str, Enum):
+    GOOGLE_ADS = "google_ads"
+    META = "meta"
+    LINKEDIN = "linkedin"
+    TIKTOK = "tiktok"
+    TWITTER = "twitter"
+    SNAPCHAT = "snapchat"
+    PINTEREST = "pinterest"
+
+
+class ConnectionStatus(str, Enum):
+    CONNECTED = "connected"
+    DISCONNECTED = "disconnected"
+    EXPIRED = "expired"
+    ERROR = "error"
+
+
+@dataclass
+class AdAccount:
+    id: UUID = field(default_factory=uuid4)
+    organization_id: UUID = field(default_factory=uuid4)
+    platform: Platform = Platform.GOOGLE_ADS
+    account_name: str = ""
+    platform_account_id: str = ""
+    status: ConnectionStatus = ConnectionStatus.DISCONNECTED
+    currency: str = "USD"
+    timezone: str = "America/New_York"
+    credentials: dict = field(default_factory=dict)
+    last_synced_at: datetime | None = None
+    created_at: datetime = field(default_factory=now)
+    updated_at: datetime = field(default_factory=now)
+
+    @classmethod
+    def create(
+        cls,
+        organization_id: UUID,
+        platform: Platform,
+        account_name: str,
+        platform_account_id: str,
+    ) -> "AdAccount":
+        return cls(
+            organization_id=organization_id,
+            platform=platform,
+            account_name=account_name,
+            platform_account_id=platform_account_id,
+            status=ConnectionStatus.CONNECTED,
+        )
+
+    def disconnect(self) -> None:
+        self.status = ConnectionStatus.DISCONNECTED
+        self.updated_at = now()

@@ -1,0 +1,7 @@
+{
+  "name": "@astra/config-eslint",
+  "version": "0.0.1",
+  "private": true,
+  "main": "library.js",
+  "files": ["base.js", "nextjs.js", "library.js"]
+}

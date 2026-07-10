@@ -1,0 +1,112 @@
+'use client';
+
+import { useEffect, useRef, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { API_BASE_URL } from '@/lib/constants';
+
+const RECONNECT_BASE_MS = 2000;
+const RECONNECT_MAX_MS = 30000;
+
+export function useNotificationStream(orgId: string | undefined) {
+  const qc = useQueryClient();
+  const controllerRef = useRef<AbortController | null>(null);
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const retryDelayRef = useRef(RECONNECT_BASE_MS);
+  const mountedRef = useRef(true);
+
+  const invalidate = useCallback(() => {
+    qc.invalidateQueries({ queryKey: ['notifications'] });
+    qc.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
+  }, [qc]);
+
+  const connect = useCallback(() => {
+    if (!orgId || !mountedRef.current) return;
+
+    const { accessToken } = getStoredTokens();
+    if (!accessToken) return;
+
+    controllerRef.current?.abort();
+    const controller = new AbortController();
+    controllerRef.current = controller;
+
+    fetch(`${API_BASE_URL}/notifications/stream?organization_id=${orgId}`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: 'text/event-stream',
+      },
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok || !response.body) {
+          throw new Error(`SSE connection failed: ${response.status}`);
+        }
+
+        retryDelayRef.current = RECONNECT_BASE_MS;
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (mountedRef.current) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const raw = line.slice(6).trim();
+              if (!raw || raw === '[DONE]') continue;
+              try {
+                const event = JSON.parse(raw);
+                const eventType = event.type || event.event;
+                if (eventType === 'notification' || eventType === 'notification.created') {
+                  qc.invalidateQueries({ queryKey: ['notifications'] });
+                  qc.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
+                } else if (eventType === 'unread_count') {
+                  qc.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
+                } else {
+                  invalidate();
+                }
+              } catch {
+                invalidate();
+              }
+            }
+          }
+        }
+      })
+      .catch((err) => {
+        if (err.name === 'AbortError') return;
+        if (!mountedRef.current) return;
+
+        retryTimeoutRef.current = setTimeout(() => {
+          retryDelayRef.current = Math.min(retryDelayRef.current * 1.5, RECONNECT_MAX_MS);
+          connect();
+        }, retryDelayRef.current);
+      });
+  }, [orgId, invalidate]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+
+    const delay = setTimeout(() => {
+      connect();
+    }, 100);
+
+    return () => {
+      mountedRef.current = false;
+      controllerRef.current?.abort();
+      if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current);
+      clearTimeout(delay);
+    };
+  }, [connect]);
+}
+
+function getStoredTokens(): { accessToken: string | null } {
+  if (typeof window === 'undefined') return { accessToken: null };
+  return {
+    accessToken: localStorage.getItem('astra_access_token'),
+  };
+}

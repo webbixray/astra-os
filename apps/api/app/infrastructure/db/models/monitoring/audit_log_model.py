@@ -1,0 +1,115 @@
+import uuid
+from datetime import UTC, datetime
+
+from sqlalchemy import DateTime, Integer, String, Text
+from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.orm import Mapped, mapped_column
+
+from app.domain.entities.monitoring.audit_log import ApiUsageRecord, AuditLogEntry, JobRecord
+from app.infrastructure.db.base import Base
+
+
+class AuditLogEntryModel(Base):
+    __tablename__ = "audit_logs"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    organization_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    action: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    resource_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    resource_id: Mapped[str] = mapped_column(String(255), default="", nullable=False)
+    details: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
+    ip_address: Mapped[str] = mapped_column(String(45), default="", nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
+
+    def to_domain(self) -> AuditLogEntry:
+        return AuditLogEntry(
+            id=self.id, organization_id=self.organization_id, user_id=self.user_id,
+            action=self.action, resource_type=self.resource_type,
+            resource_id=self.resource_id, details=dict(self.details or {}),
+            ip_address=self.ip_address,
+            created_at=self.created_at.replace(tzinfo=None),
+        )
+
+    @classmethod
+    def from_domain(cls, e: AuditLogEntry) -> "AuditLogEntryModel":
+        return cls(
+            id=e.id, organization_id=e.organization_id, user_id=e.user_id,
+            action=e.action, resource_type=e.resource_type,
+            resource_id=e.resource_id, details=e.details,
+            ip_address=e.ip_address, created_at=e.created_at,
+        )
+
+
+class JobRecordModel(Base):
+    __tablename__ = "job_records"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    organization_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    job_type: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
+    payload: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
+    result: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    error_message: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    retry_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    max_retries: Mapped[int] = mapped_column(Integer, default=3, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), nullable=False)
+
+    def to_domain(self) -> JobRecord:
+        return JobRecord(
+            id=self.id, organization_id=self.organization_id,
+            job_type=self.job_type, status=self.status,
+            payload=dict(self.payload or {}), result=dict(self.result) if self.result else None,
+            started_at=self.started_at.replace(tzinfo=None) if self.started_at else None,
+            completed_at=self.completed_at.replace(tzinfo=None) if self.completed_at else None,
+            error_message=self.error_message, retry_count=self.retry_count,
+            max_retries=self.max_retries,
+            created_at=self.created_at.replace(tzinfo=None),
+            updated_at=self.updated_at.replace(tzinfo=None),
+        )
+
+    @classmethod
+    def from_domain(cls, j: JobRecord) -> "JobRecordModel":
+        return cls(
+            id=j.id, organization_id=j.organization_id,
+            job_type=j.job_type, status=j.status,
+            payload=j.payload, result=j.result,
+            started_at=j.started_at, completed_at=j.completed_at,
+            error_message=j.error_message, retry_count=j.retry_count,
+            max_retries=j.max_retries, created_at=j.created_at, updated_at=j.updated_at,
+        )
+
+
+class ApiUsageRecordModel(Base):
+    __tablename__ = "api_usage_records"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    organization_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    endpoint: Mapped[str] = mapped_column(String(255), nullable=False)
+    method: Mapped[str] = mapped_column(String(10), nullable=False)
+    status_code: Mapped[int] = mapped_column(Integer, nullable=False)
+    ip_address: Mapped[str] = mapped_column(String(45), default="", nullable=False)
+    response_time_ms: Mapped[float] = mapped_column(Integer, default=0, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
+
+    def to_domain(self) -> ApiUsageRecord:
+        return ApiUsageRecord(
+            id=self.id, organization_id=self.organization_id, user_id=self.user_id,
+            endpoint=self.endpoint, method=self.method,
+            status_code=self.status_code, ip_address=self.ip_address,
+            response_time_ms=self.response_time_ms,
+            created_at=self.created_at.replace(tzinfo=None),
+        )
+
+    @classmethod
+    def from_domain(cls, u: ApiUsageRecord) -> "ApiUsageRecordModel":
+        return cls(
+            id=u.id, organization_id=u.organization_id, user_id=u.user_id,
+            endpoint=u.endpoint, method=u.method,
+            status_code=u.status_code, ip_address=u.ip_address,
+            response_time_ms=u.response_time_ms, created_at=u.created_at,
+        )

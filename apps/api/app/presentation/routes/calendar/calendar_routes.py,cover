@@ -1,0 +1,64 @@
+> from uuid import UUID
+  
+> from fastapi import APIRouter, Depends, Query
+> from pydantic import BaseModel
+> from sqlalchemy.ext.asyncio import AsyncSession
+  
+> from app.application.use_cases.calendar.bulk_campaign_service import BulkCampaignService
+> from app.application.use_cases.calendar.calendar_service import CalendarService
+> from app.presentation.dependencies import get_db
+> from app.presentation.middleware.auth import require_user_id
+> from app.presentation.middleware.rbac import require_org_role
+  
+> router = APIRouter()
+  
+  
+> class BulkStatusRequest(BaseModel):
+>     organization_id: UUID
+>     campaign_ids: list[UUID]
+>     status: str
+>     scope: str = "campaign"
+  
+  
+> @router.get("/calendar/events")
+> async def get_calendar_events(
+>     organization_id: UUID = Query(...),
+>     start_date: str = Query(...),
+>     end_date: str = Query(...),
+>     db: AsyncSession = Depends(get_db),
+>     user_id: UUID = Depends(require_user_id),
+> ):
+!     await require_org_role(organization_id, "viewer", user_id, db)
+!     service = CalendarService(db)
+!     return await service.get_events(
+!         organization_id=organization_id,
+!         start_date=start_date,
+!         end_date=end_date,
+!     )
+  
+  
+> @router.get("/campaigns/overview")
+> async def get_campaign_overview(
+>     organization_id: UUID = Query(...),
+>     db: AsyncSession = Depends(get_db),
+>     user_id: UUID = Depends(require_user_id),
+> ):
+!     await require_org_role(organization_id, "viewer", user_id, db)
+!     service = BulkCampaignService(db)
+!     return await service.get_overview(organization_id)
+  
+  
+> @router.post("/campaigns/bulk/status")
+> async def bulk_update_status(
+>     request: BulkStatusRequest,
+>     db: AsyncSession = Depends(get_db),
+>     user_id: UUID = Depends(require_user_id),
+> ):
+!     await require_org_role(request.organization_id, "viewer", user_id, db)
+!     service = BulkCampaignService(db)
+!     return await service.update_status(
+!         organization_id=request.organization_id,
+!         campaign_ids=request.campaign_ids,
+!         status=request.status,
+!         scope=request.scope,
+!     )

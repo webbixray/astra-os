@@ -1,0 +1,26 @@
+FROM python:3.12-slim AS builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends gcc libffi-dev musl-dev postgresql-dev && rm -rf /var/lib/apt/lists/*
+
+RUN pip install uv --no-cache-dir --break-system-packages
+
+WORKDIR /app
+COPY pyproject.toml uv.lock ./
+RUN uv sync --no-dev --frozen --group temporal --no-cache
+
+FROM python:3.12-slim AS runner
+
+RUN groupadd -r astra && useradd -r -g astra astra
+
+WORKDIR /app
+
+COPY --from=builder /app/.venv ./.venv
+COPY app/ ./app/
+
+RUN chown -R astra:astra /app
+
+USER astra
+
+ENV PATH="/app/.venv/bin:$PATH"
+
+CMD ["python", "-m", "app.infrastructure.temporal.worker"]

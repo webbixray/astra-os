@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: astra
+  labels:
+    app.kubernetes.io/name: astra-os
+    app.kubernetes.io/part-of: astra

@@ -1,0 +1,93 @@
+from collections.abc import AsyncGenerator
+
+from fastapi import Depends, Query, Request
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.application.use_cases.organizations import (
+    CreateOrganizationUseCase,
+    GetOrganizationUseCase,
+    ListUserOrganizationsUseCase,
+    UpdateOrganizationUseCase,
+)
+from app.application.use_cases.users import CreateUserUseCase, GetUserUseCase, UpdateUserUseCase
+from app.infrastructure.db.repositories.organization_repository import OrganizationRepositoryImpl
+from app.infrastructure.db.repositories.team_member_repository import TeamMemberRepositoryImpl
+from app.infrastructure.db.repositories.user_repository import UserRepositoryImpl
+
+
+async def get_db(request: Request) -> AsyncGenerator[AsyncSession, None]:
+    session_factory = request.app.state.db
+    async with session_factory() as session:
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
+        finally:
+            await session.close()
+
+
+async def get_user_repo(db: AsyncSession = Depends(get_db)) -> UserRepositoryImpl:
+    return UserRepositoryImpl(db)
+
+
+async def get_org_repo(db: AsyncSession = Depends(get_db)) -> OrganizationRepositoryImpl:
+    return OrganizationRepositoryImpl(db)
+
+
+async def get_member_repo(db: AsyncSession = Depends(get_db)) -> TeamMemberRepositoryImpl:
+    return TeamMemberRepositoryImpl(db)
+
+
+async def get_create_user_use_case(
+    repo: UserRepositoryImpl = Depends(get_user_repo),
+) -> CreateUserUseCase:
+    return CreateUserUseCase(repo)
+
+
+async def get_get_user_use_case(
+    repo: UserRepositoryImpl = Depends(get_user_repo),
+) -> GetUserUseCase:
+    return GetUserUseCase(repo)
+
+
+async def get_update_user_use_case(
+    repo: UserRepositoryImpl = Depends(get_user_repo),
+) -> UpdateUserUseCase:
+    return UpdateUserUseCase(repo)
+
+
+async def get_create_org_use_case(
+    org_repo: OrganizationRepositoryImpl = Depends(get_org_repo),
+    member_repo: TeamMemberRepositoryImpl = Depends(get_member_repo),
+) -> CreateOrganizationUseCase:
+    return CreateOrganizationUseCase(org_repo, member_repo)
+
+
+async def get_get_org_use_case(
+    org_repo: OrganizationRepositoryImpl = Depends(get_org_repo),
+    member_repo: TeamMemberRepositoryImpl = Depends(get_member_repo),
+) -> GetOrganizationUseCase:
+    return GetOrganizationUseCase(org_repo, member_repo)
+
+
+async def get_list_orgs_use_case(
+    org_repo: OrganizationRepositoryImpl = Depends(get_org_repo),
+    member_repo: TeamMemberRepositoryImpl = Depends(get_member_repo),
+) -> ListUserOrganizationsUseCase:
+    return ListUserOrganizationsUseCase(org_repo, member_repo)
+
+
+async def get_update_org_use_case(
+    org_repo: OrganizationRepositoryImpl = Depends(get_org_repo),
+    member_repo: TeamMemberRepositoryImpl = Depends(get_member_repo),
+) -> UpdateOrganizationUseCase:
+    return UpdateOrganizationUseCase(org_repo, member_repo)
+
+
+async def pagination_params(
+    page: int = Query(1, ge=1),
+    limit: int = Query(50, ge=1, le=200),
+) -> dict:
+    return {"page": page, "limit": limit}

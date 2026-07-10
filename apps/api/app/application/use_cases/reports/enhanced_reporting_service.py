@@ -1,0 +1,325 @@
+import csv
+import io
+import json
+from datetime import UTC, datetime, timedelta
+from typing import Any
+from uuid import UUID
+
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.application.use_cases.reports.reporting_service import ReportingService
+from app.domain.common import now
+from app.domain.entities.reports.report_template import (
+    EXPORT_FORMATS,
+    ReportDeliveryLog,
+    ReportTemplate,
+)
+from app.domain.exceptions.domain_exceptions import EntityNotFoundError, ValidationError
+from app.domain.services.reporting.delivery_adapters import get_delivery_adapter
+from app.infrastructure.db.models.advertising.advertising_models import AdInsightModel
+from app.infrastructure.db.models.campaigns.campaign_model import CampaignModel
+from app.infrastructure.db.models.content.content_model import ContentModel
+from app.infrastructure.db.models.email.email_campaign_model import EmailCampaignModel
+from app.infrastructure.db.repositories.report_delivery_log_repository import (
+    ReportDeliveryLogRepository,
+)
+from app.infrastructure.db.repositories.report_template_repository import ReportTemplateRepository
+
+
+class EnhancedReportingService:
+    def __init__(self, session: AsyncSession):
+        self.session = session
+        self.base = ReportingService(session)
+        self.template_repo = ReportTemplateRepository(session)
+        self.delivery_repo = ReportDeliveryLogRepository(session)
+
+    # ── Templates ────────────────────────────────────────────────────────
+
+    async def create_template(self, org_id: UUID, name: str, report_type: str,
+                              config: dict | None = None, description: str = "",
+                              created_by: UUID | None = None) -> ReportTemplate:
+        template = ReportTemplate.create(
+            organization_id=org_id, name=name, report_type=report_type,
+            config=config, description=description, created_by=created_by,
+        )
+        return await self.template_repo.save(template)
+
+    async def list_templates(self, org_id: UUID) -> list[dict]:
+        templates = await self.template_repo.find_by_organization(org_id)
+        return [
+            {
+                "id": str(t.id), "name": t.name, "description": t.description,
+                "report_type": t.report_type, "config": t.config,
+                "created_at": t.created_at.isoformat(),
+            }
+            for t in templates
+        ]
+
+    async def get_template(self, template_id: UUID) -> ReportTemplate:
+        template = await self.template_repo.find_by_id(template_id)
+        if template is None:
+            raise EntityNotFoundError("ReportTemplate", str(template_id))
+        return template
+
+    async def update_template(self, template_id: UUID, name: str | None = None,
+                              config: dict | None = None,
+                              description: str | None = None) -> ReportTemplate:
+        template = await self.get_template(template_id)
+        if name is not None:
+            template.name = name
+        if description is not None:
+            template.description = description
+        if config is not None:
+            template.update_config(config)
+        return await self.template_repo.save(template)
+
+    async def delete_template(self, template_id: UUID) -> None:
+        await self.template_repo.delete(template_id)
+
+    # ── Report Generation ────────────────────────────────────────────────
+
+    async def generate_report(self, org_id: UUID, report_type: str,
+                              format: str = "csv", days: int = 30,
+                              config: dict | None = None) -> str:
+        if format not in EXPORT_FORMATS:
+            raise ValidationError(f"Unsupported format: {format}")
+
+        data = await self._fetch_report_data(org_id, report_type, days, config or {})
+
+        if format == "csv":
+            return self._to_csv(data, report_type)
+        if format == "json":
+            return json.dumps(data, indent=2, default=str)
+        if format == "html":
+            return self._to_html(data, report_type)
+        return ""
+
+    async def generate_and_deliver(self, org_id: UUID, report_type: str,
+                                   channel: str, recipient: str,
+                                   format: str = "csv", days: int = 30,
+                                   template_id: UUID | None = None,
+                                   schedule_id: UUID | None = None) -> ReportDeliveryLog:
+        log = ReportDeliveryLog.create(
+            organization_id=org_id, report_type=report_type,
+            channel=channel, format=format, recipient=recipient,
+            template_id=template_id, schedule_id=schedule_id,
+        )
+
+        try:
+            content = await self.generate_report(org_id, report_type, format, days)
+            adapter = get_delivery_adapter(channel)
+            success = await adapter.deliver(recipient, content, format, f"{report_type}_report")
+            if success:
+                log.mark_success()
+            else:
+                log.mark_failed("Delivery adapter returned failure")
+        except Exception as e:
+            log.mark_failed(str(e))
+
+        return await self.delivery_repo.save(log)
+
+    # ── Period Comparison ────────────────────────────────────────────────
+
+    async def compare_periods(self, org_id: UUID, report_type: str = "campaigns",
+                              current_days: int = 30,
+                              comparison: str = "previous_period",
+                              custom_days: int | None = None) -> dict:
+        current_data = await self._fetch_report_data(org_id, report_type, current_days)
+        current_total = self._summarize(current_data)
+
+        if comparison == "previous_period":
+            prev_data = await self._fetch_report_data(
+                org_id, report_type, current_days,
+                offset_days=current_days,
+            )
+        elif comparison == "same_period_last_year":
+            prev_data = await self._fetch_report_data(
+                org_id, report_type, current_days,
+                offset_days=365,
+            )
+        elif comparison == "custom" and custom_days:
+            prev_data = await self._fetch_report_data(
+                org_id, report_type, custom_days,
+            )
+        else:
+            prev_data = {}
+
+        prev_total = self._summarize(prev_data)
+
+        change = {}
+        for key in current_total:
+            cur_val = current_total.get(key, 0)
+            prev_val = prev_total.get(key, 0)
+            if prev_val:
+                change[key] = {
+                    "current": cur_val,
+                    "previous": prev_val,
+                    "change": cur_val - prev_val,
+                    "change_pct": round((cur_val - prev_val) / prev_val * 100, 2),
+                }
+            else:
+                change[key] = {
+                    "current": cur_val,
+                    "previous": prev_val,
+                    "change": cur_val,
+                    "change_pct": None,
+                }
+
+        return {
+            "report_type": report_type,
+            "comparison_type": comparison,
+            "current_period": {"days": current_days, "data": current_data},
+            "previous_period": {"data": prev_data},
+            "comparison": change,
+        }
+
+    # ── Delivery Logs ────────────────────────────────────────────────────
+
+    async def get_delivery_logs(self, org_id: UUID) -> list[dict]:
+        logs = await self.delivery_repo.find_by_organization(org_id)
+        return [
+            {
+                "id": str(log.id), "report_type": log.report_type,
+                "format": log.format, "channel": log.channel,
+                "recipient": log.recipient, "status": log.status,
+                "error_message": log.error_message,
+                "generated_at": log.generated_at.isoformat(),
+            }
+            for log in logs
+        ]
+
+    # ── Helpers ──────────────────────────────────────────────────────────
+
+    async def _fetch_report_data(self, org_id: UUID, report_type: str,
+                                  days: int = 30,
+                                  offset_days: int = 0) -> dict[str, Any]:
+        end = datetime.now(UTC).date() - timedelta(days=offset_days)
+        start = end - timedelta(days=days)
+
+        if report_type == "overview":
+            return await self.base.analytics.get_overview(org_id)
+
+        if report_type == "campaigns":
+            rows = await self.session.execute(
+                select(CampaignModel).where(CampaignModel.organization_id == org_id)
+            )
+            campaigns = rows.scalars().all()
+            return {
+                "total": len(campaigns),
+                "active": sum(1 for c in campaigns if c.status == "active"),
+                "campaigns": [
+                    {"id": str(c.id), "name": c.name, "status": c.status,
+                     "budget": c.budget_amount or 0, "channels": c.channels or []}
+                    for c in campaigns
+                ],
+            }
+
+        if report_type == "ads":
+            rows = await self.session.execute(
+                select(
+                    func.sum(AdInsightModel.impressions).label("impressions"),
+                    func.sum(AdInsightModel.clicks).label("clicks"),
+                    func.sum(AdInsightModel.spend).label("spend"),
+                    func.sum(AdInsightModel.conversions).label("conversions"),
+                    func.sum(AdInsightModel.revenue).label("revenue"),
+                ).where(
+                    AdInsightModel.organization_id == org_id,
+                    AdInsightModel.date >= start.isoformat(),
+                    AdInsightModel.date <= end.isoformat(),
+                )
+            )
+            row = rows.one()
+            return {
+                "impressions": int(row.impressions or 0),
+                "clicks": int(row.clicks or 0),
+                "spend": float(row.spend or 0),
+                "conversions": int(row.conversions or 0),
+                "revenue": float(row.revenue or 0),
+            }
+
+        if report_type == "content":
+            rows = await self.session.execute(
+                select(ContentModel).where(ContentModel.organization_id == org_id)
+            )
+            contents = rows.scalars().all()
+            return {
+                "total": len(contents),
+                "published": sum(1 for c in contents if c.status == "published"),
+                "by_type": {},
+            }
+
+        if report_type == "email":
+            rows = await self.session.execute(
+                select(
+                    func.sum(EmailCampaignModel.sent_count).label("sent"),
+                    func.sum(EmailCampaignModel.open_count).label("opens"),
+                    func.sum(EmailCampaignModel.click_count).label("clicks"),
+                    func.sum(EmailCampaignModel.bounce_count).label("bounces"),
+                ).where(EmailCampaignModel.organization_id == org_id)
+            )
+            row = rows.one()
+            return {
+                "sent": int(row.sent or 0),
+                "opens": int(row.opens or 0),
+                "clicks": int(row.clicks or 0),
+                "bounces": int(row.bounces or 0),
+            }
+
+        return {}
+
+    def _summarize(self, data: dict) -> dict[str, float]:
+        result: dict[str, float] = {}
+        for k, v in data.items():
+            if isinstance(v, (int, float)):
+                result[k] = float(v)
+            elif isinstance(v, list):
+                result[f"{k}_count"] = float(len(v))
+        return result
+
+    def _to_csv(self, data: dict, report_type: str) -> str:
+        output = io.StringIO()
+        writer = csv.writer(output)
+
+        def flatten(prefix: str, d: dict):
+            rows: list[list[str]] = []
+            for k, v in d.items():
+                if isinstance(v, dict):
+                    rows.extend(flatten(f"{prefix}_{k}", v))
+                elif isinstance(v, list) and v and isinstance(v[0], dict):
+                    headers = list(v[0].keys())
+                    rows.append(["section", prefix, *headers])
+                    rows.extend(
+                        ["row", prefix] + [str(item.get(h, "")) for h in headers]
+                        for item in v
+                    )
+                else:
+                    rows.append([prefix, k, str(v)])
+            return rows
+
+        writer.writerow([f"{report_type}_report"])
+        for row in flatten(report_type, data):
+            writer.writerow(row)
+        return output.getvalue()
+
+    def _to_html(self, data: dict, report_type: str) -> str:
+        rows_html = ""
+        for k, v in data.items():
+            if isinstance(v, dict):
+                rows_html += f"<tr><td>{k}</td><td colspan='2'><table>"
+                for sk, sv in v.items():
+                    rows_html += f"<tr><td>{sk}</td><td>{sv}</td></tr>"
+                rows_html += "</table></td></tr>"
+            else:
+                rows_html += f"<tr><td>{k}</td><td>{v}</td></tr>"
+
+        return f"""<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>{report_type} Report</title>
+<style>body{{font-family:sans-serif;padding:20px}}
+table{{border-collapse:collapse;width:100%;margin-top:10px}}
+th,td{{border:1px solid #ddd;padding:8px;text-align:left}}
+th{{background:#f5f5f5}}</style></head><body>
+<h1>{report_type.replace('_', ' ').title()} Report</h1>
+<p>Generated: {now().isoformat()}</p>
+<table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>{rows_html}</tbody></table>
+</body></html>"""

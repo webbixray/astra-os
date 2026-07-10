@@ -1,0 +1,60 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+.next/
+out/
+*.tsbuildinfo
+.turbo/
+
+# Python
+*.pyc
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+*.cover
+coverage/
+coverage*.json
+htmlcov/
+venv/
+.venv/
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+docker/prod/.env
+docker/prod/ssl/*.pem
+docker/prod/ssl/*.key
+docker/prod/ssl/*.crt
+
+# Testing
+test-results/
+playwright-report/
+playwright/.auth/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docker (production configs generated at deploy time)
+Dockerfile
+docker-compose*.yml
+
+# Database files
+*.db
+*.sqlite3

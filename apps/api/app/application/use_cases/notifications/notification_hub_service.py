@@ -1,0 +1,284 @@
+import asyncio
+import contextlib
+from datetime import datetime
+from uuid import UUID
+
+from app.domain.common import now
+from app.domain.entities.notifications.notification import (
+    NOTIFICATION_CHANNELS,
+    NOTIFICATION_TYPES,
+    BroadcastAnnouncement,
+    Notification,
+    NotificationTemplate,
+    UserNotificationPreference,
+)
+from app.domain.exceptions.domain_exceptions import EntityNotFoundError, ValidationError
+from app.domain.services.notifications.delivery_adapters import get_delivery_adapter
+from app.infrastructure.db.repositories.notification_repository import NotificationRepository
+from app.infrastructure.db.repositories.notifications.announcement_repository import (
+    AnnouncementRepository,
+)
+from app.infrastructure.db.repositories.notifications.preference_repository import (
+    PreferenceRepository,
+)
+from app.infrastructure.db.repositories.notifications.template_repository import (
+    NotificationTemplateRepository,
+)
+
+_notification_streams: dict[UUID, list[asyncio.Queue]] = {}
+
+
+class NotificationHubService:
+    def __init__(
+        self,
+        notif_repo: NotificationRepository,
+        template_repo: NotificationTemplateRepository,
+        pref_repo: PreferenceRepository,
+        announcement_repo: AnnouncementRepository,
+    ):
+        self.notif_repo = notif_repo
+        self.template_repo = template_repo
+        self.pref_repo = pref_repo
+        self.announcement_repo = announcement_repo
+
+    # ── Send / Stream ────────────────────────────────────────────────────────
+
+    async def send(
+        self,
+        organization_id: UUID,
+        user_id: UUID,
+        type: str,
+        title: str,
+        body: str = "",
+        resource_type: str = "",
+        resource_id: str = "",
+        channel: str = "in_app",
+        template_id: UUID | None = None,
+    ) -> Notification:
+        if type not in NOTIFICATION_TYPES and type != "general":
+            raise ValidationError(f"Unknown notification type: {type}")
+        if channel not in NOTIFICATION_CHANNELS:
+            raise ValidationError(f"Unknown channel: {channel}")
+
+        pref = await self.pref_repo.find_by_user_and_type(user_id, type, channel)
+        if pref and not pref.enabled:
+            raise ValidationError("Notification disabled by user preference")
+
+        notification = Notification.create(
+            organization_id=organization_id, user_id=user_id, type=type,
+            title=title, body=body, resource_type=resource_type,
+            resource_id=resource_id, channel=channel, template_id=template_id,
+        )
+        saved = await self.notif_repo.save(notification)
+
+        if channel != "in_app":
+            adapter = get_delivery_adapter(channel)
+            await adapter.deliver(user_id, title, body, channel)
+
+        if channel == "in_app" or channel == "in_app":
+            data = {
+                "id": str(saved.id), "type": saved.type,
+                "title": saved.title, "body": saved.body,
+                "resource_type": saved.resource_type,
+                "resource_id": saved.resource_id,
+                "channel": saved.channel,
+                "is_read": False, "created_at": saved.created_at.isoformat(),
+            }
+            queues = _notification_streams.get(user_id, [])
+            for q in queues:
+                with contextlib.suppress(asyncio.QueueFull):
+                    q.put_nowait(data)
+
+        return saved
+
+    async def send_from_template(
+        self,
+        organization_id: UUID,
+        user_id: UUID,
+        template_id: UUID,
+        variables: dict,
+        resource_type: str = "",
+        resource_id: str = "",
+    ) -> Notification:
+        template = await self.template_repo.find_by_id(template_id)
+        if not template:
+            raise EntityNotFoundError("NotificationTemplate", str(template_id))
+
+        title = template.title_template
+        body = template.body_template
+        for k, v in variables.items():
+            title = title.replace(f"{{{{{k}}}}}", str(v))
+            body = body.replace(f"{{{{{k}}}}}", str(v))
+
+        return await self.send(
+            organization_id=organization_id, user_id=user_id,
+            type=template.type, title=title, body=body,
+            resource_type=resource_type, resource_id=resource_id,
+            channel=template.channel, template_id=template_id,
+        )
+
+    async def list_notifications(
+        self, user_id: UUID, organization_id: UUID,
+        *, unread_only: bool = False, channel: str | None = None,
+        archived: bool = False, limit: int = 50, offset: int = 0,
+    ) -> dict:
+        notifs = await self.notif_repo.find_by_user(
+            user_id=user_id, organization_id=organization_id,
+            unread_only=unread_only, channel=channel,
+            archived=archived, limit=limit, offset=offset,
+        )
+        total = await self.notif_repo.count_by_user(
+            user_id=user_id, organization_id=organization_id,
+            unread_only=unread_only, channel=channel,
+            archived=archived,
+        )
+        items = [
+            {
+                "id": str(n.id), "type": n.type,
+                "title": n.title, "body": n.body,
+                "resource_type": n.resource_type,
+                "resource_id": n.resource_id,
+                "channel": n.channel,
+                "is_read": n.is_read,
+                "read_at": n.read_at.isoformat() if n.read_at else None,
+                "archived": n.archived,
+                "created_at": n.created_at.isoformat(),
+            }
+            for n in notifs
+        ]
+        return {"items": items, "total": total}
+
+    async def get_unread_count(self, user_id: UUID, organization_id: UUID, channel: str | None = None) -> int:
+        return await self.notif_repo.count_unread(user_id, organization_id, channel)
+
+    async def mark_read(self, notification_id: UUID) -> None:
+        await self.notif_repo.mark_read(notification_id)
+
+    async def mark_all_read(self, user_id: UUID, organization_id: UUID) -> int:
+        return await self.notif_repo.mark_all_read(user_id, organization_id)
+
+    async def archive_notification(self, notification_id: UUID) -> None:
+        await self.notif_repo.archive(notification_id)
+
+    async def search_notifications(
+        self, user_id: UUID, organization_id: UUID,
+        q: str, limit: int = 50, offset: int = 0,
+    ) -> list[dict]:
+        notifs = await self.notif_repo.search(user_id, organization_id, q, limit, offset)
+        return [
+            {
+                "id": str(n.id), "type": n.type,
+                "title": n.title, "body": n.body,
+                "channel": n.channel,
+                "is_read": n.is_read,
+                "created_at": n.created_at.isoformat(),
+            }
+            for n in notifs
+        ]
+
+    # ── Templates ────────────────────────────────────────────────────────────
+
+    async def create_template(
+        self, org_id: UUID, name: str, type: str, channel: str,
+        title_template: str, body_template: str = "",
+        variables: list[str] | None = None,
+    ) -> NotificationTemplate:
+        if type not in NOTIFICATION_TYPES and type != "general":
+            raise ValidationError(f"Unknown type: {type}")
+        if channel not in NOTIFICATION_CHANNELS:
+            raise ValidationError(f"Unknown channel: {channel}")
+        template = NotificationTemplate(
+            organization_id=org_id, name=name, type=type, channel=channel,
+            title_template=title_template, body_template=body_template,
+            variables=variables or [],
+        )
+        return await self.template_repo.save(template)
+
+    async def list_templates(self, org_id: UUID) -> list[dict]:
+        templates = await self.template_repo.find_by_org(org_id)
+        return [
+            {"id": str(t.id), "name": t.name, "type": t.type,
+             "channel": t.channel, "variables": t.variables,
+             "created_at": t.created_at.isoformat()}
+            for t in templates
+        ]
+
+    async def get_template(self, template_id: UUID) -> NotificationTemplate:
+        t = await self.template_repo.find_by_id(template_id)
+        if not t:
+            raise EntityNotFoundError("NotificationTemplate", str(template_id))
+        return t
+
+    async def delete_template(self, template_id: UUID) -> None:
+        await self.template_repo.delete(template_id)
+
+    # ── Preferences ──────────────────────────────────────────────────────────
+
+    async def set_preference(
+        self, user_id: UUID, notification_type: str,
+        channel: str, enabled: bool,
+    ) -> UserNotificationPreference:
+        pref = UserNotificationPreference(
+            user_id=user_id, notification_type=notification_type,
+            channel=channel, enabled=enabled,
+        )
+        return await self.pref_repo.upsert(pref)
+
+    async def get_preferences(self, user_id: UUID) -> list[dict]:
+        prefs = await self.pref_repo.find_by_user(user_id)
+        return [
+            {"id": str(p.id), "notification_type": p.notification_type,
+             "channel": p.channel, "enabled": p.enabled}
+            for p in prefs
+        ]
+
+    # ── Announcements ────────────────────────────────────────────────────────
+
+    async def create_announcement(
+        self, org_id: UUID, title: str, body: str = "",
+        severity: str = "info", target_role: str = "",
+        created_by: UUID | None = None, expires_at: datetime | None = None,
+    ) -> BroadcastAnnouncement:
+        if severity not in ["info", "warning", "error"]:
+            raise ValidationError(f"Unknown severity: {severity}")
+        a = BroadcastAnnouncement(
+            organization_id=org_id, title=title, body=body,
+            severity=severity, target_role=target_role,
+            created_by=created_by or UUID(int=0),
+            expires_at=expires_at,
+        )
+        return await self.announcement_repo.save(a)
+
+    async def list_announcements(self, org_id: UUID) -> list[dict]:
+        announcements = await self.announcement_repo.find_by_org(org_id)
+        current_time = now()
+        return [
+            {
+                "id": str(a.id), "title": a.title, "body": a.body,
+                "severity": a.severity, "target_role": a.target_role,
+                "dismissed_by": [str(d) for d in a.dismissed_by],
+                "expired": a.expires_at is not None and a.expires_at.replace(tzinfo=None) < current_time,
+                "created_at": a.created_at.isoformat(),
+            }
+            for a in announcements
+        ]
+
+    async def dismiss_announcement(self, announcement_id: UUID, user_id: UUID) -> None:
+        await self.announcement_repo.add_dismissed(announcement_id, user_id)
+
+    async def delete_announcement(self, announcement_id: UUID) -> None:
+        await self.announcement_repo.delete(announcement_id)
+
+    # ── SSE Stream ───────────────────────────────────────────────────────────
+
+    def subscribe(self, user_id: UUID) -> asyncio.Queue:
+        queue: asyncio.Queue = asyncio.Queue(maxsize=100)
+        _notification_streams.setdefault(user_id, []).append(queue)
+        return queue
+
+    def unsubscribe(self, user_id: UUID, queue: asyncio.Queue) -> None:
+        queues = _notification_streams.get(user_id, [])
+        if queue in queues:
+            queues.remove(queue)
+        if not _notification_streams.get(user_id):
+            _notification_streams.pop(user_id, None)

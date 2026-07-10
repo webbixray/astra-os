@@ -1,0 +1,30 @@
+from uuid import UUID
+
+
+class NotificationDeliveryAdapter:
+    async def deliver(self, user_id: UUID, title: str, body: str, channel: str) -> bool:
+        raise NotImplementedError
+
+
+class EmailNotificationAdapter(NotificationDeliveryAdapter):
+    async def deliver(self, user_id: UUID, title: str, body: str, channel: str) -> bool:
+        return True
+
+
+class SMSNotificationAdapter(NotificationDeliveryAdapter):
+    async def deliver(self, user_id: UUID, title: str, body: str, channel: str) -> bool:
+        return True
+
+
+class SlackNotificationAdapter(NotificationDeliveryAdapter):
+    async def deliver(self, user_id: UUID, title: str, body: str, channel: str) -> bool:
+        return True
+
+
+def get_delivery_adapter(channel: str) -> NotificationDeliveryAdapter:
+    adapters = {
+        "email": EmailNotificationAdapter(),
+        "sms": SMSNotificationAdapter(),
+        "slack": SlackNotificationAdapter(),
+    }
+    return adapters.get(channel, EmailNotificationAdapter())

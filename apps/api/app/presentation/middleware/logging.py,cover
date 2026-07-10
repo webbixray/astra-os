@@ -1,0 +1,28 @@
+> import json
+> import logging
+> import time
+> import uuid
+  
+> from starlette.middleware.base import BaseHTTPMiddleware
+> from starlette.requests import Request
+  
+> logger = logging.getLogger("astra.api")
+  
+  
+> class LoggingMiddleware(BaseHTTPMiddleware):
+>     async def dispatch(self, request: Request, call_next):
+>         request_id = str(uuid.uuid4())[:8]
+>         request.state.request_id = request_id
+>         start = time.time()
+>         response = await call_next(request)
+>         duration_ms = (time.time() - start) * 1000
+>         log_data = {
+>             "request_id": request_id,
+>             "method": request.method,
+>             "path": request.url.path,
+>             "status": response.status_code,
+>             "duration_ms": round(duration_ms, 2),
+>         }
+>         logger.info(json.dumps(log_data))
+>         response.headers["X-Request-ID"] = request_id
+>         return response
