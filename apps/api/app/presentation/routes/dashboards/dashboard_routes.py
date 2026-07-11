@@ -86,9 +86,12 @@ async def list_dashboards(
 @router.get("/dashboards/{dashboard_id}", summary="Get dashboard by ID")
 async def get_dashboard(
     dashboard_id: UUID,
+    organization_id: UUID = Query(...),
     service: DashboardService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
+    await require_org_role(organization_id, "viewer", user_id, db)
     try:
         return await service.get_dashboard(dashboard_id=dashboard_id)
     except EntityNotFoundError:
@@ -98,9 +101,12 @@ async def get_dashboard(
 @router.delete("/dashboards/{dashboard_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete a dashboard")
 async def delete_dashboard(
     dashboard_id: UUID,
+    organization_id: UUID = Query(...),
     service: DashboardService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> None:
+    await require_org_role(organization_id, "admin", user_id, db)
     await service.delete_dashboard(dashboard_id=dashboard_id)
 
 
@@ -110,9 +116,12 @@ async def delete_dashboard(
 async def add_widget(
     dashboard_id: UUID,
     request: CreateWidgetRequest,
+    organization_id: UUID = Query(...),
     service: DashboardService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
+    await require_org_role(organization_id, "member", user_id, db)
     try:
         widget = await service.add_widget(
             dashboard_id=dashboard_id, widget_type=request.widget_type,
@@ -135,9 +144,12 @@ async def add_widget(
 async def update_widget(
     widget_id: UUID,
     request: UpdateWidgetRequest,
+    organization_id: UUID = Query(...),
     service: DashboardService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
+    await require_org_role(organization_id, "member", user_id, db)
     try:
         widget = await service.update_widget(
             widget_id=widget_id, title=request.title,
@@ -156,9 +168,12 @@ async def update_widget(
 @router.delete("/dashboards/widgets/{widget_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete a widget")
 async def delete_widget(
     widget_id: UUID,
+    organization_id: UUID = Query(...),
     service: DashboardService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> None:
+    await require_org_role(organization_id, "member", user_id, db)
     await service.delete_widget(widget_id=widget_id)
 
 

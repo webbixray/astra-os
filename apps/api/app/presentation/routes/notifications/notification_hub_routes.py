@@ -160,9 +160,12 @@ async def get_unread_count(
 @router.patch("/notifications/{notification_id}/read", summary="Mark notification as read")
 async def mark_notification_read(
     notification_id: UUID,
+    organization_id: UUID = Query(...),
     service: NotificationHubService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
+    await require_org_role(organization_id, "viewer", user_id, db)
     await service.mark_read(notification_id)
     return {"status": "ok"}
 
@@ -182,9 +185,12 @@ async def mark_all_notifications_read(
 @router.patch("/notifications/{notification_id}/archive", summary="Archive notification")
 async def archive_notification(
     notification_id: UUID,
+    organization_id: UUID = Query(...),
     service: NotificationHubService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
+    await require_org_role(organization_id, "viewer", user_id, db)
     await service.archive_notification(notification_id)
     return {"status": "ok"}
 
@@ -287,9 +293,12 @@ async def list_templates(
 @router.get("/notification-templates/{template_id}", summary="Get notification template")
 async def get_template(
     template_id: UUID,
+    organization_id: UUID = Query(...),
     service: NotificationHubService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
+    await require_org_role(organization_id, "viewer", user_id, db)
     try:
         t = await service.get_template(template_id)
     except EntityNotFoundError:
@@ -305,9 +314,12 @@ async def get_template(
 @router.delete("/notification-templates/{template_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete notification template")
 async def delete_template(
     template_id: UUID,
+    organization_id: UUID = Query(...),
     service: NotificationHubService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> None:
+    await require_org_role(organization_id, "admin", user_id, db)
     await service.delete_template(template_id)
 
 
@@ -374,9 +386,12 @@ async def list_announcements(
 @router.post("/announcements/{announcement_id}/dismiss", summary="Dismiss announcement")
 async def dismiss_announcement(
     announcement_id: UUID,
+    organization_id: UUID = Query(...),
     service: NotificationHubService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
+    await require_org_role(organization_id, "viewer", user_id, db)
     await service.dismiss_announcement(announcement_id, user_id)
     return {"status": "ok"}
 
@@ -384,7 +399,10 @@ async def dismiss_announcement(
 @router.delete("/announcements/{announcement_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete announcement")
 async def delete_announcement(
     announcement_id: UUID,
+    organization_id: UUID = Query(...),
     service: NotificationHubService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> None:
+    await require_org_role(organization_id, "admin", user_id, db)
     await service.delete_announcement(announcement_id)

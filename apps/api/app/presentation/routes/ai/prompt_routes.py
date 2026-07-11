@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,6 +10,7 @@ from app.domain.entities.prompts import PromptCategory, PromptStatus, SystemProm
 from app.infrastructure.db.repositories.prompt_repository import SystemPromptRepositoryImpl
 from app.presentation.dependencies import get_db
 from app.presentation.middleware.auth import require_user_id
+from app.presentation.middleware.rbac import require_org_role
 
 router = APIRouter()
 
@@ -75,13 +76,16 @@ async def get_manage_use_case(
     return ManagePromptsUseCase(manager)
 
 
-@router.get("/prompts", response_model=list[PromptResponse], summary="List all prompts")
+@router.get("/prompts", summary="List all prompts")
 async def list_prompts(
     category: str | None = None,
     org_id: UUID | None = None,
     use_case: ManagePromptsUseCase = Depends(get_manage_use_case),
     _user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> list[PromptResponse]:
+    if org_id:
+        await require_org_role(org_id, "viewer", _user_id, db)
     prompts = await use_case.list_prompts(org_id=org_id, category=category)
     return [_to_response(p) for p in prompts]
 
@@ -99,24 +103,30 @@ async def list_builtins() -> list[dict]:
     ]
 
 
-@router.get("/prompts/{prompt_id}", response_model=PromptResponse, summary="Get prompt by ID")
+@router.get("/prompts/{prompt_id}", summary="Get prompt by ID")
 async def get_prompt(
     prompt_id: UUID,
+    organization_id: UUID = Query(...),
     use_case: ManagePromptsUseCase = Depends(get_manage_use_case),
     _user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> PromptResponse:
+    await require_org_role(organization_id, "viewer", _user_id, db)
     prompt = await use_case.get_prompt(prompt_id)
     if prompt is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Prompt not found")
     return _to_response(prompt)
 
 
-@router.post("/prompts", response_model=PromptResponse, status_code=status.HTTP_201_CREATED, summary="Create a new prompt")
+@router.post("/prompts", status_code=status.HTTP_201_CREATED, summary="Create a new prompt")
 async def create_prompt(
     request: CreatePromptRequest,
     use_case: ManagePromptsUseCase = Depends(get_manage_use_case),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> PromptResponse:
+    if request.org_id:
+        await require_org_role(request.org_id, "member", user_id, db)
     try:
         category = PromptCategory(request.category)
     except ValueError:
@@ -133,13 +143,16 @@ async def create_prompt(
     return _to_response(prompt)
 
 
-@router.patch("/prompts/{prompt_id}", response_model=PromptResponse, summary="Update a prompt")
+@router.patch("/prompts/{prompt_id}", summary="Update a prompt")
 async def update_prompt(
     prompt_id: UUID,
     request: UpdatePromptRequest,
+    organization_id: UUID = Query(...),
     use_case: ManagePromptsUseCase = Depends(get_manage_use_case),
     _user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> PromptResponse:
+    await require_org_role(organization_id, "member", _user_id, db)
     status_enum = None
     if request.status is not None:
         try:
@@ -162,7 +175,10 @@ async def update_prompt(
 @router.delete("/prompts/{prompt_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete a prompt")
 async def delete_prompt(
     prompt_id: UUID,
+    organization_id: UUID = Query(...),
     use_case: ManagePromptsUseCase = Depends(get_manage_use_case),
     _user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> None:
+    await require_org_role(organization_id, "admin", _user_id, db)
     await use_case.delete_prompt(prompt_id)

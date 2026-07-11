@@ -186,7 +186,7 @@ class NvidiaNIMProvider(AIProvider):
         messages: list[dict],
         model: str | None = None,
     ) -> AsyncIterator[str]:
-        if not self.base_url:
+        if not self.base_url or not self.api_key:
             return
         model_name = model or self.default_model
         async with httpx.AsyncClient(timeout=120.0) as client:
@@ -210,7 +210,7 @@ class NvidiaNIMProvider(AIProvider):
         messages: list[dict],
         model: str | None = None,
     ) -> str:
-        if not self.base_url:
+        if not self.base_url or not self.api_key:
             return ""
         model_name = model or self.default_model
         async with httpx.AsyncClient(timeout=120.0) as client:

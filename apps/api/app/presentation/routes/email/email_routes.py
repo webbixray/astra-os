@@ -101,9 +101,12 @@ async def list_providers(
 @router.delete("/email/providers/{provider_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete email provider")
 async def delete_provider(
     provider_id: UUID,
+    organization_id: UUID = Query(...),
     service: EmailService = Depends(get_email_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> None:
+    await require_org_role(organization_id, "admin", user_id, db)
     await service.delete_provider(provider_id=provider_id)
 
 
@@ -161,9 +164,12 @@ async def list_email_campaigns(
 @router.get("/email/campaigns/{campaign_id}", summary="Get email campaign details")
 async def get_email_campaign(
     campaign_id: UUID,
+    organization_id: UUID = Query(...),
     service: EmailService = Depends(get_email_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
+    await require_org_role(organization_id, "viewer", user_id, db)
     try:
         c = await service.get_campaign(campaign_id=campaign_id)
     except EntityNotFoundError:
@@ -186,9 +192,12 @@ async def get_email_campaign(
 async def send_email_campaign(
     campaign_id: UUID,
     request: SendCampaignRequest,
+    organization_id: UUID = Query(...),
     service: EmailService = Depends(get_email_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
+    await require_org_role(organization_id, "admin", user_id, db)
     try:
         campaign = await service.send_campaign(
             campaign_id=campaign_id, recipients=request.recipients,
@@ -218,9 +227,12 @@ async def get_email_analytics(
 async def record_email_event(
     campaign_id: UUID,
     request: RecordEventRequest,
+    organization_id: UUID = Query(...),
     service: EmailService = Depends(get_email_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
+    await require_org_role(organization_id, "viewer", user_id, db)
     await service.record_event(
         campaign_id=campaign_id, event_type=request.event_type,
         recipient_email=request.recipient_email, metadata=request.metadata,
@@ -231,17 +243,23 @@ async def record_email_event(
 @router.get("/email/campaigns/{campaign_id}/events", summary="Get campaign events")
 async def get_campaign_events(
     campaign_id: UUID,
+    organization_id: UUID = Query(...),
     event_type: str | None = Query(None),
     service: EmailService = Depends(get_email_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> list[dict]:
+    await require_org_role(organization_id, "viewer", user_id, db)
     return await service.get_campaign_events(campaign_id=campaign_id, event_type=event_type)
 
 
 @router.delete("/email/campaigns/{campaign_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete email campaign")
 async def delete_email_campaign(
     campaign_id: UUID,
+    organization_id: UUID = Query(...),
     service: EmailService = Depends(get_email_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> None:
+    await require_org_role(organization_id, "admin", user_id, db)
     await service.delete_campaign(campaign_id=campaign_id)

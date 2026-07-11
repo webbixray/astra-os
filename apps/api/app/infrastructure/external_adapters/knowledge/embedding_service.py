@@ -14,7 +14,7 @@ class NvidiaEmbeddingProvider(EmbeddingProvider):
         self.api_key = ""
 
     async def embed(self, text: str) -> list[float]:
-        if not self.base_url:
+        if not self.base_url or not self.api_key:
             return self._fallback_embed(text)
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:
