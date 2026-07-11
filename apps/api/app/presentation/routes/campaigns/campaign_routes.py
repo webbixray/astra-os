@@ -393,8 +393,9 @@ async def get_campaign_budget(
     )
     campaign_repo = CampaignRepositoryImpl(db)
     campaign = await campaign_repo.find_by_id(campaign_id)
-    if campaign:
-        await require_org_role(campaign.organization_id, "viewer", user_id, db)
+    if not campaign:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
+    await require_org_role(campaign.organization_id, "viewer", user_id, db)
     try:
         budget = await use_case.execute(campaign_id=campaign_id)
     except EntityNotFoundError:
@@ -465,8 +466,9 @@ async def record_campaign_spend(
     )
     campaign_repo = CampaignRepositoryImpl(db)
     campaign = await campaign_repo.find_by_id(campaign_id)
-    if campaign:
-        await require_org_role(campaign.organization_id, "viewer", user_id, db)
+    if not campaign:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
+    await require_org_role(campaign.organization_id, "viewer", user_id, db)
     try:
         budget = await use_case.execute(campaign_id=campaign_id, amount=request.amount)
     except EntityNotFoundError:
@@ -668,8 +670,9 @@ async def list_ab_tests(
     )
     campaign_repo = CampaignRepositoryImpl(db)
     campaign = await campaign_repo.find_by_id(campaign_id)
-    if campaign:
-        await require_org_role(campaign.organization_id, "viewer", user_id, db)
+    if not campaign:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
+    await require_org_role(campaign.organization_id, "viewer", user_id, db)
     tests = await use_case.execute(campaign_id=campaign_id)
     return [
         {
@@ -699,8 +702,9 @@ async def get_ab_test(
         )
         campaign_repo = CampaignRepositoryImpl(db)
         campaign = await campaign_repo.find_by_id(test.campaign_id)
-        if campaign:
-            await require_org_role(campaign.organization_id, "viewer", user_id, db)
+        if not campaign:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
+        await require_org_role(campaign.organization_id, "viewer", user_id, db)
     except EntityNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="AB test not found") from None
     return {
@@ -748,8 +752,9 @@ async def add_variant(
         )
         campaign_repo = CampaignRepositoryImpl(db)
         campaign = await campaign_repo.find_by_id(existing_test.campaign_id)
-        if campaign:
-            await require_org_role(campaign.organization_id, "member", user_id, db)
+        if not campaign:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
+        await require_org_role(campaign.organization_id, "member", user_id, db)
         test = await use_case.execute(
             test_id=test_id,
             name=request.name,
@@ -791,8 +796,9 @@ async def start_ab_test(
         )
         campaign_repo = CampaignRepositoryImpl(db)
         campaign = await campaign_repo.find_by_id(existing_test.campaign_id)
-        if campaign:
-            await require_org_role(campaign.organization_id, "member", user_id, db)
+        if not campaign:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
+        await require_org_role(campaign.organization_id, "member", user_id, db)
         test = await use_case.execute(test_id=test_id)
     except (EntityNotFoundError, ValidationError) as e:
         raise HTTPException(
@@ -817,8 +823,9 @@ async def determine_winner(
         )
         campaign_repo = CampaignRepositoryImpl(db)
         campaign = await campaign_repo.find_by_id(existing_test.campaign_id)
-        if campaign:
-            await require_org_role(campaign.organization_id, "member", user_id, db)
+        if not campaign:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
+        await require_org_role(campaign.organization_id, "member", user_id, db)
         test = await use_case.execute(test_id=test_id)
     except EntityNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="AB test not found") from None
@@ -846,8 +853,9 @@ async def record_variant_metrics(
         )
         campaign_repo = CampaignRepositoryImpl(db)
         campaign = await campaign_repo.find_by_id(existing_test.campaign_id)
-        if campaign:
-            await require_org_role(campaign.organization_id, "member", user_id, db)
+        if not campaign:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
+        await require_org_role(campaign.organization_id, "member", user_id, db)
         test = await use_case.execute(
             test_id=test_id,
             variant_name=request.variant_name,

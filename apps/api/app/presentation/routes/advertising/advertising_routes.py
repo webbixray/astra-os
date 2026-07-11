@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -105,9 +105,10 @@ async def disconnect_account(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     account = await service.get_by_id(account_id)
-    if account:
-        await require_org_role(account.organization_id, "admin", user_id, db)
-        await require_feature("advertising_integration", account.organization_id, "free", db)
+    if not account:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found") from None
+    await require_org_role(account.organization_id, "admin", user_id, db)
+    await require_feature("advertising_integration", account.organization_id, "free", db)
     return await service.disconnect(account_id)
 
 
@@ -119,9 +120,10 @@ async def sync_account(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     account = await service.get_by_id(account_id)
-    if account:
-        await require_org_role(account.organization_id, "viewer", user_id, db)
-        await require_feature("advertising_integration", account.organization_id, "free", db)
+    if not account:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found") from None
+    await require_org_role(account.organization_id, "viewer", user_id, db)
+    await require_feature("advertising_integration", account.organization_id, "free", db)
     return await service.sync(account_id)
 
 
@@ -164,9 +166,10 @@ async def sync_campaign(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     campaign = await service.get_by_id(campaign_id)
-    if campaign:
-        await require_org_role(campaign.organization_id, "viewer", user_id, db)
-        await require_feature("advertising_integration", campaign.organization_id, "free", db)
+    if not campaign:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
+    await require_org_role(campaign.organization_id, "viewer", user_id, db)
+    await require_feature("advertising_integration", campaign.organization_id, "free", db)
     return await service.sync_to_platform(campaign_id)
 
 
@@ -210,9 +213,10 @@ async def update_creative(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     creative = await service.get_by_id(creative_id)
-    if creative:
-        await require_org_role(creative.organization_id, "viewer", user_id, db)
-        await require_feature("advertising_integration", creative.organization_id, "free", db)
+    if not creative:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Creative not found") from None
+    await require_org_role(creative.organization_id, "viewer", user_id, db)
+    await require_feature("advertising_integration", creative.organization_id, "free", db)
     return await service.update(
         creative_id=creative_id,
         headline=request.headline,

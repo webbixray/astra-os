@@ -173,18 +173,20 @@ async def list_content(
 async def update_content(
     content_id: UUID,
     request: UpdateContentRequest,
-    use_case: UpdateContentUseCase = Depends(get_update_use_case),
+    get_use_case: GetContentUseCase = Depends(get_get_use_case),
+    update_use_case: UpdateContentUseCase = Depends(get_update_use_case),
     user_id: UUID = Depends(require_user_id),
     db: AsyncSession = Depends(get_db),
 ) -> ContentResponse:
     try:
-        content = await use_case.execute(
+        existing = await get_use_case.execute(content_id=content_id)
+        await require_org_role(existing.organization_id, "editor", user_id, db)
+        content = await update_use_case.execute(
             content_id=content_id,
             title=request.title,
             body=request.body,
             status=request.status,
         )
-        await require_org_role(content.organization_id, "viewer", user_id, db)
     except EntityNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Content not found") from None
     except ValidationError as e:
