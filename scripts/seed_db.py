@@ -11,21 +11,25 @@ It is safe to run multiple times - it will skip existing data.
 
 import asyncio
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app.infrastructure.db.session import async_session_factory
-from app.infrastructure.db.models.user import UserModel
+from sqlalchemy import select
+
+from app.infrastructure.auth.password import hash_password
+from app.infrastructure.db.models.campaigns.campaign_model import CampaignModel
 from app.infrastructure.db.models.organization import OrganizationModel
 from app.infrastructure.db.models.team_member import TeamMemberModel
-from app.infrastructure.db.models.campaigns.campaign_model import CampaignModel
-from sqlalchemy import select
+from app.infrastructure.db.models.user import UserModel
+from app.infrastructure.db.session import async_session_factory
+
+SEED_EMAIL = "admin@astra.dev"
+SEED_PASSWORD = "AstraAdmin1!"
 
 
 SEED_USER = {
-    "email": "admin@astra.dev",
+    "email": SEED_EMAIL,
     "full_name": "Astra Admin",
     "role": "owner",
     "is_active": True,
@@ -73,7 +77,8 @@ async def seed() -> None:
 
         print("Seeding database...")
 
-        user = UserModel(**SEED_USER)
+        pw_hash = hash_password(SEED_PASSWORD)
+        user = UserModel(**SEED_USER, password_hash=pw_hash)
         session.add(user)
         await session.flush()
 
@@ -99,7 +104,8 @@ async def seed() -> None:
 
         await session.commit()
         print(f"Seeded: 1 user, 1 organization, {len(SEED_CAMPAIGNS)} campaigns")
-        print(f"Login: {SEED_USER['email']}")
+        print(f"Login:    {SEED_EMAIL}")
+        print(f"Password: {SEED_PASSWORD}")
 
 
 if __name__ == "__main__":
