@@ -107,6 +107,9 @@ async def delete_provider(
     db: AsyncSession = Depends(get_db),
 ) -> None:
     await require_org_role(organization_id, "admin", user_id, db)
+    provider = await service.provider_repo.find_by_id(provider_id)
+    if not provider or provider.organization_id != organization_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Provider not found") from None
     await service.delete_provider(provider_id=provider_id)
 
 
@@ -174,6 +177,8 @@ async def get_email_campaign(
         c = await service.get_campaign(campaign_id=campaign_id)
     except EntityNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
+    if c.organization_id != organization_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
     events = await service.get_campaign_events(campaign_id=campaign_id)
     return {
         "id": str(c.id), "name": c.name, "subject": c.subject, "body": c.body,
@@ -198,6 +203,12 @@ async def send_email_campaign(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     await require_org_role(organization_id, "admin", user_id, db)
+    try:
+        existing = await service.get_campaign(campaign_id=campaign_id)
+    except EntityNotFoundError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
+    if existing.organization_id != organization_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
     try:
         campaign = await service.send_campaign(
             campaign_id=campaign_id, recipients=request.recipients,
@@ -233,6 +244,12 @@ async def record_email_event(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     await require_org_role(organization_id, "viewer", user_id, db)
+    try:
+        existing = await service.get_campaign(campaign_id=campaign_id)
+    except EntityNotFoundError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
+    if existing.organization_id != organization_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
     await service.record_event(
         campaign_id=campaign_id, event_type=request.event_type,
         recipient_email=request.recipient_email, metadata=request.metadata,
@@ -250,6 +267,12 @@ async def get_campaign_events(
     db: AsyncSession = Depends(get_db),
 ) -> list[dict]:
     await require_org_role(organization_id, "viewer", user_id, db)
+    try:
+        existing = await service.get_campaign(campaign_id=campaign_id)
+    except EntityNotFoundError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
+    if existing.organization_id != organization_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
     return await service.get_campaign_events(campaign_id=campaign_id, event_type=event_type)
 
 
@@ -262,4 +285,10 @@ async def delete_email_campaign(
     db: AsyncSession = Depends(get_db),
 ) -> None:
     await require_org_role(organization_id, "admin", user_id, db)
+    try:
+        existing = await service.get_campaign(campaign_id=campaign_id)
+    except EntityNotFoundError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
+    if existing.organization_id != organization_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
     await service.delete_campaign(campaign_id=campaign_id)

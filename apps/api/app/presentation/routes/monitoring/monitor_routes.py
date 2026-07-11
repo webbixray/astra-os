@@ -175,6 +175,9 @@ async def update_job_status(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     await require_org_role(organization_id, "admin", user_id, db)
+    existing_job = await service.job_repo.find_by_id(job_id)
+    if not existing_job or existing_job.organization_id != organization_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found") from None
     try:
         job = await service.update_job_status(
             job_id=job_id, status=request.status,
@@ -194,6 +197,9 @@ async def retry_job(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     await require_org_role(organization_id, "admin", user_id, db)
+    existing_job = await service.job_repo.find_by_id(job_id)
+    if not existing_job or existing_job.organization_id != organization_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found") from None
     try:
         job = await service.retry_job(job_id)
     except ValidationError as e:

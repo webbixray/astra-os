@@ -115,6 +115,8 @@ async def get_prompt(
     prompt = await use_case.get_prompt(prompt_id)
     if prompt is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Prompt not found")
+    if prompt.org_id is not None and prompt.org_id != organization_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Prompt not found")
     return _to_response(prompt)
 
 
@@ -153,6 +155,11 @@ async def update_prompt(
     db: AsyncSession = Depends(get_db),
 ) -> PromptResponse:
     await require_org_role(organization_id, "member", _user_id, db)
+    existing = await use_case.get_prompt(prompt_id)
+    if existing is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Prompt not found")
+    if existing.org_id is not None and existing.org_id != organization_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Prompt not found")
     status_enum = None
     if request.status is not None:
         try:
@@ -181,4 +188,9 @@ async def delete_prompt(
     db: AsyncSession = Depends(get_db),
 ) -> None:
     await require_org_role(organization_id, "admin", _user_id, db)
+    existing = await use_case.get_prompt(prompt_id)
+    if existing is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Prompt not found")
+    if existing.org_id is not None and existing.org_id != organization_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Prompt not found")
     await use_case.delete_prompt(prompt_id)
