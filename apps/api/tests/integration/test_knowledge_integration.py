@@ -10,7 +10,6 @@ from app.domain.entities.team_member import TeamMember
 from app.infrastructure.auth.jwt import RefreshTokenStore
 from app.infrastructure.db.repositories.organization_repository import OrganizationRepositoryImpl
 from app.infrastructure.db.repositories.team_member_repository import TeamMemberRepositoryImpl
-from app.infrastructure.external_adapters.knowledge.embedding_service import get_embedding_provider
 from app.infrastructure.external_adapters.knowledge.graph_store import GraphStore
 from app.presentation.error_handlers import register_error_handlers
 from app.presentation.middleware.auth import AuthMiddleware

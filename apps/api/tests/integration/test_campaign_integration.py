@@ -10,19 +10,12 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy import select
 
 from app.config import config
-from app.domain.entities.campaigns.campaign import Campaign
 from app.domain.entities.organization import Organization
 from app.domain.entities.team_member import TeamMember
-from app.domain.entities.user import User
 from app.infrastructure.auth.jwt import RefreshTokenStore
 from app.infrastructure.db.models.campaigns.campaign_model import CampaignModel
-from app.infrastructure.db.models.organization import OrganizationModel
-from app.infrastructure.db.models.team_member import TeamMemberModel
-from app.infrastructure.db.models.user import UserModel
-from app.infrastructure.db.repositories.campaigns.campaign_repository import CampaignRepositoryImpl
 from app.infrastructure.db.repositories.organization_repository import OrganizationRepositoryImpl
 from app.infrastructure.db.repositories.team_member_repository import TeamMemberRepositoryImpl
-from app.infrastructure.db.repositories.user_repository import UserRepositoryImpl
 from app.presentation.error_handlers import register_error_handlers
 from app.presentation.middleware.auth import AuthMiddleware
 from app.presentation.middleware.csrf import CSRFMiddleware

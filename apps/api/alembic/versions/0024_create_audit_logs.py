@@ -12,7 +12,7 @@ from collections.abc import Sequence
 
 import sqlalchemy as sa
 from sqlalchemy import inspect
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.dialects.postgresql import UUID
 
 from alembic import op
 

@@ -1,4 +1,4 @@
-from uuid import UUID, uuid4
+from uuid import UUID
 
 import pytest
 from fastapi import FastAPI
@@ -19,7 +19,6 @@ def _clear_store():
 
 def _make_org(integration_session_factory):
     """Create an org and return (org_id, user_id, access_token)."""
-    ...
 
 
 @pytest.mark.asyncio
@@ -54,8 +53,12 @@ class TestOrganizationV2Integration:
     ) -> UUID:
         from app.domain.entities.organization import Organization
         from app.domain.entities.team_member import TeamMember
-        from app.infrastructure.db.repositories.organization_repository import OrganizationRepositoryImpl
-        from app.infrastructure.db.repositories.team_member_repository import TeamMemberRepositoryImpl
+        from app.infrastructure.db.repositories.organization_repository import (
+            OrganizationRepositoryImpl,
+        )
+        from app.infrastructure.db.repositories.team_member_repository import (
+            TeamMemberRepositoryImpl,
+        )
 
         async with integration_session_factory() as session:
             org_repo = OrganizationRepositoryImpl(session)
@@ -175,8 +178,9 @@ class TestOrganizationV2Integration:
         test_client.headers["Authorization"] = f"Bearer {auth['access_token']}"
 
         from app.domain.entities.team_member import TeamMember
-        from app.infrastructure.db.repositories.team_member_repository import TeamMemberRepositoryImpl
-        from app.infrastructure.db.repositories.user_repository import UserRepositoryImpl
+        from app.infrastructure.db.repositories.team_member_repository import (
+            TeamMemberRepositoryImpl,
+        )
 
         target = await self._signup(test_client, "changerole_target@test.com")
         target_id = UUID(target["user"]["id"])

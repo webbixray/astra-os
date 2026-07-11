@@ -7,12 +7,10 @@ from sqlalchemy import select
 
 from app.domain.entities.organization import Organization
 from app.domain.entities.team_member import TeamMember
-from app.domain.entities.user import User
 from app.infrastructure.auth.jwt import RefreshTokenStore
 from app.infrastructure.db.models.team_member import TeamMemberModel
 from app.infrastructure.db.repositories.organization_repository import OrganizationRepositoryImpl
 from app.infrastructure.db.repositories.team_member_repository import TeamMemberRepositoryImpl
-from app.infrastructure.db.repositories.user_repository import UserRepositoryImpl
 from app.presentation.error_handlers import register_error_handlers
 from app.presentation.middleware.auth import AuthMiddleware
 from app.presentation.routes import auth

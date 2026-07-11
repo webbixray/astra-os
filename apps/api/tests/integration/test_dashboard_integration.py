@@ -8,7 +8,10 @@ from sqlalchemy import select
 from app.domain.entities.organization import Organization
 from app.domain.entities.team_member import TeamMember
 from app.infrastructure.auth.jwt import RefreshTokenStore
-from app.infrastructure.db.models.dashboards.dashboard_model import DashboardModel, DashboardWidgetModel
+from app.infrastructure.db.models.dashboards.dashboard_model import (
+    DashboardModel,
+    DashboardWidgetModel,
+)
 from app.infrastructure.db.repositories.organization_repository import OrganizationRepositoryImpl
 from app.infrastructure.db.repositories.team_member_repository import TeamMemberRepositoryImpl
 from app.presentation.error_handlers import register_error_handlers
