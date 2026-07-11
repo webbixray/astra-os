@@ -589,7 +589,7 @@ async def clone_from_template(
     user_id: UUID = Depends(require_user_id),
     db: AsyncSession = Depends(get_db),
 ) -> CampaignResponse:
-    await require_org_role(request.organization_id, "viewer", user_id, db)
+    await require_org_role(request.organization_id, "member", user_id, db)
     try:
         campaign = await use_case.execute(
             template_id=request.template_id,

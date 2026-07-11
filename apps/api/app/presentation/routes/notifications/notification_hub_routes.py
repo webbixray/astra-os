@@ -225,7 +225,7 @@ async def send_notification(
     user_id: UUID = Depends(require_user_id),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    await require_org_role(request.organization_id, "viewer", user_id, db)
+    await require_org_role(request.organization_id, "member", user_id, db)
     try:
         notification = await service.send(
             organization_id=request.organization_id,
@@ -247,7 +247,7 @@ async def send_from_template(
     user_id: UUID = Depends(require_user_id),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    await require_org_role(request.organization_id, "viewer", user_id, db)
+    await require_org_role(request.organization_id, "member", user_id, db)
     try:
         notification = await service.send_from_template(
             organization_id=request.organization_id,
@@ -271,7 +271,7 @@ async def create_template(
     user_id: UUID = Depends(require_user_id),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    await require_org_role(organization_id, "viewer", user_id, db)
+    await require_org_role(organization_id, "member", user_id, db)
     try:
         t = await service.create_template(
             org_id=organization_id, name=request.name,
@@ -370,7 +370,7 @@ async def create_announcement(
     user_id: UUID = Depends(require_user_id),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    await require_org_role(organization_id, "viewer", user_id, db)
+    await require_org_role(organization_id, "admin", user_id, db)
     try:
         a = await service.create_announcement(
             org_id=organization_id, title=request.title,
@@ -419,4 +419,7 @@ async def delete_announcement(
     db: AsyncSession = Depends(get_db),
 ) -> None:
     await require_org_role(organization_id, "admin", user_id, db)
+    announcement = await service.announcement_repo.find_by_id(announcement_id)
+    if not announcement or announcement.organization_id != organization_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Announcement not found") from None
     await service.delete_announcement(announcement_id)

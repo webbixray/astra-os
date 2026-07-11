@@ -66,7 +66,7 @@ async def log_action(
     user_id: UUID = Depends(require_user_id),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    await require_org_role(organization_id, "viewer", user_id, db)
+    await require_org_role(organization_id, "member", user_id, db)
     try:
         entry = await service.log_action(
             org_id=organization_id, user_id=user_id,
@@ -228,7 +228,7 @@ async def record_api_call(
     user_id: UUID = Depends(require_user_id),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    await require_org_role(organization_id, "viewer", user_id, db)
+    await require_org_role(organization_id, "member", user_id, db)
     record = await service.record_api_call(
         org_id=organization_id, user_id=user_id,
         endpoint=request.endpoint, method=request.method,

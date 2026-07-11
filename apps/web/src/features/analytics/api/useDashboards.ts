@@ -93,9 +93,11 @@ export function useAddWidget() {
   return useMutation({
     mutationFn: ({
       dashboard_id,
+      organization_id,
       ...body
     }: {
       dashboard_id: string;
+      organization_id: string;
       widget_type: string;
       title: string;
       pos_x?: number;
@@ -103,7 +105,7 @@ export function useAddWidget() {
       width?: number;
       height?: number;
       config?: Record<string, unknown>;
-    }) => api.post(`/dashboards/${dashboard_id}/widgets`, body),
+    }) => api.post(`/dashboards/${dashboard_id}/widgets?organization_id=${organization_id}`, body),
     onSuccess: (_, vars) => qc.invalidateQueries({ queryKey: ['dashboard', vars.dashboard_id] }),
   });
 }
@@ -113,16 +115,18 @@ export function useUpdateWidget() {
   return useMutation({
     mutationFn: ({
       widget_id,
+      organization_id,
       ...body
     }: {
       widget_id: string;
+      organization_id: string;
       title?: string;
       pos_x?: number;
       pos_y?: number;
       width?: number;
       height?: number;
       config?: Record<string, unknown>;
-    }) => api.put(`/dashboards/widgets/${widget_id}`, body),
+    }) => api.put(`/dashboards/widgets/${widget_id}?organization_id=${organization_id}`, body),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['dashboards'] }),
   });
 }

@@ -93,9 +93,12 @@ async def get_dashboard(
 ) -> dict:
     await require_org_role(organization_id, "viewer", user_id, db)
     try:
-        return await service.get_dashboard(dashboard_id=dashboard_id)
+        result = await service.get_dashboard(dashboard_id=dashboard_id)
     except EntityNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dashboard not found") from None
+    if result.get("organization_id") and str(result["organization_id"]) != str(organization_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dashboard not found") from None
+    return result
 
 
 @router.delete("/dashboards/{dashboard_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete a dashboard")
@@ -107,6 +110,9 @@ async def delete_dashboard(
     db: AsyncSession = Depends(get_db),
 ) -> None:
     await require_org_role(organization_id, "admin", user_id, db)
+    dash = await service.dash_repo.find_by_id(dashboard_id)
+    if not dash or str(dash.organization_id) != str(organization_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dashboard not found") from None
     await service.delete_dashboard(dashboard_id=dashboard_id)
 
 
@@ -122,6 +128,9 @@ async def add_widget(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     await require_org_role(organization_id, "member", user_id, db)
+    dash = await service.dash_repo.find_by_id(dashboard_id)
+    if not dash or str(dash.organization_id) != str(organization_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dashboard not found") from None
     try:
         widget = await service.add_widget(
             dashboard_id=dashboard_id, widget_type=request.widget_type,
@@ -150,6 +159,12 @@ async def update_widget(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     await require_org_role(organization_id, "member", user_id, db)
+    existing_widget = await service.widget_repo.find_by_id(widget_id)
+    if not existing_widget:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Widget not found") from None
+    dash = await service.dash_repo.find_by_id(existing_widget.dashboard_id)
+    if not dash or str(dash.organization_id) != str(organization_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Widget not found") from None
     try:
         widget = await service.update_widget(
             widget_id=widget_id, title=request.title,
@@ -174,6 +189,12 @@ async def delete_widget(
     db: AsyncSession = Depends(get_db),
 ) -> None:
     await require_org_role(organization_id, "member", user_id, db)
+    existing_widget = await service.widget_repo.find_by_id(widget_id)
+    if not existing_widget:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Widget not found") from None
+    dash = await service.dash_repo.find_by_id(existing_widget.dashboard_id)
+    if not dash or str(dash.organization_id) != str(organization_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Widget not found") from None
     await service.delete_widget(widget_id=widget_id)
 
 

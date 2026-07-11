@@ -214,6 +214,8 @@ async def update_report_schedule(
     schedule = await repo.find_by_id(schedule_id)
     if schedule is None:
         raise HTTPException(status_code=404, detail="Schedule not found")
+    if str(schedule.organization_id) != str(organization_id):
+        raise HTTPException(status_code=404, detail="Schedule not found")
     if request.name is not None:
         schedule.name = request.name
     if request.report_type is not None:
@@ -240,4 +242,7 @@ async def delete_report_schedule(
 ) -> None:
     await require_org_role(organization_id, "admin", user_id, db)
     repo = ReportScheduleRepository(db)
+    schedule = await repo.find_by_id(schedule_id)
+    if not schedule or str(schedule.organization_id) != str(organization_id):
+        raise HTTPException(status_code=404, detail="Schedule not found") from None
     await repo.delete(schedule_id)

@@ -74,7 +74,7 @@ async def connect_account(
     user_id: UUID = Depends(require_user_id),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    await require_org_role(request.organization_id, "viewer", user_id, db)
+    await require_org_role(request.organization_id, "member", user_id, db)
     await require_feature("advertising_integration", request.organization_id, "free", db)
     return await service.connect(
         organization_id=request.organization_id,
@@ -136,7 +136,7 @@ async def create_ad_campaign(
     user_id: UUID = Depends(require_user_id),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    await require_org_role(request.organization_id, "viewer", user_id, db)
+    await require_org_role(request.organization_id, "member", user_id, db)
     await require_feature("advertising_integration", request.organization_id, "free", db)
     return await service.create(
         organization_id=request.organization_id,
@@ -182,7 +182,7 @@ async def create_creative(
     user_id: UUID = Depends(require_user_id),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    await require_org_role(request.organization_id, "viewer", user_id, db)
+    await require_org_role(request.organization_id, "member", user_id, db)
     await require_feature("advertising_integration", request.organization_id, "free", db)
     return await service.create(
         organization_id=request.organization_id,

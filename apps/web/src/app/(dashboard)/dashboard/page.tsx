@@ -69,7 +69,7 @@ export default function DashboardPage() {
   const [showAnomalies, setShowAnomalies] = useState(false);
   const [showPredictions, setShowPredictions] = useState(false);
 
-  const { data: detail } = useDashboardDetail(selectedDashId);
+  const { data: detail } = useDashboardDetail(selectedDashId, orgId);
   const { data: widgetData } = useDashboardData(selectedDashId, orgId);
   const { data: anomalies } = useAnomalies(orgId);
   const { data: predictions } = usePredictions(orgId);
@@ -329,7 +329,7 @@ export default function DashboardPage() {
                         <button
                           aria-label="Delete widget"
                           className="hidden group-hover:block text-muted-foreground hover:text-red-500"
-                          onClick={() => deleteWidget.mutate(w.id)}
+                          onClick={() => deleteWidget.mutate({ widgetId: w.id, orgId })}
                         >
                           <X className="h-3 w-3" />
                         </button>
@@ -412,7 +412,7 @@ export default function DashboardPage() {
         confirmLabel="Delete"
         variant="destructive"
         onConfirm={() => {
-          if (deleteTargetId) deleteDash.mutate(deleteTargetId);
+          if (deleteTargetId) deleteDash.mutate({ dashboardId: deleteTargetId, orgId });
         }}
         loading={deleteDash.isPending}
       />

@@ -159,6 +159,9 @@ async def execute_workflow(
 ) -> dict:
     await require_org_role(request.organization_id, "member", user_id, db)
     await require_feature("workflow_automation", request.organization_id, "free", db)
+    existing = await repo.find_by_id(workflow_id)
+    if not existing or str(existing.organization_id) != str(request.organization_id):
+        raise HTTPException(status_code=404, detail="Workflow not found") from None
     use_case = ExecuteWorkflowUseCase(repo)
     return await use_case.execute(
         workflow_id=workflow_id,

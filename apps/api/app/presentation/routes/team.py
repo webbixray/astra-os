@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -21,7 +21,7 @@ router = APIRouter()
 class InviteRequest(BaseModel):
     organization_id: UUID
     email: EmailStr
-    role: str = "member"
+    role: str = Field(default="member", pattern=r"^(admin|member|viewer)$")
 
 
 class UpdateMemberRoleRequest(BaseModel):

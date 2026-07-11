@@ -64,7 +64,7 @@ async def create_node(
     user_id: UUID = Depends(require_user_id),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    await require_org_role(request.organization_id, "viewer", user_id, db)
+    await require_org_role(request.organization_id, "member", user_id, db)
     service = KnowledgeGraphService(graph_store)
     return await service.create_node(
         organization_id=request.organization_id,
@@ -99,7 +99,7 @@ async def create_relation(
     user_id: UUID = Depends(require_user_id),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    await require_org_role(request.organization_id, "viewer", user_id, db)
+    await require_org_role(request.organization_id, "member", user_id, db)
     service = KnowledgeGraphService(graph_store)
     return await service.create_relation(
         source_id=request.source_id,
@@ -134,7 +134,7 @@ async def remember(
     user_id: UUID = Depends(require_user_id),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    await require_org_role(request.organization_id, "viewer", user_id, db)
+    await require_org_role(request.organization_id, "member", user_id, db)
     from app.domain.entities.knowledge.memory import MemoryImportance, MemoryType
     service = MemoryService(graph_store)
     return await service.remember(

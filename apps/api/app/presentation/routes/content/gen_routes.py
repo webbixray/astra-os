@@ -196,7 +196,7 @@ async def create_brand_voice(
     db: AsyncSession = Depends(get_db),
     user_id: UUID = Depends(require_user_id),
 ) -> dict:
-    await require_org_role(request.organization_id, "viewer", user_id, db)
+    await require_org_role(request.organization_id, "member", user_id, db)
     from app.domain.entities.content.brand_voice import BrandVoice
 
     voice = BrandVoice.create(
@@ -266,6 +266,8 @@ async def update_brand_voice(
     voice = await repo.find_by_id(voice_id)
     if voice is None:
         raise HTTPException(status_code=404, detail="Brand voice not found")
+    if str(voice.organization_id) != str(organization_id):
+        raise HTTPException(status_code=404, detail="Brand voice not found")
     if request.name is not None:
         voice.name = request.name
     if request.tone is not None:
@@ -292,6 +294,9 @@ async def delete_brand_voice(
 ) -> None:
     await require_org_role(organization_id, "admin", user_id, db)
     repo = BrandVoiceRepository(db)
+    voice = await repo.find_by_id(voice_id)
+    if not voice or str(voice.organization_id) != str(organization_id):
+        raise HTTPException(status_code=404, detail="Brand voice not found") from None
     await repo.delete(voice_id)
 
 
@@ -301,7 +306,7 @@ async def create_template(
     db: AsyncSession = Depends(get_db),
     user_id: UUID = Depends(require_user_id),
 ) -> dict:
-    await require_org_role(request.organization_id, "viewer", user_id, db)
+    await require_org_role(request.organization_id, "member", user_id, db)
     from app.domain.entities.content.content_template import ContentTemplate
 
     template = ContentTemplate.create(
@@ -405,6 +410,8 @@ async def update_template(
     template = await repo.find_by_id(template_id)
     if template is None:
         raise HTTPException(status_code=404, detail="Template not found")
+    if str(template.organization_id) != str(organization_id):
+        raise HTTPException(status_code=404, detail="Template not found")
     if request.name is not None:
         template.name = request.name
     if request.description is not None:
@@ -433,4 +440,7 @@ async def delete_template(
 ) -> None:
     await require_org_role(organization_id, "admin", user_id, db)
     repo = ContentTemplateRepository(db)
+    template = await repo.find_by_id(template_id)
+    if not template or str(template.organization_id) != str(organization_id):
+        raise HTTPException(status_code=404, detail="Template not found") from None
     await repo.delete(template_id)
