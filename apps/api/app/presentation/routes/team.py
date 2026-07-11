@@ -25,7 +25,7 @@ class InviteRequest(BaseModel):
 
 
 class UpdateMemberRoleRequest(BaseModel):
-    role: str
+    role: str = Field(pattern=r"^(admin|member|viewer)$")
 
 
 class MemberResponse(BaseModel):

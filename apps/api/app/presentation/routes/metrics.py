@@ -1,8 +1,12 @@
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
-from fastapi import APIRouter
+if TYPE_CHECKING:
+    from uuid import UUID
+
+from fastapi import APIRouter, Depends
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from starlette.responses import Response
 
@@ -12,14 +16,22 @@ from app.infrastructure.metrics import (
     workflows_completed,
     workflows_failed,
 )
+from app.presentation.middleware.auth import require_user_id
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
 
+def _safe_get(counter) -> int:
+    try:
+        return int(counter._value.get())
+    except Exception:
+        return 0
+
+
 @router.get("/metrics", summary="Prometheus metrics")
-async def metrics() -> Response:
+async def metrics(user_id: UUID = Depends(require_user_id)) -> Response:
     try:
         return Response(
             content=generate_latest(),
@@ -30,15 +42,8 @@ async def metrics() -> Response:
         return Response(content="# Error generating metrics\n", media_type="text/plain", status_code=500)
 
 
-def _safe_get(counter) -> int:
-    try:
-        return int(counter._value.get())
-    except Exception:
-        return 0
-
-
 @router.get("/metrics/business", summary="Business metrics")
-async def business_metrics() -> dict[str, int]:
+async def business_metrics(user_id: UUID = Depends(require_user_id)) -> dict[str, int]:
     return {
         "users_signed_up": _safe_get(users_signed_up),
         "campaigns_created": _safe_get(campaigns_created),

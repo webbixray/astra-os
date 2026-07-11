@@ -48,6 +48,8 @@ async def get_user(
     use_case: GetUserUseCase = Depends(get_get_user_use_case),
     current_user_id: UUID = Depends(require_user_id),
 ) -> UserResponse:
+    if user_id != current_user_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Cannot view another user's profile") from None
     try:
         user = await use_case.execute(user_id=user_id)
     except EntityNotFoundError:
