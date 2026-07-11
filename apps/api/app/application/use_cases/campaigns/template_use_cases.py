@@ -79,12 +79,16 @@ class DeleteTemplateUseCase:
 class CampaignRepository:
     async def save(self, campaign: Campaign) -> Campaign: ...
     async def find_by_id(self, campaign_id: UUID) -> Campaign | None: ...
-    async def find_by_organization(self, org_id: UUID, status: str | None = None) -> list[Campaign]: ...
+    async def find_by_organization(
+        self, org_id: UUID, status: str | None = None
+    ) -> list[Campaign]: ...
     async def delete(self, campaign_id: UUID) -> None: ...
 
 
 class CloneCampaignFromTemplateUseCase:
-    def __init__(self, template_repo: CampaignTemplateRepository, campaign_repo: CampaignRepository):
+    def __init__(
+        self, template_repo: CampaignTemplateRepository, campaign_repo: CampaignRepository
+    ):
         self.template_repo = template_repo
         self.campaign_repo = campaign_repo
 

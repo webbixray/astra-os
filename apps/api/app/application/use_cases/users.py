@@ -32,7 +32,9 @@ class UpdateUserUseCase:
     def __init__(self, repo: UserRepository):
         self.repo = repo
 
-    async def execute(self, user_id: UUID, name: str | None = None, avatar_url: str | None = None) -> User:
+    async def execute(
+        self, user_id: UUID, name: str | None = None, avatar_url: str | None = None
+    ) -> User:
         user = await self.repo.find_by_id(user_id)
         if user is None:
             raise EntityNotFoundError("User", str(user_id))

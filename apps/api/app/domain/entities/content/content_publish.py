@@ -32,7 +32,9 @@ class ContentPublish:
         metadata: dict | None = None,
     ) -> "ContentPublish":
         if platform not in PUBLISH_PLATFORMS:
-            raise ValidationError(f"Invalid platform: {platform}. Must be one of {PUBLISH_PLATFORMS}")
+            raise ValidationError(
+                f"Invalid platform: {platform}. Must be one of {PUBLISH_PLATFORMS}"
+            )
         return cls(
             content_id=content_id,
             platform=platform,

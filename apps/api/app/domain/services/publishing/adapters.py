@@ -21,7 +21,7 @@ class TwitterAdapter(PublishingAdapter):
 
     async def publish(self, content: Content, metadata: dict | None = None) -> str:
         (content.body or "")[:280]
-        tweet_id = f"tweet_{now().strftime('%Y%m%d%H%M%S')}_{random.randint(1000,9999)}"
+        tweet_id = f"tweet_{now().strftime('%Y%m%d%H%M%S')}_{random.randint(1000, 9999)}"
         return f"https://twitter.com/status/{tweet_id}"
 
 
@@ -30,7 +30,7 @@ class LinkedInAdapter(PublishingAdapter):
         return "linkedin"
 
     async def publish(self, content: Content, metadata: dict | None = None) -> str:
-        post_id = f"post_{now().strftime('%Y%m%d%H%M%S')}_{random.randint(1000,9999)}"
+        post_id = f"post_{now().strftime('%Y%m%d%H%M%S')}_{random.randint(1000, 9999)}"
         return f"https://linkedin.com/feed/update/{post_id}"
 
 
@@ -39,7 +39,7 @@ class FacebookAdapter(PublishingAdapter):
         return "facebook"
 
     async def publish(self, content: Content, metadata: dict | None = None) -> str:
-        post_id = f"fb_{now().strftime('%Y%m%d%H%M%S')}_{random.randint(1000,9999)}"
+        post_id = f"fb_{now().strftime('%Y%m%d%H%M%S')}_{random.randint(1000, 9999)}"
         return f"https://facebook.com/{post_id}"
 
 
@@ -48,7 +48,7 @@ class InstagramAdapter(PublishingAdapter):
         return "instagram"
 
     async def publish(self, content: Content, metadata: dict | None = None) -> str:
-        media_id = f"ig_{now().strftime('%Y%m%d%H%M%S')}_{random.randint(1000,9999)}"
+        media_id = f"ig_{now().strftime('%Y%m%d%H%M%S')}_{random.randint(1000, 9999)}"
         return f"https://instagram.com/p/{media_id}"
 
 
@@ -57,7 +57,7 @@ class EmailAdapter(PublishingAdapter):
         return "email"
 
     async def publish(self, content: Content, metadata: dict | None = None) -> str:
-        campaign_id = f"email_{now().strftime('%Y%m%d%H%M%S')}_{random.randint(1000,9999)}"
+        campaign_id = f"email_{now().strftime('%Y%m%d%H%M%S')}_{random.randint(1000, 9999)}"
         return f"email://campaign/{campaign_id}"
 
 

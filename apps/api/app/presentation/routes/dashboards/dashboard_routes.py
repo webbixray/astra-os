@@ -52,6 +52,7 @@ def get_service(db: AsyncSession = Depends(get_db)) -> DashboardService:
 
 # ── Dashboard CRUD ───────────────────────────────────────────────────────────
 
+
 @router.post("/dashboards", status_code=status.HTTP_201_CREATED, summary="Create a new dashboard")
 async def create_dashboard(
     request: CreateDashboardRequest,
@@ -68,7 +69,9 @@ async def create_dashboard(
             description=request.description,
         )
     except ValidationError as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
     return {"id": str(dash.id), "name": dash.name, "description": dash.description}
 
 
@@ -95,13 +98,21 @@ async def get_dashboard(
     try:
         result = await service.get_dashboard(dashboard_id=dashboard_id)
     except EntityNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dashboard not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Dashboard not found"
+        ) from None
     if result.get("organization_id") and str(result["organization_id"]) != str(organization_id):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dashboard not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Dashboard not found"
+        ) from None
     return result
 
 
-@router.delete("/dashboards/{dashboard_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete a dashboard")
+@router.delete(
+    "/dashboards/{dashboard_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete a dashboard",
+)
 async def delete_dashboard(
     dashboard_id: UUID,
     organization_id: UUID = Query(...),
@@ -112,13 +123,20 @@ async def delete_dashboard(
     await require_org_role(organization_id, "admin", user_id, db)
     dash = await service.dash_repo.find_by_id(dashboard_id)
     if not dash or str(dash.organization_id) != str(organization_id):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dashboard not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Dashboard not found"
+        ) from None
     await service.delete_dashboard(dashboard_id=dashboard_id)
 
 
 # ── Widget Management ────────────────────────────────────────────────────────
 
-@router.post("/dashboards/{dashboard_id}/widgets", status_code=status.HTTP_201_CREATED, summary="Add widget to dashboard")
+
+@router.post(
+    "/dashboards/{dashboard_id}/widgets",
+    status_code=status.HTTP_201_CREATED,
+    summary="Add widget to dashboard",
+)
 async def add_widget(
     dashboard_id: UUID,
     request: CreateWidgetRequest,
@@ -130,22 +148,36 @@ async def add_widget(
     await require_org_role(organization_id, "member", user_id, db)
     dash = await service.dash_repo.find_by_id(dashboard_id)
     if not dash or str(dash.organization_id) != str(organization_id):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dashboard not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Dashboard not found"
+        ) from None
     try:
         widget = await service.add_widget(
-            dashboard_id=dashboard_id, widget_type=request.widget_type,
-            title=request.title, pos_x=request.pos_x, pos_y=request.pos_y,
-            width=request.width, height=request.height, config=request.config,
+            dashboard_id=dashboard_id,
+            widget_type=request.widget_type,
+            title=request.title,
+            pos_x=request.pos_x,
+            pos_y=request.pos_y,
+            width=request.width,
+            height=request.height,
+            config=request.config,
         )
     except (EntityNotFoundError, ValidationError) as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND if isinstance(e, EntityNotFoundError) else status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_404_NOT_FOUND
+            if isinstance(e, EntityNotFoundError)
+            else status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(e),
         ) from None
     return {
-        "id": str(widget.id), "widget_type": widget.widget_type, "title": widget.title,
-        "pos_x": widget.pos_x, "pos_y": widget.pos_y,
-        "width": widget.width, "height": widget.height, "config": widget.config,
+        "id": str(widget.id),
+        "widget_type": widget.widget_type,
+        "title": widget.title,
+        "pos_x": widget.pos_x,
+        "pos_y": widget.pos_y,
+        "width": widget.width,
+        "height": widget.height,
+        "config": widget.config,
     }
 
 
@@ -161,26 +193,45 @@ async def update_widget(
     await require_org_role(organization_id, "member", user_id, db)
     existing_widget = await service.widget_repo.find_by_id(widget_id)
     if not existing_widget:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Widget not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Widget not found"
+        ) from None
     dash = await service.dash_repo.find_by_id(existing_widget.dashboard_id)
     if not dash or str(dash.organization_id) != str(organization_id):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Widget not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Widget not found"
+        ) from None
     try:
         widget = await service.update_widget(
-            widget_id=widget_id, title=request.title,
-            pos_x=request.pos_x, pos_y=request.pos_y,
-            width=request.width, height=request.height, config=request.config,
+            widget_id=widget_id,
+            title=request.title,
+            pos_x=request.pos_x,
+            pos_y=request.pos_y,
+            width=request.width,
+            height=request.height,
+            config=request.config,
         )
     except EntityNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Widget not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Widget not found"
+        ) from None
     return {
-        "id": str(widget.id), "widget_type": widget.widget_type, "title": widget.title,
-        "pos_x": widget.pos_x, "pos_y": widget.pos_y,
-        "width": widget.width, "height": widget.height, "config": widget.config,
+        "id": str(widget.id),
+        "widget_type": widget.widget_type,
+        "title": widget.title,
+        "pos_x": widget.pos_x,
+        "pos_y": widget.pos_y,
+        "width": widget.width,
+        "height": widget.height,
+        "config": widget.config,
     }
 
 
-@router.delete("/dashboards/widgets/{widget_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete a widget")
+@router.delete(
+    "/dashboards/widgets/{widget_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete a widget",
+)
 async def delete_widget(
     widget_id: UUID,
     organization_id: UUID = Query(...),
@@ -191,14 +242,19 @@ async def delete_widget(
     await require_org_role(organization_id, "member", user_id, db)
     existing_widget = await service.widget_repo.find_by_id(widget_id)
     if not existing_widget:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Widget not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Widget not found"
+        ) from None
     dash = await service.dash_repo.find_by_id(existing_widget.dashboard_id)
     if not dash or str(dash.organization_id) != str(organization_id):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Widget not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Widget not found"
+        ) from None
     await service.delete_widget(widget_id=widget_id)
 
 
 # ── Data Queries ─────────────────────────────────────────────────────────────
+
 
 @router.get("/dashboards/{dashboard_id}/data", summary="Get dashboard data")
 async def get_dashboard_data(
@@ -211,7 +267,9 @@ async def get_dashboard_data(
 ) -> dict:
     await require_org_role(organization_id, "viewer", user_id, db)
     return await service.query_dashboard_data(
-        dashboard_id=dashboard_id, org_id=organization_id, days=days,
+        dashboard_id=dashboard_id,
+        org_id=organization_id,
+        days=days,
     )
 
 
@@ -226,11 +284,14 @@ async def get_metric(
 ) -> dict:
     await require_org_role(organization_id, "viewer", user_id, db)
     return await service.query_single_metric(
-        org_id=organization_id, metric=metric, days=days,
+        org_id=organization_id,
+        metric=metric,
+        days=days,
     )
 
 
 # ── Anomaly Detection & Predictions ──────────────────────────────────────────
+
 
 @router.get("/dashboards/anomalies/{metric}", summary="Get metric anomalies")
 async def get_anomalies(

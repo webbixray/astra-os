@@ -26,7 +26,14 @@ class Campaign:
     created_at: datetime = field(default_factory=now)
     updated_at: datetime = field(default_factory=now)
 
-    VALID_STATUSES: ClassVar[list[str]] = ["draft", "pending_approval", "active", "paused", "completed", "archived"]
+    VALID_STATUSES: ClassVar[list[str]] = [
+        "draft",
+        "pending_approval",
+        "active",
+        "paused",
+        "completed",
+        "archived",
+    ]
     VALID_CHANNELS: ClassVar[list[str]] = ["email", "social", "ads", "seo", "content"]
     VALID_OBJECTIVES: ClassVar[list[str]] = ["awareness", "consideration", "conversion"]
 

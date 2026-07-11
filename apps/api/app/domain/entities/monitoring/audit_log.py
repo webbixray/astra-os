@@ -5,10 +5,19 @@ from uuid import UUID, uuid4
 from app.domain.common import now
 
 AUDIT_ACTIONS = [
-    "create", "read", "update", "delete",
-    "login", "logout", "config_change",
-    "permission_change", "invitation_sent", "invitation_accepted",
-    "export", "import", "api_call",
+    "create",
+    "read",
+    "update",
+    "delete",
+    "login",
+    "logout",
+    "config_change",
+    "permission_change",
+    "invitation_sent",
+    "invitation_accepted",
+    "export",
+    "import",
+    "api_call",
 ]
 
 JOB_STATUSES = ["queued", "running", "completed", "failed", "cancelled"]

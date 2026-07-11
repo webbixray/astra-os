@@ -41,7 +41,13 @@ BUILTIN_PROMPTS: dict[str, dict] = {
             "Format your response with clear section headers matching the template sections. "
             "Use the format: ## section_name\ncontent"
         ),
-        "variables": ["template_guidance", "content_type", "sections", "brand_voice", "instructions"],
+        "variables": [
+            "template_guidance",
+            "content_type",
+            "sections",
+            "brand_voice",
+            "instructions",
+        ],
     },
     "content_rewriter": {
         "description": "System prompt for content rewriting",

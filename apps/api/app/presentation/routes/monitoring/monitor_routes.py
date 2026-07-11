@@ -58,6 +58,7 @@ def get_service(db: AsyncSession = Depends(get_db)) -> SystemMonitorService:
 
 # ── Audit Log ────────────────────────────────────────────────────────────────
 
+
 @router.post("/audit-logs", status_code=status.HTTP_201_CREATED, summary="Log audit action")
 async def log_action(
     request: LogActionRequest,
@@ -69,13 +70,18 @@ async def log_action(
     await require_org_role(organization_id, "member", user_id, db)
     try:
         entry = await service.log_action(
-            org_id=organization_id, user_id=user_id,
-            action=request.action, resource_type=request.resource_type,
-            resource_id=request.resource_id, details=request.details,
+            org_id=organization_id,
+            user_id=user_id,
+            action=request.action,
+            resource_type=request.resource_type,
+            resource_id=request.resource_id,
+            details=request.details,
             ip_address=request.ip_address,
         )
     except ValidationError as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
     return {"id": str(entry.id), "action": entry.action, "created_at": entry.created_at.isoformat()}
 
 
@@ -95,9 +101,12 @@ async def get_audit_logs(
     limit = pagination["limit"]
     offset = (page - 1) * limit
     result = await service.get_audit_logs(
-        org_id=organization_id, action=action,
-        resource_type=resource_type, user_id=user_id,
-        limit=limit, offset=offset,
+        org_id=organization_id,
+        action=action,
+        resource_type=resource_type,
+        user_id=user_id,
+        limit=limit,
+        offset=offset,
     )
     return PaginatedResponse(
         data=result["items"],
@@ -122,6 +131,7 @@ async def get_audit_summary(
 
 # ── Jobs ─────────────────────────────────────────────────────────────────────
 
+
 @router.post("/jobs", status_code=status.HTTP_201_CREATED, summary="Create background job")
 async def create_job(
     request: CreateJobRequest,
@@ -132,8 +142,10 @@ async def create_job(
 ) -> dict:
     await require_org_role(organization_id, "member", user_id, db)
     job = await service.create_job(
-        org_id=organization_id, job_type=request.job_type,
-        payload=request.payload, max_retries=request.max_retries,
+        org_id=organization_id,
+        job_type=request.job_type,
+        payload=request.payload,
+        max_retries=request.max_retries,
     )
     return {"id": str(job.id), "job_type": job.job_type, "status": job.status}
 
@@ -153,8 +165,11 @@ async def get_jobs(
     limit = pagination["limit"]
     offset = (page - 1) * limit
     result = await service.get_jobs(
-        org_id=organization_id, status=status,
-        job_type=job_type, limit=limit, offset=offset,
+        org_id=organization_id,
+        status=status,
+        job_type=job_type,
+        limit=limit,
+        offset=offset,
     )
     return PaginatedResponse(
         data=result["items"],
@@ -180,11 +195,15 @@ async def update_job_status(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found") from None
     try:
         job = await service.update_job_status(
-            job_id=job_id, status=request.status,
-            result=request.result, error_message=request.error_message,
+            job_id=job_id,
+            status=request.status,
+            result=request.result,
+            error_message=request.error_message,
         )
     except ValidationError as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
     return {"id": str(job.id), "status": job.status}
 
 
@@ -203,7 +222,9 @@ async def retry_job(
     try:
         job = await service.retry_job(job_id)
     except ValidationError as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
     return {"id": str(job.id), "status": job.status}
 
 
@@ -220,6 +241,7 @@ async def get_job_summary(
 
 # ── API Usage ────────────────────────────────────────────────────────────────
 
+
 @router.post("/usage-records", status_code=status.HTTP_201_CREATED, summary="Record API usage")
 async def record_api_call(
     request: RecordApiCallRequest,
@@ -230,9 +252,12 @@ async def record_api_call(
 ) -> dict:
     await require_org_role(organization_id, "member", user_id, db)
     record = await service.record_api_call(
-        org_id=organization_id, user_id=user_id,
-        endpoint=request.endpoint, method=request.method,
-        status_code=request.status_code, ip_address=request.ip_address,
+        org_id=organization_id,
+        user_id=user_id,
+        endpoint=request.endpoint,
+        method=request.method,
+        status_code=request.status_code,
+        ip_address=request.ip_address,
         response_time_ms=request.response_time_ms,
     )
     return {"id": str(record.id), "endpoint": record.endpoint, "method": record.method}
@@ -273,6 +298,7 @@ async def get_usage_stats(
 
 
 # ── System Health ────────────────────────────────────────────────────────────
+
 
 @router.get("/system/health", summary="Check system health")
 async def check_system_health(

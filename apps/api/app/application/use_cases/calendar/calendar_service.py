@@ -112,7 +112,9 @@ class CalendarService:
                 id=str(m.id),
                 type="content",
                 title=m.title,
-                start_date=m.scheduled_at.isoformat() if m.scheduled_at else (m.published_at.isoformat() if m.published_at else None),
+                start_date=m.scheduled_at.isoformat()
+                if m.scheduled_at
+                else (m.published_at.isoformat() if m.published_at else None),
                 end_date=None,
                 status=m.status,
                 link=f"/content/{m.id}",

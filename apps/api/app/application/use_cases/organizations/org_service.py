@@ -45,17 +45,19 @@ class OrganizationService:
         org = await self._get_org(org_id)
         children = await self.org_repo.find_by_parent(org_id)
         return {
-            "id": str(org.id), "name": org.name, "slug": org.slug,
+            "id": str(org.id),
+            "name": org.name,
+            "slug": org.slug,
             "plan_tier": org.plan_tier,
             "children": [
-                {"id": str(c.id), "name": c.name, "slug": c.slug,
-                 "plan_tier": c.plan_tier}
+                {"id": str(c.id), "name": c.name, "slug": c.slug, "plan_tier": c.plan_tier}
                 for c in children
             ],
         }
 
-    async def set_parent_org(self, org_id: UUID, parent_org_id: UUID,
-                             user_id: UUID) -> Organization:
+    async def set_parent_org(
+        self, org_id: UUID, parent_org_id: UUID, user_id: UUID
+    ) -> Organization:
         org = await self._get_org(org_id)
         await self._require_role(org_id, user_id, "admin")
         parent = await self.org_repo.find_by_id(parent_org_id)
@@ -73,30 +75,35 @@ class OrganizationService:
         for m in memberships:
             org = orgs_by_id.get(m.organization_id)
             if org:
-                result.append({
-                    "id": str(org.id), "name": org.name, "slug": org.slug,
-                    "plan_tier": org.plan_tier, "role": m.role,
-                })
+                result.append(
+                    {
+                        "id": str(org.id),
+                        "name": org.name,
+                        "slug": org.slug,
+                        "plan_tier": org.plan_tier,
+                        "role": m.role,
+                    }
+                )
         return result
 
-    async def create_sub_org(self, parent_org_id: UUID, name: str,
-                             slug: str, user_id: UUID) -> Organization:
+    async def create_sub_org(
+        self, parent_org_id: UUID, name: str, slug: str, user_id: UUID
+    ) -> Organization:
         await self._require_role(parent_org_id, user_id, "admin")
         existing = await self.org_repo.find_by_slug(slug)
         if existing is not None:
             raise ValidationError(f"Organization with slug '{slug}' already exists")
         org = Organization.create(name=name, slug=slug, parent_org_id=parent_org_id)
         saved = await self.org_repo.save(org)
-        owner = OrganizationMember.create(
-            organization_id=saved.id, user_id=user_id, role="owner"
-        )
+        owner = OrganizationMember.create(organization_id=saved.id, user_id=user_id, role="owner")
         await self.member_repo.save(owner)
         return saved
 
     # ── Invitations ──────────────────────────────────────────────────────────
 
-    async def invite_member(self, org_id: UUID, invited_by: UUID,
-                            email: str, role: str = "member") -> OrgInvitation:
+    async def invite_member(
+        self, org_id: UUID, invited_by: UUID, email: str, role: str = "member"
+    ) -> OrgInvitation:
         await self._require_role(org_id, invited_by, "admin")
         if role == "owner":
             raise ValidationError("Cannot invite an owner")
@@ -113,18 +120,18 @@ class OrganizationService:
                 raise ValidationError("A pending invitation already exists for this email")
 
         invitation = OrgInvitation.create(
-            organization_id=org_id, invited_by=invited_by,
-            email=email, role=role,
+            organization_id=org_id,
+            invited_by=invited_by,
+            email=email,
+            role=role,
         )
         return await self.invitation_repo.save(invitation)
 
-    async def list_invitations(self, org_id: UUID,
-                               user_id: UUID) -> list[OrgInvitation]:
+    async def list_invitations(self, org_id: UUID, user_id: UUID) -> list[OrgInvitation]:
         await self._require_role(org_id, user_id, "member")
         return await self.invitation_repo.find_by_organization(org_id)
 
-    async def accept_invitation(self, invitation_id: UUID,
-                                user_id: UUID) -> OrganizationMember:
+    async def accept_invitation(self, invitation_id: UUID, user_id: UUID) -> OrganizationMember:
         invitation = await self.invitation_repo.find_by_id(invitation_id)
         if invitation is None:
             raise EntityNotFoundError("Invitation", str(invitation_id))
@@ -142,12 +149,12 @@ class OrganizationService:
 
         member = OrganizationMember.create(
             organization_id=invitation.organization_id,
-            user_id=user_id, role=invitation.role,
+            user_id=user_id,
+            role=invitation.role,
         )
         return await self.member_repo.save(member)
 
-    async def reject_invitation(self, invitation_id: UUID,
-                                user_id: UUID) -> OrgInvitation:
+    async def reject_invitation(self, invitation_id: UUID, user_id: UUID) -> OrgInvitation:
         invitation = await self.invitation_repo.find_by_id(invitation_id)
         if invitation is None:
             raise EntityNotFoundError("Invitation", str(invitation_id))
@@ -159,15 +166,13 @@ class OrganizationService:
         invitation.reject()
         return await self.invitation_repo.save(invitation)
 
-    async def cancel_invitation(self, invitation_id: UUID,
-                                org_id: UUID, user_id: UUID) -> None:
+    async def cancel_invitation(self, invitation_id: UUID, org_id: UUID, user_id: UUID) -> None:
         await self._require_role(org_id, user_id, "admin")
         await self.invitation_repo.delete(invitation_id)
 
     # ── Members ──────────────────────────────────────────────────────────────
 
-    async def list_members(self, org_id: UUID,
-                           user_id: UUID) -> list[dict]:
+    async def list_members(self, org_id: UUID, user_id: UUID) -> list[dict]:
         await self._require_role(org_id, user_id, "viewer")
         members = await self.member_repo.find_by_organization(org_id)
         user_ids = [m.user_id for m in members]
@@ -176,18 +181,22 @@ class OrganizationService:
         result = []
         for m in members:
             u = users_by_id.get(m.user_id)
-            result.append({
-                "id": str(m.id), "user_id": str(m.user_id),
-                "email": u.email if u else "unknown",
-                "name": u.name if u else "Unknown",
-                "role": m.role,
-                "permissions": m.permissions,
-                "joined_at": m.joined_at.isoformat(),
-            })
+            result.append(
+                {
+                    "id": str(m.id),
+                    "user_id": str(m.user_id),
+                    "email": u.email if u else "unknown",
+                    "name": u.name if u else "Unknown",
+                    "role": m.role,
+                    "permissions": m.permissions,
+                    "joined_at": m.joined_at.isoformat(),
+                }
+            )
         return result
 
-    async def change_member_role(self, member_id: UUID, new_role: str,
-                                 org_id: UUID, user_id: UUID) -> OrganizationMember:
+    async def change_member_role(
+        self, member_id: UUID, new_role: str, org_id: UUID, user_id: UUID
+    ) -> OrganizationMember:
         await self._require_role(org_id, user_id, "admin")
         member = await self.member_repo.find_by_id(member_id)
         if member is None:
@@ -199,8 +208,7 @@ class OrganizationService:
         member.change_role(new_role)
         return await self.member_repo.save(member)
 
-    async def remove_member(self, member_id: UUID, org_id: UUID,
-                            user_id: UUID) -> None:
+    async def remove_member(self, member_id: UUID, org_id: UUID, user_id: UUID) -> None:
         await self._require_role(org_id, user_id, "admin")
         member = await self.member_repo.find_by_id(member_id)
         if member is None:
@@ -214,9 +222,9 @@ class OrganizationService:
     async def list_feature_flags(self, org_id: UUID) -> list[FeatureFlag]:
         return await self.feature_repo.find_by_organization(org_id)
 
-    async def set_feature_flag(self, org_id: UUID, feature_key: str,
-                                *, enabled: bool = True,
-                               config: dict | None = None) -> FeatureFlag:
+    async def set_feature_flag(
+        self, org_id: UUID, feature_key: str, *, enabled: bool = True, config: dict | None = None
+    ) -> FeatureFlag:
         existing = await self.feature_repo.find_by_key(org_id, feature_key)
         if existing is not None:
             existing.toggle(enabled)
@@ -232,8 +240,7 @@ class OrganizationService:
 
     # ── Usage Tracking ───────────────────────────────────────────────────────
 
-    async def record_usage(self, org_id: UUID, metric: str,
-                           value: float = 1.0) -> UsageRecord:
+    async def record_usage(self, org_id: UUID, metric: str, value: float = 1.0) -> UsageRecord:
         record = UsageRecord.create(org_id, metric, value)
         return await self.usage_repo.save(record)
 
@@ -245,9 +252,16 @@ class OrganizationService:
         month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
         usage = {}
-        for metric in ["api_requests", "campaigns_created", "emails_sent",
-                        "content_published", "workflow_executions", "reports_generated",
-                        "storage_mb", "team_members"]:
+        for metric in [
+            "api_requests",
+            "campaigns_created",
+            "emails_sent",
+            "content_published",
+            "workflow_executions",
+            "reports_generated",
+            "storage_mb",
+            "team_members",
+        ]:
             if metric == "team_members":
                 members = await self.member_repo.find_by_organization(org_id)
                 usage[metric] = len(members)
@@ -263,8 +277,9 @@ class OrganizationService:
             "period_start": month_start.isoformat(),
         }
 
-    async def get_usage_trend(self, org_id: UUID, metric: str = "api_requests",
-                              days: int = 30) -> list[dict]:
+    async def get_usage_trend(
+        self, org_id: UUID, metric: str = "api_requests", days: int = 30
+    ) -> list[dict]:
         return await self.usage_repo.aggregate_by_period(org_id, metric, days=days)
 
     # ── Billing ──────────────────────────────────────────────────────────────
@@ -276,8 +291,7 @@ class OrganizationService:
             plan = await self.billing_repo.save(plan)
         return plan
 
-    async def change_billing_plan(self, org_id: UUID, plan_tier: str,
-                                  user_id: UUID) -> BillingPlan:
+    async def change_billing_plan(self, org_id: UUID, plan_tier: str, user_id: UUID) -> BillingPlan:
         await self._require_role(org_id, user_id, "admin")
         plan = await self.get_billing_plan(org_id)
         plan.change_plan(plan_tier)
@@ -285,15 +299,15 @@ class OrganizationService:
 
     # ── Permissions ──────────────────────────────────────────────────────────
 
-    async def check_permission(self, org_id: UUID, user_id: UUID,
-                               permission: str) -> bool:
+    async def check_permission(self, org_id: UUID, user_id: UUID, permission: str) -> bool:
         member = await self.member_repo.find_by_user_and_organization(user_id, org_id)
         if member is None:
             return False
         return member.has_permission(permission)
 
-    async def add_member_permission(self, member_id: UUID, permission: str,
-                                    org_id: UUID, user_id: UUID) -> OrganizationMember:
+    async def add_member_permission(
+        self, member_id: UUID, permission: str, org_id: UUID, user_id: UUID
+    ) -> OrganizationMember:
         await self._require_role(org_id, user_id, "admin")
         member = await self.member_repo.find_by_id(member_id)
         if member is None:
@@ -301,8 +315,9 @@ class OrganizationService:
         member.add_permission(permission)
         return await self.member_repo.save(member)
 
-    async def remove_member_permission(self, member_id: UUID, permission: str,
-                                       org_id: UUID, user_id: UUID) -> OrganizationMember:
+    async def remove_member_permission(
+        self, member_id: UUID, permission: str, org_id: UUID, user_id: UUID
+    ) -> OrganizationMember:
         await self._require_role(org_id, user_id, "admin")
         member = await self.member_repo.find_by_id(member_id)
         if member is None:
@@ -318,8 +333,9 @@ class OrganizationService:
             raise EntityNotFoundError("Organization", str(org_id))
         return org
 
-    async def _require_role(self, org_id: UUID, user_id: UUID,
-                            minimum_role: str) -> OrganizationMember:
+    async def _require_role(
+        self, org_id: UUID, user_id: UUID, minimum_role: str
+    ) -> OrganizationMember:
         member = await self.member_repo.find_by_user_and_organization(user_id, org_id)
         if member is None:
             raise ForbiddenError("Not a member of this organization")
@@ -333,7 +349,9 @@ class OrganizationService:
 
 
 class CreateOrganizationUseCase:
-    def __init__(self, org_repo: OrganizationRepositoryImpl, member_repo: TeamMemberRepositoryImpl) -> None:
+    def __init__(
+        self, org_repo: OrganizationRepositoryImpl, member_repo: TeamMemberRepositoryImpl
+    ) -> None:
         self.org_repo = org_repo
         self.member_repo = member_repo
 
@@ -353,7 +371,9 @@ class CreateOrganizationUseCase:
 
 
 class GetOrganizationUseCase:
-    def __init__(self, org_repo: OrganizationRepositoryImpl, member_repo: TeamMemberRepositoryImpl) -> None:
+    def __init__(
+        self, org_repo: OrganizationRepositoryImpl, member_repo: TeamMemberRepositoryImpl
+    ) -> None:
         self.org_repo = org_repo
         self.member_repo = member_repo
 
@@ -368,7 +388,9 @@ class GetOrganizationUseCase:
 
 
 class UpdateOrganizationUseCase:
-    def __init__(self, org_repo: OrganizationRepositoryImpl, member_repo: TeamMemberRepositoryImpl) -> None:
+    def __init__(
+        self, org_repo: OrganizationRepositoryImpl, member_repo: TeamMemberRepositoryImpl
+    ) -> None:
         self.org_repo = org_repo
         self.member_repo = member_repo
 
@@ -395,7 +417,9 @@ class UpdateOrganizationUseCase:
 
 
 class ListUserOrganizationsUseCase:
-    def __init__(self, org_repo: OrganizationRepositoryImpl, member_repo: TeamMemberRepositoryImpl) -> None:
+    def __init__(
+        self, org_repo: OrganizationRepositoryImpl, member_repo: TeamMemberRepositoryImpl
+    ) -> None:
         self.org_repo = org_repo
         self.member_repo = member_repo
 
@@ -404,4 +428,6 @@ class ListUserOrganizationsUseCase:
         org_ids = [m.organization_id for m in memberships]
         orgs_list = await self.org_repo.find_by_ids(org_ids)
         orgs_by_id = {o.id: o for o in orgs_list}
-        return [orgs_by_id[m.organization_id] for m in memberships if m.organization_id in orgs_by_id]
+        return [
+            orgs_by_id[m.organization_id] for m in memberships if m.organization_id in orgs_by_id
+        ]

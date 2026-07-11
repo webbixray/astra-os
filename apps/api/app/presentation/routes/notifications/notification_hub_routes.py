@@ -82,6 +82,7 @@ def get_service(db: AsyncSession = Depends(get_db)) -> NotificationHubService:
 
 # ── SSE Stream ──────────────────────────────────────────────────────────────
 
+
 @router.get("/notifications/stream", summary="Stream notifications via SSE")
 async def stream_notifications(
     user_id: UUID = Depends(require_user_id),
@@ -115,6 +116,7 @@ async def stream_notifications(
 
 # ── Notifications ────────────────────────────────────────────────────────────
 
+
 @router.get("/notifications", summary="List notifications")
 async def list_notifications(
     organization_id: UUID = Query(...),
@@ -131,9 +133,13 @@ async def list_notifications(
     limit = pagination["limit"]
     offset = (page - 1) * limit
     result = await service.list_notifications(
-        user_id=user_id, organization_id=organization_id,
-        unread_only=unread_only, channel=channel,
-        archived=archived, limit=limit, offset=offset,
+        user_id=user_id,
+        organization_id=organization_id,
+        unread_only=unread_only,
+        channel=channel,
+        archived=archived,
+        limit=limit,
+        offset=offset,
     )
     return PaginatedResponse(
         data=result["items"],
@@ -168,7 +174,9 @@ async def mark_notification_read(
     await require_org_role(organization_id, "viewer", user_id, db)
     notif = await service.notif_repo.find_by_id(notification_id)
     if not notif or notif.organization_id != organization_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Notification not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Notification not found"
+        ) from None
     await service.mark_read(notification_id)
     return {"status": "ok"}
 
@@ -196,7 +204,9 @@ async def archive_notification(
     await require_org_role(organization_id, "viewer", user_id, db)
     notif = await service.notif_repo.find_by_id(notification_id)
     if not notif or notif.organization_id != organization_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Notification not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Notification not found"
+        ) from None
     await service.archive_notification(notification_id)
     return {"status": "ok"}
 
@@ -213,8 +223,11 @@ async def search_notifications(
 ) -> list[dict]:
     await require_org_role(organization_id, "viewer", user_id, db)
     return await service.search_notifications(
-        user_id=user_id, organization_id=organization_id,
-        q=q, limit=limit, offset=offset,
+        user_id=user_id,
+        organization_id=organization_id,
+        q=q,
+        limit=limit,
+        offset=offset,
     )
 
 
@@ -229,18 +242,24 @@ async def send_notification(
     try:
         notification = await service.send(
             organization_id=request.organization_id,
-            user_id=request.user_id, type=request.type,
-            title=request.title, body=request.body,
+            user_id=request.user_id,
+            type=request.type,
+            title=request.title,
+            body=request.body,
             resource_type=request.resource_type,
             resource_id=request.resource_id,
             channel=request.channel,
         )
     except ValidationError as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
     return {"id": str(notification.id), "status": "sent"}
 
 
-@router.post("/notifications/send-from-template", status_code=201, summary="Send notification from template")
+@router.post(
+    "/notifications/send-from-template", status_code=201, summary="Send notification from template"
+)
 async def send_from_template(
     request: SendFromTemplateRequest,
     service: NotificationHubService = Depends(get_service),
@@ -251,19 +270,27 @@ async def send_from_template(
     try:
         notification = await service.send_from_template(
             organization_id=request.organization_id,
-            user_id=request.user_id, template_id=request.template_id,
+            user_id=request.user_id,
+            template_id=request.template_id,
             variables=request.variables,
             resource_type=request.resource_type,
             resource_id=request.resource_id,
         )
     except (EntityNotFoundError, ValidationError) as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
     return {"id": str(notification.id), "status": "sent"}
 
 
 # ── Templates ────────────────────────────────────────────────────────────────
 
-@router.post("/notification-templates", status_code=status.HTTP_201_CREATED, summary="Create notification template")
+
+@router.post(
+    "/notification-templates",
+    status_code=status.HTTP_201_CREATED,
+    summary="Create notification template",
+)
 async def create_template(
     request: CreateTemplateRequest,
     organization_id: UUID = Query(...),
@@ -274,14 +301,18 @@ async def create_template(
     await require_org_role(organization_id, "member", user_id, db)
     try:
         t = await service.create_template(
-            org_id=organization_id, name=request.name,
-            type=request.type, channel=request.channel,
+            org_id=organization_id,
+            name=request.name,
+            type=request.type,
+            channel=request.channel,
             title_template=request.title_template,
             body_template=request.body_template,
             variables=request.variables,
         )
     except ValidationError as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
     return {"id": str(t.id), "name": t.name, "type": t.type, "channel": t.channel}
 
 
@@ -308,18 +339,30 @@ async def get_template(
     try:
         t = await service.get_template(template_id)
     except EntityNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Template not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Template not found"
+        ) from None
     if t.org_id is not None and t.org_id != organization_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Template not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Template not found"
+        ) from None
     return {
-        "id": str(t.id), "name": t.name, "type": t.type,
-        "channel": t.channel, "title_template": t.title_template,
-        "body_template": t.body_template, "variables": t.variables,
+        "id": str(t.id),
+        "name": t.name,
+        "type": t.type,
+        "channel": t.channel,
+        "title_template": t.title_template,
+        "body_template": t.body_template,
+        "variables": t.variables,
         "created_at": t.created_at.isoformat(),
     }
 
 
-@router.delete("/notification-templates/{template_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete notification template")
+@router.delete(
+    "/notification-templates/{template_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete notification template",
+)
 async def delete_template(
     template_id: UUID,
     organization_id: UUID = Query(...),
@@ -330,11 +373,14 @@ async def delete_template(
     await require_org_role(organization_id, "admin", user_id, db)
     existing = await service.template_repo.find_by_id(template_id)
     if not existing or (existing.org_id is not None and existing.org_id != organization_id):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Template not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Template not found"
+        ) from None
     await service.delete_template(template_id)
 
 
 # ── Preferences ──────────────────────────────────────────────────────────────
+
 
 @router.put("/notification-preferences", summary="Set notification preference")
 async def set_preference(
@@ -343,12 +389,16 @@ async def set_preference(
     user_id: UUID = Depends(require_user_id),
 ) -> dict:
     pref = await service.set_preference(
-        user_id=user_id, notification_type=request.notification_type,
-        channel=request.channel, enabled=request.enabled,
+        user_id=user_id,
+        notification_type=request.notification_type,
+        channel=request.channel,
+        enabled=request.enabled,
     )
     return {
-        "id": str(pref.id), "notification_type": pref.notification_type,
-        "channel": pref.channel, "enabled": pref.enabled,
+        "id": str(pref.id),
+        "notification_type": pref.notification_type,
+        "channel": pref.channel,
+        "enabled": pref.enabled,
     }
 
 
@@ -362,6 +412,7 @@ async def get_preferences(
 
 # ── Announcements ────────────────────────────────────────────────────────────
 
+
 @router.post("/announcements", status_code=status.HTTP_201_CREATED, summary="Create announcement")
 async def create_announcement(
     request: CreateAnnouncementRequest,
@@ -373,13 +424,18 @@ async def create_announcement(
     await require_org_role(organization_id, "admin", user_id, db)
     try:
         a = await service.create_announcement(
-            org_id=organization_id, title=request.title,
-            body=request.body, severity=request.severity,
-            target_role=request.target_role, created_by=user_id,
+            org_id=organization_id,
+            title=request.title,
+            body=request.body,
+            severity=request.severity,
+            target_role=request.target_role,
+            created_by=user_id,
             expires_at=request.expires_at,
         )
     except ValidationError as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
     return {"id": str(a.id), "title": a.title, "severity": a.severity}
 
 
@@ -405,12 +461,18 @@ async def dismiss_announcement(
     await require_org_role(organization_id, "viewer", user_id, db)
     announcement = await service.announcement_repo.find_by_id(announcement_id)
     if not announcement or announcement.organization_id != organization_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Announcement not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Announcement not found"
+        ) from None
     await service.dismiss_announcement(announcement_id, user_id)
     return {"status": "ok"}
 
 
-@router.delete("/announcements/{announcement_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete announcement")
+@router.delete(
+    "/announcements/{announcement_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete announcement",
+)
 async def delete_announcement(
     announcement_id: UUID,
     organization_id: UUID = Query(...),
@@ -421,5 +483,7 @@ async def delete_announcement(
     await require_org_role(organization_id, "admin", user_id, db)
     announcement = await service.announcement_repo.find_by_id(announcement_id)
     if not announcement or announcement.organization_id != organization_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Announcement not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Announcement not found"
+        ) from None
     await service.delete_announcement(announcement_id)

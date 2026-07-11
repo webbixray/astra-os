@@ -229,9 +229,7 @@ class EventBus:
     async def _listen_redis(cls) -> None:
         try:
             while cls._redis_enabled and cls._pubsub:
-                message = await cls._pubsub.get_message(
-                    ignore_subscribe_messages=True, timeout=1.0
-                )
+                message = await cls._pubsub.get_message(ignore_subscribe_messages=True, timeout=1.0)
                 if message and message["type"] == "message":
                     try:
                         event = DomainEvent.from_json(message["data"])
@@ -279,7 +277,9 @@ class EventBus:
             try:
                 await cls._redis_client.publish(REDIS_CHANNEL, event.to_json())
             except Exception:
-                logger.warning("EventBus: failed to publish event to Redis: %s", event.event_type.value)
+                logger.warning(
+                    "EventBus: failed to publish event to Redis: %s", event.event_type.value
+                )
 
     @classmethod
     async def _dispatch_local(cls, event: DomainEvent) -> None:

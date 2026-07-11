@@ -57,7 +57,7 @@ ignore = [
     "D100", "D101", "D102", "D103", "D104", "D105", "D106", "D107",
     "D203", "D213", "D407", "D415",
     # ANN is too strict for initial pass
-    "ANN001", "ANN002", "ANN003", "ANN101", "ANN102", "ANN201", "ANN202", "ANN204",
+    "ANN001", "ANN002", "ANN003", "ANN201", "ANN202", "ANN204",
     "ANN205", "ANN206", "ANN401",
     # Style preferences - not errors
     "COM812", "COM819",
@@ -74,8 +74,9 @@ ignore = [
     # Can be enabled incrementally
     "FAST002", "E501", "TRY003", "EM101", "EM102", "B904",
     "ARG001", "ARG002", "INP001", "A002", "BLE001",
-    "UP042", "D400", "FBT001", "S311", "B011", "PT015",
+    "UP042", "D400", "FBT001", "FBT002", "S311", "B011", "PT015",
     "SLF001", "SIM102", "S105", "S106",
+    "PLW0603", "ASYNC240", "TC002",
 ]
 
 [tool.ruff.format]

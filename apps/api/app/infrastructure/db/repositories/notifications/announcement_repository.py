@@ -27,7 +27,9 @@ class AnnouncementRepository:
 
     async def find_by_id(self, announcement_id: UUID) -> BroadcastAnnouncement | None:
         result = await self.session.execute(
-            select(BroadcastAnnouncementModel).where(BroadcastAnnouncementModel.id == announcement_id)
+            select(BroadcastAnnouncementModel).where(
+                BroadcastAnnouncementModel.id == announcement_id
+            )
         )
         m = result.scalar_one_or_none()
         return m.to_domain() if m else None

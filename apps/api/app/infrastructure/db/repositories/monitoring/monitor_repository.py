@@ -24,9 +24,13 @@ class AuditLogRepository:
         return model.to_domain()
 
     async def find_by_org(
-        self, org_id: UUID, action: str | None = None,
-        resource_type: str | None = None, user_id: UUID | None = None,
-        limit: int = 100, offset: int = 0,
+        self,
+        org_id: UUID,
+        action: str | None = None,
+        resource_type: str | None = None,
+        user_id: UUID | None = None,
+        limit: int = 100,
+        offset: int = 0,
     ) -> list[AuditLogEntry]:
         query = select(AuditLogEntryModel).where(AuditLogEntryModel.organization_id == org_id)
         if action:
@@ -40,8 +44,11 @@ class AuditLogRepository:
         return [m.to_domain() for m in result.scalars().all()]
 
     async def count_by_org(
-        self, org_id: UUID, action: str | None = None,
-        resource_type: str | None = None, user_id: UUID | None = None,
+        self,
+        org_id: UUID,
+        action: str | None = None,
+        resource_type: str | None = None,
+        user_id: UUID | None = None,
     ) -> int:
         query = select(func.count()).where(AuditLogEntryModel.organization_id == org_id)
         if action:
@@ -75,8 +82,12 @@ class JobRecordRepository:
         return model.to_domain()
 
     async def find_by_org(
-        self, org_id: UUID, status: str | None = None,
-        job_type: str | None = None, limit: int = 100, offset: int = 0,
+        self,
+        org_id: UUID,
+        status: str | None = None,
+        job_type: str | None = None,
+        limit: int = 100,
+        offset: int = 0,
     ) -> list[JobRecord]:
         query = select(JobRecordModel).where(JobRecordModel.organization_id == org_id)
         if status:
@@ -103,7 +114,9 @@ class JobRecordRepository:
         await self.session.flush()
 
     async def count_by_org(
-        self, org_id: UUID, status: str | None = None,
+        self,
+        org_id: UUID,
+        status: str | None = None,
         job_type: str | None = None,
     ) -> int:
         query = select(func.count()).where(JobRecordModel.organization_id == org_id)
@@ -115,9 +128,11 @@ class JobRecordRepository:
         return result.scalar() or 0
 
     async def count_by_status(self, org_id: UUID) -> dict[str, int]:
-        query = select(JobRecordModel.status, func.count()).where(
-            JobRecordModel.organization_id == org_id
-        ).group_by(JobRecordModel.status)
+        query = (
+            select(JobRecordModel.status, func.count())
+            .where(JobRecordModel.organization_id == org_id)
+            .group_by(JobRecordModel.status)
+        )
         result = await self.session.execute(query)
         return dict(result.all())
 
@@ -133,13 +148,17 @@ class ApiUsageRepository:
         return model.to_domain()
 
     async def find_by_org(
-        self, org_id: UUID, limit: int = 100, offset: int = 0,
+        self,
+        org_id: UUID,
+        limit: int = 100,
+        offset: int = 0,
     ) -> list[ApiUsageRecord]:
         result = await self.session.execute(
             select(ApiUsageRecordModel)
             .where(ApiUsageRecordModel.organization_id == org_id)
             .order_by(ApiUsageRecordModel.created_at.desc())
-            .limit(limit).offset(offset)
+            .limit(limit)
+            .offset(offset)
         )
         return [m.to_domain() for m in result.scalars().all()]
 
@@ -150,10 +169,13 @@ class ApiUsageRepository:
         return result.scalar() or 0
 
     async def get_stats(
-        self, org_id: UUID, since: datetime | None = None,
+        self,
+        org_id: UUID,
+        since: datetime | None = None,
     ) -> dict:
         query = select(
-            func.count(), func.avg(ApiUsageRecordModel.response_time_ms),
+            func.count(),
+            func.avg(ApiUsageRecordModel.response_time_ms),
             func.max(ApiUsageRecordModel.response_time_ms),
         ).where(ApiUsageRecordModel.organization_id == org_id)
         if since:
@@ -168,14 +190,21 @@ class ApiUsageRepository:
 
     async def count_by_endpoint(self, org_id: UUID, since: datetime | None = None) -> list[dict]:
         query = select(
-            ApiUsageRecordModel.endpoint, ApiUsageRecordModel.method,
-            func.count(), func.avg(ApiUsageRecordModel.response_time_ms),
+            ApiUsageRecordModel.endpoint,
+            ApiUsageRecordModel.method,
+            func.count(),
+            func.avg(ApiUsageRecordModel.response_time_ms),
         ).where(ApiUsageRecordModel.organization_id == org_id)
         if since:
             query = query.where(ApiUsageRecordModel.created_at >= since)
         query = query.group_by(ApiUsageRecordModel.endpoint, ApiUsageRecordModel.method)
         result = await self.session.execute(query)
         return [
-            {"endpoint": r[0], "method": r[1], "count": r[2], "avg_response_time_ms": round(r[3] or 0, 2)}
+            {
+                "endpoint": r[0],
+                "method": r[1],
+                "count": r[2],
+                "avg_response_time_ms": round(r[3] or 0, 2),
+            }
             for r in result.all()
         ]

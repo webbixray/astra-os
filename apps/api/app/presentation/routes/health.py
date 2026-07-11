@@ -54,9 +54,7 @@ async def health_check(
             from temporalio.client import Client
 
             t0 = time.monotonic()
-            client = await asyncio.wait_for(
-                Client.connect(config.temporal_host), timeout=5.0
-            )
+            client = await asyncio.wait_for(Client.connect(config.temporal_host), timeout=5.0)
             await client.service.health_check()
             await client.close()
             checks["temporal"] = True

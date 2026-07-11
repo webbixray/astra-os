@@ -67,7 +67,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if any(path.startswith(w) for w in self.whitelist_paths):
             return await call_next(request)
 
-        client_key = str(getattr(request.state, "user_id", "")) or (request.client.host if request.client else "unknown")
+        client_key = str(getattr(request.state, "user_id", "")) or (
+            request.client.host if request.client else "unknown"
+        )
         if client_key in {"unknown", ""}:
             client_key = f"ip:{request.client.host}" if request.client else "unknown"
 
@@ -110,7 +112,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self._add_rate_limit_headers(response, limit, remaining, reset_at)
         return response
 
-    def _add_rate_limit_headers(self, response: Response, limit: int, remaining: int, reset_at: int) -> None:
+    def _add_rate_limit_headers(
+        self, response: Response, limit: int, remaining: int, reset_at: int
+    ) -> None:
         response.headers["X-RateLimit-Limit"] = str(limit)
         response.headers["X-RateLimit-Remaining"] = str(remaining)
         response.headers["X-RateLimit-Reset"] = str(reset_at)

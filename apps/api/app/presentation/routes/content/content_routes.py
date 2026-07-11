@@ -40,19 +40,27 @@ async def get_content_repo(db: AsyncSession = Depends(get_db)) -> ContentReposit
     return ContentRepositoryImpl(db)
 
 
-async def get_create_use_case(repo: ContentRepositoryImpl = Depends(get_content_repo)) -> CreateContentUseCase:
+async def get_create_use_case(
+    repo: ContentRepositoryImpl = Depends(get_content_repo),
+) -> CreateContentUseCase:
     return CreateContentUseCase(repo)
 
 
-async def get_get_use_case(repo: ContentRepositoryImpl = Depends(get_content_repo)) -> GetContentUseCase:
+async def get_get_use_case(
+    repo: ContentRepositoryImpl = Depends(get_content_repo),
+) -> GetContentUseCase:
     return GetContentUseCase(repo)
 
 
-async def get_list_use_case(repo: ContentRepositoryImpl = Depends(get_content_repo)) -> ListContentUseCase:
+async def get_list_use_case(
+    repo: ContentRepositoryImpl = Depends(get_content_repo),
+) -> ListContentUseCase:
     return ListContentUseCase(repo)
 
 
-async def get_update_use_case(repo: ContentRepositoryImpl = Depends(get_content_repo)) -> UpdateContentUseCase:
+async def get_update_use_case(
+    repo: ContentRepositoryImpl = Depends(get_content_repo),
+) -> UpdateContentUseCase:
     return UpdateContentUseCase(repo)
 
 
@@ -75,7 +83,9 @@ async def create_content(
             brand_profile_id=request.brand_profile_id,
         )
     except ValidationError as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
     return ContentResponse(
         id=content.id,
         campaign_id=content.campaign_id,
@@ -106,7 +116,9 @@ async def get_content(
         content = await use_case.execute(content_id=content_id)
         await require_org_role(content.organization_id, "viewer", user_id, db)
     except EntityNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Content not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Content not found"
+        ) from None
     return ContentResponse(
         id=content.id,
         campaign_id=content.campaign_id,
@@ -188,9 +200,13 @@ async def update_content(
             status=request.status,
         )
     except EntityNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Content not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Content not found"
+        ) from None
     except ValidationError as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
     return ContentResponse(
         id=content.id,
         campaign_id=content.campaign_id,

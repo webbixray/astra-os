@@ -126,19 +126,27 @@ async def get_campaign_repo(db: AsyncSession = Depends(get_db)) -> CampaignRepos
     return CampaignRepositoryImpl(db)
 
 
-async def get_create_use_case(repo: CampaignRepositoryImpl = Depends(get_campaign_repo)) -> CreateCampaignUseCase:
+async def get_create_use_case(
+    repo: CampaignRepositoryImpl = Depends(get_campaign_repo),
+) -> CreateCampaignUseCase:
     return CreateCampaignUseCase(repo)
 
 
-async def get_get_use_case(repo: CampaignRepositoryImpl = Depends(get_campaign_repo)) -> GetCampaignUseCase:
+async def get_get_use_case(
+    repo: CampaignRepositoryImpl = Depends(get_campaign_repo),
+) -> GetCampaignUseCase:
     return GetCampaignUseCase(repo)
 
 
-async def get_list_use_case(repo: CampaignRepositoryImpl = Depends(get_campaign_repo)) -> ListCampaignsUseCase:
+async def get_list_use_case(
+    repo: CampaignRepositoryImpl = Depends(get_campaign_repo),
+) -> ListCampaignsUseCase:
     return ListCampaignsUseCase(repo)
 
 
-async def get_update_use_case(repo: CampaignRepositoryImpl = Depends(get_campaign_repo)) -> UpdateCampaignUseCase:
+async def get_update_use_case(
+    repo: CampaignRepositoryImpl = Depends(get_campaign_repo),
+) -> UpdateCampaignUseCase:
     return UpdateCampaignUseCase(repo)
 
 
@@ -147,15 +155,21 @@ async def get_budget_repo(db: AsyncSession = Depends(get_db)) -> CampaignBudgetR
     return CampaignBudgetRepository(db)
 
 
-async def get_set_budget_uc(repo: CampaignBudgetRepository = Depends(get_budget_repo)) -> SetCampaignBudgetUseCase:
+async def get_set_budget_uc(
+    repo: CampaignBudgetRepository = Depends(get_budget_repo),
+) -> SetCampaignBudgetUseCase:
     return SetCampaignBudgetUseCase(repo)
 
 
-async def get_get_budget_uc(repo: CampaignBudgetRepository = Depends(get_budget_repo)) -> GetCampaignBudgetUseCase:
+async def get_get_budget_uc(
+    repo: CampaignBudgetRepository = Depends(get_budget_repo),
+) -> GetCampaignBudgetUseCase:
     return GetCampaignBudgetUseCase(repo)
 
 
-async def get_record_spend_uc(repo: CampaignBudgetRepository = Depends(get_budget_repo)) -> RecordSpendUseCase:
+async def get_record_spend_uc(
+    repo: CampaignBudgetRepository = Depends(get_budget_repo),
+) -> RecordSpendUseCase:
     return RecordSpendUseCase(repo)
 
 
@@ -164,19 +178,27 @@ async def get_template_repo(db: AsyncSession = Depends(get_db)) -> CampaignTempl
     return CampaignTemplateRepository(db)
 
 
-async def get_create_template_uc(repo: CampaignTemplateRepository = Depends(get_template_repo)) -> CreateTemplateUseCase:
+async def get_create_template_uc(
+    repo: CampaignTemplateRepository = Depends(get_template_repo),
+) -> CreateTemplateUseCase:
     return CreateTemplateUseCase(repo)
 
 
-async def get_list_templates_uc(repo: CampaignTemplateRepository = Depends(get_template_repo)) -> ListTemplatesUseCase:
+async def get_list_templates_uc(
+    repo: CampaignTemplateRepository = Depends(get_template_repo),
+) -> ListTemplatesUseCase:
     return ListTemplatesUseCase(repo)
 
 
-async def get_get_template_uc(repo: CampaignTemplateRepository = Depends(get_template_repo)) -> GetTemplateUseCase:
+async def get_get_template_uc(
+    repo: CampaignTemplateRepository = Depends(get_template_repo),
+) -> GetTemplateUseCase:
     return GetTemplateUseCase(repo)
 
 
-async def get_delete_template_uc(repo: CampaignTemplateRepository = Depends(get_template_repo)) -> DeleteTemplateUseCase:
+async def get_delete_template_uc(
+    repo: CampaignTemplateRepository = Depends(get_template_repo),
+) -> DeleteTemplateUseCase:
     return DeleteTemplateUseCase(repo)
 
 
@@ -192,11 +214,15 @@ async def get_abtest_repo(db: AsyncSession = Depends(get_db)) -> ABTestRepositor
     return ABTestRepository(db)
 
 
-async def get_create_abtest_uc(repo: ABTestRepository = Depends(get_abtest_repo)) -> CreateABTestUseCase:
+async def get_create_abtest_uc(
+    repo: ABTestRepository = Depends(get_abtest_repo),
+) -> CreateABTestUseCase:
     return CreateABTestUseCase(repo)
 
 
-async def get_list_abtests_uc(repo: ABTestRepository = Depends(get_abtest_repo)) -> ListABTestsUseCase:
+async def get_list_abtests_uc(
+    repo: ABTestRepository = Depends(get_abtest_repo),
+) -> ListABTestsUseCase:
     return ListABTestsUseCase(repo)
 
 
@@ -204,19 +230,27 @@ async def get_get_abtest_uc(repo: ABTestRepository = Depends(get_abtest_repo)) -
     return GetABTestUseCase(repo)
 
 
-async def get_add_variant_uc(repo: ABTestRepository = Depends(get_abtest_repo)) -> AddVariantUseCase:
+async def get_add_variant_uc(
+    repo: ABTestRepository = Depends(get_abtest_repo),
+) -> AddVariantUseCase:
     return AddVariantUseCase(repo)
 
 
-async def get_start_abtest_uc(repo: ABTestRepository = Depends(get_abtest_repo)) -> StartABTestUseCase:
+async def get_start_abtest_uc(
+    repo: ABTestRepository = Depends(get_abtest_repo),
+) -> StartABTestUseCase:
     return StartABTestUseCase(repo)
 
 
-async def get_determine_winner_uc(repo: ABTestRepository = Depends(get_abtest_repo)) -> DetermineWinnerUseCase:
+async def get_determine_winner_uc(
+    repo: ABTestRepository = Depends(get_abtest_repo),
+) -> DetermineWinnerUseCase:
     return DetermineWinnerUseCase(repo)
 
 
-async def get_record_metrics_uc(repo: ABTestRepository = Depends(get_abtest_repo)) -> RecordVariantMetricsUseCase:
+async def get_record_metrics_uc(
+    repo: ABTestRepository = Depends(get_abtest_repo),
+) -> RecordVariantMetricsUseCase:
     return RecordVariantMetricsUseCase(repo)
 
 
@@ -242,7 +276,9 @@ async def create_campaign(
             objective=request.objective,
         )
     except ValidationError as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
     campaigns_created.inc()
     return CampaignResponse(
         id=campaign.id,
@@ -274,7 +310,9 @@ async def get_campaign(
         campaign = await use_case.execute(campaign_id=campaign_id)
         await require_org_role(campaign.organization_id, "viewer", user_id, db)
     except EntityNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found"
+        ) from None
     return CampaignResponse(
         id=campaign.id,
         organization_id=campaign.organization_id,
@@ -357,9 +395,13 @@ async def update_campaign(
             budget_amount=request.budget_amount,
         )
     except EntityNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found"
+        ) from None
     except ValidationError as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
     return CampaignResponse(
         id=campaign.id,
         organization_id=campaign.organization_id,
@@ -381,6 +423,7 @@ async def update_campaign(
 
 # ── Budget endpoints ──────────────────────────────────────────────────────────
 
+
 @router.get("/{campaign_id}/budget", summary="Get campaign budget details")
 async def get_campaign_budget(
     campaign_id: UUID,
@@ -391,15 +434,20 @@ async def get_campaign_budget(
     from app.infrastructure.db.repositories.campaigns.campaign_repository import (
         CampaignRepositoryImpl,
     )
+
     campaign_repo = CampaignRepositoryImpl(db)
     campaign = await campaign_repo.find_by_id(campaign_id)
     if not campaign:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found"
+        ) from None
     await require_org_role(campaign.organization_id, "viewer", user_id, db)
     try:
         budget = await use_case.execute(campaign_id=campaign_id)
     except EntityNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Budget not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Budget not found"
+        ) from None
     return {
         "id": str(budget.id),
         "campaign_id": str(budget.campaign_id),
@@ -426,6 +474,7 @@ async def set_campaign_budget(
     from app.infrastructure.db.repositories.campaigns.campaign_repository import (
         CampaignRepositoryImpl,
     )
+
     campaign_repo = CampaignRepositoryImpl(db)
     campaign = await campaign_repo.find_by_id(campaign_id)
     if not campaign:
@@ -441,7 +490,9 @@ async def set_campaign_budget(
             period_end=request.period_end,
         )
     except ValidationError as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
     return {
         "id": str(budget.id),
         "campaign_id": str(budget.campaign_id),
@@ -453,7 +504,9 @@ async def set_campaign_budget(
     }
 
 
-@router.post("/{campaign_id}/budget/spend", status_code=status.HTTP_200_OK, summary="Record campaign spend")
+@router.post(
+    "/{campaign_id}/budget/spend", status_code=status.HTTP_200_OK, summary="Record campaign spend"
+)
 async def record_campaign_spend(
     campaign_id: UUID,
     request: RecordSpendRequest,
@@ -464,17 +517,24 @@ async def record_campaign_spend(
     from app.infrastructure.db.repositories.campaigns.campaign_repository import (
         CampaignRepositoryImpl,
     )
+
     campaign_repo = CampaignRepositoryImpl(db)
     campaign = await campaign_repo.find_by_id(campaign_id)
     if not campaign:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found"
+        ) from None
     await require_org_role(campaign.organization_id, "member", user_id, db)
     try:
         budget = await use_case.execute(campaign_id=campaign_id, amount=request.amount)
     except EntityNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Budget not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Budget not found"
+        ) from None
     except ValidationError as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
     return {
         "spent": budget.spent,
         "remaining": budget.remaining,
@@ -484,7 +544,10 @@ async def record_campaign_spend(
 
 # ── Template endpoints ────────────────────────────────────────────────────────
 
-@router.post("/templates", status_code=status.HTTP_201_CREATED, summary="Create a campaign template")
+
+@router.post(
+    "/templates", status_code=status.HTTP_201_CREATED, summary="Create a campaign template"
+)
 async def create_template(
     request: CreateTemplateRequest,
     use_case: CreateTemplateUseCase = Depends(get_create_template_uc),
@@ -552,7 +615,9 @@ async def get_template(
         template = await use_case.execute(template_id=template_id)
         await require_org_role(template.organization_id, "viewer", user_id, db)
     except EntityNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Template not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Template not found"
+        ) from None
     return {
         "id": str(template.id),
         "name": template.name,
@@ -566,7 +631,11 @@ async def get_template(
     }
 
 
-@router.delete("/templates/{template_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete a campaign template")
+@router.delete(
+    "/templates/{template_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete a campaign template",
+)
 async def delete_template(
     template_id: UUID,
     get_template: GetTemplateUseCase = Depends(get_get_template_uc),
@@ -579,10 +648,14 @@ async def delete_template(
         await require_org_role(template.organization_id, "member", user_id, db)
         await delete_template_uc.execute(template_id=template_id)
     except EntityNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Template not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Template not found"
+        ) from None
 
 
-@router.post("/from-template", status_code=status.HTTP_201_CREATED, summary="Clone campaign from template")
+@router.post(
+    "/from-template", status_code=status.HTTP_201_CREATED, summary="Clone campaign from template"
+)
 async def clone_from_template(
     request: CloneFromTemplateRequest,
     use_case: CloneCampaignFromTemplateUseCase = Depends(get_clone_uc),
@@ -599,7 +672,9 @@ async def clone_from_template(
             start_date=request.start_date,
         )
     except EntityNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Template not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Template not found"
+        ) from None
     return CampaignResponse(
         id=campaign.id,
         organization_id=campaign.organization_id,
@@ -621,7 +696,10 @@ async def clone_from_template(
 
 # ── A/B test endpoints ────────────────────────────────────────────────────────
 
-@router.post("/{campaign_id}/ab-tests", status_code=status.HTTP_201_CREATED, summary="Create an A/B test")
+
+@router.post(
+    "/{campaign_id}/ab-tests", status_code=status.HTTP_201_CREATED, summary="Create an A/B test"
+)
 async def create_ab_test(
     campaign_id: UUID,
     request: CreateABTestRequest,
@@ -632,6 +710,7 @@ async def create_ab_test(
     from app.infrastructure.db.repositories.campaigns.campaign_repository import (
         CampaignRepositoryImpl,
     )
+
     campaign_repo = CampaignRepositoryImpl(db)
     campaign = await campaign_repo.find_by_id(campaign_id)
     if not campaign:
@@ -647,7 +726,9 @@ async def create_ab_test(
             goal_metric=request.goal_metric,
         )
     except ValidationError as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
     return {
         "id": str(test.id),
         "campaign_id": str(test.campaign_id),
@@ -668,10 +749,13 @@ async def list_ab_tests(
     from app.infrastructure.db.repositories.campaigns.campaign_repository import (
         CampaignRepositoryImpl,
     )
+
     campaign_repo = CampaignRepositoryImpl(db)
     campaign = await campaign_repo.find_by_id(campaign_id)
     if not campaign:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found"
+        ) from None
     await require_org_role(campaign.organization_id, "viewer", user_id, db)
     tests = await use_case.execute(campaign_id=campaign_id)
     return [
@@ -700,13 +784,18 @@ async def get_ab_test(
         from app.infrastructure.db.repositories.campaigns.campaign_repository import (
             CampaignRepositoryImpl,
         )
+
         campaign_repo = CampaignRepositoryImpl(db)
         campaign = await campaign_repo.find_by_id(test.campaign_id)
         if not campaign:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found"
+            ) from None
         await require_org_role(campaign.organization_id, "viewer", user_id, db)
     except EntityNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="AB test not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="AB test not found"
+        ) from None
     return {
         "id": str(test.id),
         "campaign_id": str(test.campaign_id),
@@ -736,7 +825,11 @@ async def get_ab_test(
     }
 
 
-@router.post("/ab-tests/{test_id}/variants", status_code=status.HTTP_201_CREATED, summary="Add variant to A/B test")
+@router.post(
+    "/ab-tests/{test_id}/variants",
+    status_code=status.HTTP_201_CREATED,
+    summary="Add variant to A/B test",
+)
 async def add_variant(
     test_id: UUID,
     request: AddVariantRequest,
@@ -750,10 +843,13 @@ async def add_variant(
         from app.infrastructure.db.repositories.campaigns.campaign_repository import (
             CampaignRepositoryImpl,
         )
+
         campaign_repo = CampaignRepositoryImpl(db)
         campaign = await campaign_repo.find_by_id(existing_test.campaign_id)
         if not campaign:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found"
+            ) from None
         await require_org_role(campaign.organization_id, "member", user_id, db)
         test = await use_case.execute(
             test_id=test_id,
@@ -764,7 +860,9 @@ async def add_variant(
         )
     except (EntityNotFoundError, ValidationError) as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND if isinstance(e, EntityNotFoundError) else status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_404_NOT_FOUND
+            if isinstance(e, EntityNotFoundError)
+            else status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(e),
         ) from None
     return {
@@ -794,18 +892,27 @@ async def start_ab_test(
         from app.infrastructure.db.repositories.campaigns.campaign_repository import (
             CampaignRepositoryImpl,
         )
+
         campaign_repo = CampaignRepositoryImpl(db)
         campaign = await campaign_repo.find_by_id(existing_test.campaign_id)
         if not campaign:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found"
+            ) from None
         await require_org_role(campaign.organization_id, "member", user_id, db)
         test = await use_case.execute(test_id=test_id)
     except (EntityNotFoundError, ValidationError) as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND if isinstance(e, EntityNotFoundError) else status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_404_NOT_FOUND
+            if isinstance(e, EntityNotFoundError)
+            else status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(e),
         ) from None
-    return {"id": str(test.id), "status": test.status, "start_date": test.start_date.isoformat() if test.start_date else None}
+    return {
+        "id": str(test.id),
+        "status": test.status,
+        "start_date": test.start_date.isoformat() if test.start_date else None,
+    }
 
 
 @router.post("/ab-tests/{test_id}/determine-winner", summary="Determine A/B test winner")
@@ -821,14 +928,19 @@ async def determine_winner(
         from app.infrastructure.db.repositories.campaigns.campaign_repository import (
             CampaignRepositoryImpl,
         )
+
         campaign_repo = CampaignRepositoryImpl(db)
         campaign = await campaign_repo.find_by_id(existing_test.campaign_id)
         if not campaign:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found"
+            ) from None
         await require_org_role(campaign.organization_id, "member", user_id, db)
         test = await use_case.execute(test_id=test_id)
     except EntityNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="AB test not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="AB test not found"
+        ) from None
     return {
         "id": str(test.id),
         "status": test.status,
@@ -851,10 +963,13 @@ async def record_variant_metrics(
         from app.infrastructure.db.repositories.campaigns.campaign_repository import (
             CampaignRepositoryImpl,
         )
+
         campaign_repo = CampaignRepositoryImpl(db)
         campaign = await campaign_repo.find_by_id(existing_test.campaign_id)
         if not campaign:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found"
+            ) from None
         await require_org_role(campaign.organization_id, "member", user_id, db)
         test = await use_case.execute(
             test_id=test_id,
@@ -865,5 +980,7 @@ async def record_variant_metrics(
             spend=request.spend,
         )
     except EntityNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Variant not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Variant not found"
+        ) from None
     return {"id": str(test.id), "status": "metrics_recorded"}

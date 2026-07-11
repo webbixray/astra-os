@@ -32,11 +32,11 @@ class DashboardWidgetRepository:
 
 # ── Metric Queries ──────────────────────────────────────────────────────────
 
+
 async def _metric_campaigns_total(db: AsyncSession, org_id: UUID) -> int:
-    result = await db.execute(
-        select(func.count()).where(CampaignModel.organization_id == org_id)
-    )
+    result = await db.execute(select(func.count()).where(CampaignModel.organization_id == org_id))
     return result.scalar() or 0
+
 
 async def _metric_campaigns_active(db: AsyncSession, org_id: UUID) -> int:
     result = await db.execute(
@@ -47,6 +47,7 @@ async def _metric_campaigns_active(db: AsyncSession, org_id: UUID) -> int:
     )
     return result.scalar() or 0
 
+
 async def _metric_campaigns_by_status(db: AsyncSession, org_id: UUID) -> dict:
     rows = await db.execute(
         select(CampaignModel.status, func.count())
@@ -55,29 +56,37 @@ async def _metric_campaigns_by_status(db: AsyncSession, org_id: UUID) -> dict:
     )
     return {row[0]: row[1] for row in rows.all()}
 
+
 async def _metric_ad_sum(db: AsyncSession, org_id: UUID, since: datetime, column) -> float:
     result = await db.execute(
-        select(func.coalesce(func.sum(column), 0))
-        .where(AdInsightModel.organization_id == org_id, AdInsightModel.date >= since)
+        select(func.coalesce(func.sum(column), 0)).where(
+            AdInsightModel.organization_id == org_id, AdInsightModel.date >= since
+        )
     )
     return float(result.scalar() or 0)
+
 
 async def _metric_ad_spend(db: AsyncSession, org_id: UUID, since: datetime) -> float:
     return await _metric_ad_sum(db, org_id, since, AdInsightModel.spend)
 
+
 async def _metric_ad_impressions(db: AsyncSession, org_id: UUID, since: datetime) -> int:
     return int(await _metric_ad_sum(db, org_id, since, AdInsightModel.impressions))
+
 
 async def _metric_ad_clicks(db: AsyncSession, org_id: UUID, since: datetime) -> int:
     return int(await _metric_ad_sum(db, org_id, since, AdInsightModel.clicks))
 
+
 async def _metric_ad_conversions(db: AsyncSession, org_id: UUID, since: datetime) -> int:
     return int(await _metric_ad_sum(db, org_id, since, AdInsightModel.conversions))
+
 
 async def _metric_ad_ctr(db: AsyncSession, org_id: UUID, since: datetime) -> float:
     impr = await _metric_ad_impressions(db, org_id, since)
     clk = await _metric_ad_clicks(db, org_id, since)
     return (clk / impr * 100) if impr > 0 else 0.0
+
 
 async def _metric_ad_spend_trend(db: AsyncSession, org_id: UUID, since: datetime) -> list:
     rows = await db.execute(
@@ -88,6 +97,7 @@ async def _metric_ad_spend_trend(db: AsyncSession, org_id: UUID, since: datetime
     )
     return [{"date": str(row[0]), "value": float(row[1])} for row in rows.all()]
 
+
 async def _metric_content_published(db: AsyncSession, org_id: UUID) -> int:
     result = await db.execute(
         select(func.count()).where(
@@ -97,6 +107,7 @@ async def _metric_content_published(db: AsyncSession, org_id: UUID) -> int:
     )
     return result.scalar() or 0
 
+
 async def _metric_content_by_type(db: AsyncSession, org_id: UUID) -> dict:
     rows = await db.execute(
         select(ContentModel.content_type, func.count())
@@ -105,31 +116,38 @@ async def _metric_content_by_type(db: AsyncSession, org_id: UUID) -> dict:
     )
     return {row[0]: row[1] for row in rows.all()}
 
+
 async def _metric_email_sent(db: AsyncSession, org_id: UUID) -> int:
     result = await db.execute(
-        select(func.coalesce(func.sum(EmailCampaignModel.sent_count), 0))
-        .where(EmailCampaignModel.organization_id == org_id)
+        select(func.coalesce(func.sum(EmailCampaignModel.sent_count), 0)).where(
+            EmailCampaignModel.organization_id == org_id
+        )
     )
     return int(result.scalar() or 0)
 
+
 async def _metric_email_open_rate(db: AsyncSession, org_id: UUID) -> float:
     sent_r = await db.execute(
-        select(func.coalesce(func.sum(EmailCampaignModel.sent_count), 0))
-        .where(EmailCampaignModel.organization_id == org_id)
+        select(func.coalesce(func.sum(EmailCampaignModel.sent_count), 0)).where(
+            EmailCampaignModel.organization_id == org_id
+        )
     )
     open_r = await db.execute(
-        select(func.coalesce(func.sum(EmailCampaignModel.open_count), 0))
-        .where(EmailCampaignModel.organization_id == org_id)
+        select(func.coalesce(func.sum(EmailCampaignModel.open_count), 0)).where(
+            EmailCampaignModel.organization_id == org_id
+        )
     )
     sent = int(sent_r.scalar() or 0)
     opens = int(open_r.scalar() or 0)
     return (opens / sent * 100) if sent > 0 else 0.0
+
 
 async def _metric_email_campaigns(db: AsyncSession, org_id: UUID) -> int:
     result = await db.execute(
         select(func.count()).where(EmailCampaignModel.organization_id == org_id)
     )
     return result.scalar() or 0
+
 
 _METRIC_HANDLERS: dict[str, tuple] = {
     "campaigns_total": (_metric_campaigns_total, False),
@@ -148,8 +166,8 @@ _METRIC_HANDLERS: dict[str, tuple] = {
     "email_campaigns": (_metric_email_campaigns, False),
 }
 
-async def query_metric(db: AsyncSession, org_id: UUID, metric: str,
-                       days: int = 30) -> dict:
+
+async def query_metric(db: AsyncSession, org_id: UUID, metric: str, days: int = 30) -> dict:
     since = datetime.now(UTC) - timedelta(days=days)
     handler = _METRIC_HANDLERS.get(metric)
     if handler is None:
@@ -161,8 +179,10 @@ async def query_metric(db: AsyncSession, org_id: UUID, metric: str,
 
 # ── Anomaly Detection ────────────────────────────────────────────────────────
 
-async def detect_anomalies(db: AsyncSession, org_id: UUID,
-                           metric: str = "ad_spend", days: int = 90) -> list[dict]:
+
+async def detect_anomalies(
+    db: AsyncSession, org_id: UUID, metric: str = "ad_spend", days: int = 90
+) -> list[dict]:
     since = datetime.now(UTC) - timedelta(days=days)
     rows = await db.execute(
         select(AdInsightModel.date, AdInsightModel.spend)
@@ -183,21 +203,24 @@ async def detect_anomalies(db: AsyncSession, org_id: UUID,
     for date_val, val in values:
         z = (val - mean) / stdev
         if abs(z) > 2.0:
-            anomalies.append({
-                "date": str(date_val),
-                "value": val,
-                "z_score": round(z, 2),
-                "severity": "high" if abs(z) > 3.0 else "medium",
-                "direction": "up" if z > 0 else "down",
-            })
+            anomalies.append(
+                {
+                    "date": str(date_val),
+                    "value": val,
+                    "z_score": round(z, 2),
+                    "severity": "high" if abs(z) > 3.0 else "medium",
+                    "direction": "up" if z > 0 else "down",
+                }
+            )
     return anomalies
 
 
 # ── Simple Prediction (Linear Regression) ────────────────────────────────────
 
-async def predict_metric(db: AsyncSession, org_id: UUID,
-                         metric: str = "ad_spend",
-                         periods: int = 7) -> list[dict]:
+
+async def predict_metric(
+    db: AsyncSession, org_id: UUID, metric: str = "ad_spend", periods: int = 7
+) -> list[dict]:
     since = datetime.now(UTC) - timedelta(days=90)
     rows = await db.execute(
         select(AdInsightModel.date, AdInsightModel.spend)
@@ -215,7 +238,11 @@ async def predict_metric(db: AsyncSession, org_id: UUID,
     sum_y = sum(y_vals)
     sum_xy = sum(x * y for x, y in zip(x_vals, y_vals, strict=False))
     sum_xx = sum(x * x for x in x_vals)
-    slope = (n * sum_xy - sum_x * sum_y) / (n * sum_xx - sum_x * sum_x) if (n * sum_xx - sum_x * sum_x) != 0 else 0
+    slope = (
+        (n * sum_xy - sum_x * sum_y) / (n * sum_xx - sum_x * sum_x)
+        if (n * sum_xx - sum_x * sum_x) != 0
+        else 0
+    )
     intercept = (sum_y - slope * sum_x) / n
 
     last_date = data[-1][0]
@@ -223,25 +250,32 @@ async def predict_metric(db: AsyncSession, org_id: UUID,
     for i in range(1, periods + 1):
         pred_date = last_date + timedelta(days=i)
         pred_val = slope * (n + i - 1) + intercept
-        predictions.append({
-            "date": str(pred_date),
-            "predicted_value": round(max(0, pred_val), 2),
-        })
+        predictions.append(
+            {
+                "date": str(pred_date),
+                "predicted_value": round(max(0, pred_val), 2),
+            }
+        )
     return predictions
 
 
 # ── Dashboard Service ────────────────────────────────────────────────────────
 
+
 class DashboardService:
-    def __init__(self, dash_repo: DashboardRepository,
-                 widget_repo: DashboardWidgetRepository,
-                 db: AsyncSession):
+    def __init__(
+        self,
+        dash_repo: DashboardRepository,
+        widget_repo: DashboardWidgetRepository,
+        db: AsyncSession,
+    ):
         self.dash_repo = dash_repo
         self.widget_repo = widget_repo
         self.db = db
 
-    async def create_dashboard(self, org_id: UUID, name: str, created_by: UUID,
-                               description: str = "") -> Dashboard:
+    async def create_dashboard(
+        self, org_id: UUID, name: str, created_by: UUID, description: str = ""
+    ) -> Dashboard:
         dash = Dashboard.create(org_id, name, created_by, description=description)
         return await self.dash_repo.save(dash)
 
@@ -253,8 +287,11 @@ class DashboardService:
             widgets_by_dashboard[w.dashboard_id] = widgets_by_dashboard.get(w.dashboard_id, 0) + 1
         return [
             {
-                "id": str(d.id), "name": d.name, "description": d.description,
-                "layout_columns": d.layout_columns, "is_default": d.is_default,
+                "id": str(d.id),
+                "name": d.name,
+                "description": d.description,
+                "layout_columns": d.layout_columns,
+                "is_default": d.is_default,
                 "widget_count": widgets_by_dashboard.get(d.id, 0),
                 "created_at": d.created_at.isoformat(),
             }
@@ -267,14 +304,22 @@ class DashboardService:
             raise EntityNotFoundError("Dashboard", str(dashboard_id))
         widgets = await self.widget_repo.find_by_dashboard(dashboard_id)
         return {
-            "id": str(dash.id), "name": dash.name, "description": dash.description,
-            "layout_columns": dash.layout_columns, "is_default": dash.is_default,
+            "id": str(dash.id),
+            "name": dash.name,
+            "description": dash.description,
+            "layout_columns": dash.layout_columns,
+            "is_default": dash.is_default,
             "created_at": dash.created_at.isoformat(),
             "widgets": [
                 {
-                    "id": str(w.id), "widget_type": w.widget_type, "title": w.title,
-                    "pos_x": w.pos_x, "pos_y": w.pos_y,
-                    "width": w.width, "height": w.height, "config": w.config,
+                    "id": str(w.id),
+                    "widget_type": w.widget_type,
+                    "title": w.title,
+                    "pos_x": w.pos_x,
+                    "pos_y": w.pos_y,
+                    "width": w.width,
+                    "height": w.height,
+                    "config": w.config,
                 }
                 for w in widgets
             ],
@@ -286,23 +331,42 @@ class DashboardService:
 
     # ── Widget management ────────────────────────────────────────────────
 
-    async def add_widget(self, dashboard_id: UUID, widget_type: str, title: str,
-                         pos_x: int = 0, pos_y: int = 0,
-                         width: int = 1, height: int = 1,
-                         config: dict | None = None) -> DashboardWidget:
+    async def add_widget(
+        self,
+        dashboard_id: UUID,
+        widget_type: str,
+        title: str,
+        pos_x: int = 0,
+        pos_y: int = 0,
+        width: int = 1,
+        height: int = 1,
+        config: dict | None = None,
+    ) -> DashboardWidget:
         dash = await self.dash_repo.find_by_id(dashboard_id)
         if dash is None:
             raise EntityNotFoundError("Dashboard", str(dashboard_id))
         widget = DashboardWidget.create(
-            dashboard_id=dashboard_id, widget_type=widget_type, title=title,
-            pos_x=pos_x, pos_y=pos_y, width=width, height=height, config=config,
+            dashboard_id=dashboard_id,
+            widget_type=widget_type,
+            title=title,
+            pos_x=pos_x,
+            pos_y=pos_y,
+            width=width,
+            height=height,
+            config=config,
         )
         return await self.widget_repo.save(widget)
 
-    async def update_widget(self, widget_id: UUID, title: str | None = None,
-                            pos_x: int | None = None, pos_y: int | None = None,
-                            width: int | None = None, height: int | None = None,
-                            config: dict | None = None) -> DashboardWidget:
+    async def update_widget(
+        self,
+        widget_id: UUID,
+        title: str | None = None,
+        pos_x: int | None = None,
+        pos_y: int | None = None,
+        width: int | None = None,
+        height: int | None = None,
+        config: dict | None = None,
+    ) -> DashboardWidget:
         widget = await self.widget_repo.find_by_id(widget_id)
         if widget is None:
             raise EntityNotFoundError("DashboardWidget", str(widget_id))
@@ -326,35 +390,40 @@ class DashboardService:
 
     # ── Data queries for rendering ────────────────────────────────────────
 
-    async def query_widget_data(self, widget: DashboardWidget,
-                                org_id: UUID, days: int = 30) -> dict:
+    async def query_widget_data(
+        self, widget: DashboardWidget, org_id: UUID, days: int = 30
+    ) -> dict:
         metric = widget.config.get("metric", "")
         return await query_metric(self.db, org_id, metric, days=days)
 
-    async def query_dashboard_data(self, dashboard_id: UUID,
-                                   org_id: UUID, days: int = 30) -> list[dict]:
+    async def query_dashboard_data(
+        self, dashboard_id: UUID, org_id: UUID, days: int = 30
+    ) -> list[dict]:
         widgets = await self.widget_repo.find_by_dashboard(dashboard_id)
         results = []
         for w in widgets:
             data = await self.query_widget_data(w, org_id, days=days)
-            results.append({
-                "widget_id": str(w.id),
-                "widget_type": w.widget_type,
-                "title": w.title,
-                "position": {"x": w.pos_x, "y": w.pos_y, "w": w.width, "h": w.height},
-                "config": w.config,
-                "data": data,
-            })
+            results.append(
+                {
+                    "widget_id": str(w.id),
+                    "widget_type": w.widget_type,
+                    "title": w.title,
+                    "position": {"x": w.pos_x, "y": w.pos_y, "w": w.width, "h": w.height},
+                    "config": w.config,
+                    "data": data,
+                }
+            )
         return results
 
-    async def get_anomalies(self, org_id: UUID, metric: str = "ad_spend",
-                            days: int = 90) -> list[dict]:
+    async def get_anomalies(
+        self, org_id: UUID, metric: str = "ad_spend", days: int = 90
+    ) -> list[dict]:
         return await detect_anomalies(self.db, org_id, metric=metric, days=days)
 
-    async def get_prediction(self, org_id: UUID, metric: str = "ad_spend",
-                             periods: int = 7) -> list[dict]:
+    async def get_prediction(
+        self, org_id: UUID, metric: str = "ad_spend", periods: int = 7
+    ) -> list[dict]:
         return await predict_metric(self.db, org_id, metric=metric, periods=periods)
 
-    async def query_single_metric(self, org_id: UUID, metric: str,
-                                   days: int = 30) -> dict:
+    async def query_single_metric(self, org_id: UUID, metric: str, days: int = 30) -> dict:
         return await query_metric(self.db, org_id, metric, days=days)

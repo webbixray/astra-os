@@ -22,6 +22,7 @@ router = APIRouter()
 
 # --- Schemas ---
 
+
 class ConnectAccountRequest(BaseModel):
     organization_id: UUID
     platform: str
@@ -53,6 +54,7 @@ class UpdateCreativeRequest(BaseModel):
 
 # --- Dependencies ---
 
+
 def get_account_service(db: AsyncSession = Depends(get_db)) -> AdAccountService:
     return AdAccountService(AdAccountRepository(db))
 
@@ -66,6 +68,7 @@ def get_creative_service(db: AsyncSession = Depends(get_db)) -> AdCreativeServic
 
 
 # --- Ad Account Routes ---
+
 
 @router.post("/ad/accounts", status_code=201)
 async def connect_account(
@@ -106,7 +109,9 @@ async def disconnect_account(
 ) -> dict:
     account = await service.get_by_id(account_id)
     if not account:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Account not found"
+        ) from None
     await require_org_role(account.organization_id, "admin", user_id, db)
     await require_feature("advertising_integration", account.organization_id, "auto", db)
     return await service.disconnect(account_id)
@@ -121,13 +126,16 @@ async def sync_account(
 ) -> dict:
     account = await service.get_by_id(account_id)
     if not account:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Account not found"
+        ) from None
     await require_org_role(account.organization_id, "viewer", user_id, db)
     await require_feature("advertising_integration", account.organization_id, "auto", db)
     return await service.sync(account_id)
 
 
 # --- Ad Campaign Routes ---
+
 
 @router.post("/ad/campaigns", status_code=201)
 async def create_ad_campaign(
@@ -167,13 +175,16 @@ async def sync_campaign(
 ) -> dict:
     campaign = await service.get_by_id(campaign_id)
     if not campaign:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found"
+        ) from None
     await require_org_role(campaign.organization_id, "viewer", user_id, db)
     await require_feature("advertising_integration", campaign.organization_id, "auto", db)
     return await service.sync_to_platform(campaign_id)
 
 
 # --- Ad Creative Routes ---
+
 
 @router.post("/ad/creatives", status_code=201)
 async def create_creative(
@@ -214,7 +225,9 @@ async def update_creative(
 ) -> dict:
     creative = await service.get_by_id(creative_id)
     if not creative:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Creative not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Creative not found"
+        ) from None
     await require_org_role(creative.organization_id, "viewer", user_id, db)
     await require_feature("advertising_integration", creative.organization_id, "auto", db)
     return await service.update(

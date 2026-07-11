@@ -51,7 +51,10 @@ def get_service(db: AsyncSession = Depends(get_db)) -> EnhancedReportingService:
 
 # ── Templates ────────────────────────────────────────────────────────────────
 
-@router.post("/reports/templates", status_code=status.HTTP_201_CREATED, summary="Create report template")
+
+@router.post(
+    "/reports/templates", status_code=status.HTTP_201_CREATED, summary="Create report template"
+)
 async def create_template(
     request: CreateTemplateRequest,
     organization_id: UUID = Query(...),
@@ -62,12 +65,17 @@ async def create_template(
     await require_org_role(organization_id, "admin", user_id, db)
     try:
         t = await service.create_template(
-            org_id=organization_id, name=request.name,
-            report_type=request.report_type, config=request.config,
-            description=request.description, created_by=user_id,
+            org_id=organization_id,
+            name=request.name,
+            report_type=request.report_type,
+            config=request.config,
+            description=request.description,
+            created_by=user_id,
         )
     except ValidationError as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
     return {"id": str(t.id), "name": t.name, "report_type": t.report_type}
 
 
@@ -94,10 +102,15 @@ async def get_template(
     try:
         t = await service.get_template(template_id)
     except EntityNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Template not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Template not found"
+        ) from None
     return {
-        "id": str(t.id), "name": t.name, "description": t.description,
-        "report_type": t.report_type, "config": t.config,
+        "id": str(t.id),
+        "name": t.name,
+        "description": t.description,
+        "report_type": t.report_type,
+        "config": t.config,
         "created_at": t.created_at.isoformat(),
     }
 
@@ -114,15 +127,23 @@ async def update_template(
     await require_org_role(organization_id, "member", user_id, db)
     try:
         t = await service.update_template(
-            template_id, name=request.name,
-            config=request.config, description=request.description,
+            template_id,
+            name=request.name,
+            config=request.config,
+            description=request.description,
         )
     except EntityNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Template not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Template not found"
+        ) from None
     return {"id": str(t.id), "name": t.name}
 
 
-@router.delete("/reports/templates/{template_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete report template")
+@router.delete(
+    "/reports/templates/{template_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete report template",
+)
 async def delete_template(
     template_id: UUID,
     organization_id: UUID = Query(...),
@@ -135,6 +156,7 @@ async def delete_template(
 
 
 # ── Generate & Export ────────────────────────────────────────────────────────
+
 
 @router.get("/reports/generate/{report_type}", summary="Generate report")
 async def generate_report(
@@ -149,21 +171,29 @@ async def generate_report(
     await require_org_role(organization_id, "viewer", user_id, db)
     try:
         content = await service.generate_report(
-            org_id=organization_id, report_type=report_type,
-            format=format, days=days,
+            org_id=organization_id,
+            report_type=report_type,
+            format=format,
+            days=days,
         )
     except ValidationError as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
     media_types = {"csv": "text/csv", "json": "application/json", "html": "text/html"}
     from fastapi.responses import PlainTextResponse
+
     return PlainTextResponse(
         content=content,
         media_type=media_types.get(format, "text/plain"),
-        headers={"Content-Disposition": f'attachment; filename="{re.sub(r"[^a-zA-Z0-9_-]", "", report_type)}_report.{re.sub(r"[^a-zA-Z0-9_-]", "", format)}"'},
+        headers={
+            "Content-Disposition": f'attachment; filename="{re.sub(r"[^a-zA-Z0-9_-]", "", report_type)}_report.{re.sub(r"[^a-zA-Z0-9_-]", "", format)}"'
+        },
     )
 
 
 # ── Delivery ─────────────────────────────────────────────────────────────────
+
 
 @router.post("/reports/deliver", summary="Deliver report")
 async def deliver_report(
@@ -176,17 +206,24 @@ async def deliver_report(
     await require_org_role(organization_id, "viewer", user_id, db)
     try:
         log = await service.generate_and_deliver(
-            org_id=organization_id, report_type=request.report_type,
-            channel=request.channel, recipient=request.recipient,
-            format=request.format, days=request.days,
+            org_id=organization_id,
+            report_type=request.report_type,
+            channel=request.channel,
+            recipient=request.recipient,
+            format=request.format,
+            days=request.days,
             template_id=UUID(request.template_id) if request.template_id else None,
             schedule_id=UUID(request.schedule_id) if request.schedule_id else None,
         )
     except (ValidationError, ValueError) as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
     return {
-        "id": str(log.id), "status": log.status,
-        "channel": log.channel, "format": log.format,
+        "id": str(log.id),
+        "status": log.status,
+        "channel": log.channel,
+        "format": log.format,
     }
 
 
@@ -203,6 +240,7 @@ async def get_delivery_logs(
 
 # ── Period Comparison ────────────────────────────────────────────────────────
 
+
 @router.post("/reports/compare", summary="Compare reporting periods")
 async def compare_periods(
     request: ComparePeriodsRequest,
@@ -214,10 +252,13 @@ async def compare_periods(
     await require_org_role(organization_id, "viewer", user_id, db)
     try:
         return await service.compare_periods(
-            org_id=organization_id, report_type=request.report_type,
+            org_id=organization_id,
+            report_type=request.report_type,
             current_days=request.current_days,
             comparison=request.comparison,
             custom_days=request.custom_days,
         )
     except ValidationError as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None

@@ -21,12 +21,15 @@ class PreferenceRepository:
 
     async def find_by_user(self, user_id: UUID) -> list[UserNotificationPreference]:
         result = await self.session.execute(
-            select(UserNotificationPreferenceModel)
-            .where(UserNotificationPreferenceModel.user_id == user_id)
+            select(UserNotificationPreferenceModel).where(
+                UserNotificationPreferenceModel.user_id == user_id
+            )
         )
         return [m.to_domain() for m in result.scalars().all()]
 
-    async def find_by_user_and_type(self, user_id: UUID, notification_type: str, channel: str) -> UserNotificationPreference | None:
+    async def find_by_user_and_type(
+        self, user_id: UUID, notification_type: str, channel: str
+    ) -> UserNotificationPreference | None:
         result = await self.session.execute(
             select(UserNotificationPreferenceModel).where(
                 UserNotificationPreferenceModel.user_id == user_id,
@@ -38,7 +41,9 @@ class PreferenceRepository:
         return m.to_domain() if m else None
 
     async def upsert(self, pref: UserNotificationPreference) -> UserNotificationPreference:
-        existing = await self.find_by_user_and_type(pref.user_id, pref.notification_type, pref.channel)
+        existing = await self.find_by_user_and_type(
+            pref.user_id, pref.notification_type, pref.channel
+        )
         if existing:
             await self.session.execute(
                 update(UserNotificationPreferenceModel)

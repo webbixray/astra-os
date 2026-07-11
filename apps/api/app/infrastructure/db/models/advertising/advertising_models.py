@@ -13,7 +13,12 @@ class AdAccountModel(Base):
     __tablename__ = "ad_accounts"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+    organization_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     platform = Column(String(50), nullable=False)
     account_name = Column(String(255), nullable=False)
     platform_account_id = Column(String(255), nullable=False)
@@ -30,8 +35,18 @@ class AdCampaignModel(Base):
     __tablename__ = "ad_campaigns"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
-    ad_account_id = Column(UUID(as_uuid=True), ForeignKey("ad_accounts.id", ondelete="CASCADE"), nullable=False, index=True)
+    organization_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    ad_account_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("ad_accounts.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     name = Column(String(255), nullable=False)
     objective = Column(String(50), default="awareness")
     status = Column(String(50), default="draft")
@@ -54,8 +69,15 @@ class AdCreativeModel(Base):
     __tablename__ = "ad_creatives"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
-    ad_campaign_id = Column(UUID(as_uuid=True), ForeignKey("ad_campaigns.id", ondelete="SET NULL"), nullable=True)
+    organization_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    ad_campaign_id = Column(
+        UUID(as_uuid=True), ForeignKey("ad_campaigns.id", ondelete="SET NULL"), nullable=True
+    )
     name = Column(String(255), nullable=False)
     type = Column(String(50), default="image")
     status = Column(String(50), default="draft")
@@ -75,9 +97,18 @@ class AdInsightModel(Base):
     __tablename__ = "ad_insights"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
-    ad_account_id = Column(UUID(as_uuid=True), ForeignKey("ad_accounts.id", ondelete="CASCADE"), nullable=False)
-    ad_campaign_id = Column(UUID(as_uuid=True), ForeignKey("ad_campaigns.id", ondelete="CASCADE"), nullable=True)
+    organization_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    ad_account_id = Column(
+        UUID(as_uuid=True), ForeignKey("ad_accounts.id", ondelete="CASCADE"), nullable=False
+    )
+    ad_campaign_id = Column(
+        UUID(as_uuid=True), ForeignKey("ad_campaigns.id", ondelete="CASCADE"), nullable=True
+    )
     date = Column(String(20), nullable=False, index=True)
     impressions = Column(Integer, default=0)
     clicks = Column(Integer, default=0)

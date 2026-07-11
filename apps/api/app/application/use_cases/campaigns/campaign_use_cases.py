@@ -13,21 +13,23 @@ from app.domain.exceptions.domain_exceptions import EntityNotFoundError
 
 
 class CampaignRepository:
-    async def save(self, campaign: Campaign) -> Campaign:
-        ...
+    async def save(self, campaign: Campaign) -> Campaign: ...
 
-    async def find_by_id(self, campaign_id: UUID) -> Campaign | None:
-        ...
+    async def find_by_id(self, campaign_id: UUID) -> Campaign | None: ...
 
-    async def find_by_organization(self, org_id: UUID, status: str | None = None) -> list[Campaign]:
-        ...
+    async def find_by_organization(
+        self, org_id: UUID, status: str | None = None
+    ) -> list[Campaign]: ...
 
-    async def delete(self, campaign_id: UUID) -> None:
-        ...
+    async def delete(self, campaign_id: UUID) -> None: ...
 
 
 class CreateCampaignUseCase:
-    def __init__(self, repo: CampaignRepository, member_check: Callable[[UUID], Awaitable[bool]] | None = None):
+    def __init__(
+        self,
+        repo: CampaignRepository,
+        member_check: Callable[[UUID], Awaitable[bool]] | None = None,
+    ):
         self.repo = repo
         self.member_check = member_check
 

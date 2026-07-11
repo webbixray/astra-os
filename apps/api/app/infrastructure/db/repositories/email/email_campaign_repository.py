@@ -24,7 +24,9 @@ class EmailCampaignRepository:
         model = result.scalar_one_or_none()
         return model.to_domain() if model is not None else None
 
-    async def find_by_organization(self, org_id: UUID, status: str | None = None) -> list[EmailCampaign]:
+    async def find_by_organization(
+        self, org_id: UUID, status: str | None = None
+    ) -> list[EmailCampaign]:
         query = select(EmailCampaignModel).where(EmailCampaignModel.organization_id == org_id)
         if status is not None:
             query = query.where(EmailCampaignModel.status == status)

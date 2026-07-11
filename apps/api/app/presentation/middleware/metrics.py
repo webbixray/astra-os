@@ -42,8 +42,6 @@ class MetricsMiddleware(BaseHTTPMiddleware):
         http_requests_total.labels(
             method=method, path=normalized, status=response.status_code
         ).inc()
-        http_request_duration_seconds.labels(
-            method=method, path=normalized
-        ).observe(duration)
+        http_request_duration_seconds.labels(method=method, path=normalized).observe(duration)
         http_requests_in_flight.labels(method=method).dec()
         return response

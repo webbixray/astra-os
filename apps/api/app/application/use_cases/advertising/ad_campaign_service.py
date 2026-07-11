@@ -68,11 +68,15 @@ class AdCampaignService:
             return {"error": "Campaign not found"}
 
         adapter = AdPlatformFactory.create(
-            __import__("app.domain.entities.advertising.ad_account", fromlist=["Platform"]).Platform(model.platform),
+            __import__(
+                "app.domain.entities.advertising.ad_account", fromlist=["Platform"]
+            ).Platform(model.platform),
         )
 
         platform_id = await adapter.create_campaign(
-            __import__("app.domain.entities.advertising.ad_campaign", fromlist=["AdCampaign"]).AdCampaign(
+            __import__(
+                "app.domain.entities.advertising.ad_campaign", fromlist=["AdCampaign"]
+            ).AdCampaign(
                 name=model.name,
                 platform=model.platform,
             )

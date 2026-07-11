@@ -39,11 +39,13 @@ def require_permission(resource: str, action: str):
 
     Returns:
         FastAPI dependency that checks permission
+
     """
+
     async def _check_permission(
         organization_id: UUID,
         user_roles: list[str] = Depends(get_user_roles),
-        enforcer = Depends(lambda: get_enforcer()),
+        enforcer=Depends(get_enforcer),
     ) -> list[str]:
         # Check if any of the user's roles have the permission
         for role in user_roles:

@@ -18,8 +18,9 @@ class UsageRecordRepository:
         await self.session.flush()
         return model.to_domain()
 
-    async def sum_by_metric(self, org_id: UUID, metric: str,
-                            since: datetime | None = None) -> float:
+    async def sum_by_metric(
+        self, org_id: UUID, metric: str, since: datetime | None = None
+    ) -> float:
         query = select(func.coalesce(func.sum(UsageRecordModel.value), 0)).where(
             UsageRecordModel.organization_id == org_id,
             UsageRecordModel.metric == metric,
@@ -29,8 +30,7 @@ class UsageRecordRepository:
         result = await self.session.execute(query)
         return float(result.scalar() or 0)
 
-    async def aggregate_by_period(self, org_id: UUID, metric: str,
-                                  days: int = 30) -> list[dict]:
+    async def aggregate_by_period(self, org_id: UUID, metric: str, days: int = 30) -> list[dict]:
         since = datetime.now(UTC).replace(tzinfo=None) - timedelta(days=days)
         rows = await self.session.execute(
             select(

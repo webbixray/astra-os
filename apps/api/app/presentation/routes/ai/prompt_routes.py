@@ -132,7 +132,10 @@ async def create_prompt(
     try:
         category = PromptCategory(request.category)
     except ValueError:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=f"Invalid category: {request.category}") from None
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Invalid category: {request.category}",
+        ) from None
     prompt = await use_case.create_prompt(
         name=request.name,
         content=request.content,
@@ -165,7 +168,10 @@ async def update_prompt(
         try:
             status_enum = PromptStatus(request.status)
         except ValueError:
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=f"Invalid status: {request.status}") from None
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Invalid status: {request.status}",
+            ) from None
     try:
         prompt = await use_case.update_prompt(
             prompt_id=prompt_id,
@@ -179,7 +185,9 @@ async def update_prompt(
     return _to_response(prompt)
 
 
-@router.delete("/prompts/{prompt_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete a prompt")
+@router.delete(
+    "/prompts/{prompt_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete a prompt"
+)
 async def delete_prompt(
     prompt_id: UUID,
     organization_id: UUID = Query(...),

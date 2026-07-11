@@ -55,6 +55,7 @@ def get_service(db: AsyncSession = Depends(get_db)) -> OrganizationService:
 
 # ── Org Hierarchy ────────────────────────────────────────────────────────────
 
+
 @router.get("/organizations/{org_id}/tree", summary="Get organization tree")
 async def get_org_tree(
     org_id: UUID,
@@ -83,13 +84,26 @@ async def set_parent_org(
     try:
         org = await service.set_parent_org(org_id, request.parent_org_id, user_id)
     except (EntityNotFoundError, ValidationError) as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND if isinstance(e, EntityNotFoundError) else status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND
+            if isinstance(e, EntityNotFoundError)
+            else status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(e),
+        ) from None
     except ForbiddenError as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from None
-    return {"id": str(org.id), "name": org.name, "parent_org_id": str(org.parent_org_id) if org.parent_org_id else None}
+    return {
+        "id": str(org.id),
+        "name": org.name,
+        "parent_org_id": str(org.parent_org_id) if org.parent_org_id else None,
+    }
 
 
-@router.post("/organizations/{org_id}/sub-orgs", status_code=status.HTTP_201_CREATED, summary="Create sub-organization")
+@router.post(
+    "/organizations/{org_id}/sub-orgs",
+    status_code=status.HTTP_201_CREATED,
+    summary="Create sub-organization",
+)
 async def create_sub_org(
     org_id: UUID,
     request: CreateSubOrgRequest,
@@ -101,16 +115,27 @@ async def create_sub_org(
     try:
         org = await service.create_sub_org(org_id, request.name, request.slug, user_id)
     except (ValidationError, ValueError) as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
     except ForbiddenError as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from None
-    return {"id": str(org.id), "name": org.name, "slug": org.slug,
-            "parent_org_id": str(org.parent_org_id)}
+    return {
+        "id": str(org.id),
+        "name": org.name,
+        "slug": org.slug,
+        "parent_org_id": str(org.parent_org_id),
+    }
 
 
 # ── Invitations ──────────────────────────────────────────────────────────────
 
-@router.post("/organizations/{org_id}/invitations", status_code=status.HTTP_201_CREATED, summary="Invite member to organization")
+
+@router.post(
+    "/organizations/{org_id}/invitations",
+    status_code=status.HTTP_201_CREATED,
+    summary="Invite member to organization",
+)
 async def invite_member(
     org_id: UUID,
     request: InviteMemberRequest,
@@ -122,12 +147,17 @@ async def invite_member(
     try:
         inv = await service.invite_member(org_id, user_id, request.email, request.role)
     except (ValidationError, ValueError) as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
     except ForbiddenError as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from None
     return {
-        "id": str(inv.id), "email": inv.email, "role": inv.role,
-        "status": inv.status, "created_at": inv.created_at.isoformat(),
+        "id": str(inv.id),
+        "email": inv.email,
+        "role": inv.role,
+        "status": inv.status,
+        "created_at": inv.created_at.isoformat(),
     }
 
 
@@ -145,8 +175,11 @@ async def list_invitations(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from None
     return [
         {
-            "id": str(inv.id), "email": inv.email, "role": inv.role,
-            "status": inv.status, "created_at": inv.created_at.isoformat(),
+            "id": str(inv.id),
+            "email": inv.email,
+            "role": inv.role,
+            "status": inv.status,
+            "created_at": inv.created_at.isoformat(),
         }
         for inv in invitations
     ]
@@ -161,11 +194,22 @@ async def accept_invitation(
     try:
         member = await service.accept_invitation(invitation_id, user_id)
     except (EntityNotFoundError, ForbiddenError) as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND if isinstance(e, EntityNotFoundError) else status.HTTP_403_FORBIDDEN, detail=str(e)) from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND
+            if isinstance(e, EntityNotFoundError)
+            else status.HTTP_403_FORBIDDEN,
+            detail=str(e),
+        ) from None
     except ValidationError as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
-    return {"id": str(member.id), "organization_id": str(member.organization_id),
-            "role": member.role, "status": "accepted"}
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
+    return {
+        "id": str(member.id),
+        "organization_id": str(member.organization_id),
+        "role": member.role,
+        "status": "accepted",
+    }
 
 
 @router.post("/invitations/{invitation_id}/reject", summary="Reject invitation")
@@ -177,13 +221,24 @@ async def reject_invitation(
     try:
         inv = await service.reject_invitation(invitation_id, user_id)
     except (EntityNotFoundError, ForbiddenError) as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND if isinstance(e, EntityNotFoundError) else status.HTTP_403_FORBIDDEN, detail=str(e)) from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND
+            if isinstance(e, EntityNotFoundError)
+            else status.HTTP_403_FORBIDDEN,
+            detail=str(e),
+        ) from None
     except ValidationError as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
     return {"id": str(inv.id), "status": inv.status}
 
 
-@router.delete("/organizations/{org_id}/invitations/{invitation_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Cancel invitation")
+@router.delete(
+    "/organizations/{org_id}/invitations/{invitation_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Cancel invitation",
+)
 async def cancel_invitation(
     org_id: UUID,
     invitation_id: UUID,
@@ -199,6 +254,7 @@ async def cancel_invitation(
 
 
 # ── Members ──────────────────────────────────────────────────────────────────
+
 
 @router.get("/organizations/{org_id}/members", summary="List organization members")
 async def list_members(
@@ -227,13 +283,22 @@ async def change_member_role(
     try:
         member = await service.change_member_role(member_id, request.role, org_id, user_id)
     except (EntityNotFoundError, ValidationError) as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND if isinstance(e, EntityNotFoundError) else status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND
+            if isinstance(e, EntityNotFoundError)
+            else status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(e),
+        ) from None
     except ForbiddenError as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from None
     return {"id": str(member.id), "role": member.role}
 
 
-@router.delete("/organizations/{org_id}/members/{member_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Remove member")
+@router.delete(
+    "/organizations/{org_id}/members/{member_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Remove member",
+)
 async def remove_member(
     org_id: UUID,
     member_id: UUID,
@@ -245,12 +310,18 @@ async def remove_member(
     try:
         await service.remove_member(member_id, org_id, user_id)
     except (EntityNotFoundError, ValidationError) as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND if isinstance(e, EntityNotFoundError) else status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND
+            if isinstance(e, EntityNotFoundError)
+            else status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(e),
+        ) from None
     except ForbiddenError as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from None
 
 
 # ── Feature Flags ────────────────────────────────────────────────────────────
+
 
 @router.get("/organizations/{org_id}/features", summary="List feature flags")
 async def list_feature_flags(
@@ -266,8 +337,10 @@ async def list_feature_flags(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from None
     return [
         {
-            "id": str(f.id), "feature_key": f.feature_key,
-            "enabled": f.enabled, "config": f.config,
+            "id": str(f.id),
+            "feature_key": f.feature_key,
+            "enabled": f.enabled,
+            "config": f.config,
         }
         for f in flags
     ]
@@ -287,13 +360,19 @@ async def set_feature_flag(
             org_id, request.feature_key, enabled=request.enabled, config=request.config
         )
     except ValidationError as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
     except ForbiddenError as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from None
     return {"id": str(flag.id), "feature_key": flag.feature_key, "enabled": flag.enabled}
 
 
-@router.delete("/organizations/{org_id}/features/{flag_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete feature flag")
+@router.delete(
+    "/organizations/{org_id}/features/{flag_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete feature flag",
+)
 async def delete_feature_flag(
     org_id: UUID,
     flag_id: UUID,
@@ -309,6 +388,7 @@ async def delete_feature_flag(
 
 
 # ── Usage & Billing ──────────────────────────────────────────────────────────
+
 
 @router.get("/organizations/{org_id}/usage", summary="Get usage summary")
 async def get_usage(
@@ -353,7 +433,8 @@ async def get_billing_plan(
     except ForbiddenError as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from None
     return {
-        "id": str(plan.id), "plan_tier": plan.plan_tier,
+        "id": str(plan.id),
+        "plan_tier": plan.plan_tier,
         "billing_cycle": plan.billing_cycle,
         "subscription_status": plan.subscription_status,
         "current_period_start": plan.current_period_start.isoformat(),
@@ -374,13 +455,20 @@ async def change_billing_plan(
     try:
         plan = await service.change_billing_plan(org_id, request.plan_tier, user_id)
     except (ValidationError, ValueError) as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
     except ForbiddenError as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from None
-    return {"id": str(plan.id), "plan_tier": plan.plan_tier, "subscription_status": plan.subscription_status}
+    return {
+        "id": str(plan.id),
+        "plan_tier": plan.plan_tier,
+        "subscription_status": plan.subscription_status,
+    }
 
 
 # ── Permissions ──────────────────────────────────────────────────────────────
+
 
 @router.get("/organizations/{org_id}/check-permission/{permission}", summary="Check permission")
 async def check_permission(
@@ -395,7 +483,9 @@ async def check_permission(
     return {"has_permission": has}
 
 
-@router.post("/organizations/{org_id}/members/{member_id}/permissions", summary="Add member permission")
+@router.post(
+    "/organizations/{org_id}/members/{member_id}/permissions", summary="Add member permission"
+)
 async def add_member_permission(
     org_id: UUID,
     member_id: UUID,
@@ -408,13 +498,21 @@ async def add_member_permission(
     try:
         member = await service.add_member_permission(member_id, request.permission, org_id, user_id)
     except (EntityNotFoundError, ValidationError) as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND if isinstance(e, EntityNotFoundError) else status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND
+            if isinstance(e, EntityNotFoundError)
+            else status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(e),
+        ) from None
     except ForbiddenError as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from None
     return {"id": str(member.id), "permissions": member.permissions}
 
 
-@router.delete("/organizations/{org_id}/members/{member_id}/permissions/{permission}", summary="Remove member permission")
+@router.delete(
+    "/organizations/{org_id}/members/{member_id}/permissions/{permission}",
+    summary="Remove member permission",
+)
 async def remove_member_permission(
     org_id: UUID,
     member_id: UUID,
@@ -427,7 +525,12 @@ async def remove_member_permission(
     try:
         member = await service.remove_member_permission(member_id, permission, org_id, user_id)
     except (EntityNotFoundError, ValidationError) as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND if isinstance(e, EntityNotFoundError) else status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND
+            if isinstance(e, EntityNotFoundError)
+            else status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(e),
+        ) from None
     except ForbiddenError as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from None
     return {"id": str(member.id), "permissions": member.permissions}

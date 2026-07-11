@@ -37,8 +37,10 @@ def _xor_crypt(data: bytes, key: bytes, nonce: bytes) -> bytes:
     out = bytearray()
     counter = 0
     while len(out) < len(data):
-        block_key = hashlib.sha256(key + struct.pack(">QQ", int.from_bytes(nonce[:8], "big"), counter)).digest()
-        chunk = data[len(out): len(out) + _BLOCK_SIZE]
+        block_key = hashlib.sha256(
+            key + struct.pack(">QQ", int.from_bytes(nonce[:8], "big"), counter)
+        ).digest()
+        chunk = data[len(out) : len(out) + _BLOCK_SIZE]
         out.extend(bytes(a ^ b for a, b in zip(chunk, block_key[: len(chunk)], strict=True)))
         counter += 1
     return bytes(out)
@@ -58,6 +60,7 @@ def encrypt_field(plaintext: str, secret_key: str) -> str:
 
     payload = nonce + ciphertext + tag
     import base64
+
     token = base64.urlsafe_b64encode(payload).decode("ascii")
     return f"{_PREFIX}{token}"
 
@@ -75,8 +78,9 @@ def decrypt_field(ciphertext: str, secret_key: str) -> str:
 
     enc_key, mac_key = _derive_keys(secret_key)
     import base64
+
     try:
-        payload = base64.urlsafe_b64decode(ciphertext[len(_PREFIX):])
+        payload = base64.urlsafe_b64decode(ciphertext[len(_PREFIX) :])
     except Exception:
         logger.warning("Failed to decode encrypted field payload (corrupt base64)")
         return ciphertext
@@ -105,4 +109,5 @@ def is_encrypted(value: str) -> bool:
 def get_secret_key() -> str:
     """Return the current application secret key."""
     from app.config import config
+
     return config.secret_key

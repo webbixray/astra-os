@@ -21,7 +21,11 @@ class SupabaseJWTVerifier:
     def __init__(self) -> None:
         self._jwks: dict | None = None
         self._jwks_fetched_at: float = 0
-        self._jwks_url = f"{config.supabase_url.rstrip('/')}/auth/v1/.well-known/jwks.json" if config.supabase_url else ""
+        self._jwks_url = (
+            f"{config.supabase_url.rstrip('/')}/auth/v1/.well-known/jwks.json"
+            if config.supabase_url
+            else ""
+        )
 
     @property
     def enabled(self) -> bool:

@@ -25,7 +25,9 @@ def _to_response(p: ContentPublish) -> dict:
 
 
 class ContentPublishingService:
-    def __init__(self, repo: ContentPublishRepository, content_repo: ContentRepositoryImpl | None = None):
+    def __init__(
+        self, repo: ContentPublishRepository, content_repo: ContentRepositoryImpl | None = None
+    ):
         self.repo = repo
         self._content_repo = content_repo
 
@@ -45,6 +47,7 @@ class ContentPublishingService:
         metadata: dict | None = None,
     ) -> ContentPublish:
         from datetime import datetime as dt
+
         parsed_schedule = dt.fromisoformat(scheduled_at) if scheduled_at else None
 
         publish = ContentPublish.create(
@@ -74,9 +77,11 @@ class ContentPublishingService:
 
         return saved
 
-    async def schedule(self, content_id: UUID, platform: str, scheduled_at: str,
-                       metadata: dict | None = None) -> ContentPublish:
+    async def schedule(
+        self, content_id: UUID, platform: str, scheduled_at: str, metadata: dict | None = None
+    ) -> ContentPublish:
         from datetime import datetime as dt
+
         parsed = dt.fromisoformat(scheduled_at)
         publish = ContentPublish.create(
             content_id=content_id,

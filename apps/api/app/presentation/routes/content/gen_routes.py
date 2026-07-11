@@ -25,6 +25,7 @@ async def _get_content_service(db: AsyncSession) -> ContentGenerationService:
     prompt_manager = PromptManager(repository=prompt_repo)
     return ContentGenerationService(prompt_manager=prompt_manager)
 
+
 router = APIRouter()
 
 
@@ -123,7 +124,6 @@ async def generate_content(
         tone=request.tone,
         instructions=request.instructions,
     )
-
 
 
 @router.post("/ai/content/rewrite", summary="Rewrite content with AI")
@@ -282,7 +282,12 @@ async def update_brand_voice(
         voice.is_active = request.is_active
         voice.updated_at = now()
     saved = await repo.save(voice)
-    return {"id": str(saved.id), "name": saved.name, "tone": saved.tone, "is_active": saved.is_active}
+    return {
+        "id": str(saved.id),
+        "name": saved.name,
+        "tone": saved.tone,
+        "is_active": saved.is_active,
+    }
 
 
 @router.delete("/brand-voices/{voice_id}", status_code=204, summary="Delete a brand voice")
@@ -431,7 +436,9 @@ async def update_template(
     }
 
 
-@router.delete("/content/templates/{template_id}", status_code=204, summary="Delete a content template")
+@router.delete(
+    "/content/templates/{template_id}", status_code=204, summary="Delete a content template"
+)
 async def delete_template(
     template_id: UUID,
     organization_id: UUID = Query(...),

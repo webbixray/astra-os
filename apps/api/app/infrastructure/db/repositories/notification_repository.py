@@ -63,7 +63,9 @@ class NotificationRepository:
         result = await self.session.execute(query)
         return result.scalar() or 0
 
-    async def count_unread(self, user_id: UUID, organization_id: UUID, channel: str | None = None) -> int:
+    async def count_unread(
+        self, user_id: UUID, organization_id: UUID, channel: str | None = None
+    ) -> int:
         query = select(func.count()).where(
             NotificationModel.user_id == user_id,
             NotificationModel.organization_id == organization_id,
@@ -77,6 +79,7 @@ class NotificationRepository:
 
     async def mark_read(self, notification_id: UUID) -> None:
         from datetime import datetime
+
         await self.session.execute(
             update(NotificationModel)
             .where(NotificationModel.id == notification_id)
@@ -86,6 +89,7 @@ class NotificationRepository:
 
     async def mark_all_read(self, user_id: UUID, organization_id: UUID) -> int:
         from datetime import datetime
+
         result = await self.session.execute(
             update(NotificationModel)
             .where(
@@ -119,8 +123,8 @@ class NotificationRepository:
             NotificationModel.organization_id == organization_id,
         )
         query = query.where(
-            NotificationModel.title.ilike(f"%{query_str}%") |
-            NotificationModel.body.ilike(f"%{query_str}%")
+            NotificationModel.title.ilike(f"%{query_str}%")
+            | NotificationModel.body.ilike(f"%{query_str}%")
         )
         query = query.order_by(NotificationModel.created_at.desc()).limit(limit).offset(offset)
         result = await self.session.execute(query)

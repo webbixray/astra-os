@@ -84,9 +84,7 @@ class ChatUseCase:
                 return "Available commands: /campaign, /content, /analytics, /help"
         return None
 
-    async def _get_memory_context(
-        self, organization_id: str, user_id: str, message: str
-    ) -> str:
+    async def _get_memory_context(self, organization_id: str, user_id: str, message: str) -> str:
         if not self.memory_service:
             return ""
         try:
@@ -97,10 +95,7 @@ class ChatUseCase:
                 limit=3,
             )
             if memories:
-                return "\n".join(
-                    f"- {m['key']}: {m['value'][:200]}"
-                    for m in memories
-                )
+                return "\n".join(f"- {m['key']}: {m['value'][:200]}" for m in memories)
         except Exception as e:
             logger.warning("Failed to get memory context: %s", e)
         return ""
@@ -269,6 +264,7 @@ class ChatUseCase:
 # Backward-compatible module-level wrappers for tests
 def build_system_prompt(page_context: dict, memory_notes: str = "") -> str:
     import asyncio
+
     use_case = object.__new__(ChatUseCase)
     use_case.prompt_manager = None
     use_case.memory_service = None
@@ -279,6 +275,7 @@ def build_system_prompt(page_context: dict, memory_notes: str = "") -> str:
 
 def handle_slash_command(message: str) -> str | None:
     import asyncio
+
     use_case = object.__new__(ChatUseCase)
     use_case.prompt_manager = None
     return asyncio.run(use_case._handle_slash_command(message))

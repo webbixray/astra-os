@@ -23,7 +23,9 @@ class EmailEventRepository:
         await self.session.flush()
         return [m.to_domain() for m in models]
 
-    async def find_by_campaign(self, campaign_id: UUID, event_type: str | None = None) -> list[EmailEvent]:
+    async def find_by_campaign(
+        self, campaign_id: UUID, event_type: str | None = None
+    ) -> list[EmailEvent]:
         query = select(EmailEventModel).where(EmailEventModel.campaign_id == campaign_id)
         if event_type is not None:
             query = query.where(EmailEventModel.event_type == event_type)

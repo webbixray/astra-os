@@ -38,7 +38,9 @@ class ReportSchedule:
         if not name or not name.strip():
             raise ValidationError("Schedule name is required")
         if frequency not in VALID_FREQUENCIES:
-            raise ValidationError(f"Invalid frequency: {frequency}. Must be one of {VALID_FREQUENCIES}")
+            raise ValidationError(
+                f"Invalid frequency: {frequency}. Must be one of {VALID_FREQUENCIES}"
+            )
         return cls(
             organization_id=organization_id,
             name=name.strip(),

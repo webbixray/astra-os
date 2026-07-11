@@ -10,7 +10,10 @@ BUILTIN_TEMPLATES = [
         description="A standard blog post with title, introduction, body sections, and conclusion",
         sections=[
             {"name": "title", "prompt": "Write a compelling blog title about {topic}"},
-            {"name": "introduction", "prompt": "Write an engaging introduction that hooks the reader"},
+            {
+                "name": "introduction",
+                "prompt": "Write an engaging introduction that hooks the reader",
+            },
             {"name": "body", "prompt": "Write the main body covering {key_points}"},
             {"name": "conclusion", "prompt": "Write a conclusion with a call to action"},
         ],
@@ -73,10 +76,12 @@ class ContentGenerationService:
         system_prompt = await self._build_system_prompt(template, brand_voice, tone, instructions)
         user_prompt = self._build_user_prompt(template, variables)
 
-        response = await self.router.chat([
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ])
+        response = await self.router.chat(
+            [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ]
+        )
 
         sections = self._parse_sections(response, template.sections)
 
@@ -113,10 +118,12 @@ class ContentGenerationService:
             },
         )
 
-        return await self.router.chat([
-            {"role": "system", "content": system},
-            {"role": "user", "content": f"Rewrite this content:\n\n{content}"},
-        ])
+        return await self.router.chat(
+            [
+                {"role": "system", "content": system},
+                {"role": "user", "content": f"Rewrite this content:\n\n{content}"},
+            ]
+        )
 
     async def generate_bulk(
         self,
@@ -169,9 +176,8 @@ class ContentGenerationService:
             prompt += "Variables:\n"
             for k, v in variables.items():
                 prompt += f"  {k}: {v}\n"
-        prompt += (
-            "\nSections to generate:\n"
-            + "\n".join(f"  - {s['name']}: {s['prompt']}" for s in template.sections)
+        prompt += "\nSections to generate:\n" + "\n".join(
+            f"  - {s['name']}: {s['prompt']}" for s in template.sections
         )
         return prompt
 

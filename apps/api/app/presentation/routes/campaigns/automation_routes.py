@@ -50,7 +50,12 @@ def get_service(db: AsyncSession = Depends(get_db)) -> AutomationService:
 
 # ── Budget Allocation ────────────────────────────────────────────────────────
 
-@router.post("/automation/budget-rules", status_code=status.HTTP_201_CREATED, summary="Create a budget allocation rule")
+
+@router.post(
+    "/automation/budget-rules",
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a budget allocation rule",
+)
 async def create_budget_rule(
     request: CreateBudgetRuleRequest,
     organization_id: UUID = Query(...),
@@ -61,12 +66,16 @@ async def create_budget_rule(
     await require_org_role(organization_id, "admin", user_id, db)
     try:
         rule = await service.create_budget_rule(
-            org_id=organization_id, campaign_id=request.campaign_id,
-            name=request.name, strategy=request.strategy,
+            org_id=organization_id,
+            campaign_id=request.campaign_id,
+            name=request.name,
+            strategy=request.strategy,
             allocations=request.allocations,
         )
     except ValidationError as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
     return {"id": str(rule.id), "name": rule.name, "strategy": rule.strategy}
 
 
@@ -93,10 +102,16 @@ async def calculate_allocation(
     try:
         return await service.calculate_allocation(rule_id)
     except EntityNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Rule not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Rule not found"
+        ) from None
 
 
-@router.delete("/automation/budget-rules/{rule_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete a budget rule")
+@router.delete(
+    "/automation/budget-rules/{rule_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete a budget rule",
+)
 async def delete_budget_rule(
     rule_id: UUID,
     organization_id: UUID = Query(...),
@@ -110,7 +125,12 @@ async def delete_budget_rule(
 
 # ── Bid Optimization ─────────────────────────────────────────────────────────
 
-@router.post("/automation/bid-rules", status_code=status.HTTP_201_CREATED, summary="Create a bid optimization rule")
+
+@router.post(
+    "/automation/bid-rules",
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a bid optimization rule",
+)
 async def create_bid_rule(
     request: CreateBidRuleRequest,
     organization_id: UUID = Query(...),
@@ -121,13 +141,18 @@ async def create_bid_rule(
     await require_org_role(organization_id, "admin", user_id, db)
     try:
         rule = await service.create_bid_rule(
-            org_id=organization_id, ad_account_id=request.ad_account_id,
-            name=request.name, strategy=request.strategy,
+            org_id=organization_id,
+            ad_account_id=request.ad_account_id,
+            name=request.name,
+            strategy=request.strategy,
             target_value=request.target_value,
-            min_bid=request.min_bid, max_bid=request.max_bid,
+            min_bid=request.min_bid,
+            max_bid=request.max_bid,
         )
     except ValidationError as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
     return {"id": str(rule.id), "name": rule.name, "strategy": rule.strategy}
 
 
@@ -154,10 +179,16 @@ async def optimize_bid(
     try:
         return await service.optimize_bid(rule_id)
     except EntityNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Rule not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Rule not found"
+        ) from None
 
 
-@router.delete("/automation/bid-rules/{rule_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete a bid rule")
+@router.delete(
+    "/automation/bid-rules/{rule_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete a bid rule",
+)
 async def delete_bid_rule(
     rule_id: UUID,
     organization_id: UUID = Query(...),
@@ -171,7 +202,12 @@ async def delete_bid_rule(
 
 # ── Audience Segmentation ────────────────────────────────────────────────────
 
-@router.post("/automation/audience-segments", status_code=status.HTTP_201_CREATED, summary="Create an audience segment")
+
+@router.post(
+    "/automation/audience-segments",
+    status_code=status.HTTP_201_CREATED,
+    summary="Create an audience segment",
+)
 async def create_audience_segment(
     request: CreateSegmentRequest,
     organization_id: UUID = Query(...),
@@ -182,13 +218,21 @@ async def create_audience_segment(
     await require_org_role(organization_id, "admin", user_id, db)
     try:
         segment = await service.create_audience_segment(
-            org_id=organization_id, name=request.name,
-            source=request.source, criteria=request.criteria,
+            org_id=organization_id,
+            name=request.name,
+            source=request.source,
+            criteria=request.criteria,
         )
     except ValidationError as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
-    return {"id": str(segment.id), "name": segment.name,
-            "source": segment.source, "predicted_size": segment.predicted_size}
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
+    return {
+        "id": str(segment.id),
+        "name": segment.name,
+        "source": segment.source,
+        "predicted_size": segment.predicted_size,
+    }
 
 
 @router.get("/automation/audience-segments", summary="List audience segments")
@@ -214,10 +258,16 @@ async def predict_audience(
     try:
         return await service.predict_audience(segment_id)
     except EntityNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Segment not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Segment not found"
+        ) from None
 
 
-@router.delete("/automation/audience-segments/{segment_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete an audience segment")
+@router.delete(
+    "/automation/audience-segments/{segment_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete an audience segment",
+)
 async def delete_audience_segment(
     segment_id: UUID,
     organization_id: UUID = Query(...),
@@ -231,6 +281,7 @@ async def delete_audience_segment(
 
 # ── Content Recommendations ──────────────────────────────────────────────────
 
+
 @router.post("/automation/recommendations/generate", summary="Generate content recommendations")
 async def generate_recommendations(
     organization_id: UUID = Query(...),
@@ -241,11 +292,16 @@ async def generate_recommendations(
 ) -> list[dict]:
     await require_org_role(organization_id, "viewer", user_id, db)
     recs = await service.generate_recommendations(
-        org_id=organization_id, campaign_id=campaign_id,
+        org_id=organization_id,
+        campaign_id=campaign_id,
     )
     return [
-        {"id": str(r.id), "type": r.recommendation_type,
-         "title": r.title, "confidence_score": r.confidence_score}
+        {
+            "id": str(r.id),
+            "type": r.recommendation_type,
+            "title": r.title,
+            "confidence_score": r.confidence_score,
+        }
         for r in recs
     ]
 
@@ -274,13 +330,18 @@ async def apply_recommendation(
     try:
         rec = await service.apply_recommendation(rec_id)
     except EntityNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recommendation not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Recommendation not found"
+        ) from None
     return {"id": str(rec.id), "applied": rec.applied}
 
 
 # ── Automation Rules Engine ──────────────────────────────────────────────────
 
-@router.post("/automation/rules", status_code=status.HTTP_201_CREATED, summary="Create an automation rule")
+
+@router.post(
+    "/automation/rules", status_code=status.HTTP_201_CREATED, summary="Create an automation rule"
+)
 async def create_automation_rule(
     request: CreateRuleRequest,
     organization_id: UUID = Query(...),
@@ -291,16 +352,25 @@ async def create_automation_rule(
     await require_org_role(organization_id, "admin", user_id, db)
     try:
         rule = await service.create_rule(
-            org_id=organization_id, name=request.name,
-            trigger_type=request.trigger_type, action_type=request.action_type,
+            org_id=organization_id,
+            name=request.name,
+            trigger_type=request.trigger_type,
+            action_type=request.action_type,
             trigger_config=request.trigger_config,
             action_config=request.action_config,
-            description=request.description, created_by=user_id,
+            description=request.description,
+            created_by=user_id,
         )
     except ValidationError as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
-    return {"id": str(rule.id), "name": rule.name,
-            "trigger_type": rule.trigger_type, "action_type": rule.action_type}
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
+    return {
+        "id": str(rule.id),
+        "name": rule.name,
+        "trigger_type": rule.trigger_type,
+        "action_type": rule.action_type,
+    }
 
 
 @router.get("/automation/rules", summary="List automation rules")
@@ -327,7 +397,9 @@ async def toggle_automation_rule(
     try:
         rule = await service.toggle_rule(rule_id, enabled)
     except EntityNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Rule not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Rule not found"
+        ) from None
     return {"id": str(rule.id), "enabled": rule.enabled}
 
 
@@ -342,7 +414,11 @@ async def evaluate_automation_rules(
     return await service.evaluate_rules(org_id=organization_id)
 
 
-@router.delete("/automation/rules/{rule_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete an automation rule")
+@router.delete(
+    "/automation/rules/{rule_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete an automation rule",
+)
 async def delete_automation_rule(
     rule_id: UUID,
     organization_id: UUID = Query(...),

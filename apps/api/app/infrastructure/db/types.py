@@ -67,6 +67,7 @@ class EncryptedJSON(TypeDecorator):
         if value is None:
             return None
         import json
+
         plaintext = json.dumps(value, default=str)
         return encrypt_field(plaintext, get_secret_key())
 
@@ -74,5 +75,6 @@ class EncryptedJSON(TypeDecorator):
         if value is None:
             return None
         import json
+
         plaintext = decrypt_field(value, get_secret_key())
         return json.loads(plaintext)

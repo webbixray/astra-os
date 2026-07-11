@@ -139,14 +139,31 @@ class AgentOrchestrator:
             if "create" in msg_lower or "new" in msg_lower:
                 subtasks.append({"title": "Generate campaign suggestions", "description": message})
             if "optimize" in msg_lower or "improve" in msg_lower:
-                subtasks.append({"title": "Analyze campaign performance", "description": f"Find optimization opportunities: {message}"})
+                subtasks.append(
+                    {
+                        "title": "Analyze campaign performance",
+                        "description": f"Find optimization opportunities: {message}",
+                    }
+                )
         elif director == "content_director":
             if "create" in msg_lower or "write" in msg_lower:
-                subtasks.append({"title": "Generate content outline", "description": f"Create outline for: {message}"})
+                subtasks.append(
+                    {
+                        "title": "Generate content outline",
+                        "description": f"Create outline for: {message}",
+                    }
+                )
             if "review" in msg_lower:
-                subtasks.append({"title": "Review content quality", "description": f"Review and provide feedback: {message}"})
+                subtasks.append(
+                    {
+                        "title": "Review content quality",
+                        "description": f"Review and provide feedback: {message}",
+                    }
+                )
         elif director == "analytics_director":
-            subtasks.append({"title": "Gather performance data", "description": f"Analyze: {message}"})
+            subtasks.append(
+                {"title": "Gather performance data", "description": f"Analyze: {message}"}
+            )
         if not subtasks:
             subtasks.append({"title": "Process request", "description": message})
         return subtasks
@@ -170,9 +187,11 @@ class AgentOrchestrator:
         prompt = CLASSIFICATION_PROMPT.format(message=message[:500])
         try:
             if self.ai_router:
-                response = await self.ai_router.chat([
-                    {"role": "user", "content": prompt},
-                ])
+                response = await self.ai_router.chat(
+                    [
+                        {"role": "user", "content": prompt},
+                    ]
+                )
                 clean = response.strip()
                 if clean.startswith("```"):
                     clean = clean.split("\n", 1)[-1].rsplit("\n", 1)[0]
@@ -192,7 +211,10 @@ class AgentOrchestrator:
         director_map = [
             (["campaign", "campaigns"], "campaign_director"),
             (["content", "blog", "social", "email", "write", "create content"], "content_director"),
-            (["analytics", "report", "metric", "performance", "analyze", "show"], "analytics_director"),
+            (
+                ["analytics", "report", "metric", "performance", "analyze", "show"],
+                "analytics_director",
+            ),
             (["workflow", "automation", "approval", "workflows"], "workflow_director"),
         ]
         director = "general"

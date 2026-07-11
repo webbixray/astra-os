@@ -19,6 +19,7 @@ with workflow.unsafe.imports_passed_through():
 async def compile_workflow_activity(input: CompileWorkflowInput) -> list[dict]:
     from app.domain.entities.workflows.workflow import Workflow, WorkflowEdge, WorkflowNode
     from app.domain.services.workflow_compiler import compile_workflow
+
     wf = Workflow(
         id=UUID(input.workflow_id),
         organization_id=UUID(input.organization_id),

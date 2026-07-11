@@ -51,9 +51,7 @@ def _entity_to_model(entity: Workflow) -> WorkflowModel:
 
 
 def _execution_model_to_entity(model: WorkflowExecutionModel) -> WorkflowExecution:
-    steps = [
-        ExecutionStep(**s) if isinstance(s, dict) else s for s in (model.steps or [])
-    ]
+    steps = [ExecutionStep(**s) if isinstance(s, dict) else s for s in (model.steps or [])]
     return WorkflowExecution(
         id=model.id,
         workflow_id=model.workflow_id,
@@ -97,15 +95,11 @@ class WorkflowRepository:
         return _model_to_entity(model)
 
     async def find_by_id(self, workflow_id: UUID) -> Workflow | None:
-        result = await self.db.execute(
-            select(WorkflowModel).where(WorkflowModel.id == workflow_id)
-        )
+        result = await self.db.execute(select(WorkflowModel).where(WorkflowModel.id == workflow_id))
         model = result.scalar_one_or_none()
         return _model_to_entity(model) if model else None
 
-    async def find_by_organization(
-        self, org_id: UUID, status: str | None = None
-    ) -> list[Workflow]:
+    async def find_by_organization(self, org_id: UUID, status: str | None = None) -> list[Workflow]:
         query = select(WorkflowModel).where(WorkflowModel.organization_id == org_id)
         if status:
             query = query.where(WorkflowModel.status == status)
@@ -115,9 +109,7 @@ class WorkflowRepository:
         return [_model_to_entity(m) for m in models]
 
     async def delete(self, workflow_id: UUID) -> None:
-        result = await self.db.execute(
-            select(WorkflowModel).where(WorkflowModel.id == workflow_id)
-        )
+        result = await self.db.execute(select(WorkflowModel).where(WorkflowModel.id == workflow_id))
         model = result.scalar_one_or_none()
         if model:
             await self.db.delete(model)
@@ -130,9 +122,7 @@ class WorkflowRepository:
         await self.db.refresh(model)
         return _execution_model_to_entity(model)
 
-    async def find_executions_by_workflow(
-        self, workflow_id: UUID
-    ) -> list[WorkflowExecution]:
+    async def find_executions_by_workflow(self, workflow_id: UUID) -> list[WorkflowExecution]:
         result = await self.db.execute(
             select(WorkflowExecutionModel)
             .where(WorkflowExecutionModel.workflow_id == workflow_id)

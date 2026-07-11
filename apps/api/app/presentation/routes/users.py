@@ -55,11 +55,15 @@ async def get_user(
     current_user_id: UUID = Depends(require_user_id),
 ) -> UserResponse:
     if user_id != current_user_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Cannot view another user's profile") from None
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Cannot view another user's profile"
+        ) from None
     try:
         user = await use_case.execute(user_id=user_id)
     except EntityNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        ) from None
     return UserResponse(
         id=user.id,
         email=user.email,
@@ -78,7 +82,9 @@ async def update_user(
     current_user_id: UUID = Depends(require_user_id),
 ) -> UserResponse:
     if user_id != current_user_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Cannot update another user's profile") from None
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Cannot update another user's profile"
+        ) from None
     try:
         user = await use_case.execute(
             user_id=user_id,
@@ -86,7 +92,9 @@ async def update_user(
             avatar_url=request.avatar_url,
         )
     except EntityNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        ) from None
     return UserResponse(
         id=user.id,
         email=user.email,

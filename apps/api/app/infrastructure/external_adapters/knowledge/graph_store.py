@@ -120,9 +120,7 @@ class GraphStore:
             },
         )
 
-    async def get_relations(
-        self, node_id: UUID, relation_type: str | None = None
-    ) -> list[dict]:
+    async def get_relations(self, node_id: UUID, relation_type: str | None = None) -> list[dict]:
         query = """
             SELECT r.id, r.source_id, r.target_id, r.relation_type,
                    n_source.name AS source_name, n_target.name AS target_name,

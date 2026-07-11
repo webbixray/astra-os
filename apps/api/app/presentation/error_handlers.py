@@ -1,9 +1,8 @@
 """RFC 7807 Problem Details error handlers."""
 
 import logging
-from urllib.parse import urljoin
 
-from fastapi import Request, status
+from fastapi import Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -98,7 +97,9 @@ def register_error_handlers(app):
         return _problem_response(request, exc.status_code, exc.detail)
 
     @app.exception_handler(RequestValidationError)
-    async def validation_error_pydantic(request: Request, exc: RequestValidationError) -> JSONResponse:
+    async def validation_error_pydantic(
+        request: Request, exc: RequestValidationError
+    ) -> JSONResponse:
         errors = []
         for err in exc.errors():
             loc = ".".join(str(loc_part) for loc_part in err.get("loc", []))

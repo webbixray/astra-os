@@ -79,7 +79,8 @@ class EnvelopeMiddleware:
         wrapped_bytes = json.dumps(wrapped, default=str).encode("utf-8")
 
         start["headers"] = [
-            (k, v) for k, v in start.get("headers", [])
+            (k, v)
+            for k, v in start.get("headers", [])
             if k.lower() not in {"content-length", "content-encoding"}
         ]
         start["headers"].append((b"content-length", str(len(wrapped_bytes)).encode("utf-8")))

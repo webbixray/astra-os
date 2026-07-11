@@ -26,13 +26,9 @@ PASSWORD_PATTERN = re.compile(
 
 def validate_password_strength(password: str) -> None:
     if len(password) < PASSWORD_MIN_LENGTH:
-        raise ValidationError(
-            f"Password must be at least {PASSWORD_MIN_LENGTH} characters long."
-        )
+        raise ValidationError(f"Password must be at least {PASSWORD_MIN_LENGTH} characters long.")
     if len(password) > PASSWORD_MAX_LENGTH:
-        raise ValidationError(
-            f"Password must not exceed {PASSWORD_MAX_LENGTH} characters."
-        )
+        raise ValidationError(f"Password must not exceed {PASSWORD_MAX_LENGTH} characters.")
     if not PASSWORD_PATTERN.match(password):
         raise ValidationError(
             "Password must contain at least one uppercase letter, "

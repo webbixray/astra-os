@@ -18,12 +18,14 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 SAFE_METHODS: Final[frozenset[str]] = frozenset({"GET", "HEAD", "OPTIONS", "TRACE"})
-EXEMPT_PATHS: Final[frozenset[str]] = frozenset({
-    "/api/v1/auth/signin",
-    "/api/v1/auth/signup",
-    "/api/v1/auth/refresh",
-    "/api/v1/health",
-})
+EXEMPT_PATHS: Final[frozenset[str]] = frozenset(
+    {
+        "/api/v1/auth/signin",
+        "/api/v1/auth/signup",
+        "/api/v1/auth/refresh",
+        "/api/v1/health",
+    }
+)
 
 
 def _generate_csrf_token(secret: str, session_id: str, timestamp: int | None = None) -> str:

@@ -85,7 +85,6 @@ async def get_ad_performance(
     ad_account_repo = AdAccountRepository(db)
     accounts = await ad_account_repo.find_by_organization(organization_id)
     connected_accounts = [
-        {"platform": a.platform, "platform_account_id": a.platform_account_id}
-        for a in accounts
+        {"platform": a.platform, "platform_account_id": a.platform_account_id} for a in accounts
     ]
     return await service.get_ad_performance(connected_accounts)

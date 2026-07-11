@@ -140,8 +140,9 @@ class ContentRecommendationRepository:
         model = result.scalar_one_or_none()
         return model.to_domain() if model is not None else None
 
-    async def find_by_organization(self, org_id: UUID,
-                                    rec_type: str | None = None) -> list[ContentRecommendation]:
+    async def find_by_organization(
+        self, org_id: UUID, rec_type: str | None = None
+    ) -> list[ContentRecommendation]:
         query = select(ContentRecommendationModel).where(
             ContentRecommendationModel.organization_id == org_id
         )

@@ -139,7 +139,9 @@ async def export_report_csv(
         start_date=start_date,
         end_date=end_date,
     )
-    filename = f"{re.sub(r'[^a-zA-Z0-9_-]', '', type)}_report_{datetime.now(UTC).date().isoformat()}.csv"
+    filename = (
+        f"{re.sub(r'[^a-zA-Z0-9_-]', '', type)}_report_{datetime.now(UTC).date().isoformat()}.csv"
+    )
     return PlainTextResponse(
         content=csv_content,
         media_type="text/csv",
@@ -233,7 +235,9 @@ async def update_report_schedule(
     return {"id": str(saved.id), "is_active": saved.is_active}
 
 
-@router.delete("/reports/schedules/{schedule_id}", status_code=204, summary="Delete report schedule")
+@router.delete(
+    "/reports/schedules/{schedule_id}", status_code=204, summary="Delete report schedule"
+)
 async def delete_report_schedule(
     schedule_id: UUID,
     organization_id: UUID = Query(...),

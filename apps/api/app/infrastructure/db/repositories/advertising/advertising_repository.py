@@ -21,9 +21,7 @@ class AdAccountRepository:
         return model
 
     async def find_by_id(self, id: UUID) -> AdAccountModel | None:
-        result = await self.db.execute(
-            select(AdAccountModel).where(AdAccountModel.id == id)
-        )
+        result = await self.db.execute(select(AdAccountModel).where(AdAccountModel.id == id))
         return result.scalar_one_or_none()
 
     async def find_by_organization(self, org_id: UUID) -> list[AdAccountModel]:
@@ -50,9 +48,7 @@ class AdCampaignRepository:
         return model
 
     async def find_by_id(self, id: UUID) -> AdCampaignModel | None:
-        result = await self.db.execute(
-            select(AdCampaignModel).where(AdCampaignModel.id == id)
-        )
+        result = await self.db.execute(select(AdCampaignModel).where(AdCampaignModel.id == id))
         return result.scalar_one_or_none()
 
     async def find_by_organization(self, org_id: UUID) -> list[AdCampaignModel]:
@@ -83,9 +79,7 @@ class AdCreativeRepository:
         return model
 
     async def find_by_id(self, id: UUID) -> AdCreativeModel | None:
-        result = await self.db.execute(
-            select(AdCreativeModel).where(AdCreativeModel.id == id)
-        )
+        result = await self.db.execute(select(AdCreativeModel).where(AdCreativeModel.id == id))
         return result.scalar_one_or_none()
 
     async def find_by_organization(self, org_id: UUID) -> list[AdCreativeModel]:
@@ -98,7 +92,6 @@ class AdCreativeRepository:
 
     async def find_by_campaign(self, campaign_id: UUID) -> list[AdCreativeModel]:
         result = await self.db.execute(
-            select(AdCreativeModel)
-            .where(AdCreativeModel.ad_campaign_id == campaign_id)
+            select(AdCreativeModel).where(AdCreativeModel.ad_campaign_id == campaign_id)
         )
         return list(result.scalars().all())

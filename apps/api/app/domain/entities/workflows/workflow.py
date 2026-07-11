@@ -154,7 +154,11 @@ class Workflow:
     def transition_to(self, new_status: WorkflowStatus) -> None:
         allowed = {
             WorkflowStatus.DRAFT: [WorkflowStatus.ACTIVE, WorkflowStatus.ARCHIVED],
-            WorkflowStatus.ACTIVE: [WorkflowStatus.PAUSED, WorkflowStatus.COMPLETED, WorkflowStatus.ARCHIVED],
+            WorkflowStatus.ACTIVE: [
+                WorkflowStatus.PAUSED,
+                WorkflowStatus.COMPLETED,
+                WorkflowStatus.ARCHIVED,
+            ],
             WorkflowStatus.PAUSED: [WorkflowStatus.ACTIVE, WorkflowStatus.ARCHIVED],
             WorkflowStatus.COMPLETED: [WorkflowStatus.ARCHIVED],
             WorkflowStatus.ARCHIVED: [],

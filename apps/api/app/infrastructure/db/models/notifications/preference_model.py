@@ -17,13 +17,22 @@ class UserNotificationPreferenceModel(Base):
     notification_type: Mapped[str] = mapped_column(String(50), nullable=False)
     channel: Mapped[str] = mapped_column(String(20), nullable=False)
     enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
+    )
 
     def to_domain(self) -> UserNotificationPreference:
         return UserNotificationPreference(
-            id=self.id, user_id=self.user_id,
-            notification_type=self.notification_type, channel=self.channel,
+            id=self.id,
+            user_id=self.user_id,
+            notification_type=self.notification_type,
+            channel=self.channel,
             enabled=self.enabled,
             created_at=self.created_at.replace(tzinfo=None),
             updated_at=self.updated_at.replace(tzinfo=None),
@@ -32,8 +41,11 @@ class UserNotificationPreferenceModel(Base):
     @classmethod
     def from_domain(cls, p: UserNotificationPreference) -> "UserNotificationPreferenceModel":
         return cls(
-            id=p.id, user_id=p.user_id,
-            notification_type=p.notification_type, channel=p.channel,
+            id=p.id,
+            user_id=p.user_id,
+            notification_type=p.notification_type,
+            channel=p.channel,
             enabled=p.enabled,
-            created_at=p.created_at, updated_at=p.updated_at,
+            created_at=p.created_at,
+            updated_at=p.updated_at,
         )

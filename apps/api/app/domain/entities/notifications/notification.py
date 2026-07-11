@@ -53,9 +53,13 @@ class Notification:
         template_id: UUID | None = None,
     ) -> "Notification":
         if type not in NOTIFICATION_TYPES:
-            raise ValidationError(f"Invalid notification type: {type}. Must be one of {NOTIFICATION_TYPES}")
+            raise ValidationError(
+                f"Invalid notification type: {type}. Must be one of {NOTIFICATION_TYPES}"
+            )
         if channel not in NOTIFICATION_CHANNELS:
-            raise ValidationError(f"Invalid notification channel: {channel}. Must be one of {NOTIFICATION_CHANNELS}")
+            raise ValidationError(
+                f"Invalid notification channel: {channel}. Must be one of {NOTIFICATION_CHANNELS}"
+            )
         if not title or not title.strip():
             raise ValidationError("Notification title is required")
         return cls(

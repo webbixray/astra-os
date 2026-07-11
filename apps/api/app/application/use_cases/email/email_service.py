@@ -21,34 +21,54 @@ class EmailProviderRepository:
 class EmailCampaignRepository:
     async def save(self, campaign: EmailCampaign) -> EmailCampaign: ...
     async def find_by_id(self, campaign_id: UUID) -> EmailCampaign | None: ...
-    async def find_by_organization(self, org_id: UUID, status: str | None = None) -> list[EmailCampaign]: ...
+    async def find_by_organization(
+        self, org_id: UUID, status: str | None = None
+    ) -> list[EmailCampaign]: ...
     async def get_analytics(self, org_id: UUID) -> dict: ...
     async def delete(self, campaign_id: UUID) -> None: ...
 
 
 class EmailEventRepository:
     async def save(self, event: EmailEvent) -> EmailEvent: ...
-    async def find_by_campaign(self, campaign_id: UUID, event_type: str | None = None) -> list[EmailEvent]: ...
+    async def find_by_campaign(
+        self, campaign_id: UUID, event_type: str | None = None
+    ) -> list[EmailEvent]: ...
     async def count_by_type(self, campaign_id: UUID) -> dict[str, int]: ...
 
 
 class EmailService:
-    def __init__(self, provider_repo: EmailProviderRepository,
-                 campaign_repo: EmailCampaignRepository,
-                 event_repo: EmailEventRepository):
+    def __init__(
+        self,
+        provider_repo: EmailProviderRepository,
+        campaign_repo: EmailCampaignRepository,
+        event_repo: EmailEventRepository,
+    ):
         self.provider_repo = provider_repo
         self.campaign_repo = campaign_repo
         self.event_repo = event_repo
 
     # ── Provider management ────────────────────────────────────────────────
 
-    async def create_provider(self, org_id: UUID, provider_type: str, name: str,
-                              api_key: str, from_email: str, created_by: UUID,
-                              from_name: str = "", config: dict | None = None) -> EmailProvider:
+    async def create_provider(
+        self,
+        org_id: UUID,
+        provider_type: str,
+        name: str,
+        api_key: str,
+        from_email: str,
+        created_by: UUID,
+        from_name: str = "",
+        config: dict | None = None,
+    ) -> EmailProvider:
         provider = EmailProvider.create(
-            organization_id=org_id, provider_type=provider_type, name=name,
-            api_key=api_key, from_email=from_email, created_by=created_by,
-            from_name=from_name, config=config,
+            organization_id=org_id,
+            provider_type=provider_type,
+            name=name,
+            api_key=api_key,
+            from_email=from_email,
+            created_by=created_by,
+            from_name=from_name,
+            config=config,
         )
         return await self.provider_repo.save(provider)
 
@@ -60,16 +80,31 @@ class EmailService:
 
     # ── Campaign management ────────────────────────────────────────────────
 
-    async def create_campaign(self, org_id: UUID, provider_id: UUID, name: str,
-                              subject: str, body: str, from_email: str,
-                              created_by: UUID, from_name: str = "",
-                              scheduled_at: str | None = None) -> EmailCampaign:
+    async def create_campaign(
+        self,
+        org_id: UUID,
+        provider_id: UUID,
+        name: str,
+        subject: str,
+        body: str,
+        from_email: str,
+        created_by: UUID,
+        from_name: str = "",
+        scheduled_at: str | None = None,
+    ) -> EmailCampaign:
         from datetime import datetime as dt
+
         parsed = dt.fromisoformat(scheduled_at) if scheduled_at else None
         campaign = EmailCampaign.create(
-            organization_id=org_id, provider_id=provider_id, name=name,
-            subject=subject, body=body, from_email=from_email,
-            created_by=created_by, from_name=from_name, scheduled_at=parsed,
+            organization_id=org_id,
+            provider_id=provider_id,
+            name=name,
+            subject=subject,
+            body=body,
+            from_email=from_email,
+            created_by=created_by,
+            from_name=from_name,
+            scheduled_at=parsed,
         )
         return await self.campaign_repo.save(campaign)
 
@@ -101,8 +136,11 @@ class EmailService:
 
         try:
             result = await sender.send(
-                to=recipients, subject=campaign.subject, body=campaign.body,
-                from_email=campaign.from_email, from_name=campaign.from_name,
+                to=recipients,
+                subject=campaign.subject,
+                body=campaign.body,
+                from_email=campaign.from_email,
+                from_name=campaign.from_name,
                 metadata={"campaign_id": str(campaign.id)},
             )
             campaign.complete(sent=result.get("sent_count", len(recipients)))
@@ -110,7 +148,8 @@ class EmailService:
 
             events = [
                 EmailEvent.create(
-                    campaign_id=campaign.id, event_type="sent",
+                    campaign_id=campaign.id,
+                    event_type="sent",
                     recipient_email=recipient,
                 )
                 for recipient in recipients
@@ -126,7 +165,9 @@ class EmailService:
     async def get_analytics(self, org_id: UUID) -> dict:
         return await self.campaign_repo.get_analytics(org_id)
 
-    async def get_campaign_events(self, campaign_id: UUID, event_type: str | None = None) -> list[dict]:
+    async def get_campaign_events(
+        self, campaign_id: UUID, event_type: str | None = None
+    ) -> list[dict]:
         events = await self.event_repo.find_by_campaign(campaign_id, event_type=event_type)
         return [
             {
@@ -138,11 +179,14 @@ class EmailService:
             for e in events
         ]
 
-    async def record_event(self, campaign_id: UUID, event_type: str,
-                           recipient_email: str, metadata: dict | None = None) -> None:
+    async def record_event(
+        self, campaign_id: UUID, event_type: str, recipient_email: str, metadata: dict | None = None
+    ) -> None:
         event = EmailEvent.create(
-            campaign_id=campaign_id, event_type=event_type,
-            recipient_email=recipient_email, metadata=metadata,
+            campaign_id=campaign_id,
+            event_type=event_type,
+            recipient_email=recipient_email,
+            metadata=metadata,
         )
         await self.event_repo.save(event)
 

@@ -38,9 +38,7 @@ class APIVersionMiddleware(BaseHTTPMiddleware):
         if route is not None and getattr(route, "deprecated", False):
             response.headers[_API_DEPRECATED_HEADER] = "true"
             response.headers[_API_SUNSET_HEADER] = "Sat, 01 Dec 2025 00:00:00 GMT"
-            response.headers[_API_LINK_HEADER] = (
-                '</api/v2>; rel="successor-version"'
-            )
+            response.headers[_API_LINK_HEADER] = '</api/v2>; rel="successor-version"'
             logger.info(
                 "Deprecated endpoint called: %s %s",
                 request.method,

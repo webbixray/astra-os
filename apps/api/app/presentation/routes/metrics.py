@@ -40,7 +40,9 @@ async def metrics() -> Response:
         )
     except Exception:
         logger.exception("Failed to generate Prometheus metrics")
-        return Response(content="# Error generating metrics\n", media_type="text/plain", status_code=500)
+        return Response(
+            content="# Error generating metrics\n", media_type="text/plain", status_code=500
+        )
 
 
 @router.get("/metrics/business", summary="Business metrics (authenticated)")

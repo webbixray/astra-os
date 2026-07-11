@@ -5,6 +5,7 @@ Extracts tenant ID from X-Tenant-ID header or subdomain and attaches to request 
 
 import logging
 import re
+
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 
@@ -47,5 +48,4 @@ class TenantResolutionMiddleware(BaseHTTPMiddleware):
         else:
             request.state.tenant_id = None
 
-        response = await call_next(request)
-        return response
+        return await call_next(request)

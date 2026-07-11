@@ -31,6 +31,7 @@ class SetCampaignBudgetUseCase:
             return await self.repo.save(existing)
 
         from datetime import datetime as dt
+
         budget = CampaignBudget.create(
             campaign_id=campaign_id,
             total_budget=total_budget,

@@ -74,9 +74,15 @@ class NotificationHubService:
             raise ValidationError("Notification disabled by user preference")
 
         notification = Notification.create(
-            organization_id=organization_id, user_id=user_id, type=type,
-            title=title, body=body, resource_type=resource_type,
-            resource_id=resource_id, channel=channel, template_id=template_id,
+            organization_id=organization_id,
+            user_id=user_id,
+            type=type,
+            title=title,
+            body=body,
+            resource_type=resource_type,
+            resource_id=resource_id,
+            channel=channel,
+            template_id=template_id,
         )
         saved = await self.notif_repo.save(notification)
 
@@ -86,12 +92,15 @@ class NotificationHubService:
 
         if channel == "in_app":
             data = {
-                "id": str(saved.id), "type": saved.type,
-                "title": saved.title, "body": saved.body,
+                "id": str(saved.id),
+                "type": saved.type,
+                "title": saved.title,
+                "body": saved.body,
                 "resource_type": saved.resource_type,
                 "resource_id": saved.resource_id,
                 "channel": saved.channel,
-                "is_read": False, "created_at": saved.created_at.isoformat(),
+                "is_read": False,
+                "created_at": saved.created_at.isoformat(),
             }
             self._push_to_local_queues(user_id, data)
             await self._publish_to_redis(user_id, data)
@@ -118,31 +127,50 @@ class NotificationHubService:
             body = body.replace(f"{{{{{k}}}}}", str(v))
 
         return await self.send(
-            organization_id=organization_id, user_id=user_id,
-            type=template.type, title=title, body=body,
-            resource_type=resource_type, resource_id=resource_id,
-            channel=template.channel, template_id=template_id,
+            organization_id=organization_id,
+            user_id=user_id,
+            type=template.type,
+            title=title,
+            body=body,
+            resource_type=resource_type,
+            resource_id=resource_id,
+            channel=template.channel,
+            template_id=template_id,
         )
 
     async def list_notifications(
-        self, user_id: UUID, organization_id: UUID,
-        *, unread_only: bool = False, channel: str | None = None,
-        archived: bool = False, limit: int = 50, offset: int = 0,
+        self,
+        user_id: UUID,
+        organization_id: UUID,
+        *,
+        unread_only: bool = False,
+        channel: str | None = None,
+        archived: bool = False,
+        limit: int = 50,
+        offset: int = 0,
     ) -> dict:
         notifs = await self.notif_repo.find_by_user(
-            user_id=user_id, organization_id=organization_id,
-            unread_only=unread_only, channel=channel,
-            archived=archived, limit=limit, offset=offset,
+            user_id=user_id,
+            organization_id=organization_id,
+            unread_only=unread_only,
+            channel=channel,
+            archived=archived,
+            limit=limit,
+            offset=offset,
         )
         total = await self.notif_repo.count_by_user(
-            user_id=user_id, organization_id=organization_id,
-            unread_only=unread_only, channel=channel,
+            user_id=user_id,
+            organization_id=organization_id,
+            unread_only=unread_only,
+            channel=channel,
             archived=archived,
         )
         items = [
             {
-                "id": str(n.id), "type": n.type,
-                "title": n.title, "body": n.body,
+                "id": str(n.id),
+                "type": n.type,
+                "title": n.title,
+                "body": n.body,
                 "resource_type": n.resource_type,
                 "resource_id": n.resource_id,
                 "channel": n.channel,
@@ -155,7 +183,9 @@ class NotificationHubService:
         ]
         return {"items": items, "total": total}
 
-    async def get_unread_count(self, user_id: UUID, organization_id: UUID, channel: str | None = None) -> int:
+    async def get_unread_count(
+        self, user_id: UUID, organization_id: UUID, channel: str | None = None
+    ) -> int:
         return await self.notif_repo.count_unread(user_id, organization_id, channel)
 
     async def mark_read(self, notification_id: UUID) -> None:
@@ -168,14 +198,20 @@ class NotificationHubService:
         await self.notif_repo.archive(notification_id)
 
     async def search_notifications(
-        self, user_id: UUID, organization_id: UUID,
-        q: str, limit: int = 50, offset: int = 0,
+        self,
+        user_id: UUID,
+        organization_id: UUID,
+        q: str,
+        limit: int = 50,
+        offset: int = 0,
     ) -> list[dict]:
         notifs = await self.notif_repo.search(user_id, organization_id, q, limit, offset)
         return [
             {
-                "id": str(n.id), "type": n.type,
-                "title": n.title, "body": n.body,
+                "id": str(n.id),
+                "type": n.type,
+                "title": n.title,
+                "body": n.body,
                 "channel": n.channel,
                 "is_read": n.is_read,
                 "created_at": n.created_at.isoformat(),
@@ -186,8 +222,13 @@ class NotificationHubService:
     # ── Templates ────────────────────────────────────────────────────────────
 
     async def create_template(
-        self, org_id: UUID, name: str, type: str, channel: str,
-        title_template: str, body_template: str = "",
+        self,
+        org_id: UUID,
+        name: str,
+        type: str,
+        channel: str,
+        title_template: str,
+        body_template: str = "",
         variables: list[str] | None = None,
     ) -> NotificationTemplate:
         if type not in NOTIFICATION_TYPES and type != "general":
@@ -195,8 +236,12 @@ class NotificationHubService:
         if channel not in NOTIFICATION_CHANNELS:
             raise ValidationError(f"Unknown channel: {channel}")
         template = NotificationTemplate(
-            organization_id=org_id, name=name, type=type, channel=channel,
-            title_template=title_template, body_template=body_template,
+            organization_id=org_id,
+            name=name,
+            type=type,
+            channel=channel,
+            title_template=title_template,
+            body_template=body_template,
             variables=variables or [],
         )
         return await self.template_repo.save(template)
@@ -204,9 +249,14 @@ class NotificationHubService:
     async def list_templates(self, org_id: UUID) -> list[dict]:
         templates = await self.template_repo.find_by_org(org_id)
         return [
-            {"id": str(t.id), "name": t.name, "type": t.type,
-             "channel": t.channel, "variables": t.variables,
-             "created_at": t.created_at.isoformat()}
+            {
+                "id": str(t.id),
+                "name": t.name,
+                "type": t.type,
+                "channel": t.channel,
+                "variables": t.variables,
+                "created_at": t.created_at.isoformat(),
+            }
             for t in templates
         ]
 
@@ -222,35 +272,52 @@ class NotificationHubService:
     # ── Preferences ──────────────────────────────────────────────────────────
 
     async def set_preference(
-        self, user_id: UUID, notification_type: str,
-        channel: str, enabled: bool,
+        self,
+        user_id: UUID,
+        notification_type: str,
+        channel: str,
+        enabled: bool,
     ) -> UserNotificationPreference:
         pref = UserNotificationPreference(
-            user_id=user_id, notification_type=notification_type,
-            channel=channel, enabled=enabled,
+            user_id=user_id,
+            notification_type=notification_type,
+            channel=channel,
+            enabled=enabled,
         )
         return await self.pref_repo.upsert(pref)
 
     async def get_preferences(self, user_id: UUID) -> list[dict]:
         prefs = await self.pref_repo.find_by_user(user_id)
         return [
-            {"id": str(p.id), "notification_type": p.notification_type,
-             "channel": p.channel, "enabled": p.enabled}
+            {
+                "id": str(p.id),
+                "notification_type": p.notification_type,
+                "channel": p.channel,
+                "enabled": p.enabled,
+            }
             for p in prefs
         ]
 
     # ── Announcements ────────────────────────────────────────────────────────
 
     async def create_announcement(
-        self, org_id: UUID, title: str, body: str = "",
-        severity: str = "info", target_role: str = "",
-        created_by: UUID | None = None, expires_at: datetime | None = None,
+        self,
+        org_id: UUID,
+        title: str,
+        body: str = "",
+        severity: str = "info",
+        target_role: str = "",
+        created_by: UUID | None = None,
+        expires_at: datetime | None = None,
     ) -> BroadcastAnnouncement:
         if severity not in ["info", "warning", "error"]:
             raise ValidationError(f"Unknown severity: {severity}")
         a = BroadcastAnnouncement(
-            organization_id=org_id, title=title, body=body,
-            severity=severity, target_role=target_role,
+            organization_id=org_id,
+            title=title,
+            body=body,
+            severity=severity,
+            target_role=target_role,
             created_by=created_by or UUID(int=0),
             expires_at=expires_at,
         )
@@ -261,10 +328,14 @@ class NotificationHubService:
         current_time = now()
         return [
             {
-                "id": str(a.id), "title": a.title, "body": a.body,
-                "severity": a.severity, "target_role": a.target_role,
+                "id": str(a.id),
+                "title": a.title,
+                "body": a.body,
+                "severity": a.severity,
+                "target_role": a.target_role,
                 "dismissed_by": [str(d) for d in a.dismissed_by],
-                "expired": a.expires_at is not None and a.expires_at.replace(tzinfo=None) < current_time,
+                "expired": a.expires_at is not None
+                and a.expires_at.replace(tzinfo=None) < current_time,
                 "created_at": a.created_at.isoformat(),
             }
             for a in announcements
@@ -300,16 +371,20 @@ class NotificationHubService:
     async def _publish_to_redis(user_id: UUID, data: dict) -> None:
         try:
             from app.config import config
+
             if not config.redis_url:
                 return
             from redis.asyncio import Redis
+
             redis = await Redis.from_url(config.redis_url, decode_responses=True)
             try:
-                message = json.dumps({
-                    "user_id": str(user_id),
-                    "data": data,
-                    "source_instance": _INSTANCE_ID,
-                })
+                message = json.dumps(
+                    {
+                        "user_id": str(user_id),
+                        "data": data,
+                        "source_instance": _INSTANCE_ID,
+                    }
+                )
                 await redis.publish(REDIS_NOTIFICATION_CHANNEL, message)
             finally:
                 await redis.close()
@@ -320,9 +395,11 @@ class NotificationHubService:
     async def start_redis_listener() -> None:
         try:
             from app.config import config
+
             if not config.redis_url:
                 return
             from redis.asyncio import Redis
+
             redis = await Redis.from_url(config.redis_url, decode_responses=True)
             pubsub = redis.pubsub()
             await pubsub.subscribe(REDIS_NOTIFICATION_CHANNEL)

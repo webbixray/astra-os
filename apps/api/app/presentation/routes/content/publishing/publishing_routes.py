@@ -36,7 +36,11 @@ async def get_pub_service(db: AsyncSession = Depends(get_db)) -> ContentPublishi
     )
 
 
-@router.post("/content/{content_id}/publish", status_code=status.HTTP_201_CREATED, summary="Publish content to platform")
+@router.post(
+    "/content/{content_id}/publish",
+    status_code=status.HTTP_201_CREATED,
+    summary="Publish content to platform",
+)
 async def publish_content(
     content_id: UUID,
     request: PublishRequest,
@@ -45,10 +49,13 @@ async def publish_content(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     from app.infrastructure.db.repositories.content.content_repository import ContentRepositoryImpl
+
     content_repo = ContentRepositoryImpl(db)
     content = await content_repo.find_by_id(content_id)
     if not content:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Content not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Content not found"
+        ) from None
     await require_org_role(content.organization_id, "member", user_id, db)
     try:
         result = await service.publish(
@@ -58,13 +65,24 @@ async def publish_content(
             metadata=request.metadata,
         )
     except ValidationError as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
-    return {"id": str(result.id), "platform": result.platform, "status": result.status,
-            "external_url": result.external_url, "error_message": result.error_message,
-            "scheduled_at": result.scheduled_at.isoformat() if result.scheduled_at else None}
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
+    return {
+        "id": str(result.id),
+        "platform": result.platform,
+        "status": result.status,
+        "external_url": result.external_url,
+        "error_message": result.error_message,
+        "scheduled_at": result.scheduled_at.isoformat() if result.scheduled_at else None,
+    }
 
 
-@router.post("/content/{content_id}/schedule", status_code=status.HTTP_201_CREATED, summary="Schedule content for publishing")
+@router.post(
+    "/content/{content_id}/schedule",
+    status_code=status.HTTP_201_CREATED,
+    summary="Schedule content for publishing",
+)
 async def schedule_content(
     content_id: UUID,
     request: ScheduleRequest,
@@ -73,10 +91,13 @@ async def schedule_content(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     from app.infrastructure.db.repositories.content.content_repository import ContentRepositoryImpl
+
     content_repo = ContentRepositoryImpl(db)
     content = await content_repo.find_by_id(content_id)
     if not content:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Content not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Content not found"
+        ) from None
     await require_org_role(content.organization_id, "member", user_id, db)
     try:
         result = await service.schedule(
@@ -86,9 +107,15 @@ async def schedule_content(
             metadata=request.metadata,
         )
     except ValidationError as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
-    return {"id": str(result.id), "platform": result.platform, "status": result.status,
-            "scheduled_at": result.scheduled_at.isoformat() if result.scheduled_at else None}
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
+    return {
+        "id": str(result.id),
+        "platform": result.platform,
+        "status": result.status,
+        "scheduled_at": result.scheduled_at.isoformat() if result.scheduled_at else None,
+    }
 
 
 @router.get("/content/publishing/queue", summary="Get publishing queue")
@@ -111,10 +138,13 @@ async def get_publishing_history(
     db: AsyncSession = Depends(get_db),
 ) -> list[dict]:
     from app.infrastructure.db.repositories.content.content_repository import ContentRepositoryImpl
+
     content_repo = ContentRepositoryImpl(db)
     content = await content_repo.find_by_id(content_id)
     if not content:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Content not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Content not found"
+        ) from None
     await require_org_role(content.organization_id, "viewer", user_id, db)
     return await service.get_history(content_id=content_id)
 
@@ -129,27 +159,42 @@ async def retry_publish(
     from app.infrastructure.db.repositories.content.content_publish_repository import (
         ContentPublishRepository,
     )
+
     pub_repo = ContentPublishRepository(db)
     publish_record = await pub_repo.find_by_id(publish_id)
     if not publish_record:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Publish record not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Publish record not found"
+        ) from None
     content_repo = ContentRepositoryImpl(db)
     content = await content_repo.find_by_id(publish_record.content_id)
     if not content:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Content not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Content not found"
+        ) from None
     await require_org_role(content.organization_id, "member", user_id, db)
     try:
         result = await service.retry(publish_id=publish_id)
     except (EntityNotFoundError, ValidationError) as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND if isinstance(e, EntityNotFoundError) else status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_404_NOT_FOUND
+            if isinstance(e, EntityNotFoundError)
+            else status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(e),
         ) from None
-    return {"id": str(result.id), "status": result.status,
-            "external_url": result.external_url, "error_message": result.error_message}
+    return {
+        "id": str(result.id),
+        "status": result.status,
+        "external_url": result.external_url,
+        "error_message": result.error_message,
+    }
 
 
-@router.delete("/content/publishing/{publish_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Cancel a publishing job")
+@router.delete(
+    "/content/publishing/{publish_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Cancel a publishing job",
+)
 async def cancel_publish(
     publish_id: UUID,
     service: ContentPublishingService = Depends(get_pub_service),
@@ -159,19 +204,26 @@ async def cancel_publish(
     from app.infrastructure.db.repositories.content.content_publish_repository import (
         ContentPublishRepository,
     )
+
     pub_repo = ContentPublishRepository(db)
     publish_record = await pub_repo.find_by_id(publish_id)
     if not publish_record:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Publish record not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Publish record not found"
+        ) from None
     content_repo = ContentRepositoryImpl(db)
     content = await content_repo.find_by_id(publish_record.content_id)
     if not content:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Content not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Content not found"
+        ) from None
     await require_org_role(content.organization_id, "member", user_id, db)
     try:
         await service.cancel(publish_id=publish_id)
     except (EntityNotFoundError, ValidationError) as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND if isinstance(e, EntityNotFoundError) else status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_404_NOT_FOUND
+            if isinstance(e, EntityNotFoundError)
+            else status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(e),
         ) from None

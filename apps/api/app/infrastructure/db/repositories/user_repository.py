@@ -19,31 +19,23 @@ class UserRepositoryImpl(UserRepository):
         return merged.to_domain()
 
     async def find_by_id(self, user_id: UUID) -> User | None:
-        result = await self.session.execute(
-            select(UserModel).where(UserModel.id == user_id)
-        )
+        result = await self.session.execute(select(UserModel).where(UserModel.id == user_id))
         model = result.scalar_one_or_none()
         return model.to_domain() if model is not None else None
 
     async def find_by_ids(self, ids: list[UUID]) -> list[User]:
         if not ids:
             return []
-        result = await self.session.execute(
-            select(UserModel).where(UserModel.id.in_(ids))
-        )
+        result = await self.session.execute(select(UserModel).where(UserModel.id.in_(ids)))
         return [m.to_domain() for m in result.scalars().all()]
 
     async def find_by_email(self, email: str) -> User | None:
-        result = await self.session.execute(
-            select(UserModel).where(UserModel.email == email)
-        )
+        result = await self.session.execute(select(UserModel).where(UserModel.email == email))
         model = result.scalar_one_or_none()
         return model.to_domain() if model is not None else None
 
     async def delete(self, user_id: UUID) -> None:
-        result = await self.session.execute(
-            select(UserModel).where(UserModel.id == user_id)
-        )
+        result = await self.session.execute(select(UserModel).where(UserModel.id == user_id))
         model = result.scalar_one_or_none()
         if model is not None:
             await self.session.delete(model)

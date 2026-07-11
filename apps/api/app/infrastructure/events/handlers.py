@@ -10,7 +10,9 @@ logger = logging.getLogger(__name__)
 
 @event_handler(DomainEventType.CAMPAIGN_CREATED)
 async def on_campaign_created(event: DomainEvent) -> None:
-    logger.info("Campaign created: %s (org: %s)", event.aggregate_id, event.data.get("organization_id"))
+    logger.info(
+        "Campaign created: %s (org: %s)", event.aggregate_id, event.data.get("organization_id")
+    )
 
 
 @event_handler(DomainEventType.CAMPAIGN_ACTIVATED)
@@ -36,7 +38,9 @@ async def on_content_published(event: DomainEvent) -> None:
 @event_handler(DomainEventType.WORKFLOW_COMPLETED)
 async def on_workflow_completed(event: DomainEvent) -> None:
     workflows_completed.inc()
-    logger.info("Workflow completed: %s (%d steps)", event.aggregate_id, len(event.data.get("steps", [])))
+    logger.info(
+        "Workflow completed: %s (%d steps)", event.aggregate_id, len(event.data.get("steps", []))
+    )
 
 
 @event_handler(DomainEventType.WORKFLOW_FAILED)

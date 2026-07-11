@@ -42,6 +42,7 @@ class NvidiaEmbeddingProvider(EmbeddingProvider):
 
     def _fallback_embed(self, text: str) -> list[float]:
         import hashlib
+
         hash_bytes = hashlib.sha256(text.encode()).digest()
         vec = [b / 255.0 for b in hash_bytes[:384]]
         norm = sum(v * v for v in vec) ** 0.5

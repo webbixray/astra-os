@@ -9,7 +9,9 @@ class TemporalWorkflowClient:
     def __init__(self):
         self._client = None
         self._imported = False
-        self.enabled = bool(config.temporal_host and not config.temporal_host.startswith("localhost:"))
+        self.enabled = bool(
+            config.temporal_host and not config.temporal_host.startswith("localhost:")
+        )
 
     async def get_client(self):
         if not self.enabled:

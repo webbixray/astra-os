@@ -46,9 +46,7 @@ class ListWorkflowsUseCase:
     def __init__(self, repo: WorkflowRepository):
         self.repo = repo
 
-    async def execute(
-        self, organization_id: UUID, status: str | None = None
-    ) -> list[Workflow]:
+    async def execute(self, organization_id: UUID, status: str | None = None) -> list[Workflow]:
         return await self.repo.find_by_organization(organization_id, status)
 
 
@@ -76,9 +74,11 @@ class UpdateWorkflowUseCase:
             workflow.status = WorkflowStatus(status)
         if nodes is not None:
             from app.domain.entities.workflows.workflow import WorkflowNode
+
             workflow.nodes = [WorkflowNode(**n) if isinstance(n, dict) else n for n in nodes]
         if edges is not None:
             from app.domain.entities.workflows.workflow import WorkflowEdge
+
             workflow.edges = [WorkflowEdge(**e) if isinstance(e, dict) else e for e in edges]
         workflow.updated_at = now()
         return await self.repo.save(workflow)
@@ -124,7 +124,9 @@ class ExecuteWorkflowUseCase:
             execution = await self.repo.save_execution(execution)
             return {
                 "execution_id": str(execution.id),
-                "status": execution.status.value if hasattr(execution.status, "value") else execution.status,
+                "status": execution.status.value
+                if hasattr(execution.status, "value")
+                else execution.status,
                 "steps": [s.__dict__ for s in execution.steps],
                 "engine": "temporal",
             }

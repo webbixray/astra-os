@@ -48,9 +48,7 @@ class AnalyticsService:
             "status_breakdown": status_breakdown,
         }
 
-    async def get_campaign_performance(
-        self, organization_id: UUID
-    ) -> list[dict]:
+    async def get_campaign_performance(self, organization_id: UUID) -> list[dict]:
         campaigns = await self.campaign_repo.find_by_organization(organization_id)
         return [
             {
@@ -69,9 +67,7 @@ class AnalyticsService:
             for c in campaigns
         ]
 
-    async def get_ad_performance(
-        self, connected_accounts: list[dict]
-    ) -> dict:
+    async def get_ad_performance(self, connected_accounts: list[dict]) -> dict:
         all_campaigns = await AdPlatformFactory.get_connected_campaigns(connected_accounts)
 
         total_impressions = sum(c.impressions for c in all_campaigns)
@@ -90,8 +86,12 @@ class AnalyticsService:
             "total_budget": total_budget,
             "ctr": round(total_clicks / total_impressions * 100, 2) if total_impressions > 0 else 0,
             "cpc": round(total_spend / total_clicks, 2) if total_clicks > 0 else 0,
-            "conversion_rate": round(total_conversions / total_clicks * 100, 2) if total_clicks > 0 else 0,
-            "roi": round((total_revenue - total_spend) / total_spend * 100, 2) if total_spend > 0 else 0,
+            "conversion_rate": round(total_conversions / total_clicks * 100, 2)
+            if total_clicks > 0
+            else 0,
+            "roi": round((total_revenue - total_spend) / total_spend * 100, 2)
+            if total_spend > 0
+            else 0,
             "platforms": [
                 {
                     "name": platform,
@@ -105,7 +105,8 @@ class AnalyticsService:
                             "conversions": c.conversions,
                             "revenue": c.revenue,
                         }
-                        for c in all_campaigns if c.platform.value == platform
+                        for c in all_campaigns
+                        if c.platform.value == platform
                     ],
                 }
                 for platform in {c.platform.value for c in all_campaigns}

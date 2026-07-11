@@ -12,12 +12,50 @@ class Money:
     amount: Decimal = field(default=Decimal("0.00"))
     currency: str = "USD"
 
-    VALID_CURRENCIES = frozenset({
-        "USD", "EUR", "GBP", "JPY", "AUD", "CAD", "CHF", "CNY", "INR", "BRL",
-        "MXN", "KRW", "SGD", "HKD", "SEK", "NOK", "DKK", "PLN", "CZK", "HUF",
-        "THB", "IDR", "MYR", "PHP", "VND", "ZAR", "AED", "SAR", "QAR", "KWD",
-        "BHD", "TRY", "RUB", "NGN", "KES", "EGP", "ARS", "CLP", "COP", "PEN",
-    })
+    VALID_CURRENCIES = frozenset(
+        {
+            "USD",
+            "EUR",
+            "GBP",
+            "JPY",
+            "AUD",
+            "CAD",
+            "CHF",
+            "CNY",
+            "INR",
+            "BRL",
+            "MXN",
+            "KRW",
+            "SGD",
+            "HKD",
+            "SEK",
+            "NOK",
+            "DKK",
+            "PLN",
+            "CZK",
+            "HUF",
+            "THB",
+            "IDR",
+            "MYR",
+            "PHP",
+            "VND",
+            "ZAR",
+            "AED",
+            "SAR",
+            "QAR",
+            "KWD",
+            "BHD",
+            "TRY",
+            "RUB",
+            "NGN",
+            "KES",
+            "EGP",
+            "ARS",
+            "CLP",
+            "COP",
+            "PEN",
+        }
+    )
 
     def __post_init__(self) -> None:
         if isinstance(self.amount, (int, float)):
@@ -98,9 +136,7 @@ class Money:
 class Email:
     value: str
 
-    _PATTERN = re.compile(
-        r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-    )
+    _PATTERN = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
 
     def __post_init__(self) -> None:
         if not self._PATTERN.match(self.value):
@@ -185,19 +221,25 @@ class Percentage:
     def __add__(self, other: Percentage) -> Percentage:
         result = self.value + other.value
         if result > Decimal(100):
-            raise ValueError(f"Percentage addition cannot exceed 100: {self.value} + {other.value} = {result}")
+            raise ValueError(
+                f"Percentage addition cannot exceed 100: {self.value} + {other.value} = {result}"
+            )
         return Percentage(result)
 
     def __sub__(self, other: Percentage) -> Percentage:
         result = self.value - other.value
         if result < Decimal(0):
-            raise ValueError(f"Percentage subtraction cannot go below 0: {self.value} - {other.value} = {result}")
+            raise ValueError(
+                f"Percentage subtraction cannot go below 0: {self.value} - {other.value} = {result}"
+            )
         return Percentage(result)
 
     def __mul__(self, factor: float | Decimal) -> Percentage:
         result = self.value * Decimal(str(factor))
         if result > Decimal(100):
-            raise ValueError(f"Percentage multiplication cannot exceed 100: {self.value} * {factor} = {result}")
+            raise ValueError(
+                f"Percentage multiplication cannot exceed 100: {self.value} * {factor} = {result}"
+            )
         return Percentage(result)
 
     def __str__(self) -> str:

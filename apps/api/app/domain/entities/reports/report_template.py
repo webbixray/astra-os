@@ -6,8 +6,13 @@ from app.domain.common import now
 from app.domain.exceptions.domain_exceptions import ValidationError
 
 REPORT_TYPES = [
-    "overview", "campaigns", "ads", "content",
-    "email", "platform_comparison", "custom",
+    "overview",
+    "campaigns",
+    "ads",
+    "content",
+    "email",
+    "platform_comparison",
+    "custom",
 ]
 
 EXPORT_FORMATS = ["csv", "json", "html"]
@@ -28,9 +33,15 @@ class ReportTemplate:
     updated_at: datetime = field(default_factory=now)
 
     @classmethod
-    def create(cls, organization_id: UUID, name: str, report_type: str,
-               config: dict | None = None, description: str = "",
-               created_by: UUID | None = None) -> "ReportTemplate":
+    def create(
+        cls,
+        organization_id: UUID,
+        name: str,
+        report_type: str,
+        config: dict | None = None,
+        description: str = "",
+        created_by: UUID | None = None,
+    ) -> "ReportTemplate":
         if not name or not name.strip():
             raise ValidationError("Template name is required")
         if report_type not in REPORT_TYPES:
@@ -65,10 +76,16 @@ class ReportDeliveryLog:
     generated_at: datetime = field(default_factory=now)
 
     @classmethod
-    def create(cls, organization_id: UUID, report_type: str,
-               channel: str = "download", format: str = "csv",
-               recipient: str = "", template_id: UUID | None = None,
-               schedule_id: UUID | None = None) -> "ReportDeliveryLog":
+    def create(
+        cls,
+        organization_id: UUID,
+        report_type: str,
+        channel: str = "download",
+        format: str = "csv",
+        recipient: str = "",
+        template_id: UUID | None = None,
+        schedule_id: UUID | None = None,
+    ) -> "ReportDeliveryLog":
         if format not in EXPORT_FORMATS:
             raise ValidationError(f"Invalid export format: {format}")
         return cls(

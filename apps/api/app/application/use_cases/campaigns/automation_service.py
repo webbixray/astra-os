@@ -34,18 +34,28 @@ class AutomationService:
 
     # ── Budget Allocation ────────────────────────────────────────────────
 
-    async def create_budget_rule(self, org_id: UUID, campaign_id: UUID,
-                                  name: str, strategy: str = "equal",
-                                  allocations: dict | None = None) -> BudgetAllocationRule:
+    async def create_budget_rule(
+        self,
+        org_id: UUID,
+        campaign_id: UUID,
+        name: str,
+        strategy: str = "equal",
+        allocations: dict | None = None,
+    ) -> BudgetAllocationRule:
         rule = BudgetAllocationRule.create(org_id, campaign_id, name, strategy, allocations)
         return await self.budget_repo.save(rule)
 
     async def list_budget_rules(self, org_id: UUID) -> list[dict]:
         rules = await self.budget_repo.find_by_organization(org_id)
         return [
-            {"id": str(r.id), "campaign_id": str(r.campaign_id),
-             "name": r.name, "strategy": r.strategy,
-             "allocations": r.allocations, "enabled": r.enabled}
+            {
+                "id": str(r.id),
+                "campaign_id": str(r.campaign_id),
+                "name": r.name,
+                "strategy": r.strategy,
+                "allocations": r.allocations,
+                "enabled": r.enabled,
+            }
             for r in rules
         ]
 
@@ -63,12 +73,16 @@ class AutomationService:
             impression_result = await self.db.execute(
                 select(
                     AdInsightModel.platform,
-                    func.coalesce(func.sum(AdInsightModel.impressions), 0).label("total_impressions"),
+                    func.coalesce(func.sum(AdInsightModel.impressions), 0).label(
+                        "total_impressions"
+                    ),
                 )
                 .where(AdInsightModel.platform.in_(channels.keys()))
                 .group_by(AdInsightModel.platform)
             )
-            results = {row.platform: float(row.total_impressions) for row in impression_result.all()}
+            results = {
+                row.platform: float(row.total_impressions) for row in impression_result.all()
+            }
             for ch in channels:
                 results.setdefault(ch, 0.0)
             total = sum(results.values()) or 1
@@ -84,22 +98,34 @@ class AutomationService:
 
     # ── Bid Optimization ─────────────────────────────────────────────────
 
-    async def create_bid_rule(self, org_id: UUID, ad_account_id: UUID,
-                               name: str, strategy: str = "target_cpa",
-                               target_value: float = 0.0,
-                               min_bid: float = 0.0,
-                               max_bid: float = 0.0) -> BidOptimizationRule:
-        rule = BidOptimizationRule.create(org_id, ad_account_id, name, strategy,
-                                          target_value, min_bid, max_bid)
+    async def create_bid_rule(
+        self,
+        org_id: UUID,
+        ad_account_id: UUID,
+        name: str,
+        strategy: str = "target_cpa",
+        target_value: float = 0.0,
+        min_bid: float = 0.0,
+        max_bid: float = 0.0,
+    ) -> BidOptimizationRule:
+        rule = BidOptimizationRule.create(
+            org_id, ad_account_id, name, strategy, target_value, min_bid, max_bid
+        )
         return await self.bid_repo.save(rule)
 
     async def list_bid_rules(self, org_id: UUID) -> list[dict]:
         rules = await self.bid_repo.find_by_organization(org_id)
         return [
-            {"id": str(r.id), "ad_account_id": str(r.ad_account_id),
-             "name": r.name, "strategy": r.strategy,
-             "target_value": r.target_value, "min_bid": r.min_bid,
-             "max_bid": r.max_bid, "enabled": r.enabled}
+            {
+                "id": str(r.id),
+                "ad_account_id": str(r.ad_account_id),
+                "name": r.name,
+                "strategy": r.strategy,
+                "target_value": r.target_value,
+                "min_bid": r.min_bid,
+                "max_bid": r.max_bid,
+                "enabled": r.enabled,
+            }
             for r in rules
         ]
 
@@ -109,10 +135,15 @@ class AutomationService:
             raise EntityNotFoundError("BidOptimizationRule", str(rule_id))
 
         suggested_bid = rule.target_value * random.uniform(0.8, 1.2)
-        suggested_bid = max(rule.min_bid, min(rule.max_bid, suggested_bid)) if rule.max_bid > 0 else suggested_bid
+        suggested_bid = (
+            max(rule.min_bid, min(rule.max_bid, suggested_bid))
+            if rule.max_bid > 0
+            else suggested_bid
+        )
 
         return {
-            "rule_id": str(rule.id), "strategy": rule.strategy,
+            "rule_id": str(rule.id),
+            "strategy": rule.strategy,
             "suggested_bid": round(suggested_bid, 2),
             "target_value": rule.target_value,
             "confidence": round(random.uniform(0.6, 0.95), 2),
@@ -120,9 +151,9 @@ class AutomationService:
 
     # ── Audience Segmentation ────────────────────────────────────────────
 
-    async def create_audience_segment(self, org_id: UUID, name: str,
-                                       source: str = "custom",
-                                       criteria: dict | None = None) -> AudienceSegment:
+    async def create_audience_segment(
+        self, org_id: UUID, name: str, source: str = "custom", criteria: dict | None = None
+    ) -> AudienceSegment:
         segment = AudienceSegment.create(org_id, name, source, criteria)
         segment.predicted_size = random.randint(1000, 100000)
         segment.confidence_score = round(random.uniform(0.5, 0.95), 2)
@@ -131,9 +162,14 @@ class AutomationService:
     async def list_audience_segments(self, org_id: UUID) -> list[dict]:
         segments = await self.audience_repo.find_by_organization(org_id)
         return [
-            {"id": str(s.id), "name": s.name, "source": s.source,
-             "predicted_size": s.predicted_size,
-             "confidence_score": s.confidence_score, "criteria": s.criteria}
+            {
+                "id": str(s.id),
+                "name": s.name,
+                "source": s.source,
+                "predicted_size": s.predicted_size,
+                "confidence_score": s.confidence_score,
+                "criteria": s.criteria,
+            }
             for s in segments
         ]
 
@@ -142,7 +178,8 @@ class AutomationService:
         if segment is None:
             raise EntityNotFoundError("AudienceSegment", str(segment_id))
         return {
-            "segment_id": str(segment.id), "name": segment.name,
+            "segment_id": str(segment.id),
+            "name": segment.name,
             "predicted_size": segment.predicted_size,
             "confidence_score": segment.confidence_score,
             "estimated_reach": int(segment.predicted_size * random.uniform(0.5, 0.9)),
@@ -152,27 +189,47 @@ class AutomationService:
     # ── Content Recommendations ──────────────────────────────────────────
 
     AI_RECOMMENDATIONS: ClassVar[list[dict[str, str]]] = [
-        {"type": "topic", "title": "Industry trends and insights",
-         "description": "Create content around emerging industry trends to capture early adopter attention"},
-        {"type": "format", "title": "Short-form video content",
-         "description": "Video content has 3x higher engagement — prioritize reels and shorts"},
-        {"type": "channel", "title": "LinkedIn for B2B campaigns",
-         "description": "B2B audiences respond best on LinkedIn — increase allocation by 20%"},
-        {"type": "timing", "title": "Optimal posting time 10-11am",
-         "description": "Peak engagement occurs between 10-11am on weekdays"},
-        {"type": "headline", "title": "Use question-based headlines",
-         "description": "Question headlines drive 40% higher click-through rates"},
-        {"type": "cta", "title": "Social proof CTAs outperform",
-         "description": "CTAs like 'Join 10,000+ marketers' convert 25% better"},
+        {
+            "type": "topic",
+            "title": "Industry trends and insights",
+            "description": "Create content around emerging industry trends to capture early adopter attention",
+        },
+        {
+            "type": "format",
+            "title": "Short-form video content",
+            "description": "Video content has 3x higher engagement — prioritize reels and shorts",
+        },
+        {
+            "type": "channel",
+            "title": "LinkedIn for B2B campaigns",
+            "description": "B2B audiences respond best on LinkedIn — increase allocation by 20%",
+        },
+        {
+            "type": "timing",
+            "title": "Optimal posting time 10-11am",
+            "description": "Peak engagement occurs between 10-11am on weekdays",
+        },
+        {
+            "type": "headline",
+            "title": "Use question-based headlines",
+            "description": "Question headlines drive 40% higher click-through rates",
+        },
+        {
+            "type": "cta",
+            "title": "Social proof CTAs outperform",
+            "description": "CTAs like 'Join 10,000+ marketers' convert 25% better",
+        },
     ]
 
-    async def generate_recommendations(self, org_id: UUID,
-                                        campaign_id: UUID | None = None) -> list[ContentRecommendation]:
+    async def generate_recommendations(
+        self, org_id: UUID, campaign_id: UUID | None = None
+    ) -> list[ContentRecommendation]:
         recs = []
         for rec_data in self.AI_RECOMMENDATIONS:
             score = round(random.uniform(0.55, 0.95), 2)
             rec = ContentRecommendation.create(
-                organization_id=org_id, campaign_id=campaign_id,
+                organization_id=org_id,
+                campaign_id=campaign_id,
                 recommendation_type=rec_data["type"],
                 title=rec_data["title"],
                 description=rec_data["description"],
@@ -181,14 +238,17 @@ class AutomationService:
             recs.append(await self.recommendation_repo.save(rec))
         return recs
 
-    async def list_recommendations(self, org_id: UUID,
-                                    rec_type: str | None = None) -> list[dict]:
+    async def list_recommendations(self, org_id: UUID, rec_type: str | None = None) -> list[dict]:
         recs = await self.recommendation_repo.find_by_organization(org_id, rec_type)
         return [
-            {"id": str(r.id), "type": r.recommendation_type,
-             "title": r.title, "description": r.description,
-             "confidence_score": r.confidence_score,
-             "applied": r.applied}
+            {
+                "id": str(r.id),
+                "type": r.recommendation_type,
+                "title": r.title,
+                "description": r.description,
+                "confidence_score": r.confidence_score,
+                "applied": r.applied,
+            }
             for r in recs
         ]
 
@@ -201,23 +261,46 @@ class AutomationService:
 
     # ── Automation Rules Engine ──────────────────────────────────────────
 
-    async def create_rule(self, org_id: UUID, name: str, trigger_type: str,
-                           action_type: str, trigger_config: dict | None = None,
-                           action_config: dict | None = None,
-                           description: str = "",
-                           created_by: UUID | None = None) -> AutomationRule:
-        rule = AutomationRule.create(org_id, name, trigger_type, action_type,
-                                     trigger_config, action_config, description, created_by)
+    async def create_rule(
+        self,
+        org_id: UUID,
+        name: str,
+        trigger_type: str,
+        action_type: str,
+        trigger_config: dict | None = None,
+        action_config: dict | None = None,
+        description: str = "",
+        created_by: UUID | None = None,
+    ) -> AutomationRule:
+        rule = AutomationRule.create(
+            org_id,
+            name,
+            trigger_type,
+            action_type,
+            trigger_config,
+            action_config,
+            description,
+            created_by,
+        )
         return await self.rule_repo.save(rule)
 
     async def list_rules(self, org_id: UUID) -> list[dict]:
         rules = await self.rule_repo.find_by_organization(org_id)
         return [
-            {"id": str(r.id), "name": r.name, "description": r.description,
-             "trigger_type": r.trigger_type, "trigger_config": r.trigger_config,
-             "action_type": r.action_type, "action_config": r.action_config,
-             "enabled": r.enabled, "execution_count": r.execution_count,
-             "last_triggered_at": r.last_triggered_at.isoformat() if r.last_triggered_at else None}
+            {
+                "id": str(r.id),
+                "name": r.name,
+                "description": r.description,
+                "trigger_type": r.trigger_type,
+                "trigger_config": r.trigger_config,
+                "action_type": r.action_type,
+                "action_config": r.action_config,
+                "enabled": r.enabled,
+                "execution_count": r.execution_count,
+                "last_triggered_at": r.last_triggered_at.isoformat()
+                if r.last_triggered_at
+                else None,
+            }
             for r in rules
         ]
 
@@ -237,13 +320,16 @@ class AutomationService:
             if triggered:
                 rule.record_execution()
                 triggered_rules.append(rule)
-            results.append({
-                "rule_id": str(rule.id), "name": rule.name,
-                "trigger_type": rule.trigger_type,
-                "action_type": rule.action_type,
-                "triggered": triggered,
-                "execution_count": rule.execution_count,
-            })
+            results.append(
+                {
+                    "rule_id": str(rule.id),
+                    "name": rule.name,
+                    "trigger_type": rule.trigger_type,
+                    "action_type": rule.action_type,
+                    "triggered": triggered,
+                    "execution_count": rule.execution_count,
+                }
+            )
         if triggered_rules:
             await self.rule_repo.save_all(triggered_rules)
         return results

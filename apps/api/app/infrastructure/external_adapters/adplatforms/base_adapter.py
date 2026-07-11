@@ -32,25 +32,43 @@ def _is_mock_mode(credentials: dict | None) -> bool:
 
 MOCK_GOOGLE_CAMPAIGNS = [
     AdCampaign(
-        id="google-campaign-1", platform=AdPlatform.GOOGLE_ADS,
-        name="Google Search - Brand", status=AdStatus.ACTIVE,
-        budget=5000, spend=3240.50, impressions=125000, clicks=4200,
-        conversions=185, revenue=18500,
+        id="google-campaign-1",
+        platform=AdPlatform.GOOGLE_ADS,
+        name="Google Search - Brand",
+        status=AdStatus.ACTIVE,
+        budget=5000,
+        spend=3240.50,
+        impressions=125000,
+        clicks=4200,
+        conversions=185,
+        revenue=18500,
     ),
     AdCampaign(
-        id="google-campaign-2", platform=AdPlatform.GOOGLE_ADS,
-        name="Google Display - Retargeting", status=AdStatus.ACTIVE,
-        budget=3000, spend=2100.00, impressions=450000, clicks=1800,
-        conversions=95, revenue=9500,
+        id="google-campaign-2",
+        platform=AdPlatform.GOOGLE_ADS,
+        name="Google Display - Retargeting",
+        status=AdStatus.ACTIVE,
+        budget=3000,
+        spend=2100.00,
+        impressions=450000,
+        clicks=1800,
+        conversions=95,
+        revenue=9500,
     ),
 ]
 
 MOCK_META_CAMPAIGNS = [
     AdCampaign(
-        id="meta-campaign-1", platform=AdPlatform.META,
-        name="Meta - Summer Sale", status=AdStatus.ACTIVE,
-        budget=8000, spend=5600.00, impressions=890000, clicks=12500,
-        conversions=420, revenue=42000,
+        id="meta-campaign-1",
+        platform=AdPlatform.META,
+        name="Meta - Summer Sale",
+        status=AdStatus.ACTIVE,
+        budget=8000,
+        spend=5600.00,
+        impressions=890000,
+        clicks=12500,
+        conversions=420,
+        revenue=42000,
     ),
 ]
 
@@ -98,42 +116,59 @@ class BaseAdAdapter(AdPlatformPort):
                 resp = await client.request(method, url, **kwargs)
 
                 if resp.status_code == 429:
-                    retry_after = int(resp.headers.get("Retry-After", RETRY_BASE_DELAY * (2 ** attempt)))
+                    retry_after = int(
+                        resp.headers.get("Retry-After", RETRY_BASE_DELAY * (2**attempt))
+                    )
                     logger.warning(
                         "[%s] Rate limited (429), retrying after %ds (attempt %d/%d)",
-                        self.platform.value, retry_after, attempt + 1, MAX_RETRIES,
+                        self.platform.value,
+                        retry_after,
+                        attempt + 1,
+                        MAX_RETRIES,
                     )
                     await asyncio.sleep(retry_after)
                     continue
 
                 if resp.status_code >= 500:
-                    delay = RETRY_BASE_DELAY * (2 ** attempt)
+                    delay = RETRY_BASE_DELAY * (2**attempt)
                     last_exc = AdPlatformError(
-                        self.platform.value, f"Server error {resp.status_code}",
+                        self.platform.value,
+                        f"Server error {resp.status_code}",
                     )
                     logger.warning(
                         "[%s] Server error %d, retrying in %.1fs (attempt %d/%d)",
-                        self.platform.value, resp.status_code, delay, attempt + 1, MAX_RETRIES,
+                        self.platform.value,
+                        resp.status_code,
+                        delay,
+                        attempt + 1,
+                        MAX_RETRIES,
                     )
                     await asyncio.sleep(delay)
                 else:
                     return resp
 
             except httpx.TimeoutException as exc:
-                delay = RETRY_BASE_DELAY * (2 ** attempt)
+                delay = RETRY_BASE_DELAY * (2**attempt)
                 last_exc = exc
                 logger.warning(
                     "[%s] Request timeout, retrying in %.1fs (attempt %d/%d)",
-                    self.platform.value, delay, attempt + 1, MAX_RETRIES,
+                    self.platform.value,
+                    delay,
+                    attempt + 1,
+                    MAX_RETRIES,
                 )
                 await asyncio.sleep(delay)
 
             except httpx.HTTPError as exc:
-                delay = RETRY_BASE_DELAY * (2 ** attempt)
+                delay = RETRY_BASE_DELAY * (2**attempt)
                 last_exc = exc
                 logger.warning(
                     "[%s] HTTP error: %s, retrying in %.1fs (attempt %d/%d)",
-                    self.platform.value, exc, delay, attempt + 1, MAX_RETRIES,
+                    self.platform.value,
+                    exc,
+                    delay,
+                    attempt + 1,
+                    MAX_RETRIES,
                 )
                 await asyncio.sleep(delay)
 
@@ -202,7 +237,9 @@ class GoogleAdsAdapter(BaseAdAdapter):
         if resp.status_code != 200:
             logger.warning(
                 "[google_ads] API returned %d for account %s: %s",
-                resp.status_code, account_id, resp.text[:200],
+                resp.status_code,
+                account_id,
+                resp.text[:200],
             )
             return MOCK_GOOGLE_CAMPAIGNS
 
@@ -213,17 +250,19 @@ class GoogleAdsAdapter(BaseAdAdapter):
             metrics = row.get("metrics", {})
             budget_micros = c.get("campaignBudget", {}).get("amountMicros", 0)
             cost_micros = metrics.get("costMicros", 0)
-            campaigns.append(AdCampaign(
-                id=str(c.get("id", "")),
-                platform=AdPlatform.GOOGLE_ADS,
-                name=c.get("name", ""),
-                status=self._map_status(c.get("status", ""), AdPlatform.GOOGLE_ADS),
-                budget=float(budget_micros) / 1_000_000,
-                spend=float(cost_micros) / 1_000_000,
-                impressions=int(metrics.get("impressions", 0)),
-                clicks=int(metrics.get("clicks", 0)),
-                conversions=int(float(metrics.get("conversions", 0))),
-            ))
+            campaigns.append(
+                AdCampaign(
+                    id=str(c.get("id", "")),
+                    platform=AdPlatform.GOOGLE_ADS,
+                    name=c.get("name", ""),
+                    status=self._map_status(c.get("status", ""), AdPlatform.GOOGLE_ADS),
+                    budget=float(budget_micros) / 1_000_000,
+                    spend=float(cost_micros) / 1_000_000,
+                    impressions=int(metrics.get("impressions", 0)),
+                    clicks=int(metrics.get("clicks", 0)),
+                    conversions=int(float(metrics.get("conversions", 0))),
+                )
+            )
 
         logger.info("[google_ads] Fetched %d campaigns for account %s", len(campaigns), account_id)
         return campaigns or MOCK_GOOGLE_CAMPAIGNS
@@ -249,7 +288,9 @@ class GoogleAdsAdapter(BaseAdAdapter):
         )
 
         if resp.status_code not in (200, 201):
-            raise AdPlatformError("google_ads", f"Failed to create campaign: {resp.text}", resp.status_code)
+            raise AdPlatformError(
+                "google_ads", f"Failed to create campaign: {resp.text}", resp.status_code
+            )
 
         data = resp.json()
         campaign_id = str(data.get("id", ""))
@@ -288,7 +329,9 @@ class MetaAdsAdapter(BaseAdAdapter):
         if resp.status_code != 200:
             logger.warning(
                 "[meta] API returned %d for account %s: %s",
-                resp.status_code, account_id, resp.text[:200],
+                resp.status_code,
+                account_id,
+                resp.text[:200],
             )
             return MOCK_META_CAMPAIGNS
 
@@ -297,17 +340,19 @@ class MetaAdsAdapter(BaseAdAdapter):
         for c in data.get("data", []):
             insights_data = c.get("insights", {}).get("data", [])
             insights = insights_data[0] if insights_data else {}
-            campaigns.append(AdCampaign(
-                id=c.get("id", ""),
-                platform=AdPlatform.META,
-                name=c.get("name", ""),
-                status=self._map_status(c.get("status", ""), AdPlatform.META),
-                budget=float(c.get("daily_budget", 0) or 0),
-                spend=float(insights.get("spend", 0)),
-                impressions=int(insights.get("impressions", 0)),
-                clicks=int(insights.get("clicks", 0)),
-                conversions=int(float(insights.get("conversions", 0))),
-            ))
+            campaigns.append(
+                AdCampaign(
+                    id=c.get("id", ""),
+                    platform=AdPlatform.META,
+                    name=c.get("name", ""),
+                    status=self._map_status(c.get("status", ""), AdPlatform.META),
+                    budget=float(c.get("daily_budget", 0) or 0),
+                    spend=float(insights.get("spend", 0)),
+                    impressions=int(insights.get("impressions", 0)),
+                    clicks=int(insights.get("clicks", 0)),
+                    conversions=int(float(insights.get("conversions", 0))),
+                )
+            )
 
         logger.info("[meta] Fetched %d campaigns for account %s", len(campaigns), account_id)
         return campaigns or MOCK_META_CAMPAIGNS
@@ -332,7 +377,9 @@ class MetaAdsAdapter(BaseAdAdapter):
         )
 
         if resp.status_code not in (200, 201):
-            raise AdPlatformError("meta", f"Failed to create campaign: {resp.text}", resp.status_code)
+            raise AdPlatformError(
+                "meta", f"Failed to create campaign: {resp.text}", resp.status_code
+            )
 
         data = resp.json()
         campaign_id = str(data.get("id", ""))
@@ -372,7 +419,9 @@ class LinkedInAdsAdapter(BaseAdAdapter):
         if resp.status_code != 200:
             logger.warning(
                 "[linkedin] API returned %d for account %s: %s",
-                resp.status_code, account_id, resp.text[:200],
+                resp.status_code,
+                account_id,
+                resp.text[:200],
             )
             return []
 
@@ -380,13 +429,15 @@ class LinkedInAdsAdapter(BaseAdAdapter):
         campaigns = []
         for c in data.get("elements", []):
             status_str = c.get("status", "ACTIVE")
-            campaigns.append(AdCampaign(
-                id=c.get("id", ""),
-                platform=AdPlatform.LINKEDIN,
-                name=c.get("name", ""),
-                status=self._map_status(status_str, AdPlatform.LINKEDIN),
-                budget=float(c.get("totalBudget", {}).get("amount", 0)),
-            ))
+            campaigns.append(
+                AdCampaign(
+                    id=c.get("id", ""),
+                    platform=AdPlatform.LINKEDIN,
+                    name=c.get("name", ""),
+                    status=self._map_status(status_str, AdPlatform.LINKEDIN),
+                    budget=float(c.get("totalBudget", {}).get("amount", 0)),
+                )
+            )
 
         logger.info("[linkedin] Fetched %d campaigns for account %s", len(campaigns), account_id)
         return campaigns
@@ -419,7 +470,9 @@ class LinkedInAdsAdapter(BaseAdAdapter):
         )
 
         if resp.status_code not in (200, 201):
-            raise AdPlatformError("linkedin", f"Failed to create campaign: {resp.text}", resp.status_code)
+            raise AdPlatformError(
+                "linkedin", f"Failed to create campaign: {resp.text}", resp.status_code
+            )
 
         campaign_id = resp.headers.get("x-restli-id", "linkedin-new-campaign-id")
         logger.info("[linkedin] Created campaign %s", campaign_id)
@@ -455,7 +508,9 @@ class TikTokAdsAdapter(BaseAdAdapter):
         if resp.status_code != 200:
             logger.warning(
                 "[tiktok] API returned %d for advertiser %s: %s",
-                resp.status_code, advertiser_id, resp.text[:200],
+                resp.status_code,
+                advertiser_id,
+                resp.text[:200],
             )
             return []
 
@@ -463,15 +518,19 @@ class TikTokAdsAdapter(BaseAdAdapter):
         campaigns = []
         for c in data.get("data", {}).get("list", []):
             status_str = c.get("operation_status", "CAMPAIGN_STATUS_ENABLE")
-            campaigns.append(AdCampaign(
-                id=c.get("campaign_id", ""),
-                platform=AdPlatform.TIKTOK,
-                name=c.get("campaign_name", ""),
-                status=self._map_status(status_str, AdPlatform.TIKTOK),
-                budget=float(c.get("budget", 0)),
-            ))
+            campaigns.append(
+                AdCampaign(
+                    id=c.get("campaign_id", ""),
+                    platform=AdPlatform.TIKTOK,
+                    name=c.get("campaign_name", ""),
+                    status=self._map_status(status_str, AdPlatform.TIKTOK),
+                    budget=float(c.get("budget", 0)),
+                )
+            )
 
-        logger.info("[tiktok] Fetched %d campaigns for advertiser %s", len(campaigns), advertiser_id)
+        logger.info(
+            "[tiktok] Fetched %d campaigns for advertiser %s", len(campaigns), advertiser_id
+        )
         return campaigns
 
     async def get_performance(
@@ -499,7 +558,9 @@ class TikTokAdsAdapter(BaseAdAdapter):
         )
 
         if resp.status_code != 200:
-            raise AdPlatformError("tiktok", f"Failed to create campaign: {resp.text}", resp.status_code)
+            raise AdPlatformError(
+                "tiktok", f"Failed to create campaign: {resp.text}", resp.status_code
+            )
 
         resp_data = resp.json()
         campaign_id = str(resp_data.get("data", {}).get("campaign_id", "tiktok-new-campaign-id"))
@@ -527,9 +588,7 @@ class AdPlatformFactory:
         return adapter_cls(credentials=credentials)
 
     @classmethod
-    async def get_connected_campaigns(
-        cls, connected_accounts: list[dict]
-    ) -> list[AdCampaign]:
+    async def get_connected_campaigns(cls, connected_accounts: list[dict]) -> list[AdCampaign]:
         all_campaigns: list[AdCampaign] = []
         for account in connected_accounts:
             adapter: BaseAdAdapter | None = None

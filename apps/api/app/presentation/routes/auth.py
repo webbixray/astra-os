@@ -77,7 +77,12 @@ def _clear_auth_cookies(response: Response) -> None:
     response.delete_cookie("astra_refresh_token", path="/api/v1/auth")
 
 
-@router.post("/signup", response_model=AuthResponse, status_code=status.HTTP_201_CREATED, summary="Register a new user")
+@router.post(
+    "/signup",
+    response_model=AuthResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Register a new user",
+)
 async def sign_up(
     request: SignUpRequest,
     response: Response,
@@ -93,7 +98,9 @@ async def sign_up(
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e)) from e
     except Exception:
         logger.exception("Unexpected error during sign up")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Registration failed") from None
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Registration failed"
+        ) from None
     _set_auth_cookies(response, result["access_token"], result["refresh_token"])
     return AuthResponse(
         access_token=result["access_token"],
@@ -117,7 +124,9 @@ async def sign_in(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e)) from e
     except Exception:
         logger.exception("Unexpected error during sign in")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Sign in failed") from None
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Sign in failed"
+        ) from None
     _set_auth_cookies(response, result["access_token"], result["refresh_token"])
     return AuthResponse(
         access_token=result["access_token"],
@@ -138,7 +147,9 @@ async def refresh_token(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e)) from e
     except Exception:
         logger.exception("Unexpected error during token refresh")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Token refresh failed") from None
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Token refresh failed"
+        ) from None
     _set_auth_cookies(response, result["access_token"], result["refresh_token"])
     return AuthResponse(
         access_token=result["access_token"],
@@ -170,7 +181,9 @@ async def get_current_user(
         user = await service.get_current_user(user_id)
     except Exception:
         logger.exception("Unexpected error fetching current user")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to fetch user profile") from None
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to fetch user profile"
+        ) from None
     return UserResponse(
         id=user.id,
         email=user.email,

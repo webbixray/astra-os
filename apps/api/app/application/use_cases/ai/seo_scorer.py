@@ -21,7 +21,9 @@ class SEOScorer:
         details["length_rating"] = self._rating(length_score)
 
         read_score = self._score_readability(words, sentences, sentence_count)
-        details["avg_word_length"] = round(sum(len(w) for w in words) / word_count, 1) if word_count else 0
+        details["avg_word_length"] = (
+            round(sum(len(w) for w in words) / word_count, 1) if word_count else 0
+        )
         details["avg_sentence_length"] = round(word_count / sentence_count, 1)
         details["readability_score"] = read_score
         details["readability_rating"] = self._rating(read_score)
@@ -59,7 +61,9 @@ class SEOScorer:
             return 90
         return min(100, 90 + (word_count - 2000) / 1000 * 10)
 
-    def _score_readability(self, words: list[str], sentences: list[str], sentence_count: int) -> float:
+    def _score_readability(
+        self, words: list[str], sentences: list[str], sentence_count: int
+    ) -> float:
         if not words or sentence_count == 0:
             return 0
         avg_syllables = sum(self._syllables(w) for w in words) / len(words)
@@ -81,7 +85,11 @@ class SEOScorer:
                 kw_score = density / 0.5 * 50
             else:
                 kw_score = max(0, 100 - (density - 3) * 20)
-            results[kw] = {"count": count, "density": round(density, 2), "score": round(kw_score, 1)}
+            results[kw] = {
+                "count": count,
+                "density": round(density, 2),
+                "score": round(kw_score, 1),
+            }
             total_score += kw_score
 
         avg = total_score / max(len(keywords), 1)

@@ -102,7 +102,6 @@ async def _ensure_default_policies() -> None:
         ["owner", "teams", "*"],
         ["owner", "users", "*"],
         ["owner", "settings", "*"],
-
         # Admin - full access except organization-level settings
         ["admin", "organizations", "read"],
         ["admin", "campaigns", "*"],
@@ -120,7 +119,6 @@ async def _ensure_default_policies() -> None:
         ["admin", "teams", "write"],
         ["admin", "users", "read"],
         ["admin", "users", "write"],
-
         # Operator - operational access
         ["operator", "organizations", "read"],
         ["operator", "campaigns", "read"],
@@ -137,7 +135,6 @@ async def _ensure_default_policies() -> None:
         ["operator", "reports", "read"],
         ["operator", "notifications", "read"],
         ["operator", "dashboards", "read"],
-
         # Viewer - read-only access
         ["viewer", "organizations", "read"],
         ["viewer", "campaigns", "read"],

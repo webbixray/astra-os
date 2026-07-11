@@ -7,10 +7,8 @@ from typing import TYPE_CHECKING
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
-from starlette.responses import Response
 
 from app.infrastructure.audit.audit_service import AuditService
-from app.presentation.dependencies import get_db
 
 if TYPE_CHECKING:
     from uuid import UUID
@@ -37,51 +35,23 @@ class AuditMiddleware(BaseHTTPMiddleware):
     """Log mutating requests to audit trail."""
 
     async def dispatch(self, request: Request, call_next):
-        # Skip non-mutating methods
         if request.method not in MUTATING_METHODS:
             return await call_next(request)
 
-        # Skip excluded paths
         path = request.url.path
-        if any(path.startswith(excluded) for excluded in EXCLUDED_PATHS):
+        if any(path.startswith(p) for p in EXCLUDED_PATHS):
             return await call_next(request)
 
-        # Capture request body for audit
-        request_body = None
-        if request.method in {"POST", "PUT", "PATCH"}:
-            try:
-                body = await request.body()
-                if body:
-                    request_body = json.loads(body.decode("utf-8"))
-            except Exception:
-                request_body = "<unable to parse>"
-
-        # Get user and tenant from request state
+        request_body = await self._capture_request_body(request)
         user_id = getattr(request.state, "user_id", None)
         tenant_id = getattr(request.state, "tenant_id", None)
 
-        # Start timing
         start_time = time.time()
-
-        # Process request
         response = await call_next(request)
-
-        # Capture response body for audit (only for errors or important actions)
-        response_body = None
-        if response.status_code >= 400:
-            try:
-                response_body_raw = b""
-                async for chunk in response.body_iterator:
-                    response_body_raw += chunk
-                if response_body_raw:
-                    response_body = json.loads(response_body_raw.decode("utf-8"))
-            except Exception:
-                response_body = "<unable to parse>"
-
-        # Calculate duration
         duration_ms = int((time.time() - start_time) * 1000)
 
-        # Log to audit trail (async, fire-and-forget)
+        response_body = await self._capture_response_body(response)
+
         try:
             await self._log_audit(
                 request=request,
@@ -92,10 +62,32 @@ class AuditMiddleware(BaseHTTPMiddleware):
                 response_body=response_body,
                 duration_ms=duration_ms,
             )
-        except Exception as e:
-            logger.error("Failed to write audit log: %s", e)
+        except Exception:
+            logger.exception("Failed to write audit log")
 
         return response
+
+    @staticmethod
+    async def _capture_request_body(request: Request):
+        if request.method not in {"POST", "PUT", "PATCH"}:
+            return None
+        try:
+            body = await request.body()
+            return json.loads(body.decode("utf-8")) if body else None
+        except Exception:
+            return "<unable to parse>"
+
+    @staticmethod
+    async def _capture_response_body(response):
+        if response.status_code < 400:
+            return None
+        try:
+            raw = b""
+            async for chunk in response.body_iterator:
+                raw += chunk
+            return json.loads(raw.decode("utf-8")) if raw else None
+        except Exception:
+            return "<unable to parse>"
 
     async def _log_audit(
         self,

@@ -8,13 +8,11 @@ class AIProvider(ABC):
         self,
         messages: list[dict],
         model: str | None = None,
-    ) -> AsyncIterator[str]:
-        ...
+    ) -> AsyncIterator[str]: ...
 
     @abstractmethod
     async def chat(
         self,
         messages: list[dict],
         model: str | None = None,
-    ) -> str:
-        ...
+    ) -> str: ...

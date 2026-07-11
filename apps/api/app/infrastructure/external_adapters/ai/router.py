@@ -73,7 +73,7 @@ class UsageTracker:
     def record(cls, record: UsageRecord) -> None:
         cls._records.append(record)
         if len(cls._records) > cls._max_records:
-            cls._records = cls._records[-cls._max_records:]
+            cls._records = cls._records[-cls._max_records :]
         logger.info(
             "AI call: %s/%s (%d+%d tokens, $%.5f, %.0fms)",
             record.provider,
@@ -298,10 +298,12 @@ class AnthropicProvider(AIProvider):
             if msg.get("role") == "system":
                 system = msg.get("content", "")
             else:
-                converted.append({
-                    "role": msg.get("role", "user"),
-                    "content": msg.get("content", ""),
-                })
+                converted.append(
+                    {
+                        "role": msg.get("role", "user"),
+                        "content": msg.get("content", ""),
+                    }
+                )
         return system, converted
 
     async def stream_chat(
@@ -382,10 +384,12 @@ class GeminiProvider(AIProvider):
                 system_instruction = {"parts": [{"text": content}]}
             else:
                 gemini_role = "model" if role == "assistant" else "user"
-                contents.append({
-                    "role": gemini_role,
-                    "parts": [{"text": content}],
-                })
+                contents.append(
+                    {
+                        "role": gemini_role,
+                        "parts": [{"text": content}],
+                    }
+                )
         result: dict[str, Any] = {"contents": contents}
         if system_instruction:
             result["systemInstruction"] = system_instruction

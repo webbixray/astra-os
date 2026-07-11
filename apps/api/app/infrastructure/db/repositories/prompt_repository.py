@@ -28,13 +28,17 @@ class SystemPromptRepositoryImpl(SystemPromptRepository):
     async def find_by_name(self, name: str, org_id: UUID | None = None) -> SystemPrompt | None:
         stmt = select(SystemPromptModel).where(
             SystemPromptModel.name == name,
-            SystemPromptModel.org_id == org_id if org_id is not None else SystemPromptModel.org_id.is_(None),
+            SystemPromptModel.org_id == org_id
+            if org_id is not None
+            else SystemPromptModel.org_id.is_(None),
         )
         result = await self.session.execute(stmt)
         model = result.scalar_one_or_none()
         return model.to_domain() if model is not None else None
 
-    async def list_by_category(self, category: str, org_id: UUID | None = None) -> list[SystemPrompt]:
+    async def list_by_category(
+        self, category: str, org_id: UUID | None = None
+    ) -> list[SystemPrompt]:
         stmt = select(SystemPromptModel).where(
             SystemPromptModel.category == category,
         )

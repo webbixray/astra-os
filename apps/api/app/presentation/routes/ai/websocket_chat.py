@@ -121,13 +121,17 @@ async def _handle_ws_message(
         return
 
     if not organization_id:
-        await manager.send_json(client_id, {"type": "error", "message": "organization_id is required"})
+        await manager.send_json(
+            client_id, {"type": "error", "message": "organization_id is required"}
+        )
         return
 
     try:
         await require_org_role(UUID(organization_id), "member", user_id, session)
     except Exception:
-        await manager.send_json(client_id, {"type": "error", "message": "Not authorized to access this organization"})
+        await manager.send_json(
+            client_id, {"type": "error", "message": "Not authorized to access this organization"}
+        )
         return
 
     await manager.send_json(client_id, {"type": "thinking", "conversation_id": conversation_id})
@@ -135,7 +139,8 @@ async def _handle_ws_message(
     try:
         domain_messages = [
             ChatMessage(role=MessageRole(m["role"]), content=m["content"])
-            for m in history if isinstance(m, dict) and "role" in m and "content" in m
+            for m in history
+            if isinstance(m, dict) and "role" in m and "content" in m
         ]
 
         domain_request = ChatRequest(
@@ -149,13 +154,25 @@ async def _handle_ws_message(
         full_response = ""
         async for chunk in use_case.stream(domain_request):
             full_response += chunk
-            await manager.send_json(client_id, {"type": "chunk", "content": chunk, "conversation_id": conversation_id})
+            await manager.send_json(
+                client_id, {"type": "chunk", "content": chunk, "conversation_id": conversation_id}
+            )
 
-        await manager.send_json(client_id, {"type": "done", "conversation_id": conversation_id, "full_response": full_response})
+        await manager.send_json(
+            client_id,
+            {"type": "done", "conversation_id": conversation_id, "full_response": full_response},
+        )
 
     except Exception:
         logger.exception("WebSocket chat error for user %s", user_id)
-        await manager.send_json(client_id, {"type": "error", "message": "An error occurred while processing your message", "conversation_id": conversation_id})
+        await manager.send_json(
+            client_id,
+            {
+                "type": "error",
+                "message": "An error occurred while processing your message",
+                "conversation_id": conversation_id,
+            },
+        )
 
 
 @router.websocket("/ws/chat")
@@ -175,11 +192,14 @@ async def websocket_chat(
 
     try:
         await manager.connect(websocket, client_id)
-        await manager.send_json(client_id, {
-            "type": "connected",
-            "client_id": client_id,
-            "message": "Connected to ASTRA OS chat",
-        })
+        await manager.send_json(
+            client_id,
+            {
+                "type": "connected",
+                "client_id": client_id,
+                "message": "Connected to ASTRA OS chat",
+            },
+        )
 
         async with _get_session(websocket) as session:
             use_case = _build_use_case(session)
@@ -189,7 +209,9 @@ async def websocket_chat(
                 try:
                     payload = json.loads(raw)
                 except json.JSONDecodeError:
-                    await manager.send_json(client_id, {"type": "error", "message": "Invalid JSON payload"})
+                    await manager.send_json(
+                        client_id, {"type": "error", "message": "Invalid JSON payload"}
+                    )
                     continue
 
                 await _handle_ws_message(websocket, client_id, user_id, session, use_case, payload)

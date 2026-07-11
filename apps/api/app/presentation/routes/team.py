@@ -81,14 +81,16 @@ async def list_members(
 ) -> PaginatedResponse:
     await require_org_role(organization_id, "viewer", current_user_id, db)
 
-    stmt = select(
-        TeamMemberModel,
-        UserModel.email,
-        UserModel.name,
-    ).join(
-        UserModel, TeamMemberModel.user_id == UserModel.id
-    ).where(
-        TeamMemberModel.organization_id == organization_id,
+    stmt = (
+        select(
+            TeamMemberModel,
+            UserModel.email,
+            UserModel.name,
+        )
+        .join(UserModel, TeamMemberModel.user_id == UserModel.id)
+        .where(
+            TeamMemberModel.organization_id == organization_id,
+        )
     )
 
     result = await db.execute(stmt)
@@ -101,7 +103,9 @@ async def list_members(
             email=m.email,
             name=m.name,
             role=m.TeamMemberModel.role,
-            joined_at=m.TeamMemberModel.joined_at.isoformat() if m.TeamMemberModel.joined_at else None,
+            joined_at=m.TeamMemberModel.joined_at.isoformat()
+            if m.TeamMemberModel.joined_at
+            else None,
         )
         for m in rows
     ]

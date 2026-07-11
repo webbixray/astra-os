@@ -6,8 +6,12 @@ from app.domain.common import now
 from app.domain.exceptions.domain_exceptions import ValidationError
 
 WIDGET_TYPES = [
-    "kpi_card", "line_chart", "bar_chart", "pie_chart",
-    "data_table", "trend_indicator",
+    "kpi_card",
+    "line_chart",
+    "bar_chart",
+    "pie_chart",
+    "data_table",
+    "trend_indicator",
 ]
 
 

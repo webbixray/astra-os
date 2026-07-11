@@ -102,7 +102,9 @@ async def get_organization(
     try:
         org = await use_case.execute(org_id=org_id, user_id=user_id)
     except EntityNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found"
+        ) from None
     except ForbiddenError:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied") from None
     return OrganizationResponse(
@@ -133,7 +135,9 @@ async def update_organization(
             settings=request.settings,
         )
     except EntityNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found"
+        ) from None
     except ForbiddenError:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied") from None
     return OrganizationResponse(

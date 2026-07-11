@@ -80,7 +80,13 @@ class ABTest:
     created_at: datetime = field(default_factory=now)
     updated_at: datetime = field(default_factory=now)
 
-    VALID_GOAL_METRICS: ClassVar[list[str]] = ["ctr", "conversion_rate", "cpa", "clicks", "conversions"]
+    VALID_GOAL_METRICS: ClassVar[list[str]] = [
+        "ctr",
+        "conversion_rate",
+        "cpa",
+        "clicks",
+        "conversions",
+    ]
 
     @classmethod
     def create(
@@ -127,10 +133,14 @@ class ABTest:
         best = max(
             self.variants,
             key=lambda v: (
-                v.conversion_rate if self.goal_metric == "conversion_rate"
-                else v.ctr if self.goal_metric == "ctr"
-                else -v.cpa if self.goal_metric == "cpa"
-                else v.clicks if self.goal_metric == "clicks"
+                v.conversion_rate
+                if self.goal_metric == "conversion_rate"
+                else v.ctr
+                if self.goal_metric == "ctr"
+                else -v.cpa
+                if self.goal_metric == "cpa"
+                else v.clicks
+                if self.goal_metric == "clicks"
                 else v.conversions
             ),
         )

@@ -27,7 +27,9 @@ class Organization:
         if not slug or not slug.strip():
             raise ValidationError("Slug is required")
         if not re.match(r"^[a-z0-9]+(?:-[a-z0-9]+)*$", slug):
-            raise ValidationError("Slug must contain only lowercase alphanumeric characters and hyphens")
+            raise ValidationError(
+                "Slug must contain only lowercase alphanumeric characters and hyphens"
+            )
         return cls(
             name=name.strip(),
             slug=slug.strip(),
@@ -62,43 +64,83 @@ ORG_ROLE_HIERARCHY: dict[str, int] = {
 }
 
 PERMISSIONS = [
-    "org:read", "org:write", "org:delete",
-    "org:manage_members", "org:manage_billing",
+    "org:read",
+    "org:write",
+    "org:delete",
+    "org:manage_members",
+    "org:manage_billing",
     "org:manage_features",
-    "campaign:read", "campaign:write", "campaign:delete",
-    "content:read", "content:write", "content:delete",
+    "campaign:read",
+    "campaign:write",
+    "campaign:delete",
+    "content:read",
+    "content:write",
+    "content:delete",
     "content:publish",
-    "email:read", "email:write", "email:send",
+    "email:read",
+    "email:write",
+    "email:send",
     "analytics:read",
-    "reports:read", "reports:export",
-    "workflows:read", "workflows:write", "workflows:execute",
-    "settings:read", "settings:write",
+    "reports:read",
+    "reports:export",
+    "workflows:read",
+    "workflows:write",
+    "workflows:execute",
+    "settings:read",
+    "settings:write",
 ]
 
 ROLE_DEFAULT_PERMISSIONS: dict[str, list[str]] = {
     "viewer": [
-        "org:read", "campaign:read", "content:read",
-        "email:read", "analytics:read", "reports:read",
-        "workflows:read", "settings:read",
+        "org:read",
+        "campaign:read",
+        "content:read",
+        "email:read",
+        "analytics:read",
+        "reports:read",
+        "workflows:read",
+        "settings:read",
     ],
     "member": [
-        "org:read", "campaign:read", "campaign:write",
-        "content:read", "content:write", "content:publish",
-        "email:read", "email:write", "email:send",
-        "analytics:read", "reports:read", "reports:export",
-        "workflows:read", "workflows:write", "workflows:execute",
+        "org:read",
+        "campaign:read",
+        "campaign:write",
+        "content:read",
+        "content:write",
+        "content:publish",
+        "email:read",
+        "email:write",
+        "email:send",
+        "analytics:read",
+        "reports:read",
+        "reports:export",
+        "workflows:read",
+        "workflows:write",
+        "workflows:execute",
         "settings:read",
     ],
     "admin": [
-        "org:read", "org:write", "org:manage_members",
-        "campaign:read", "campaign:write", "campaign:delete",
-        "content:read", "content:write", "content:delete",
+        "org:read",
+        "org:write",
+        "org:manage_members",
+        "campaign:read",
+        "campaign:write",
+        "campaign:delete",
+        "content:read",
+        "content:write",
+        "content:delete",
         "content:publish",
-        "email:read", "email:write", "email:send",
+        "email:read",
+        "email:write",
+        "email:send",
         "analytics:read",
-        "reports:read", "reports:export",
-        "workflows:read", "workflows:write", "workflows:execute",
-        "settings:read", "settings:write",
+        "reports:read",
+        "reports:export",
+        "workflows:read",
+        "workflows:write",
+        "workflows:execute",
+        "settings:read",
+        "settings:write",
     ],
     "owner": PERMISSIONS,
 }
@@ -114,7 +156,9 @@ class OrganizationMember:
     joined_at: datetime = field(default_factory=now)
 
     @classmethod
-    def create(cls, organization_id: UUID, user_id: UUID, role: str = "member") -> "OrganizationMember":
+    def create(
+        cls, organization_id: UUID, user_id: UUID, role: str = "member"
+    ) -> "OrganizationMember":
         if role not in ORG_ROLES:
             raise ValidationError(f"Invalid role: {role}. Must be one of {ORG_ROLES}")
         return cls(
@@ -161,8 +205,9 @@ class OrgInvitation:
     updated_at: datetime = field(default_factory=now)
 
     @classmethod
-    def create(cls, organization_id: UUID, invited_by: UUID,
-               email: str, role: str = "member") -> "OrgInvitation":
+    def create(
+        cls, organization_id: UUID, invited_by: UUID, email: str, role: str = "member"
+    ) -> "OrgInvitation":
         if role not in ORG_ROLES:
             raise ValidationError(f"Invalid role: {role}")
         if role == "owner":
@@ -193,6 +238,7 @@ class OrgInvitation:
 
 # ── Feature Flags ────────────────────────────────────────────────────────────
 
+
 @dataclass
 class FeatureFlag:
     id: UUID = field(default_factory=uuid4)
@@ -204,8 +250,14 @@ class FeatureFlag:
     updated_at: datetime = field(default_factory=now)
 
     @classmethod
-    def create(cls, organization_id: UUID, feature_key: str,
-                *, enabled: bool = True, config: dict | None = None) -> "FeatureFlag":
+    def create(
+        cls,
+        organization_id: UUID,
+        feature_key: str,
+        *,
+        enabled: bool = True,
+        config: dict | None = None,
+    ) -> "FeatureFlag":
         if not feature_key or not feature_key.strip():
             raise ValidationError("Feature key is required")
         return cls(
@@ -227,9 +279,14 @@ class FeatureFlag:
 # ── Usage Tracking ───────────────────────────────────────────────────────────
 
 USAGE_METRICS = [
-    "api_requests", "campaigns_created", "emails_sent",
-    "content_published", "workflow_executions", "reports_generated",
-    "storage_mb", "team_members",
+    "api_requests",
+    "campaigns_created",
+    "emails_sent",
+    "content_published",
+    "workflow_executions",
+    "reports_generated",
+    "storage_mb",
+    "team_members",
 ]
 
 
@@ -256,28 +313,38 @@ class UsageRecord:
 
 PLAN_LIMITS: dict[str, dict[str, int | float]] = {
     "free": {
-        "max_campaigns": 5, "max_team_members": 3,
-        "max_emails_per_month": 1000, "max_storage_mb": 100,
+        "max_campaigns": 5,
+        "max_team_members": 3,
+        "max_emails_per_month": 1000,
+        "max_storage_mb": 100,
         "max_api_requests_per_day": 1000,
     },
     "starter": {
-        "max_campaigns": 20, "max_team_members": 10,
-        "max_emails_per_month": 10000, "max_storage_mb": 500,
+        "max_campaigns": 20,
+        "max_team_members": 10,
+        "max_emails_per_month": 10000,
+        "max_storage_mb": 500,
         "max_api_requests_per_day": 10000,
     },
     "professional": {
-        "max_campaigns": 100, "max_team_members": 50,
-        "max_emails_per_month": 100000, "max_storage_mb": 2000,
+        "max_campaigns": 100,
+        "max_team_members": 50,
+        "max_emails_per_month": 100000,
+        "max_storage_mb": 2000,
         "max_api_requests_per_day": 50000,
     },
     "business": {
-        "max_campaigns": 500, "max_team_members": 200,
-        "max_emails_per_month": 1000000, "max_storage_mb": 10000,
+        "max_campaigns": 500,
+        "max_team_members": 200,
+        "max_emails_per_month": 1000000,
+        "max_storage_mb": 10000,
         "max_api_requests_per_day": 200000,
     },
     "enterprise": {
-        "max_campaigns": -1, "max_team_members": -1,
-        "max_emails_per_month": -1, "max_storage_mb": -1,
+        "max_campaigns": -1,
+        "max_team_members": -1,
+        "max_emails_per_month": -1,
+        "max_storage_mb": -1,
         "max_api_requests_per_day": -1,
     },
 }
@@ -300,6 +367,7 @@ class BillingPlan:
         if plan_tier not in VALID_PLANS:
             raise ValidationError(f"Invalid plan tier: {plan_tier}")
         from datetime import timedelta
+
         current_time = now()
         return cls(
             organization_id=organization_id,

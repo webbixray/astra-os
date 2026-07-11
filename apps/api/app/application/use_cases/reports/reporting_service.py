@@ -36,9 +36,7 @@ class ReportingService:
         stmt = (
             select(
                 AdInsightModel.date,
-                func.sum(
-                    getattr(AdInsightModel, metric, AdInsightModel.spend)
-                ).label("value"),
+                func.sum(getattr(AdInsightModel, metric, AdInsightModel.spend)).label("value"),
             )
             .where(
                 AdInsightModel.organization_id == organization_id,
@@ -109,9 +107,7 @@ class ReportingService:
                 }
             )
 
-        return [
-            {"ad_campaign_id": cid, "data": points} for cid, points in grouped.items()
-        ]
+        return [{"ad_campaign_id": cid, "data": points} for cid, points in grouped.items()]
 
     async def get_platform_comparison(self, organization_id: UUID) -> dict:
         stmt = (
@@ -137,15 +133,9 @@ class ReportingService:
                 "spend": round(float(row.spend), 2),
                 "conversions": int(row.conversions),
                 "revenue": round(float(row.revenue), 2),
-                "ctr": round(
-                    (row.clicks / row.impressions * 100) if row.impressions else 0, 2
-                ),
-                "cpc": round(
-                    (row.spend / row.clicks) if row.clicks else 0, 2
-                ),
-                "roas": round(
-                    (row.revenue / row.spend) if row.spend else 0, 2
-                ),
+                "ctr": round((row.clicks / row.impressions * 100) if row.impressions else 0, 2),
+                "cpc": round((row.spend / row.clicks) if row.clicks else 0, 2),
+                "roas": round((row.revenue / row.spend) if row.spend else 0, 2),
             }
             for row in rows
         ]
@@ -153,35 +143,61 @@ class ReportingService:
         return {"platforms": platforms, "total_platforms": len(platforms)}
 
     async def _export_campaigns(self, writer: csv.writer, organization_id: UUID) -> None:
-        writer.writerow(["ID", "Name", "Status", "Budget", "Start Date", "End Date", "Channels", "Objective"])
+        writer.writerow(
+            ["ID", "Name", "Status", "Budget", "Start Date", "End Date", "Channels", "Objective"]
+        )
         stmt = select(CampaignModel).where(CampaignModel.organization_id == organization_id)
         result = await self.session.execute(stmt)
         for c in result.scalars().all():
-            writer.writerow([
-                str(c.id), c.name, c.status, c.budget_amount or 0,
-                c.start_date.isoformat() if c.start_date else "",
-                c.end_date.isoformat() if c.end_date else "",
-                ", ".join(c.channels) if c.channels else "",
-                c.objective or "",
-            ])
+            writer.writerow(
+                [
+                    str(c.id),
+                    c.name,
+                    c.status,
+                    c.budget_amount or 0,
+                    c.start_date.isoformat() if c.start_date else "",
+                    c.end_date.isoformat() if c.end_date else "",
+                    ", ".join(c.channels) if c.channels else "",
+                    c.objective or "",
+                ]
+            )
 
     async def _export_content(self, writer: csv.writer, organization_id: UUID) -> None:
         writer.writerow(["ID", "Title", "Type", "Status", "Version", "Created At", "Scheduled At"])
         stmt = select(ContentModel).where(ContentModel.organization_id == organization_id)
         result = await self.session.execute(stmt)
         for c in result.scalars().all():
-            writer.writerow([
-                str(c.id), c.title, c.content_type, c.status, c.version,
-                c.created_at.isoformat() if c.created_at else "",
-                c.scheduled_at.isoformat() if c.scheduled_at else "",
-            ])
+            writer.writerow(
+                [
+                    str(c.id),
+                    c.title,
+                    c.content_type,
+                    c.status,
+                    c.version,
+                    c.created_at.isoformat() if c.created_at else "",
+                    c.scheduled_at.isoformat() if c.scheduled_at else "",
+                ]
+            )
 
-    async def _export_ads(self, writer: csv.writer, organization_id: UUID,
-                          start_date: str | None, end_date: str | None) -> None:
-        writer.writerow([
-            "Date", "Platform", "Campaign ID", "Impressions", "Clicks",
-            "Spend", "Conversions", "Revenue",
-        ])
+    async def _export_ads(
+        self,
+        writer: csv.writer,
+        organization_id: UUID,
+        start_date: str | None,
+        end_date: str | None,
+    ) -> None:
+        writer.writerow(
+            [
+                "Date",
+                "Platform",
+                "Campaign ID",
+                "Impressions",
+                "Clicks",
+                "Spend",
+                "Conversions",
+                "Revenue",
+            ]
+        )
         stmt = select(AdInsightModel).where(
             AdInsightModel.organization_id == organization_id,
         )
@@ -192,21 +208,35 @@ class ReportingService:
         stmt = stmt.order_by(AdInsightModel.date)
         result = await self.session.execute(stmt)
         for ins in result.scalars().all():
-            writer.writerow([
-                ins.date, ins.platform or "", str(ins.ad_campaign_id) if ins.ad_campaign_id else "",
-                ins.impressions, ins.clicks, ins.spend, ins.conversions, ins.revenue,
-            ])
+            writer.writerow(
+                [
+                    ins.date,
+                    ins.platform or "",
+                    str(ins.ad_campaign_id) if ins.ad_campaign_id else "",
+                    ins.impressions,
+                    ins.clicks,
+                    ins.spend,
+                    ins.conversions,
+                    ins.revenue,
+                ]
+            )
 
     async def _export_ad_accounts(self, writer: csv.writer, organization_id: UUID) -> None:
         writer.writerow(["ID", "Platform", "Account Name", "Status", "Last Synced"])
         from app.infrastructure.db.models.advertising.advertising_models import AdAccountModel
+
         stmt = select(AdAccountModel).where(AdAccountModel.organization_id == organization_id)
         result = await self.session.execute(stmt)
         for a in result.scalars().all():
-            writer.writerow([
-                str(a.id), a.platform, a.account_name, a.status,
-                a.last_synced_at.isoformat() if a.last_synced_at else "",
-            ])
+            writer.writerow(
+                [
+                    str(a.id),
+                    a.platform,
+                    a.account_name,
+                    a.status,
+                    a.last_synced_at.isoformat() if a.last_synced_at else "",
+                ]
+            )
 
     async def export_csv(
         self,

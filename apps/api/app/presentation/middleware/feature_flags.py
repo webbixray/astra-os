@@ -19,6 +19,7 @@ async def get_organization_plan_tier(organization_id: UUID, db: AsyncSession) ->
     org = await org_repo.find_by_id(organization_id)
     return org.plan_tier if org else "free"
 
+
 FEATURE_PRESETS: dict[str, list[str]] = {
     "free": ["basic_analytics", "content_management"],
     "starter": ["basic_analytics", "content_management", "email_marketing", "campaign_management"],

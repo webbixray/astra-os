@@ -70,8 +70,7 @@ async def chat_stream(
     domain_messages = []
     if request.messages:
         domain_messages = [
-            ChatMessage(role=MessageRole(m.role), content=m.content)
-            for m in request.messages
+            ChatMessage(role=MessageRole(m.role), content=m.content) for m in request.messages
         ]
 
     domain_request = ChatRequest(
@@ -110,8 +109,7 @@ async def chat(
     domain_messages = []
     if request.messages:
         domain_messages = [
-            ChatMessage(role=MessageRole(m.role), content=m.content)
-            for m in request.messages
+            ChatMessage(role=MessageRole(m.role), content=m.content) for m in request.messages
         ]
 
     domain_request = ChatRequest(

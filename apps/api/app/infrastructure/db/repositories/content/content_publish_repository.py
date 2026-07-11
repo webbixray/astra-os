@@ -33,8 +33,11 @@ class ContentPublishRepository:
         )
         return [m.to_domain() for m in result.scalars().all()]
 
-    async def find_queue_by_org(self, org_id: UUID, status: str | None = None) -> list[ContentPublish]:
+    async def find_queue_by_org(
+        self, org_id: UUID, status: str | None = None
+    ) -> list[ContentPublish]:
         from app.infrastructure.db.models.content.content_model import ContentModel
+
         query = (
             select(ContentPublishModel)
             .join(ContentModel, ContentPublishModel.content_id == ContentModel.id)
@@ -42,12 +45,16 @@ class ContentPublishRepository:
         )
         if status is not None:
             query = query.where(ContentPublishModel.status == status)
-        query = query.order_by(ContentPublishModel.scheduled_at.asc().nullslast(), ContentPublishModel.created_at.desc())
+        query = query.order_by(
+            ContentPublishModel.scheduled_at.asc().nullslast(),
+            ContentPublishModel.created_at.desc(),
+        )
         result = await self.session.execute(query)
         return [m.to_domain() for m in result.scalars().all()]
 
     async def find_scheduled_due(self) -> list[ContentPublish]:
         from datetime import datetime
+
         result = await self.session.execute(
             select(ContentPublishModel)
             .where(

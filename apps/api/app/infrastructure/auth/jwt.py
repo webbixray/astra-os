@@ -162,13 +162,20 @@ class JWTService:
                 try:
                     loop = asyncio.get_running_loop()
                     if loop.is_running():
-                        revoked = RefreshTokenStore.fingerprint(token) in RefreshTokenStore._memory_revoked
+                        revoked = (
+                            RefreshTokenStore.fingerprint(token)
+                            in RefreshTokenStore._memory_revoked
+                        )
                     else:
                         revoked = loop.run_until_complete(RefreshTokenStore.is_revoked(token))
                 except RuntimeError:
-                    revoked = RefreshTokenStore.fingerprint(token) in RefreshTokenStore._memory_revoked
+                    revoked = (
+                        RefreshTokenStore.fingerprint(token) in RefreshTokenStore._memory_revoked
+                    )
                 if revoked:
-                    logger.warning("Attempted use of revoked refresh token: sub=%s", payload.get("sub"))
+                    logger.warning(
+                        "Attempted use of revoked refresh token: sub=%s", payload.get("sub")
+                    )
                     return None
         except JWTError as e:
             logger.debug("JWT verification failed: %s", e)

@@ -114,6 +114,4 @@ class StartupProbe:
             if config.is_production:
                 cls.errors.append("SUPABASE_URL is required in production.")
             else:
-                cls.warnings.append(
-                    "SUPABASE_URL not set. Authentication may not work correctly."
-                )
+                cls.warnings.append("SUPABASE_URL not set. Authentication may not work correctly.")

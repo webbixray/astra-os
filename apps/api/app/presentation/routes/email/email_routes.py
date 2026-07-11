@@ -62,7 +62,10 @@ def get_email_service(db: AsyncSession = Depends(get_db)) -> EmailService:
 
 # ── Provider endpoints ─────────────────────────────────────────────────────
 
-@router.post("/email/providers", status_code=status.HTTP_201_CREATED, summary="Create email provider")
+
+@router.post(
+    "/email/providers", status_code=status.HTTP_201_CREATED, summary="Create email provider"
+)
 async def create_provider(
     request: CreateProviderRequest,
     service: EmailService = Depends(get_email_service),
@@ -73,14 +76,26 @@ async def create_provider(
     await require_feature("email_marketing", request.organization_id, "auto", db)
     try:
         provider = await service.create_provider(
-            org_id=request.organization_id, provider_type=request.provider_type,
-            name=request.name, api_key=request.api_key, from_email=request.from_email,
-            created_by=user_id, from_name=request.from_name, config=request.config,
+            org_id=request.organization_id,
+            provider_type=request.provider_type,
+            name=request.name,
+            api_key=request.api_key,
+            from_email=request.from_email,
+            created_by=user_id,
+            from_name=request.from_name,
+            config=request.config,
         )
     except ValidationError as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
-    return {"id": str(provider.id), "name": provider.name, "provider_type": provider.provider_type,
-            "from_email": provider.from_email, "is_verified": provider.is_verified}
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
+    return {
+        "id": str(provider.id),
+        "name": provider.name,
+        "provider_type": provider.provider_type,
+        "from_email": provider.from_email,
+        "is_verified": provider.is_verified,
+    }
 
 
 @router.get("/email/providers", summary="List email providers")
@@ -93,12 +108,25 @@ async def list_providers(
     await require_org_role(organization_id, "viewer", user_id, db)
     await require_feature("email_marketing", organization_id, "auto", db)
     providers = await service.list_providers(org_id=organization_id)
-    return [{"id": str(p.id), "name": p.name, "provider_type": p.provider_type,
-             "from_email": p.from_email, "from_name": p.from_name,
-             "is_verified": p.is_verified, "is_active": p.is_active} for p in providers]
+    return [
+        {
+            "id": str(p.id),
+            "name": p.name,
+            "provider_type": p.provider_type,
+            "from_email": p.from_email,
+            "from_name": p.from_name,
+            "is_verified": p.is_verified,
+            "is_active": p.is_active,
+        }
+        for p in providers
+    ]
 
 
-@router.delete("/email/providers/{provider_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete email provider")
+@router.delete(
+    "/email/providers/{provider_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete email provider",
+)
 async def delete_provider(
     provider_id: UUID,
     organization_id: UUID = Query(...),
@@ -109,13 +137,18 @@ async def delete_provider(
     await require_org_role(organization_id, "admin", user_id, db)
     provider = await service.provider_repo.find_by_id(provider_id)
     if not provider or provider.organization_id != organization_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Provider not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Provider not found"
+        ) from None
     await service.delete_provider(provider_id=provider_id)
 
 
 # ── Campaign endpoints ─────────────────────────────────────────────────────
 
-@router.post("/email/campaigns", status_code=status.HTTP_201_CREATED, summary="Create email campaign")
+
+@router.post(
+    "/email/campaigns", status_code=status.HTTP_201_CREATED, summary="Create email campaign"
+)
 async def create_email_campaign(
     request: CreateCampaignRequest,
     service: EmailService = Depends(get_email_service),
@@ -126,16 +159,26 @@ async def create_email_campaign(
     await require_feature("email_marketing", request.organization_id, "auto", db)
     try:
         campaign = await service.create_campaign(
-            org_id=request.organization_id, provider_id=request.provider_id,
-            name=request.name, subject=request.subject, body=request.body,
-            from_email=request.from_email, created_by=user_id,
-            from_name=request.from_name, scheduled_at=request.scheduled_at,
+            org_id=request.organization_id,
+            provider_id=request.provider_id,
+            name=request.name,
+            subject=request.subject,
+            body=request.body,
+            from_email=request.from_email,
+            created_by=user_id,
+            from_name=request.from_name,
+            scheduled_at=request.scheduled_at,
         )
     except ValidationError as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from None
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
     return {
-        "id": str(campaign.id), "name": campaign.name, "subject": campaign.subject,
-        "status": campaign.status, "scheduled_at": campaign.scheduled_at.isoformat() if campaign.scheduled_at else None,
+        "id": str(campaign.id),
+        "name": campaign.name,
+        "subject": campaign.subject,
+        "status": campaign.status,
+        "scheduled_at": campaign.scheduled_at.isoformat() if campaign.scheduled_at else None,
     }
 
 
@@ -152,10 +195,15 @@ async def list_email_campaigns(
     campaigns = await service.list_campaigns(org_id=organization_id, status=status)
     return [
         {
-            "id": str(c.id), "name": c.name, "subject": c.subject,
-            "status": c.status, "recipient_count": c.recipient_count,
-            "sent_count": c.sent_count, "open_count": c.open_count,
-            "click_count": c.click_count, "bounce_count": c.bounce_count,
+            "id": str(c.id),
+            "name": c.name,
+            "subject": c.subject,
+            "status": c.status,
+            "recipient_count": c.recipient_count,
+            "sent_count": c.sent_count,
+            "open_count": c.open_count,
+            "click_count": c.click_count,
+            "bounce_count": c.bounce_count,
             "scheduled_at": c.scheduled_at.isoformat() if c.scheduled_at else None,
             "sent_at": c.sent_at.isoformat() if c.sent_at else None,
             "created_at": c.created_at.isoformat(),
@@ -176,16 +224,27 @@ async def get_email_campaign(
     try:
         c = await service.get_campaign(campaign_id=campaign_id)
     except EntityNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found"
+        ) from None
     if c.organization_id != organization_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found"
+        ) from None
     events = await service.get_campaign_events(campaign_id=campaign_id)
     return {
-        "id": str(c.id), "name": c.name, "subject": c.subject, "body": c.body,
-        "from_email": c.from_email, "from_name": c.from_name,
-        "status": c.status, "recipient_count": c.recipient_count,
-        "sent_count": c.sent_count, "open_count": c.open_count,
-        "click_count": c.click_count, "bounce_count": c.bounce_count,
+        "id": str(c.id),
+        "name": c.name,
+        "subject": c.subject,
+        "body": c.body,
+        "from_email": c.from_email,
+        "from_name": c.from_name,
+        "status": c.status,
+        "recipient_count": c.recipient_count,
+        "sent_count": c.sent_count,
+        "open_count": c.open_count,
+        "click_count": c.click_count,
+        "bounce_count": c.bounce_count,
         "scheduled_at": c.scheduled_at.isoformat() if c.scheduled_at else None,
         "sent_at": c.sent_at.isoformat() if c.sent_at else None,
         "created_at": c.created_at.isoformat(),
@@ -206,20 +265,31 @@ async def send_email_campaign(
     try:
         existing = await service.get_campaign(campaign_id=campaign_id)
     except EntityNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found"
+        ) from None
     if existing.organization_id != organization_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found"
+        ) from None
     try:
         campaign = await service.send_campaign(
-            campaign_id=campaign_id, recipients=request.recipients,
+            campaign_id=campaign_id,
+            recipients=request.recipients,
         )
     except (EntityNotFoundError, ValidationError) as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND if isinstance(e, EntityNotFoundError) else status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_404_NOT_FOUND
+            if isinstance(e, EntityNotFoundError)
+            else status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(e),
         ) from None
-    return {"id": str(campaign.id), "status": campaign.status,
-            "sent_count": campaign.sent_count, "sent_at": campaign.sent_at.isoformat() if campaign.sent_at else None}
+    return {
+        "id": str(campaign.id),
+        "status": campaign.status,
+        "sent_count": campaign.sent_count,
+        "sent_at": campaign.sent_at.isoformat() if campaign.sent_at else None,
+    }
 
 
 @router.get("/email/analytics", summary="Get email analytics")
@@ -247,12 +317,18 @@ async def record_email_event(
     try:
         existing = await service.get_campaign(campaign_id=campaign_id)
     except EntityNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found"
+        ) from None
     if existing.organization_id != organization_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found"
+        ) from None
     await service.record_event(
-        campaign_id=campaign_id, event_type=request.event_type,
-        recipient_email=request.recipient_email, metadata=request.metadata,
+        campaign_id=campaign_id,
+        event_type=request.event_type,
+        recipient_email=request.recipient_email,
+        metadata=request.metadata,
     )
     return {"status": "recorded"}
 
@@ -270,13 +346,21 @@ async def get_campaign_events(
     try:
         existing = await service.get_campaign(campaign_id=campaign_id)
     except EntityNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found"
+        ) from None
     if existing.organization_id != organization_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found"
+        ) from None
     return await service.get_campaign_events(campaign_id=campaign_id, event_type=event_type)
 
 
-@router.delete("/email/campaigns/{campaign_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete email campaign")
+@router.delete(
+    "/email/campaigns/{campaign_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete email campaign",
+)
 async def delete_email_campaign(
     campaign_id: UUID,
     organization_id: UUID = Query(...),
@@ -288,7 +372,11 @@ async def delete_email_campaign(
     try:
         existing = await service.get_campaign(campaign_id=campaign_id)
     except EntityNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found"
+        ) from None
     if existing.organization_id != organization_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found"
+        ) from None
     await service.delete_campaign(campaign_id=campaign_id)

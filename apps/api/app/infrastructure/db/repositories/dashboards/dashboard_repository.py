@@ -80,7 +80,11 @@ class DashboardWidgetRepository:
         result = await self.session.execute(
             select(DashboardWidgetModel)
             .where(DashboardWidgetModel.dashboard_id.in_(dashboard_ids))
-            .order_by(DashboardWidgetModel.dashboard_id, DashboardWidgetModel.pos_y, DashboardWidgetModel.pos_x)
+            .order_by(
+                DashboardWidgetModel.dashboard_id,
+                DashboardWidgetModel.pos_y,
+                DashboardWidgetModel.pos_x,
+            )
         )
         return [m.to_domain() for m in result.scalars().all()]
 

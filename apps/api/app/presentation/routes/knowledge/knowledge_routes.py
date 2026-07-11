@@ -119,7 +119,9 @@ async def get_node_relations(
     service = KnowledgeGraphService(graph_store)
     node = await service.get_node(node_id)
     if not node:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Node not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Node not found"
+        ) from None
     await require_org_role(node.organization_id, "viewer", user_id, db)
     return await service.get_node_relations(
         node_id=node_id,
@@ -136,6 +138,7 @@ async def remember(
 ) -> dict:
     await require_org_role(request.organization_id, "member", user_id, db)
     from app.domain.entities.knowledge.memory import MemoryImportance, MemoryType
+
     service = MemoryService(graph_store)
     return await service.remember(
         organization_id=request.organization_id,

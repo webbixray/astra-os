@@ -1,4 +1,3 @@
-
 from app.domain.entities.workflows.execution import ExecutionStep
 from app.domain.entities.workflows.workflow import NodeType, Workflow
 
@@ -25,8 +24,7 @@ class CompiledStep:
         )
 
 
-class CompileError(Exception):
-    ...
+class CompileError(Exception): ...
 
 
 def compile_workflow(workflow: Workflow) -> list[CompiledStep]:
@@ -68,7 +66,11 @@ def compile_workflow(workflow: Workflow) -> list[CompiledStep]:
             )
             ordered_steps.append(step)
 
-        unvisited = [edge.target_id for edge in edges_by_source.get(current_id, []) if edge.target_id not in visited]
+        unvisited = [
+            edge.target_id
+            for edge in edges_by_source.get(current_id, [])
+            if edge.target_id not in visited
+        ]
         queue.extend(unvisited)
 
     return ordered_steps

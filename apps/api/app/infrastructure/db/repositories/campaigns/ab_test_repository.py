@@ -18,9 +18,7 @@ class ABTestRepository:
         return merged.to_domain()
 
     async def find_by_id(self, test_id: UUID) -> ABTest | None:
-        result = await self.session.execute(
-            select(ABTestModel).where(ABTestModel.id == test_id)
-        )
+        result = await self.session.execute(select(ABTestModel).where(ABTestModel.id == test_id))
         model = result.scalar_one_or_none()
         return model.to_domain() if model is not None else None
 

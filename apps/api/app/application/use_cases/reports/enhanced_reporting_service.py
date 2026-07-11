@@ -36,12 +36,22 @@ class EnhancedReportingService:
 
     # ── Templates ────────────────────────────────────────────────────────
 
-    async def create_template(self, org_id: UUID, name: str, report_type: str,
-                              config: dict | None = None, description: str = "",
-                              created_by: UUID | None = None) -> ReportTemplate:
+    async def create_template(
+        self,
+        org_id: UUID,
+        name: str,
+        report_type: str,
+        config: dict | None = None,
+        description: str = "",
+        created_by: UUID | None = None,
+    ) -> ReportTemplate:
         template = ReportTemplate.create(
-            organization_id=org_id, name=name, report_type=report_type,
-            config=config, description=description, created_by=created_by,
+            organization_id=org_id,
+            name=name,
+            report_type=report_type,
+            config=config,
+            description=description,
+            created_by=created_by,
         )
         return await self.template_repo.save(template)
 
@@ -49,8 +59,11 @@ class EnhancedReportingService:
         templates = await self.template_repo.find_by_organization(org_id)
         return [
             {
-                "id": str(t.id), "name": t.name, "description": t.description,
-                "report_type": t.report_type, "config": t.config,
+                "id": str(t.id),
+                "name": t.name,
+                "description": t.description,
+                "report_type": t.report_type,
+                "config": t.config,
                 "created_at": t.created_at.isoformat(),
             }
             for t in templates
@@ -62,9 +75,13 @@ class EnhancedReportingService:
             raise EntityNotFoundError("ReportTemplate", str(template_id))
         return template
 
-    async def update_template(self, template_id: UUID, name: str | None = None,
-                              config: dict | None = None,
-                              description: str | None = None) -> ReportTemplate:
+    async def update_template(
+        self,
+        template_id: UUID,
+        name: str | None = None,
+        config: dict | None = None,
+        description: str | None = None,
+    ) -> ReportTemplate:
         template = await self.get_template(template_id)
         if name is not None:
             template.name = name
@@ -79,9 +96,14 @@ class EnhancedReportingService:
 
     # ── Report Generation ────────────────────────────────────────────────
 
-    async def generate_report(self, org_id: UUID, report_type: str,
-                              format: str = "csv", days: int = 30,
-                              config: dict | None = None) -> str:
+    async def generate_report(
+        self,
+        org_id: UUID,
+        report_type: str,
+        format: str = "csv",
+        days: int = 30,
+        config: dict | None = None,
+    ) -> str:
         if format not in EXPORT_FORMATS:
             raise ValidationError(f"Unsupported format: {format}")
 
@@ -95,15 +117,25 @@ class EnhancedReportingService:
             return self._to_html(data, report_type)
         return ""
 
-    async def generate_and_deliver(self, org_id: UUID, report_type: str,
-                                   channel: str, recipient: str,
-                                   format: str = "csv", days: int = 30,
-                                   template_id: UUID | None = None,
-                                   schedule_id: UUID | None = None) -> ReportDeliveryLog:
+    async def generate_and_deliver(
+        self,
+        org_id: UUID,
+        report_type: str,
+        channel: str,
+        recipient: str,
+        format: str = "csv",
+        days: int = 30,
+        template_id: UUID | None = None,
+        schedule_id: UUID | None = None,
+    ) -> ReportDeliveryLog:
         log = ReportDeliveryLog.create(
-            organization_id=org_id, report_type=report_type,
-            channel=channel, format=format, recipient=recipient,
-            template_id=template_id, schedule_id=schedule_id,
+            organization_id=org_id,
+            report_type=report_type,
+            channel=channel,
+            format=format,
+            recipient=recipient,
+            template_id=template_id,
+            schedule_id=schedule_id,
         )
 
         try:
@@ -121,26 +153,36 @@ class EnhancedReportingService:
 
     # ── Period Comparison ────────────────────────────────────────────────
 
-    async def compare_periods(self, org_id: UUID, report_type: str = "campaigns",
-                              current_days: int = 30,
-                              comparison: str = "previous_period",
-                              custom_days: int | None = None) -> dict:
+    async def compare_periods(
+        self,
+        org_id: UUID,
+        report_type: str = "campaigns",
+        current_days: int = 30,
+        comparison: str = "previous_period",
+        custom_days: int | None = None,
+    ) -> dict:
         current_data = await self._fetch_report_data(org_id, report_type, current_days)
         current_total = self._summarize(current_data)
 
         if comparison == "previous_period":
             prev_data = await self._fetch_report_data(
-                org_id, report_type, current_days,
+                org_id,
+                report_type,
+                current_days,
                 offset_days=current_days,
             )
         elif comparison == "same_period_last_year":
             prev_data = await self._fetch_report_data(
-                org_id, report_type, current_days,
+                org_id,
+                report_type,
+                current_days,
                 offset_days=365,
             )
         elif comparison == "custom" and custom_days:
             prev_data = await self._fetch_report_data(
-                org_id, report_type, custom_days,
+                org_id,
+                report_type,
+                custom_days,
             )
         else:
             prev_data = {}
@@ -180,9 +222,12 @@ class EnhancedReportingService:
         logs = await self.delivery_repo.find_by_organization(org_id)
         return [
             {
-                "id": str(log.id), "report_type": log.report_type,
-                "format": log.format, "channel": log.channel,
-                "recipient": log.recipient, "status": log.status,
+                "id": str(log.id),
+                "report_type": log.report_type,
+                "format": log.format,
+                "channel": log.channel,
+                "recipient": log.recipient,
+                "status": log.status,
                 "error_message": log.error_message,
                 "generated_at": log.generated_at.isoformat(),
             }
@@ -191,9 +236,9 @@ class EnhancedReportingService:
 
     # ── Helpers ──────────────────────────────────────────────────────────
 
-    async def _fetch_report_data(self, org_id: UUID, report_type: str,
-                                  days: int = 30,
-                                  offset_days: int = 0) -> dict[str, Any]:
+    async def _fetch_report_data(
+        self, org_id: UUID, report_type: str, days: int = 30, offset_days: int = 0
+    ) -> dict[str, Any]:
         end = datetime.now(UTC).date() - timedelta(days=offset_days)
         start = end - timedelta(days=days)
 
@@ -209,8 +254,13 @@ class EnhancedReportingService:
                 "total": len(campaigns),
                 "active": sum(1 for c in campaigns if c.status == "active"),
                 "campaigns": [
-                    {"id": str(c.id), "name": c.name, "status": c.status,
-                     "budget": c.budget_amount or 0, "channels": c.channels or []}
+                    {
+                        "id": str(c.id),
+                        "name": c.name,
+                        "status": c.status,
+                        "budget": c.budget_amount or 0,
+                        "channels": c.channels or [],
+                    }
                     for c in campaigns
                 ],
             }
@@ -290,8 +340,7 @@ class EnhancedReportingService:
                     headers = list(v[0].keys())
                     rows.append(["section", prefix, *headers])
                     rows.extend(
-                        ["row", prefix] + [str(item.get(h, "")) for h in headers]
-                        for item in v
+                        ["row", prefix] + [str(item.get(h, "")) for h in headers] for item in v
                     )
                 else:
                     rows.append([prefix, k, str(v)])
@@ -319,7 +368,7 @@ class EnhancedReportingService:
 table{{border-collapse:collapse;width:100%;margin-top:10px}}
 th,td{{border:1px solid #ddd;padding:8px;text-align:left}}
 th{{background:#f5f5f5}}</style></head><body>
-<h1>{report_type.replace('_', ' ').title()} Report</h1>
+<h1>{report_type.replace("_", " ").title()} Report</h1>
 <p>Generated: {now().isoformat()}</p>
 <table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>{rows_html}</tbody></table>
 </body></html>"""

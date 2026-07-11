@@ -88,7 +88,9 @@ class KnowledgeGraphService:
             relation_type=relation_type,
         )
 
-    async def index_campaign(self, organization_id: UUID, campaign_id: UUID, name: str, description: str) -> None:
+    async def index_campaign(
+        self, organization_id: UUID, campaign_id: UUID, name: str, description: str
+    ) -> None:
         await self.create_node(
             organization_id=organization_id,
             type=NodeType.CAMPAIGN,
@@ -97,7 +99,9 @@ class KnowledgeGraphService:
             properties={"campaign_id": str(campaign_id)},
         )
 
-    async def index_content(self, organization_id: UUID, content_id: UUID, title: str, body: str) -> None:
+    async def index_content(
+        self, organization_id: UUID, content_id: UUID, title: str, body: str
+    ) -> None:
         await self.create_node(
             organization_id=organization_id,
             type=NodeType.CONTENT,

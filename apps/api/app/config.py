@@ -81,9 +81,7 @@ class AppConfig(BaseSettings):
             }
             missing = [k for k, v in required_in_prod.items() if not v]
             if missing:
-                raise ValueError(
-                    f"Production environment requires: {', '.join(missing)}"
-                )
+                raise ValueError(f"Production environment requires: {', '.join(missing)}")
         return self
 
     @property

@@ -30,8 +30,8 @@ from app.infrastructure.events import (  # noqa: F401 - registers event handlers
 from app.infrastructure.logging import configure_logging
 from app.infrastructure.startup import StartupProbe
 from app.presentation.error_handlers import register_error_handlers
-from app.presentation.middleware.audit import AuditMiddleware
 from app.presentation.middleware.api_version import APIVersionMiddleware
+from app.presentation.middleware.audit import AuditMiddleware
 from app.presentation.middleware.auth import AuthMiddleware
 from app.presentation.middleware.csrf import CSRFMiddleware
 from app.presentation.middleware.logging import LoggingMiddleware
@@ -39,7 +39,6 @@ from app.presentation.middleware.metrics import MetricsMiddleware
 from app.presentation.middleware.ratelimit import RateLimitMiddleware
 from app.presentation.middleware.response_envelope import EnvelopeMiddleware
 from app.presentation.middleware.security_headers import SecurityHeadersMiddleware
-from app.presentation.middleware.tenant import TenantResolutionMiddleware
 from app.presentation.middleware.tenant import TenantResolutionMiddleware
 from app.presentation.routes import auth, health, metrics, organizations, users
 from app.presentation.routes.advertising import advertising_routes
@@ -97,6 +96,7 @@ async def lifespan(app: FastAPI):
             from app.application.use_cases.notifications.notification_hub_service import (
                 NotificationHubService,
             )
+
             await NotificationHubService.start_redis_listener()
         except Exception:
             logger.warning("Notification Redis listener startup failed", exc_info=True)
@@ -111,6 +111,7 @@ async def lifespan(app: FastAPI):
             from app.application.use_cases.notifications.notification_hub_service import (
                 NotificationHubService,
             )
+
             await NotificationHubService.stop_redis_listener()
         except Exception:
             logger.debug("Failed to stop notification Redis listener", exc_info=True)
@@ -127,7 +128,9 @@ async def lifespan(app: FastAPI):
         logger.info("ASTRA OS API shutdown complete")
 
 
-async def _retry_connect_redis(redis_cache: RedisCache, retries: int = 5, delay: float = 2.0) -> None:
+async def _retry_connect_redis(
+    redis_cache: RedisCache, retries: int = 5, delay: float = 2.0
+) -> None:
     last_exc: Exception | None = None
     for attempt in range(retries):
         try:
@@ -135,7 +138,9 @@ async def _retry_connect_redis(redis_cache: RedisCache, retries: int = 5, delay:
         except Exception as e:
             last_exc = e
             if attempt < retries - 1:
-                logger.warning("Redis connection failed (attempt %d/%d): %s", attempt + 1, retries, e)
+                logger.warning(
+                    "Redis connection failed (attempt %d/%d): %s", attempt + 1, retries, e
+                )
                 await asyncio.sleep(delay * (attempt + 1))
         else:
             logger.info("Redis connected (attempt %d/%d)", attempt + 1, retries)
@@ -155,7 +160,9 @@ async def _verify_db_connection(engine: AsyncEngine, retries: int = 5, delay: fl
         except Exception as e:
             last_exc = e
             if attempt < retries - 1:
-                logger.warning("Database connection failed (attempt %d/%d): %s", attempt + 1, retries, e)
+                logger.warning(
+                    "Database connection failed (attempt %d/%d): %s", attempt + 1, retries, e
+                )
                 await asyncio.sleep(delay * (attempt + 1))
         else:
             logger.info("Database connected (attempt %d/%d)", attempt + 1, retries)
