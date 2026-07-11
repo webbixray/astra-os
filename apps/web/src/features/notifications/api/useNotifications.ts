@@ -59,6 +59,7 @@ export function useNotifications(
       api.get<Notification[]>(
         `/notifications?organization_id=${orgId}&unread_only=${unreadOnly}&limit=${limit}&archived=${archived}${channel ? `&channel=${channel}` : ''}`,
       ),
+    enabled: !!orgId,
     refetchInterval: 300_000,
     staleTime: 60_000,
   });

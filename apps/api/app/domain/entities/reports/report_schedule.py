@@ -3,6 +3,9 @@ from datetime import datetime
 from uuid import UUID, uuid4
 
 from app.domain.common import now
+from app.domain.exceptions.domain_exceptions import ValidationError
+
+VALID_FREQUENCIES = ["daily", "weekly", "monthly", "quarterly"]
 
 
 @dataclass
@@ -32,9 +35,13 @@ class ReportSchedule:
         config: dict | None = None,
         created_by: UUID | None = None,
     ) -> "ReportSchedule":
+        if not name or not name.strip():
+            raise ValidationError("Schedule name is required")
+        if frequency not in VALID_FREQUENCIES:
+            raise ValidationError(f"Invalid frequency: {frequency}. Must be one of {VALID_FREQUENCIES}")
         return cls(
             organization_id=organization_id,
-            name=name,
+            name=name.strip(),
             report_type=report_type,
             frequency=frequency,
             recipients=recipients or [],

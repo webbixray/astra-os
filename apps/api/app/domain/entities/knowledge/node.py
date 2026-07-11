@@ -4,6 +4,7 @@ from enum import Enum
 from uuid import UUID, uuid4
 
 from app.domain.common import now
+from app.domain.exceptions.domain_exceptions import ValidationError
 
 
 class NodeType(str, Enum):
@@ -41,10 +42,12 @@ class KnowledgeNode:
         description: str = "",
         properties: dict | None = None,
     ) -> "KnowledgeNode":
+        if not name or not name.strip():
+            raise ValidationError("Knowledge node name is required")
         return cls(
             organization_id=organization_id,
             type=type,
-            name=name,
+            name=name.strip(),
             description=description,
             properties=properties or {},
         )

@@ -58,6 +58,7 @@ export function useDashboards(orgId: string) {
   return useQuery<DashboardSummary[]>({
     queryKey: ['dashboards', orgId],
     queryFn: () => api.get<DashboardSummary[]>(`/dashboards?organization_id=${orgId}`),
+    enabled: !!orgId,
   });
 }
 

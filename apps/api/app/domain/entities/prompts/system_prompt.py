@@ -4,6 +4,7 @@ from enum import Enum
 from uuid import UUID, uuid4
 
 from app.domain.common import now
+from app.domain.exceptions.domain_exceptions import ValidationError
 
 
 class PromptCategory(str, Enum):
@@ -48,9 +49,13 @@ class SystemPrompt:
         is_builtin: bool = False,
         created_by: UUID | None = None,
     ) -> "SystemPrompt":
+        if not name or not name.strip():
+            raise ValidationError("Prompt name is required")
+        if not content or not content.strip():
+            raise ValidationError("Prompt content is required")
         return cls(
-            name=name,
-            content=content,
+            name=name.strip(),
+            content=content.strip(),
             category=category,
             description=description,
             org_id=org_id,

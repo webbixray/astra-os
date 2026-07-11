@@ -4,6 +4,7 @@ from enum import Enum
 from uuid import UUID, uuid4
 
 from app.domain.common import now
+from app.domain.exceptions.domain_exceptions import ValidationError
 
 
 class AgentRole(str, Enum):
@@ -41,8 +42,10 @@ class Agent:
         capabilities: list[str] | None = None,
         parent_id: UUID | None = None,
     ) -> "Agent":
+        if not name or not name.strip():
+            raise ValidationError("Agent name is required")
         return cls(
-            name=name,
+            name=name.strip(),
             role=role,
             capabilities=capabilities or [],
             parent_id=parent_id,

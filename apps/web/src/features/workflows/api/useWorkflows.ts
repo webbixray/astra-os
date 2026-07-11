@@ -11,6 +11,7 @@ export function useWorkflows(orgId: string, status?: string) {
   return useQuery<Workflow[]>({
     queryKey: [WORKFLOWS_KEY, orgId, status],
     queryFn: () => api.get<Workflow[]>(`/workflows?${params}`),
+    enabled: !!orgId,
   });
 }
 

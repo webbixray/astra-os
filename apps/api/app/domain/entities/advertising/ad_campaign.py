@@ -4,6 +4,7 @@ from enum import Enum
 from uuid import UUID, uuid4
 
 from app.domain.common import now
+from app.domain.exceptions.domain_exceptions import ValidationError
 
 
 class SyncStatus(str, Enum):
@@ -54,10 +55,12 @@ class AdCampaign:
         objective: CampaignObjective = CampaignObjective.AWARENESS,
         created_by: UUID | None = None,
     ) -> "AdCampaign":
+        if not name or not name.strip():
+            raise ValidationError("Campaign name is required")
         return cls(
             organization_id=organization_id,
             ad_account_id=ad_account_id,
-            name=name,
+            name=name.strip(),
             objective=objective,
             created_by=created_by or uuid4(),
         )

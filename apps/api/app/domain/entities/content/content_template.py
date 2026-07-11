@@ -3,6 +3,7 @@ from datetime import datetime
 from uuid import UUID, uuid4
 
 from app.domain.common import now
+from app.domain.exceptions.domain_exceptions import ValidationError
 
 
 @dataclass
@@ -32,9 +33,11 @@ class ContentTemplate:
         system_prompt: str = "",
         created_by: UUID | None = None,
     ) -> "ContentTemplate":
+        if not name or not name.strip():
+            raise ValidationError("Template name is required")
         return cls(
             organization_id=organization_id,
-            name=name,
+            name=name.strip(),
             content_type=content_type,
             description=description,
             sections=sections or [],

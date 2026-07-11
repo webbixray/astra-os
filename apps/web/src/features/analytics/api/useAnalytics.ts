@@ -55,6 +55,7 @@ export function useAnalyticsOverview(orgId: string) {
   return useQuery<Overview>({
     queryKey: ['analytics', 'overview', orgId],
     queryFn: () => api.get<Overview>(`/analytics/overview?organization_id=${orgId}`),
+    enabled: !!orgId,
   });
 }
 
@@ -62,6 +63,7 @@ export function useCampaignPerformance(orgId: string) {
   return useQuery<CampaignPerformance[]>({
     queryKey: ['analytics', 'campaigns', orgId],
     queryFn: () => api.get<CampaignPerformance[]>(`/analytics/campaigns?organization_id=${orgId}`),
+    enabled: !!orgId,
   });
 }
 

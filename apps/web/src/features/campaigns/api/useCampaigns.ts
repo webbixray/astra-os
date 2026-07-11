@@ -11,6 +11,7 @@ export function useCampaigns(orgId: string, status?: string) {
   return useQuery<Campaign[]>({
     queryKey: [CAMPAIGNS_KEY, orgId, status],
     queryFn: () => api.get<Campaign[]>(`/campaigns?${params}`),
+    enabled: !!orgId,
   });
 }
 

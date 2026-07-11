@@ -3,6 +3,7 @@ from datetime import datetime
 from uuid import UUID, uuid4
 
 from app.domain.common import now
+from app.domain.exceptions.domain_exceptions import ValidationError
 
 
 @dataclass
@@ -30,12 +31,13 @@ class BrandVoice:
         target_audience: str = "",
         created_by: UUID | None = None,
     ) -> "BrandVoice":
+        if not name or not name.strip():
+            raise ValidationError("Brand voice name is required")
         if tone not in ("professional", "casual", "funny", "formal", "friendly", "authoritative"):
-            msg = f"Invalid tone: {tone}"
-            raise ValueError(msg)
+            raise ValidationError(f"Invalid tone: {tone}")
         return cls(
             organization_id=organization_id,
-            name=name,
+            name=name.strip(),
             tone=tone,
             vocabulary=vocabulary or [],
             style_guide=style_guide,

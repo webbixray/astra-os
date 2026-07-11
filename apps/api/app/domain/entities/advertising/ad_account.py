@@ -4,6 +4,7 @@ from enum import Enum
 from uuid import UUID, uuid4
 
 from app.domain.common import now
+from app.domain.exceptions.domain_exceptions import ValidationError
 
 
 class Platform(str, Enum):
@@ -46,11 +47,15 @@ class AdAccount:
         account_name: str,
         platform_account_id: str,
     ) -> "AdAccount":
+        if not account_name or not account_name.strip():
+            raise ValidationError("Account name is required")
+        if not platform_account_id or not platform_account_id.strip():
+            raise ValidationError("Platform account ID is required")
         return cls(
             organization_id=organization_id,
             platform=platform,
-            account_name=account_name,
-            platform_account_id=platform_account_id,
+            account_name=account_name.strip(),
+            platform_account_id=platform_account_id.strip(),
             status=ConnectionStatus.CONNECTED,
         )
 

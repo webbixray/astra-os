@@ -11,6 +11,7 @@ export function useContentList(orgId: string, status?: string) {
   return useQuery<Content[]>({
     queryKey: [CONTENT_KEY, orgId, status],
     queryFn: () => api.get<Content[]>(`/content?${params}`),
+    enabled: !!orgId,
   });
 }
 

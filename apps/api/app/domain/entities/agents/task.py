@@ -4,6 +4,7 @@ from enum import Enum
 from uuid import UUID, uuid4
 
 from app.domain.common import now
+from app.domain.exceptions.domain_exceptions import ValidationError
 
 
 class TaskStatus(str, Enum):
@@ -47,8 +48,10 @@ class AgentTask:
         priority: TaskPriority = TaskPriority.MEDIUM,
         parent_task_id: UUID | None = None,
     ) -> "AgentTask":
+        if not title or not title.strip():
+            raise ValidationError("Task title is required")
         return cls(
-            title=title,
+            title=title.strip(),
             description=description,
             assigned_by=assigned_by,
             priority=priority,
