@@ -105,7 +105,20 @@ export default function TeamPage() {
           <h2 className="text-sm font-medium">Members ({members?.length ?? 0})</h2>
         </div>
         {isLoading ? (
-          <div className="p-6 text-center text-sm text-muted-foreground">Loading...</div>
+          <div className="space-y-0">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="grid grid-cols-12 gap-4 border-b px-6 py-4 items-center">
+                <div className="col-span-3 flex items-center gap-3">
+                  <div className="h-8 w-8 animate-pulse rounded-full bg-muted" />
+                  <div className="h-4 w-24 animate-pulse rounded bg-muted" />
+                </div>
+                <div className="col-span-3"><div className="h-4 w-32 animate-pulse rounded bg-muted" /></div>
+                <div className="col-span-2"><div className="h-5 w-16 animate-pulse rounded-full bg-muted" /></div>
+                <div className="col-span-2"><div className="h-3 w-20 animate-pulse rounded bg-muted" /></div>
+                <div className="col-span-2" />
+              </div>
+            ))}
+          </div>
         ) : (
           <>
             <div className="grid grid-cols-12 gap-4 border-b px-6 py-3 text-xs font-medium text-muted-foreground">

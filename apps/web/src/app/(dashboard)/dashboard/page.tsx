@@ -159,7 +159,7 @@ export default function DashboardPage() {
             My Dashboards
           </p>
           <div className="space-y-1">
-            {dashboards?.map((d) => (
+            {dashboards ? dashboards.map((d) => (
               <div
                 key={d.id}
                 className={cn(
@@ -186,6 +186,10 @@ export default function DashboardPage() {
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
+              </div>
+            )) : [1, 2, 3].map((i) => (
+              <div key={i} className="flex items-center gap-3 rounded-md px-3 py-2">
+                <div className="h-4 w-24 animate-pulse rounded bg-muted" />
               </div>
             ))}
           </div>
@@ -301,7 +305,7 @@ export default function DashboardPage() {
                   gridAutoRows: 'minmax(100px, auto)',
                 }}
               >
-                {canvasWidgets.map((w) => {
+                {canvasWidgets.length > 0 ? canvasWidgets.map((w) => {
                   const spanX = Math.min(w.width, cols);
                   const dataItem = widgetData?.find((wd) => wd.widget_id === w.id);
                   const rawValue = dataItem?.data?.value;
@@ -350,8 +354,18 @@ export default function DashboardPage() {
                         )}
                       </div>
                     </div>
-                  );
-                })}
+                ) : (
+                  [1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className="rounded-lg border bg-card p-4"
+                      style={{ gridColumn: `span ${Math.min(4, cols)}` }}
+                    >
+                      <div className="h-3 w-20 animate-pulse rounded bg-muted" />
+                      <div className="mt-3 h-12 animate-pulse rounded bg-muted" />
+                    </div>
+                  ))
+                )}
               </div>
 
               {canvasWidgets.length === 0 && (
