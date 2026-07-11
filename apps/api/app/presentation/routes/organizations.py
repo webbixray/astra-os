@@ -145,34 +145,3 @@ async def update_organization(
         created_at=org.created_at,
         updated_at=org.updated_at,
     )
-
-
-@router.get("", summary="List all organizations")
-async def list_organizations(
-    use_case: ListUserOrganizationsUseCase = Depends(get_list_orgs_use_case),
-    user_id: UUID = Depends(require_user_id),
-    pagination: dict = Depends(pagination_params),
-) -> PaginatedResponse[OrganizationResponse]:
-    orgs = await use_case.execute(user_id=user_id)
-    items = [
-        OrganizationResponse(
-            id=org.id,
-            name=org.name,
-            slug=org.slug,
-            plan_tier=org.plan_tier,
-            settings=org.settings,
-            created_at=org.created_at,
-            updated_at=org.updated_at,
-        )
-        for org in orgs
-    ]
-    total = len(items)
-    page = pagination["page"]
-    limit = pagination["limit"]
-    return PaginatedResponse(
-        data=items,
-        total=total,
-        page=page,
-        limit=limit,
-        pages=max(1, (total + limit - 1) // limit),
-    )
