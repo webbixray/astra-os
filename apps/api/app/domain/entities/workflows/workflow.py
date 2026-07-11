@@ -102,9 +102,11 @@ class Workflow:
         created_by: UUID,
         description: str = "",
     ) -> "Workflow":
+        if not name or not name.strip():
+            raise ValidationError("Workflow name is required")
         return cls(
             organization_id=organization_id,
-            name=name,
+            name=name.strip(),
             description=description,
             created_by=created_by,
             nodes=[

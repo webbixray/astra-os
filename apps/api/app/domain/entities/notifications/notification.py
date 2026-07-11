@@ -3,6 +3,7 @@ from datetime import datetime
 from uuid import UUID, uuid4
 
 from app.domain.common import now
+from app.domain.exceptions.domain_exceptions import ValidationError
 
 NOTIFICATION_TYPES = [
     "campaign_milestone",
@@ -51,11 +52,17 @@ class Notification:
         channel: str = "in_app",
         template_id: UUID | None = None,
     ) -> "Notification":
+        if type not in NOTIFICATION_TYPES:
+            raise ValidationError(f"Invalid notification type: {type}. Must be one of {NOTIFICATION_TYPES}")
+        if channel not in NOTIFICATION_CHANNELS:
+            raise ValidationError(f"Invalid notification channel: {channel}. Must be one of {NOTIFICATION_CHANNELS}")
+        if not title or not title.strip():
+            raise ValidationError("Notification title is required")
         return cls(
             organization_id=organization_id,
             user_id=user_id,
             type=type,
-            title=title,
+            title=title.strip(),
             body=body,
             resource_type=resource_type,
             resource_id=resource_id,

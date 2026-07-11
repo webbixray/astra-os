@@ -1,3 +1,4 @@
+import re
 from datetime import UTC, datetime
 from uuid import UUID
 
@@ -138,7 +139,7 @@ async def export_report_csv(
         start_date=start_date,
         end_date=end_date,
     )
-    filename = f"{type}_report_{datetime.now(UTC).date().isoformat()}.csv"
+    filename = f"{re.sub(r'[^a-zA-Z0-9_-]', '', type)}_report_{datetime.now(UTC).date().isoformat()}.csv"
     return PlainTextResponse(
         content=csv_content,
         media_type="text/csv",

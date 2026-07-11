@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from uuid import UUID, uuid4
@@ -21,9 +22,15 @@ class Organization:
 
     @classmethod
     def create(cls, name: str, slug: str, parent_org_id: UUID | None = None) -> "Organization":
+        if not name or not name.strip():
+            raise ValidationError("Organization name is required")
+        if not slug or not slug.strip():
+            raise ValidationError("Slug is required")
+        if not re.match(r"^[a-z0-9]+(?:-[a-z0-9]+)*$", slug):
+            raise ValidationError("Slug must contain only lowercase alphanumeric characters and hyphens")
         return cls(
-            name=name,
-            slug=slug,
+            name=name.strip(),
+            slug=slug.strip(),
             parent_org_id=parent_org_id,
         )
 

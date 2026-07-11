@@ -108,6 +108,9 @@ class BaseAdAdapter(AdPlatformPort):
 
                 if resp.status_code >= 500:
                     delay = RETRY_BASE_DELAY * (2 ** attempt)
+                    last_exc = AdPlatformError(
+                        self.platform.value, f"Server error {resp.status_code}",
+                    )
                     logger.warning(
                         "[%s] Server error %d, retrying in %.1fs (attempt %d/%d)",
                         self.platform.value, resp.status_code, delay, attempt + 1, MAX_RETRIES,
@@ -529,6 +532,7 @@ class AdPlatformFactory:
     ) -> list[AdCampaign]:
         all_campaigns: list[AdCampaign] = []
         for account in connected_accounts:
+            adapter: BaseAdAdapter | None = None
             try:
                 platform = AdPlatform(account.get("platform", "google_ads"))
                 adapter = cls.create(platform, account.get("credentials"))

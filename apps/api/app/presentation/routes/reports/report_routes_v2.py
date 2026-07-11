@@ -1,3 +1,4 @@
+import re
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -149,7 +150,7 @@ async def generate_report(
     return PlainTextResponse(
         content=content,
         media_type=media_types.get(format, "text/plain"),
-        headers={"Content-Disposition": f'attachment; filename="{report_type}_report.{format}"'},
+        headers={"Content-Disposition": f'attachment; filename="{re.sub(r"[^a-zA-Z0-9_-]", "", report_type)}_report.{re.sub(r"[^a-zA-Z0-9_-]", "", format)}"'},
     )
 
 

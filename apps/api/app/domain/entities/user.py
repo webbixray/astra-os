@@ -2,6 +2,8 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
+from app.domain.exceptions.domain_exceptions import ValidationError
+
 
 @dataclass
 class User:
@@ -16,9 +18,15 @@ class User:
 
     @classmethod
     def create(cls, email: str, name: str, password_hash: str = "") -> "User":
+        if not email or not email.strip():
+            raise ValidationError("Email is required")
+        if "@" not in email:
+            raise ValidationError("Invalid email format")
+        if not name or not name.strip():
+            raise ValidationError("Name is required")
         return cls(
-            email=email,
-            name=name,
+            email=email.strip(),
+            name=name.strip(),
             password_hash=password_hash,
         )
 
