@@ -6,6 +6,7 @@ import logging
 import os
 import time
 import uuid
+from collections import deque
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from enum import Enum
@@ -170,8 +171,7 @@ class EventBus:
     _instance: ClassVar[EventBus | None] = None
     _subscribers: ClassVar[dict[DomainEventType, list[EventHandler]]] = {}
     _global_subscribers: ClassVar[list[EventHandler]] = []
-    _history: ClassVar[list[DomainEvent]] = []
-    _max_history: ClassVar[int] = 1000
+    _history: ClassVar[deque[DomainEvent]] = deque(maxlen=1000)
     _redis_client: ClassVar[Any | None] = None
     _pubsub: ClassVar[Any | None] = None
     _listener_task: ClassVar[asyncio.Task[None] | None] = None
@@ -272,8 +272,6 @@ class EventBus:
     @classmethod
     async def publish(cls, event: DomainEvent) -> None:
         cls._history.append(event)
-        if len(cls._history) > cls._max_history:
-            cls._history.pop(0)
 
         await cls._dispatch_local(event)
 

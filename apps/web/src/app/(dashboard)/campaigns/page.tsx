@@ -68,7 +68,7 @@ export default function CampaignsPage() {
 
       {tab === 'campaigns' ? (
         <>
-          {overview && (
+          {overview ? (
             <div className="grid grid-cols-4 gap-4">
               <div className="rounded-lg border bg-card p-4">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -103,6 +103,15 @@ export default function CampaignsPage() {
                   {Object.entries(overview.ad_platform_breakdown || {}).map(([p, c]) => `${p}: ${c}`).join(', ')}
                 </p>
               </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-4 gap-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="rounded-lg border bg-card p-4">
+                  <div className="h-4 w-24 animate-pulse rounded bg-muted" />
+                  <div className="mt-2 h-7 w-16 animate-pulse rounded bg-muted" />
+                </div>
+              ))}
             </div>
           )}
 
