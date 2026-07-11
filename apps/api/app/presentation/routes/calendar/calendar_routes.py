@@ -54,7 +54,7 @@ async def bulk_update_status(
     db: AsyncSession = Depends(get_db),
     user_id: UUID = Depends(require_user_id),
 ) -> dict:
-    await require_org_role(request.organization_id, "viewer", user_id, db)
+    await require_org_role(request.organization_id, "admin", user_id, db)
     service = BulkCampaignService(db)
     return await service.update_status(
         organization_id=request.organization_id,

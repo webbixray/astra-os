@@ -227,7 +227,7 @@ async def create_campaign(
     user_id: UUID = Depends(require_user_id),
     db: AsyncSession = Depends(get_db),
 ) -> CampaignResponse:
-    await require_org_role(request.organization_id, "viewer", user_id, db)
+    await require_org_role(request.organization_id, "member", user_id, db)
     try:
         campaign = await use_case.execute(
             organization_id=request.organization_id,
@@ -468,7 +468,7 @@ async def record_campaign_spend(
     campaign = await campaign_repo.find_by_id(campaign_id)
     if not campaign:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
-    await require_org_role(campaign.organization_id, "viewer", user_id, db)
+    await require_org_role(campaign.organization_id, "member", user_id, db)
     try:
         budget = await use_case.execute(campaign_id=campaign_id, amount=request.amount)
     except EntityNotFoundError:

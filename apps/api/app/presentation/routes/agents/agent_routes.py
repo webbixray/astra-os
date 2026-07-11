@@ -9,6 +9,7 @@ from app.application.use_cases.agents.tool_registry import ToolRegistry
 from app.infrastructure.external_adapters.agents.tool_handlers import register_tools
 from app.presentation.dependencies import get_db
 from app.presentation.middleware.auth import require_user_id
+from app.presentation.middleware.rbac import require_org_role
 
 router = APIRouter()
 
@@ -37,7 +38,9 @@ async def process_with_agents(
     request: AgentRequest,
     orchestrator: AgentOrchestrator = Depends(get_orchestrator),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> AgentResponse:
+    await require_org_role(request.organization_id, "member", user_id, db)
     result = await orchestrator.process_user_request(
         user_id=user_id,
         organization_id=request.organization_id,

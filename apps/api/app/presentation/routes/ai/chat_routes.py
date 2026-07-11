@@ -17,6 +17,7 @@ from app.infrastructure.external_adapters.ai.router import AIRouter
 from app.infrastructure.external_adapters.knowledge.graph_store import GraphStore
 from app.presentation.dependencies import get_db
 from app.presentation.middleware.auth import require_user_id
+from app.presentation.middleware.rbac import require_org_role
 
 router = APIRouter()
 
@@ -63,7 +64,9 @@ async def chat_stream(
     request: ChatRequestSchema,
     use_case: ChatUseCase = Depends(get_chat_use_case),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> StreamingResponse:
+    await require_org_role(request.organization_id, "member", user_id, db)
     domain_messages = []
     if request.messages:
         domain_messages = [
@@ -101,7 +104,9 @@ async def chat(
     request: ChatRequestSchema,
     use_case: ChatUseCase = Depends(get_chat_use_case),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
+    await require_org_role(request.organization_id, "member", user_id, db)
     domain_messages = []
     if request.messages:
         domain_messages = [

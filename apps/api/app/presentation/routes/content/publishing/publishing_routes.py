@@ -49,7 +49,7 @@ async def publish_content(
     content = await content_repo.find_by_id(content_id)
     if not content:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Content not found") from None
-    await require_org_role(content.organization_id, "viewer", user_id, db)
+    await require_org_role(content.organization_id, "member", user_id, db)
     try:
         result = await service.publish(
             content_id=content_id,
@@ -77,7 +77,7 @@ async def schedule_content(
     content = await content_repo.find_by_id(content_id)
     if not content:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Content not found") from None
-    await require_org_role(content.organization_id, "viewer", user_id, db)
+    await require_org_role(content.organization_id, "member", user_id, db)
     try:
         result = await service.schedule(
             content_id=content_id,
@@ -137,7 +137,7 @@ async def retry_publish(
     content = await content_repo.find_by_id(publish_record.content_id)
     if not content:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Content not found") from None
-    await require_org_role(content.organization_id, "viewer", user_id, db)
+    await require_org_role(content.organization_id, "member", user_id, db)
     try:
         result = await service.retry(publish_id=publish_id)
     except (EntityNotFoundError, ValidationError) as e:
@@ -167,7 +167,7 @@ async def cancel_publish(
     content = await content_repo.find_by_id(publish_record.content_id)
     if not content:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Content not found") from None
-    await require_org_role(content.organization_id, "viewer", user_id, db)
+    await require_org_role(content.organization_id, "member", user_id, db)
     try:
         await service.cancel(publish_id=publish_id)
     except (EntityNotFoundError, ValidationError) as e:

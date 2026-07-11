@@ -180,7 +180,7 @@ async def update_content(
 ) -> ContentResponse:
     try:
         existing = await get_use_case.execute(content_id=content_id)
-        await require_org_role(existing.organization_id, "editor", user_id, db)
+        await require_org_role(existing.organization_id, "member", user_id, db)
         content = await update_use_case.execute(
             content_id=content_id,
             title=request.title,
