@@ -227,3 +227,47 @@ class TestEventBusConcurrency:
 
         assert h1.await_count == 2
         assert h2.await_count == 1
+
+
+class TestDomainEventSerialization:
+    def test_to_json_and_back(self) -> None:
+        event = DomainEvent.create(
+            event_type=DomainEventType.CAMPAIGN_CREATED,
+            aggregate_id="camp-123",
+            aggregate_type="campaign",
+            data={"name": "Test Campaign", "budget": 5000},
+            correlation_id="corr-abc",
+            priority=EventPriority.HIGH,
+        )
+        json_str = event.to_json()
+        restored = DomainEvent.from_json(json_str)
+
+        assert restored.event_type == event.event_type
+        assert restored.aggregate_id == event.aggregate_id
+        assert restored.aggregate_type == event.aggregate_type
+        assert restored.data == event.data
+        assert restored.event_id == event.event_id
+        assert restored.correlation_id == event.correlation_id
+        assert restored.priority == event.priority
+        assert restored.timestamp == event.timestamp
+
+    def test_to_json_includes_source_instance(self) -> None:
+        event = DomainEvent.create(
+            DomainEventType.CAMPAIGN_CREATED, "c-1", "campaign"
+        )
+        json_str = event.to_json()
+        import json
+        payload = json.loads(json_str)
+        assert "source_instance" in payload
+
+    def test_roundtrip_preserves_all_event_types(self) -> None:
+        for event_type in DomainEventType:
+            event = DomainEvent.create(event_type, "id-1", "aggregate")
+            restored = DomainEvent.from_json(event.to_json())
+            assert restored.event_type == event_type
+
+    def test_roundtrip_with_empty_data(self) -> None:
+        event = DomainEvent.create(DomainEventType.USER_SIGNED_IN, "u-1", "user")
+        restored = DomainEvent.from_json(event.to_json())
+        assert restored.data == {}
+        assert restored.metadata == {}

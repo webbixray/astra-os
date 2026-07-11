@@ -12,9 +12,18 @@ import {
   useSEOScore,
 } from '@/features/ai-content/api/useContentGen';
 import { useOrg } from '@/lib/org';
-import { ContentSettingsPanel } from './content-settings-panel';
+import dynamic from 'next/dynamic';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
-import { ContentResultPanel } from './content-result-panel';
+
+const ContentSettingsPanel = dynamic(
+  () => import('./content-settings-panel').then((m) => ({ default: m.ContentSettingsPanel })),
+  { ssr: false },
+);
+
+const ContentResultPanel = dynamic(
+  () => import('./content-result-panel').then((m) => ({ default: m.ContentResultPanel })),
+  { ssr: false },
+);
 
 const instructionsSchema = z.string().max(1000, 'Instructions too long').optional();
 

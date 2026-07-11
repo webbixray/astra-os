@@ -7,7 +7,7 @@ services:
     environment:
       POSTGRES_DB: astra
       POSTGRES_USER: astra
-      POSTGRES_PASSWORD: astra_dev
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?must be set}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -21,10 +21,11 @@ services:
     container_name: astra-redis
     ports:
       - "6379:6379"
+    command: redis-server --requirepass ${REDIS_PASSWORD:?must be set}
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:?must be set}", "ping"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -36,11 +37,17 @@ services:
       - "7233:7233"
       - "8233:8233"
     environment:
+      DB: postgres12
+      DB_PORT: 5432
       POSTGRES_SEEDS: postgres
       POSTGRES_USER: astra
-      POSTGRES_PWD: astra_dev
+      POSTGRES_PWD: ${POSTGRES_PASSWORD:?must be set}
       POSTGRES_DB: astra_temporal
-      DYNAMIC_CONFIG_FILE_PATH: config/dynamicconfig/development-sql.yaml
+      DB_POSTGRES_HOST: postgres
+      DB_POSTGRES_PORT: 5432
+      DB_POSTGRES_USER: astra
+      DB_POSTGRES_PWD: ${POSTGRES_PASSWORD:?must be set}
+      DB_POSTGRES_DB: astra_temporal
     depends_on:
       postgres:
         condition: service_healthy
@@ -60,8 +67,8 @@ services:
     env_file:
       - docker/dev/.env
     environment:
-      DATABASE_URL: postgresql+asyncpg://astra:astra_dev@postgres:5432/astra
-      REDIS_URL: redis://redis:6379/0
+      DATABASE_URL: postgresql+asyncpg://astra:${POSTGRES_PASSWORD:?must be set}@postgres:5432/astra
+      REDIS_URL: redis://:${REDIS_PASSWORD:?must be set}@redis:6379/0
       TEMPORAL_HOST: temporal:7233
       CORS_ORIGINS: http://localhost:3000
       ENVIRONMENT: development
@@ -74,7 +81,9 @@ services:
       temporal:
         condition: service_healthy
     volumes:
-      - ./apps/api:/app
+      - ./apps/api/app:/app/app
+      - ./apps/api/alembic:/app/alembic
+      - ./apps/api/alembic.ini:/app/alembic.ini
       - ./scripts:/app/scripts
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:8000/api/v1/health"]
@@ -83,9 +92,9 @@ services:
       start_period: 15s
       retries: 3
     command: >
-      sh -c "cd /app && .venv/bin/python -m alembic upgrade head &&
-             .venv/bin/python -m scripts.seed_db &&
-             uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+      sh -c "cd /app && uv run python -m alembic upgrade head &&
+             uv run python -m scripts.seed_db &&
+             uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
 
   web:
     build:

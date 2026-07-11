@@ -1,0 +1,110 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: astra
+      POSTGRES_USER: astra
+      POSTGRES_PASSWORD: astra_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U astra"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  temporal:
+    image: temporalio/auto-setup:1.24
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB: postgres12
+      DB_PORT: 5432
+      POSTGRES_USER: astra
+      POSTGRES_PASSWORD: astra_dev
+      POSTGRES_DB: temporal
+      POSTGRES_SEEDS: postgres
+    ports:
+      - "7233:7233"
+
+  temporal-admin:
+    image: temporalio/admin-tools:1.24
+    restart: unless-stopped
+    depends_on:
+      - temporal
+    environment:
+      TEMPORAL_CLI_ADDRESS: temporal:7233
+
+  api:
+    build:
+      context: ../../apps/api
+      dockerfile: Dockerfile.dev
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+asyncpg://astra:astra_dev@postgres:5432/astra
+      REDIS_URL: redis://redis:6379/0
+      TEMPORAL_HOST: temporal:7233
+      SECRET_KEY: astra_dev_secret_key_do_not_use_in_production
+      ENVIRONMENT: development
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../../apps/api:/app
+      - ../../packages/shared:/packages/shared
+
+  temporal-worker:
+    build:
+      context: ../../apps/api
+      dockerfile: Dockerfile.worker
+    restart: unless-stopped
+    depends_on:
+      temporal:
+        condition: service_started
+    environment:
+      TEMPORAL_HOST: temporal:7233
+      DATABASE_URL: postgresql+asyncpg://astra:astra_dev@postgres:5432/astra
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: astra_dev_secret_key_do_not_use_in_production
+      ENVIRONMENT: development
+
+  web:
+    build:
+      context: ../..
+      dockerfile: apps/web/Dockerfile.dev
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_started
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+      NEXT_PUBLIC_WS_URL: ws://localhost:8000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../../apps/web:/app/apps/web
+      - /app/apps/web/node_modules
+      - ../../packages:/app/packages
+
+volumes:
+  pgdata:

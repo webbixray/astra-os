@@ -28,10 +28,14 @@ venv/
 .env
 .env.local
 .env.*.local
+docker/dev/.env
 docker/prod/.env
 docker/prod/ssl/*.pem
 docker/prod/ssl/*.key
 docker/prod/ssl/*.crt
+
+# Coverage trace files
+*.py,cover
 
 # Testing
 test-results/

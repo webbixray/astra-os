@@ -1,5 +1,7 @@
 FROM node:20-alpine
 
+RUN addgroup -S astra && adduser -S astra -G astra
+
 RUN npm install -g pnpm@9
 
 WORKDIR /app
@@ -12,6 +14,10 @@ COPY packages/config-typescript/package.json packages/config-typescript/
 RUN pnpm install --no-frozen-lockfile
 
 COPY . .
+
+RUN chown -R astra:astra /app
+
+USER astra
 
 WORKDIR /app/apps/web
 

@@ -1,11 +1,13 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import httpx
 import pytest
 
 from app.domain.entities.adplatforms.platform import AdCampaign, AdPlatform, AdStatus
 from app.infrastructure.external_adapters.adplatforms.base_adapter import (
     MOCK_GOOGLE_CAMPAIGNS,
     MOCK_META_CAMPAIGNS,
+    AdPlatformError,
     AdPlatformFactory,
     BaseAdAdapter,
     GoogleAdsAdapter,
@@ -344,7 +346,7 @@ class TestAdPlatformFactory:
 
     def test_create_unknown_platform_raises(self):
         with pytest.raises(ValueError, match="Unsupported platform"):
-            AdPlatformFactory.create("unknown_platform")  # type: ignore
+            AdPlatformFactory.create("unknown_platform")  # type: ignore[arg-type]
 
     def test_adapters_dict_contains_all(self):
         assert set(AdPlatformFactory._adapters.keys()) == {
@@ -363,3 +365,79 @@ class TestAdPlatformFactory:
         assert result[0].platform == AdPlatform.GOOGLE_ADS
         assert result[1].platform == AdPlatform.GOOGLE_ADS
         assert result[2].platform == AdPlatform.META
+
+
+class TestAdPlatformContextManager:
+    @pytest.mark.asyncio
+    async def test_context_manager_enter_returns_self(self):
+        adapter = GoogleAdsAdapter()
+        async with adapter as ctx:
+            assert ctx is adapter
+
+    @pytest.mark.asyncio
+    async def test_context_manager_exit_closes_client(self):
+        adapter = GoogleAdsAdapter()
+        async with adapter:
+            await adapter.get_client()
+            assert adapter._client is not None
+        assert adapter._client is None
+
+
+class TestAdPlatformError:
+    def test_error_contains_platform(self):
+        err = AdPlatformError("google_ads", "API failed", status_code=403)
+        assert err.platform == "google_ads"
+        assert err.status_code == 403
+        assert "[google_ads]" in str(err)
+        assert "API failed" in str(err)
+
+
+class TestAdPlatformRetryLogic:
+    @pytest.mark.asyncio
+    async def test_retry_on_500_succeeds(self):
+        error_response = MagicMock()
+        error_response.status_code = 500
+
+        success_response = MagicMock()
+        success_response.status_code = 200
+
+        adapter = GoogleAdsAdapter(credentials={"access_token": "tok", "developer_token": "dev"})
+        with patch.object(adapter, "get_client") as mock_get_client:
+            mock_client = AsyncMock()
+            mock_client.request = AsyncMock(side_effect=[error_response, success_response])
+            mock_get_client.return_value = mock_client
+
+            with patch("app.infrastructure.external_adapters.adplatforms.base_adapter.asyncio.sleep", new_callable=AsyncMock):
+                resp = await adapter._request_with_retry("POST", "https://example.com")
+
+        assert resp.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_retry_on_timeout_succeeds(self):
+        success_response = MagicMock()
+        success_response.status_code = 200
+
+        adapter = GoogleAdsAdapter(credentials={"access_token": "tok", "developer_token": "dev"})
+        with patch.object(adapter, "get_client") as mock_get_client:
+            mock_client = AsyncMock()
+            mock_client.request = AsyncMock(side_effect=[httpx.TimeoutException("timeout"), success_response])
+            mock_get_client.return_value = mock_client
+
+            with patch("app.infrastructure.external_adapters.adplatforms.base_adapter.asyncio.sleep", new_callable=AsyncMock):
+                resp = await adapter._request_with_retry("POST", "https://example.com")
+
+        assert resp.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_exhausted_retries_raises(self):
+        adapter = GoogleAdsAdapter(credentials={"access_token": "tok", "developer_token": "dev"})
+        with patch.object(adapter, "get_client") as mock_get_client:
+            mock_client = AsyncMock()
+            mock_client.request = AsyncMock(side_effect=httpx.TimeoutException("timeout"))
+            mock_get_client.return_value = mock_client
+
+            with (
+                patch("app.infrastructure.external_adapters.adplatforms.base_adapter.asyncio.sleep", new_callable=AsyncMock),
+                pytest.raises(AdPlatformError, match="Request failed after"),
+            ):
+                await adapter._request_with_retry("POST", "https://example.com")

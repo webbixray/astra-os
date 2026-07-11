@@ -1,76 +1,75 @@
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
-const badge = (color: string) => `bg-${color}-500/10 text-${color}-500`;
 const muted = 'bg-muted text-muted-foreground';
 
 export const CAMPAIGN_STATUS_COLORS: Record<string, string> = {
   draft: muted,
-  pending_approval: badge('yellow'),
-  active: badge('green'),
-  paused: badge('blue'),
+  pending_approval: 'bg-yellow-500/10 text-yellow-500',
+  active: 'bg-green-500/10 text-green-500',
+  paused: 'bg-blue-500/10 text-blue-500',
   completed: muted,
   archived: muted,
 };
 
 export const CONTENT_STATUS_COLORS: Record<string, string> = {
   draft: muted,
-  review: badge('yellow'),
-  approved: badge('green'),
-  published: badge('blue'),
+  review: 'bg-yellow-500/10 text-yellow-500',
+  approved: 'bg-green-500/10 text-green-500',
+  published: 'bg-blue-500/10 text-blue-500',
   archived: muted,
 };
 
 export const WORKFLOW_STATUS_COLORS: Record<string, string> = {
   draft: muted,
-  active: badge('green'),
-  paused: badge('blue'),
+  active: 'bg-green-500/10 text-green-500',
+  paused: 'bg-blue-500/10 text-blue-500',
   completed: muted,
   archived: muted,
 };
 
 export const AD_STATUS_COLORS: Record<string, string> = {
   draft: muted,
-  active: badge('green'),
-  paused: badge('yellow'),
-  completed: badge('blue'),
+  active: 'bg-green-500/10 text-green-500',
+  paused: 'bg-yellow-500/10 text-yellow-500',
+  completed: 'bg-blue-500/10 text-blue-500',
   archived: muted,
 };
 
 export const EMAIL_STATUS_COLORS: Record<string, string> = {
   draft: muted,
-  scheduled: badge('blue'),
-  sending: badge('yellow'),
-  sent: badge('green'),
-  partially_sent: badge('orange'),
-  failed: badge('red'),
+  scheduled: 'bg-blue-500/10 text-blue-500',
+  sending: 'bg-yellow-500/10 text-yellow-500',
+  sent: 'bg-green-500/10 text-green-500',
+  partially_sent: 'bg-orange-500/10 text-orange-500',
+  failed: 'bg-red-500/10 text-red-500',
 };
 
 export const JOB_STATUS_COLORS: Record<string, string> = {
-  completed: badge('green'),
-  running: badge('blue'),
-  queued: badge('yellow'),
-  failed: badge('red'),
+  completed: 'bg-green-500/10 text-green-500',
+  running: 'bg-blue-500/10 text-blue-500',
+  queued: 'bg-yellow-500/10 text-yellow-500',
+  failed: 'bg-red-500/10 text-red-500',
   cancelled: muted,
 };
 
 export const REPORT_STATUS_COLORS: Record<string, string> = {
-  delivered: badge('green'),
-  failed: badge('red'),
-  pending: badge('yellow'),
+  delivered: 'bg-green-500/10 text-green-500',
+  failed: 'bg-red-500/10 text-red-500',
+  pending: 'bg-yellow-500/10 text-yellow-500',
 };
 
 export const CREATIVE_STATUS_COLORS: Record<string, string> = {
   draft: muted,
-  approved: badge('green'),
-  rejected: badge('red'),
-  active: badge('blue'),
+  approved: 'bg-green-500/10 text-green-500',
+  rejected: 'bg-red-500/10 text-red-500',
+  active: 'bg-blue-500/10 text-blue-500',
 };
 
 export const AB_TEST_STATUS_COLORS: Record<string, string> = {
   draft: muted,
-  running: badge('green'),
-  completed: badge('blue'),
+  running: 'bg-green-500/10 text-green-500',
+  completed: 'bg-blue-500/10 text-blue-500',
   archived: muted,
 };
 

@@ -10,6 +10,7 @@ It is safe to run multiple times - it will skip existing data.
 """
 
 import asyncio
+import os
 import sys
 from pathlib import Path
 
@@ -22,7 +23,7 @@ from app.infrastructure.db.models.campaigns.campaign_model import CampaignModel
 from app.infrastructure.db.models.organization import OrganizationModel
 from app.infrastructure.db.models.team_member import TeamMemberModel
 from app.infrastructure.db.models.user import UserModel
-from app.infrastructure.db.session import async_session_factory
+from app.infrastructure.db.session import create_session_factory
 
 SEED_EMAIL = "admin@astra.dev"
 SEED_PASSWORD = "AstraAdmin1!"
@@ -68,7 +69,10 @@ SEED_CAMPAIGNS = [
 
 
 async def seed() -> None:
-    async with async_session_factory() as session:
+    db_url = os.environ.get("DATABASE_URL", "postgresql+asyncpg://astra:astra_dev@localhost:5432/astra")
+    engine, session_factory = create_session_factory(db_url)
+
+    async with session_factory() as session:
         result = await session.execute(select(UserModel).limit(1))
         existing_user = result.scalar_one_or_none()
         if existing_user:
@@ -106,6 +110,8 @@ async def seed() -> None:
         print(f"Seeded: 1 user, 1 organization, {len(SEED_CAMPAIGNS)} campaigns")
         print(f"Login:    {SEED_EMAIL}")
         print(f"Password: {SEED_PASSWORD}")
+
+    await engine.dispose()
 
 
 if __name__ == "__main__":

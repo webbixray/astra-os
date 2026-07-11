@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from pydantic import BaseModel, EmailStr
 
 if TYPE_CHECKING:
@@ -17,6 +18,8 @@ from app.config import config
 from app.presentation.dependencies import get_user_repo
 from app.presentation.middleware.auth import require_user_id
 from app.presentation.schemas.common import MessageResponse, UserResponse
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -80,11 +83,17 @@ async def sign_up(
     response: Response,
     service: AuthService = Depends(get_auth_service),
 ) -> AuthResponse:
-    result = await service.sign_up(
-        email=request.email,
-        password=request.password,
-        name=request.name,
-    )
+    try:
+        result = await service.sign_up(
+            email=request.email,
+            password=request.password,
+            name=request.name,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e)) from e
+    except Exception:
+        logger.exception("Unexpected error during sign up")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Registration failed") from None
     _set_auth_cookies(response, result["access_token"], result["refresh_token"])
     return AuthResponse(
         access_token=result["access_token"],
@@ -99,10 +108,16 @@ async def sign_in(
     response: Response,
     service: AuthService = Depends(get_auth_service),
 ) -> AuthResponse:
-    result = await service.sign_in(
-        email=request.email,
-        password=request.password,
-    )
+    try:
+        result = await service.sign_in(
+            email=request.email,
+            password=request.password,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e)) from e
+    except Exception:
+        logger.exception("Unexpected error during sign in")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Sign in failed") from None
     _set_auth_cookies(response, result["access_token"], result["refresh_token"])
     return AuthResponse(
         access_token=result["access_token"],
@@ -117,7 +132,13 @@ async def refresh_token(
     response: Response,
     service: AuthService = Depends(get_auth_service),
 ) -> AuthResponse:
-    result = await service.refresh_access_token(request.refresh_token)
+    try:
+        result = await service.refresh_access_token(request.refresh_token)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e)) from e
+    except Exception:
+        logger.exception("Unexpected error during token refresh")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Token refresh failed") from None
     _set_auth_cookies(response, result["access_token"], result["refresh_token"])
     return AuthResponse(
         access_token=result["access_token"],
@@ -132,7 +153,10 @@ async def logout(
     response: Response,
     service: AuthService = Depends(get_auth_service),
 ) -> MessageResponse:
-    await service.logout(request.refresh_token)
+    try:
+        await service.logout(request.refresh_token)
+    except Exception:
+        logger.exception("Unexpected error during logout")
     _clear_auth_cookies(response)
     return MessageResponse(message="Logged out successfully")
 
@@ -142,7 +166,11 @@ async def get_current_user(
     user_id: UUID = Depends(require_user_id),
     service: AuthService = Depends(get_auth_service),
 ) -> UserResponse:
-    user = await service.get_current_user(user_id)
+    try:
+        user = await service.get_current_user(user_id)
+    except Exception:
+        logger.exception("Unexpected error fetching current user")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to fetch user profile") from None
     return UserResponse(
         id=user.id,
         email=user.email,

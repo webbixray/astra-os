@@ -1,5 +1,6 @@
 import logging
 import time
+from collections import OrderedDict
 
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -12,6 +13,19 @@ logger = logging.getLogger(__name__)
 
 
 AUTH_PATHS = ("/api/v1/auth/signin", "/api/v1/auth/signup", "/api/v1/auth/refresh")
+
+# Per-endpoint rate limits for expensive operations (requests per minute)
+ENDPOINT_LIMITS: dict[str, int] = {
+    "/api/v1/ai/generate": 20,
+    "/api/v1/ai/rewrite": 20,
+    "/api/v1/ai/seo-score": 30,
+    "/api/v1/email/send": 10,
+    "/api/v1/reports/export": 15,
+    "/api/v1/content/generate": 20,
+}
+
+# Maximum number of distinct client keys to track in memory before eviction
+_MAX_LOCAL_CLIENTS = 10_000
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
@@ -28,7 +42,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self.auth_requests_per_minute = auth_requests_per_minute
         self.whitelist_paths = whitelist_paths or ["/api/v1/health"]
         self._redis_cache = redis_cache
-        self._local_windows: dict[str, list[float]] = {}
+        self._local_windows: OrderedDict[str, list[float]] = OrderedDict()
 
     @property
     def redis_cache(self) -> RedisCache | None:
@@ -39,6 +53,15 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         except AttributeError:
             return None
 
+    def _resolve_limit(self, path: str) -> int:
+        """Return the applicable rate limit for a given path."""
+        if path.startswith(AUTH_PATHS):
+            return self.auth_requests_per_minute
+        for prefix, limit in ENDPOINT_LIMITS.items():
+            if path.startswith(prefix):
+                return limit
+        return self.requests_per_minute
+
     async def dispatch(self, request: Request, call_next):
         path = request.url.path
         if any(path.startswith(w) for w in self.whitelist_paths):
@@ -48,8 +71,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if client_key in {"unknown", ""}:
             client_key = f"ip:{request.client.host}" if request.client else "unknown"
 
-        is_auth = path.startswith(AUTH_PATHS)
-        limit = self.auth_requests_per_minute if is_auth else self.requests_per_minute
+        limit = self._resolve_limit(path)
 
         if self.redis_cache and self.redis_cache.client is not None:
             count = await self._get_count_redis(client_key)
@@ -79,7 +101,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if self.redis_cache and self.redis_cache.client is not None:
             await self._increment_redis(client_key)
         else:
+            self._get_count_local(client_key)  # prunes stale entries
             self._local_windows.setdefault(client_key, []).append(time.time())
+            self._local_windows.move_to_end(client_key)
+            self._evict_local()
 
         response = await call_next(request)
         self._add_rate_limit_headers(response, limit, remaining, reset_at)
@@ -109,15 +134,13 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
     def _get_count_local(self, client_key: str) -> int:
         now = time.time()
-        window = self._local_windows.setdefault(client_key, [])
+        window = self._local_windows.get(client_key, [])
         window[:] = [t for t in window if t > now - 60]
+        if not window and client_key in self._local_windows:
+            del self._local_windows[client_key]
         return len(window)
 
-    def _check_local(self, client_key: str, limit: int) -> bool:
-        now = time.time()
-        window = self._local_windows.setdefault(client_key, [])
-        window[:] = [t for t in window if t > now - 60]
-        if len(window) >= limit:
-            return False
-        window.append(now)
-        return True
+    def _evict_local(self) -> None:
+        """Evict oldest entries when the map exceeds capacity."""
+        while len(self._local_windows) > _MAX_LOCAL_CLIENTS:
+            self._local_windows.popitem(last=False)

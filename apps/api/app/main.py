@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from app.config import config
+from app.domain.events.event_bus import EventBus
 from app.infrastructure.cache.redis import RedisCache, RedisConfig
 from app.infrastructure.db.config import DatabaseConfig
 from app.infrastructure.db.session import create_session_factory
@@ -29,6 +30,7 @@ from app.infrastructure.events import (  # noqa: F401 - registers event handlers
 from app.infrastructure.logging import configure_logging
 from app.infrastructure.startup import StartupProbe
 from app.presentation.error_handlers import register_error_handlers
+from app.presentation.middleware.api_version import APIVersionMiddleware
 from app.presentation.middleware.auth import AuthMiddleware
 from app.presentation.middleware.csrf import CSRFMiddleware
 from app.presentation.middleware.logging import LoggingMiddleware
@@ -40,6 +42,7 @@ from app.presentation.routes import auth, health, metrics, organizations, users
 from app.presentation.routes.advertising import advertising_routes
 from app.presentation.routes.agents import agent_routes
 from app.presentation.routes.ai import chat_routes, prompt_routes
+from app.presentation.routes.ai.websocket_chat import router as ws_chat_router
 from app.presentation.routes.analytics import analytics_routes
 from app.presentation.routes.calendar import calendar_routes
 from app.presentation.routes.campaigns import campaign_routes
@@ -80,12 +83,35 @@ async def lifespan(app: FastAPI):
         await _retry_connect_redis(redis_cache)
     app.state.redis = redis_cache
 
+    if config.redis_url:
+        try:
+            await EventBus.enable_redis(config.redis_url)
+        except Exception:
+            logger.warning("EventBus Redis Pub/Sub initialization failed, using in-memory mode")
+
+    if config.redis_url:
+        try:
+            from app.application.use_cases.notifications.notification_hub_service import (
+                NotificationHubService,
+            )
+            await NotificationHubService.start_redis_listener()
+        except Exception:
+            logger.warning("Notification Redis listener startup failed", exc_info=True)
+
     logger.info("ASTRA OS API ready")
 
     try:
         yield
     finally:
         logger.info("Shutting down ASTRA OS API...")
+        try:
+            from app.application.use_cases.notifications.notification_hub_service import (
+                NotificationHubService,
+            )
+            await NotificationHubService.stop_redis_listener()
+        except Exception:
+            logger.debug("Failed to stop notification Redis listener", exc_info=True)
+        await EventBus.disable_redis()
 
         if app.state.redis:
             await app.state.redis.disconnect()
@@ -207,6 +233,7 @@ def create_app() -> FastAPI:
         ],
     )
     app.add_middleware(EnvelopeMiddleware)
+    app.add_middleware(APIVersionMiddleware)
 
     app.include_router(health.router, prefix="/api/v1", tags=["health"])
     app.include_router(metrics.router, prefix="/api/v1", tags=["metrics"])
@@ -234,6 +261,7 @@ def create_app() -> FastAPI:
     app.include_router(automation_router, prefix="/api/v1", tags=["automation"])
     app.include_router(monitor_router, prefix="/api/v1", tags=["monitoring"])
     app.include_router(prompt_routes.router, prefix="/api/v1", tags=["prompts"])
+    app.include_router(ws_chat_router, tags=["websocket"])
 
     register_error_handlers(app)
     _init_opentelemetry(app)

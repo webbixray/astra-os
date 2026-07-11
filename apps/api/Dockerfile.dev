@@ -1,5 +1,7 @@
 FROM python:3.12-alpine
 
+RUN addgroup -S astra && adduser -S astra -G astra
+
 WORKDIR /app
 
 RUN apk add --no-cache git curl
@@ -11,7 +13,11 @@ RUN uv sync --no-cache
 
 COPY . .
 
+RUN chown -R astra:astra /app
+
 RUN chmod +x scripts/ 2>/dev/null || true
+
+USER astra
 
 ENV PATH="/app/.venv/bin:$PATH"
 

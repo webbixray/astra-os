@@ -71,11 +71,11 @@ const TYPE_ICONS: Record<string, string> = {
 const SidebarNav = memo(function SidebarNav() {
   const pathname = usePathname();
   return (
-    <nav className="flex-1 space-y-1 p-4">
+    <nav className="flex-1 space-y-1 p-4" aria-label="Main navigation">
       {navigation.map((item) => {
         const isActive = pathname.startsWith(item.href);
         return (
-          <Link key={item.name} href={item.href}>
+          <Link key={item.name} href={item.href} aria-current={isActive ? 'page' : undefined}>
             <span
               className={cn(
                 'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
@@ -100,7 +100,7 @@ const UserMenu = memo(function UserMenu() {
   return (
     <div className="border-t border-border p-4">
       <div className="flex items-center gap-3">
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-sm font-medium">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-sm font-medium" aria-hidden="true">
           {user?.name?.charAt(0)?.toUpperCase() || 'U'}
         </div>
         <div className="flex-1 truncate text-sm">
@@ -148,6 +148,8 @@ const NotificationBell = memo(function NotificationBell() {
         variant="ghost"
         size="icon"
         aria-label="Notifications"
+        aria-haspopup="true"
+        aria-expanded={showDropdown}
         onClick={() => setShowDropdown(!showDropdown)}
       >
         <Bell className="h-5 w-5" />
@@ -159,7 +161,7 @@ const NotificationBell = memo(function NotificationBell() {
       </Button>
 
       {showDropdown && (
-        <div className="absolute right-0 top-10 z-50 w-80 rounded-lg border bg-card shadow-lg">
+        <div className="absolute right-0 top-10 z-50 w-80 rounded-lg border bg-card shadow-lg" role="menu" aria-label="Notifications">
           <div className="flex items-center justify-between border-b px-4 py-3">
             <span className="text-sm font-medium">Notifications</span>
             <Button
@@ -177,6 +179,8 @@ const NotificationBell = memo(function NotificationBell() {
               recentNotifications.map((n) => (
                 <div
                   key={n.id}
+                  role="menuitem"
+                  tabIndex={0}
                   className="flex items-start gap-3 border-b px-4 py-3 text-sm hover:bg-accent/50 cursor-pointer transition-colors"
                   onClick={() => {
                     if (!n.is_read) markRead.mutate(n.id);
@@ -225,7 +229,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      <aside className="flex w-64 flex-col border-r border-border">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-primary focus:text-primary-foreground focus:px-4 focus:py-2 focus:m-2 focus:rounded-md"
+      >
+        Skip to content
+      </a>
+      <aside className="flex w-64 flex-col border-r border-border" aria-label="Sidebar">
         <div className="flex h-14 items-center gap-2 border-b border-border px-6">
           <Command className="h-5 w-5" />
           <span className="font-semibold">ASTRA OS</span>
@@ -235,7 +245,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       <div className="flex flex-1 flex-col overflow-hidden">
-        <header className="flex h-14 items-center gap-4 border-b border-border px-6">
+        <header className="flex h-14 items-center gap-4 border-b border-border px-6" aria-label="Top bar">
           <div className="relative flex-1">
             <Command className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
@@ -255,7 +265,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </Button>
           {orgId && <NotificationBell />}
         </header>
-        <main className="flex-1 overflow-y-auto">{children}</main>
+        <main id="main-content" className="flex-1 overflow-y-auto">{children}</main>
       </div>
     </div>
   );

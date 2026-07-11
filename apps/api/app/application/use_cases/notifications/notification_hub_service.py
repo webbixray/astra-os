@@ -1,6 +1,10 @@
 import asyncio
 import contextlib
+import json
+import logging
+import os
 from datetime import datetime
+from typing import Any
 from uuid import UUID
 
 from app.domain.common import now
@@ -25,7 +29,12 @@ from app.infrastructure.db.repositories.notifications.template_repository import
     NotificationTemplateRepository,
 )
 
+logger = logging.getLogger(__name__)
+
+_INSTANCE_ID = os.getpid()
 _notification_streams: dict[UUID, list[asyncio.Queue]] = {}
+_redis_state: dict[str, Any] = {"listener_task": None, "pubsub": None}
+REDIS_NOTIFICATION_CHANNEL = "astra:notifications"
 
 
 class NotificationHubService:
@@ -75,7 +84,7 @@ class NotificationHubService:
             adapter = get_delivery_adapter(channel)
             await adapter.deliver(user_id, title, body, channel)
 
-        if channel == "in_app" or channel == "in_app":
+        if channel == "in_app":
             data = {
                 "id": str(saved.id), "type": saved.type,
                 "title": saved.title, "body": saved.body,
@@ -84,10 +93,8 @@ class NotificationHubService:
                 "channel": saved.channel,
                 "is_read": False, "created_at": saved.created_at.isoformat(),
             }
-            queues = _notification_streams.get(user_id, [])
-            for q in queues:
-                with contextlib.suppress(asyncio.QueueFull):
-                    q.put_nowait(data)
+            self._push_to_local_queues(user_id, data)
+            await self._publish_to_redis(user_id, data)
 
         return saved
 
@@ -282,3 +289,80 @@ class NotificationHubService:
             queues.remove(queue)
         if not _notification_streams.get(user_id):
             _notification_streams.pop(user_id, None)
+
+    def _push_to_local_queues(self, user_id: UUID, data: dict) -> None:
+        queues = _notification_streams.get(user_id, [])
+        for q in queues:
+            with contextlib.suppress(asyncio.QueueFull):
+                q.put_nowait(data)
+
+    @staticmethod
+    async def _publish_to_redis(user_id: UUID, data: dict) -> None:
+        try:
+            from app.config import config
+            if not config.redis_url:
+                return
+            from redis.asyncio import Redis
+            redis = await Redis.from_url(config.redis_url, decode_responses=True)
+            try:
+                message = json.dumps({
+                    "user_id": str(user_id),
+                    "data": data,
+                    "source_instance": _INSTANCE_ID,
+                })
+                await redis.publish(REDIS_NOTIFICATION_CHANNEL, message)
+            finally:
+                await redis.close()
+        except Exception:
+            logger.debug("Failed to publish notification to Redis", exc_info=True)
+
+    @staticmethod
+    async def start_redis_listener() -> None:
+        try:
+            from app.config import config
+            if not config.redis_url:
+                return
+            from redis.asyncio import Redis
+            redis = await Redis.from_url(config.redis_url, decode_responses=True)
+            pubsub = redis.pubsub()
+            await pubsub.subscribe(REDIS_NOTIFICATION_CHANNEL)
+            _redis_state["pubsub"] = pubsub
+
+            async def _listen() -> None:
+                try:
+                    while True:
+                        message = await pubsub.get_message(
+                            ignore_subscribe_messages=True, timeout=1.0
+                        )
+                        if message and message["type"] == "message":
+                            try:
+                                payload = json.loads(message["data"])
+                                if payload.get("source_instance") == _INSTANCE_ID:
+                                    continue
+                                uid = UUID(payload["user_id"])
+                                data = payload["data"]
+                                queues = _notification_streams.get(uid, [])
+                                for q in queues:
+                                    with contextlib.suppress(asyncio.QueueFull):
+                                        q.put_nowait(data)
+                            except Exception:
+                                logger.exception("Failed to process Redis notification message")
+                        await asyncio.sleep(0.01)
+                except asyncio.CancelledError:
+                    pass
+
+            _redis_state["listener_task"] = asyncio.create_task(_listen())
+            logger.info("Notification Redis listener started")
+        except Exception:
+            logger.warning("Failed to start notification Redis listener", exc_info=True)
+
+    @staticmethod
+    async def stop_redis_listener() -> None:
+        task = _redis_state.get("listener_task")
+        if task and not task.done():
+            task.cancel()
+        pubsub = _redis_state.get("pubsub")
+        if pubsub:
+            await pubsub.unsubscribe(REDIS_NOTIFICATION_CHANNEL)
+            await pubsub.close()
+        _redis_state.clear()

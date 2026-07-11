@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
+import os
 import time
 import uuid
 from collections.abc import Awaitable, Callable
@@ -10,6 +12,9 @@ from enum import Enum
 from typing import Any, ClassVar, Self
 
 logger = logging.getLogger(__name__)
+
+REDIS_CHANNEL = "astra:events"
+INSTANCE_ID = os.getpid()
 
 
 class EventPriority(Enum):
@@ -99,6 +104,7 @@ class DomainEvent:
     correlation_id: str | None = None
     causation_id: str | None = None
     priority: EventPriority = EventPriority.NORMAL
+    source_instance: str = field(default_factory=lambda: INSTANCE_ID)
 
     @classmethod
     def create(
@@ -121,6 +127,41 @@ class DomainEvent:
             priority=priority,
         )
 
+    def to_json(self) -> str:
+        payload = {
+            "event_type": self.event_type.value,
+            "aggregate_id": self.aggregate_id,
+            "aggregate_type": self.aggregate_type,
+            "data": self.data,
+            "metadata": self.metadata,
+            "event_id": self.event_id,
+            "timestamp": self.timestamp,
+            "version": self.version,
+            "correlation_id": self.correlation_id,
+            "causation_id": self.causation_id,
+            "priority": self.priority.value,
+            "source_instance": self.source_instance,
+        }
+        return json.dumps(payload)
+
+    @classmethod
+    def from_json(cls, raw: str) -> DomainEvent:
+        payload = json.loads(raw)
+        return cls(
+            event_type=DomainEventType(payload["event_type"]),
+            aggregate_id=payload["aggregate_id"],
+            aggregate_type=payload["aggregate_type"],
+            data=payload.get("data", {}),
+            metadata=payload.get("metadata", {}),
+            event_id=payload.get("event_id", str(uuid.uuid4())),
+            timestamp=payload.get("timestamp", time.time()),
+            version=payload.get("version", 1),
+            correlation_id=payload.get("correlation_id"),
+            causation_id=payload.get("causation_id"),
+            priority=EventPriority(payload.get("priority", EventPriority.NORMAL.value)),
+            source_instance=payload.get("source_instance", "unknown"),
+        )
+
 
 EventHandler = Callable[[DomainEvent], Awaitable[None]]
 
@@ -131,6 +172,10 @@ class EventBus:
     _global_subscribers: ClassVar[list[EventHandler]] = []
     _history: ClassVar[list[DomainEvent]] = []
     _max_history: ClassVar[int] = 1000
+    _redis_client: ClassVar[Any | None] = None
+    _pubsub: ClassVar[Any | None] = None
+    _listener_task: ClassVar[asyncio.Task[None] | None] = None
+    _redis_enabled: ClassVar[bool] = False
 
     def __new__(cls) -> Self:
         if cls._instance is None:
@@ -139,10 +184,67 @@ class EventBus:
 
     @classmethod
     def reset(cls) -> None:
+        if cls._listener_task and not cls._listener_task.done():
+            cls._listener_task.cancel()
         cls._instance = None
         cls._subscribers.clear()
         cls._global_subscribers.clear()
         cls._history.clear()
+        cls._redis_client = None
+        cls._pubsub = None
+        cls._listener_task = None
+        cls._redis_enabled = False
+
+    @classmethod
+    async def enable_redis(cls, redis_url: str) -> None:
+        try:
+            from redis.asyncio import Redis
+
+            cls._redis_client = Redis.from_url(redis_url, decode_responses=True)
+            await cls._redis_client.ping()
+            cls._redis_enabled = True
+            cls._pubsub = cls._redis_client.pubsub()
+            await cls._pubsub.subscribe(REDIS_CHANNEL)
+            cls._listener_task = asyncio.create_task(cls._listen_redis())
+            logger.info("EventBus: Redis Pub/Sub enabled on channel '%s'", REDIS_CHANNEL)
+        except Exception:
+            logger.warning("EventBus: Redis unavailable, falling back to in-memory only")
+            cls._redis_enabled = False
+
+    @classmethod
+    async def disable_redis(cls) -> None:
+        if cls._listener_task and not cls._listener_task.done():
+            cls._listener_task.cancel()
+        if cls._pubsub:
+            await cls._pubsub.unsubscribe(REDIS_CHANNEL)
+            await cls._pubsub.close()
+        if cls._redis_client:
+            await cls._redis_client.close()
+        cls._redis_client = None
+        cls._pubsub = None
+        cls._listener_task = None
+        cls._redis_enabled = False
+
+    @classmethod
+    async def _listen_redis(cls) -> None:
+        try:
+            while cls._redis_enabled and cls._pubsub:
+                message = await cls._pubsub.get_message(
+                    ignore_subscribe_messages=True, timeout=1.0
+                )
+                if message and message["type"] == "message":
+                    try:
+                        event = DomainEvent.from_json(message["data"])
+                        if event.source_instance == INSTANCE_ID:
+                            continue
+                        await cls._dispatch_local(event)
+                    except Exception:
+                        logger.exception("EventBus: failed to process Redis message")
+                await asyncio.sleep(0.01)
+        except asyncio.CancelledError:
+            pass
+        except Exception:
+            logger.exception("EventBus: Redis listener crashed")
 
     @classmethod
     def subscribe(cls, event_type: DomainEventType, handler: EventHandler) -> Callable[[], None]:
@@ -173,6 +275,16 @@ class EventBus:
         if len(cls._history) > cls._max_history:
             cls._history.pop(0)
 
+        await cls._dispatch_local(event)
+
+        if cls._redis_enabled and cls._redis_client:
+            try:
+                await cls._redis_client.publish(REDIS_CHANNEL, event.to_json())
+            except Exception:
+                logger.warning("EventBus: failed to publish event to Redis: %s", event.event_type.value)
+
+    @classmethod
+    async def _dispatch_local(cls, event: DomainEvent) -> None:
         handlers = list(cls._subscribers.get(event.event_type, []))
         global_handlers = list(cls._global_subscribers)
 
@@ -220,6 +332,21 @@ class EventBus:
     @classmethod
     def clear_history(cls) -> None:
         cls._history.clear()
+
+    @classmethod
+    async def get_redis_info(cls) -> dict[str, Any]:
+        if not cls._redis_enabled or not cls._redis_client:
+            return {"enabled": False, "connected": False}
+        try:
+            info = await cls._redis_client.info("stats")
+            return {
+                "enabled": True,
+                "connected": True,
+                "channel": REDIS_CHANNEL,
+                "messages_published": info.get("pubsub_channels", 0),
+            }
+        except Exception:
+            return {"enabled": True, "connected": False}
 
 
 def event_handler(event_type: DomainEventType):

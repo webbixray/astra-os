@@ -6,12 +6,14 @@ import { API_BASE_URL } from '@/lib/constants';
 
 const RECONNECT_BASE_MS = 2000;
 const RECONNECT_MAX_MS = 30000;
+const MAX_RETRIES = 10;
 
 export function useNotificationStream(orgId: string | undefined) {
   const qc = useQueryClient();
   const controllerRef = useRef<AbortController | null>(null);
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const retryDelayRef = useRef(RECONNECT_BASE_MS);
+  const retryCountRef = useRef(0);
   const mountedRef = useRef(true);
 
   const invalidate = useCallback(() => {
@@ -42,6 +44,7 @@ export function useNotificationStream(orgId: string | undefined) {
         }
 
         retryDelayRef.current = RECONNECT_BASE_MS;
+        retryCountRef.current = 0;
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
@@ -80,7 +83,9 @@ export function useNotificationStream(orgId: string | undefined) {
       .catch((err) => {
         if (err.name === 'AbortError') return;
         if (!mountedRef.current) return;
+        if (retryCountRef.current >= MAX_RETRIES) return;
 
+        retryCountRef.current += 1;
         retryTimeoutRef.current = setTimeout(() => {
           retryDelayRef.current = Math.min(retryDelayRef.current * 1.5, RECONNECT_MAX_MS);
           connect();

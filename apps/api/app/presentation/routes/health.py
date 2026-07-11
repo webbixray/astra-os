@@ -89,24 +89,32 @@ async def liveness() -> dict[str, str]:
 
 
 @router.get("/health/ready", summary="Check readiness")
-async def readiness(request: Request) -> dict[str, object]:
-    status = "ready"
+async def readiness(request: Request, db: AsyncSession = Depends(get_db)) -> dict[str, object]:
+    status_val = "ready"
     checks: dict[str, bool] = {}
 
-    if getattr(request.app.state, "db", None):
+    try:
+        await db.execute(text("SELECT 1"))
         checks["database"] = True
-    else:
+    except Exception:
         checks["database"] = False
-        status = "not_ready"
+        status_val = "not_ready"
 
-    redis = getattr(request.app.state, "redis", None)
-    if redis and redis.client:
-        checks["redis"] = True
-    else:
+    redis_cache = getattr(request.app.state, "redis", None)
+    if redis_cache and redis_cache.client:
+        try:
+            await asyncio.wait_for(redis_cache.client.ping(), timeout=2.0)
+            checks["redis"] = True
+        except Exception:
+            checks["redis"] = False
+            status_val = "not_ready"
+    elif config.redis_url:
         checks["redis"] = False
-        status = "not_ready"
+        status_val = "not_ready"
+    else:
+        checks["redis"] = True
 
-    return {"status": status, "checks": checks}
+    return {"status": status_val, "checks": checks}
 
 
 @router.get("/", summary="Get API root info")
