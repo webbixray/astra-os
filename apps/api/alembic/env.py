@@ -1,5 +1,10 @@
 import asyncio
+import sys
 from logging.config import fileConfig
+from pathlib import Path
+
+# Ensure app package is importable regardless of working directory
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection

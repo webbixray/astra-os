@@ -1,0 +1,16 @@
+{
+  "name": "astra-agent-orchestrator",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Agent Orchestrator Runtime for ASTRA OS",
+  "scripts": {
+    "dev": "python -m services.agent_orchestrator",
+    "build": "python -m build",
+    "test": "pytest",
+    "lint": "ruff check .",
+    "format": "ruff format .",
+    "typecheck": "mypy ."
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

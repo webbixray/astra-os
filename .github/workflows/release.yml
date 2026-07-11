@@ -59,7 +59,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: apps/api/Dockerfile.prod
+          file: apps/api/Dockerfile
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/api:latest
@@ -71,7 +71,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: apps/web/Dockerfile.prod
+          file: apps/web/Dockerfile
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/web:latest

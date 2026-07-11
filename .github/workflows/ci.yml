@@ -81,7 +81,7 @@ jobs:
           echo "Migration tree is linear"
 
       - name: Test (pytest)
-        run: python -m pytest -v --tb=short --cov=app --cov-report=term --cov-fail-under=60
+        run: python -m pytest -v --tb=short --cov=app --cov-report=term --cov-fail-under=80
 
       - name: Security scan (bandit)
         run: |
@@ -92,7 +92,6 @@ jobs:
         run: |
           pip install safety
           safety check --full-report
-        continue-on-error: true
 
   api-lint:
     runs-on: ubuntu-latest

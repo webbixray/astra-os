@@ -59,8 +59,8 @@ services:
 
   api:
     build:
-      context: ./apps/api
-      dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: ./apps/api/Dockerfile.dev
     container_name: astra-api
     ports:
       - "8000:8000"
@@ -91,10 +91,7 @@ services:
       timeout: 5s
       start_period: 15s
       retries: 3
-    command: >
-      sh -c "cd /app && uv run python -m alembic upgrade head &&
-             uv run python -m scripts.seed_db &&
-             uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    command: sh -c "cd /app && env PYTHONPATH=/app /app/.venv/bin/python -m alembic upgrade head && env PYTHONPATH=/app /app/.venv/bin/python -m scripts.seed_db && uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
 
   web:
     build:

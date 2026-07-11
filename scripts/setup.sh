@@ -106,6 +106,8 @@ cd "$ROOT_DIR"
 pnpm install
 log_success "Frontend dependencies installed"
 
+cd apps/api && pip install -e "../../services/agent_orchestrator" 2>/dev/null || true
+
 # Install API dependencies
 log_info "Installing API dependencies..."
 cd "$ROOT_DIR/apps/api"
