@@ -24,6 +24,7 @@ class CreateNodeRequest(BaseModel):
 
 
 class CreateRelationRequest(BaseModel):
+    organization_id: UUID
     source_id: UUID
     target_id: UUID
     relation_type: str = "related_to"

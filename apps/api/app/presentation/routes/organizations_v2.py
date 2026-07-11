@@ -12,6 +12,7 @@ from app.domain.exceptions.domain_exceptions import (
 )
 from app.presentation.dependencies import get_db
 from app.presentation.middleware.auth import require_user_id
+from app.presentation.middleware.rbac import require_org_role
 
 router = APIRouter()
 
@@ -59,7 +60,9 @@ async def get_org_tree(
     org_id: UUID,
     service: OrganizationService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
+    await require_org_role(org_id, "viewer", user_id, db)
     try:
         return await service.get_org_tree(org_id)
     except ForbiddenError as e:
@@ -74,7 +77,9 @@ async def set_parent_org(
     request: SetParentRequest,
     service: OrganizationService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
+    await require_org_role(org_id, "owner", user_id, db)
     try:
         org = await service.set_parent_org(org_id, request.parent_org_id, user_id)
     except (EntityNotFoundError, ValidationError) as e:
@@ -90,7 +95,9 @@ async def create_sub_org(
     request: CreateSubOrgRequest,
     service: OrganizationService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
+    await require_org_role(org_id, "admin", user_id, db)
     try:
         org = await service.create_sub_org(org_id, request.name, request.slug, user_id)
     except (ValidationError, ValueError) as e:
@@ -109,7 +116,9 @@ async def invite_member(
     request: InviteMemberRequest,
     service: OrganizationService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
+    await require_org_role(org_id, "admin", user_id, db)
     try:
         inv = await service.invite_member(org_id, user_id, request.email, request.role)
     except (ValidationError, ValueError) as e:
@@ -127,7 +136,9 @@ async def list_invitations(
     org_id: UUID,
     service: OrganizationService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> list[dict]:
+    await require_org_role(org_id, "viewer", user_id, db)
     try:
         invitations = await service.list_invitations(org_id, user_id)
     except ForbiddenError as e:
@@ -178,7 +189,9 @@ async def cancel_invitation(
     invitation_id: UUID,
     service: OrganizationService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> None:
+    await require_org_role(org_id, "admin", user_id, db)
     try:
         await service.cancel_invitation(invitation_id, org_id, user_id)
     except ForbiddenError as e:
@@ -192,7 +205,9 @@ async def list_members(
     org_id: UUID,
     service: OrganizationService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> list[dict]:
+    await require_org_role(org_id, "viewer", user_id, db)
     try:
         return await service.list_members(org_id, user_id)
     except ForbiddenError as e:
@@ -206,7 +221,9 @@ async def change_member_role(
     request: ChangeRoleRequest,
     service: OrganizationService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
+    await require_org_role(org_id, "admin", user_id, db)
     try:
         member = await service.change_member_role(member_id, request.role, org_id, user_id)
     except (EntityNotFoundError, ValidationError) as e:
@@ -222,7 +239,9 @@ async def remove_member(
     member_id: UUID,
     service: OrganizationService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> None:
+    await require_org_role(org_id, "admin", user_id, db)
     try:
         await service.remove_member(member_id, org_id, user_id)
     except (EntityNotFoundError, ValidationError) as e:
@@ -238,7 +257,9 @@ async def list_feature_flags(
     org_id: UUID,
     service: OrganizationService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> list[dict]:
+    await require_org_role(org_id, "viewer", user_id, db)
     try:
         flags = await service.list_feature_flags(org_id)
     except ForbiddenError as e:
@@ -258,7 +279,9 @@ async def set_feature_flag(
     request: SetFeatureFlagRequest,
     service: OrganizationService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
+    await require_org_role(org_id, "admin", user_id, db)
     try:
         flag = await service.set_feature_flag(
             org_id, request.feature_key, enabled=request.enabled, config=request.config
@@ -276,7 +299,9 @@ async def delete_feature_flag(
     flag_id: UUID,
     service: OrganizationService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> None:
+    await require_org_role(org_id, "admin", user_id, db)
     try:
         await service.delete_feature_flag(org_id, flag_id)
     except ForbiddenError as e:
@@ -290,7 +315,9 @@ async def get_usage(
     org_id: UUID,
     service: OrganizationService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
+    await require_org_role(org_id, "viewer", user_id, db)
     try:
         return await service.get_usage_summary(org_id)
     except ForbiddenError as e:
@@ -304,7 +331,9 @@ async def get_usage_trend(
     days: int = Query(30, ge=1, le=365),
     service: OrganizationService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> list[dict]:
+    await require_org_role(org_id, "viewer", user_id, db)
     try:
         return await service.get_usage_trend(org_id, metric, days)
     except ForbiddenError as e:
@@ -316,7 +345,9 @@ async def get_billing_plan(
     org_id: UUID,
     service: OrganizationService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
+    await require_org_role(org_id, "viewer", user_id, db)
     try:
         plan = await service.get_billing_plan(org_id)
     except ForbiddenError as e:
@@ -337,7 +368,9 @@ async def change_billing_plan(
     request: ChangePlanRequest,
     service: OrganizationService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
+    await require_org_role(org_id, "owner", user_id, db)
     try:
         plan = await service.change_billing_plan(org_id, request.plan_tier, user_id)
     except (ValidationError, ValueError) as e:
@@ -355,7 +388,9 @@ async def check_permission(
     permission: str,
     service: OrganizationService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
+    await require_org_role(org_id, "viewer", user_id, db)
     has = await service.check_permission(org_id, user_id, permission)
     return {"has_permission": has}
 
@@ -367,7 +402,9 @@ async def add_member_permission(
     request: AddPermissionRequest,
     service: OrganizationService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
+    await require_org_role(org_id, "admin", user_id, db)
     try:
         member = await service.add_member_permission(member_id, request.permission, org_id, user_id)
     except (EntityNotFoundError, ValidationError) as e:
@@ -384,7 +421,9 @@ async def remove_member_permission(
     permission: str,
     service: OrganizationService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
+    await require_org_role(org_id, "admin", user_id, db)
     try:
         member = await service.remove_member_permission(member_id, permission, org_id, user_id)
     except (EntityNotFoundError, ValidationError) as e:
