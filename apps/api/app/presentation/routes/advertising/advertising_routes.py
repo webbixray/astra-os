@@ -75,7 +75,7 @@ async def connect_account(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     await require_org_role(request.organization_id, "member", user_id, db)
-    await require_feature("advertising_integration", request.organization_id, "free", db)
+    await require_feature("advertising_integration", request.organization_id, "auto", db)
     return await service.connect(
         organization_id=request.organization_id,
         platform=request.platform,
@@ -93,7 +93,7 @@ async def list_accounts(
     db: AsyncSession = Depends(get_db),
 ) -> list[dict]:
     await require_org_role(organization_id, "viewer", user_id, db)
-    await require_feature("advertising_integration", organization_id, "free", db)
+    await require_feature("advertising_integration", organization_id, "auto", db)
     return await service.list_accounts(organization_id)
 
 
@@ -108,7 +108,7 @@ async def disconnect_account(
     if not account:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found") from None
     await require_org_role(account.organization_id, "admin", user_id, db)
-    await require_feature("advertising_integration", account.organization_id, "free", db)
+    await require_feature("advertising_integration", account.organization_id, "auto", db)
     return await service.disconnect(account_id)
 
 
@@ -123,7 +123,7 @@ async def sync_account(
     if not account:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found") from None
     await require_org_role(account.organization_id, "viewer", user_id, db)
-    await require_feature("advertising_integration", account.organization_id, "free", db)
+    await require_feature("advertising_integration", account.organization_id, "auto", db)
     return await service.sync(account_id)
 
 
@@ -137,7 +137,7 @@ async def create_ad_campaign(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     await require_org_role(request.organization_id, "member", user_id, db)
-    await require_feature("advertising_integration", request.organization_id, "free", db)
+    await require_feature("advertising_integration", request.organization_id, "auto", db)
     return await service.create(
         organization_id=request.organization_id,
         ad_account_id=request.ad_account_id,
@@ -154,7 +154,7 @@ async def list_ad_campaigns(
     db: AsyncSession = Depends(get_db),
 ) -> list[dict]:
     await require_org_role(organization_id, "viewer", user_id, db)
-    await require_feature("advertising_integration", organization_id, "free", db)
+    await require_feature("advertising_integration", organization_id, "auto", db)
     return await service.list_by_organization(organization_id)
 
 
@@ -169,7 +169,7 @@ async def sync_campaign(
     if not campaign:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found") from None
     await require_org_role(campaign.organization_id, "viewer", user_id, db)
-    await require_feature("advertising_integration", campaign.organization_id, "free", db)
+    await require_feature("advertising_integration", campaign.organization_id, "auto", db)
     return await service.sync_to_platform(campaign_id)
 
 
@@ -183,7 +183,7 @@ async def create_creative(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     await require_org_role(request.organization_id, "member", user_id, db)
-    await require_feature("advertising_integration", request.organization_id, "free", db)
+    await require_feature("advertising_integration", request.organization_id, "auto", db)
     return await service.create(
         organization_id=request.organization_id,
         name=request.name,
@@ -200,7 +200,7 @@ async def list_creatives(
     db: AsyncSession = Depends(get_db),
 ) -> list[dict]:
     await require_org_role(organization_id, "viewer", user_id, db)
-    await require_feature("advertising_integration", organization_id, "free", db)
+    await require_feature("advertising_integration", organization_id, "auto", db)
     return await service.list_by_organization(organization_id)
 
 
@@ -216,7 +216,7 @@ async def update_creative(
     if not creative:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Creative not found") from None
     await require_org_role(creative.organization_id, "viewer", user_id, db)
-    await require_feature("advertising_integration", creative.organization_id, "free", db)
+    await require_feature("advertising_integration", creative.organization_id, "auto", db)
     return await service.update(
         creative_id=creative_id,
         headline=request.headline,

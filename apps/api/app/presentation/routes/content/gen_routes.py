@@ -101,7 +101,7 @@ async def generate_content(
     user_id: UUID = Depends(require_user_id),
 ) -> dict:
     await require_org_role(request.organization_id, "viewer", user_id, db)
-    await require_feature("ai_content_generation", request.organization_id, "free", db)
+    await require_feature("ai_content_generation", request.organization_id, "auto", db)
     service = await _get_content_service(db)
     template_repo = ContentTemplateRepository(db)
     voice_repo = BrandVoiceRepository(db)

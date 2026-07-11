@@ -70,7 +70,7 @@ async def create_provider(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     await require_org_role(request.organization_id, "member", user_id, db)
-    await require_feature("email_marketing", request.organization_id, "free", db)
+    await require_feature("email_marketing", request.organization_id, "auto", db)
     try:
         provider = await service.create_provider(
             org_id=request.organization_id, provider_type=request.provider_type,
@@ -91,7 +91,7 @@ async def list_providers(
     db: AsyncSession = Depends(get_db),
 ) -> list[dict]:
     await require_org_role(organization_id, "viewer", user_id, db)
-    await require_feature("email_marketing", organization_id, "free", db)
+    await require_feature("email_marketing", organization_id, "auto", db)
     providers = await service.list_providers(org_id=organization_id)
     return [{"id": str(p.id), "name": p.name, "provider_type": p.provider_type,
              "from_email": p.from_email, "from_name": p.from_name,
@@ -123,7 +123,7 @@ async def create_email_campaign(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     await require_org_role(request.organization_id, "member", user_id, db)
-    await require_feature("email_marketing", request.organization_id, "free", db)
+    await require_feature("email_marketing", request.organization_id, "auto", db)
     try:
         campaign = await service.create_campaign(
             org_id=request.organization_id, provider_id=request.provider_id,
@@ -148,7 +148,7 @@ async def list_email_campaigns(
     db: AsyncSession = Depends(get_db),
 ) -> list[dict]:
     await require_org_role(organization_id, "viewer", user_id, db)
-    await require_feature("email_marketing", organization_id, "free", db)
+    await require_feature("email_marketing", organization_id, "auto", db)
     campaigns = await service.list_campaigns(org_id=organization_id, status=status)
     return [
         {
@@ -230,7 +230,7 @@ async def get_email_analytics(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     await require_org_role(organization_id, "viewer", user_id, db)
-    await require_feature("email_marketing", organization_id, "free", db)
+    await require_feature("email_marketing", organization_id, "auto", db)
     return await service.get_analytics(org_id=organization_id)
 
 

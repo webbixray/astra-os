@@ -81,7 +81,7 @@ async def create_workflow(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     await require_org_role(request.organization_id, "member", user_id, db)
-    await require_feature("workflow_automation", request.organization_id, "free", db)
+    await require_feature("workflow_automation", request.organization_id, "auto", db)
     use_case = CreateWorkflowUseCase(repo)
     workflow = await use_case.execute(
         organization_id=request.organization_id,
@@ -104,7 +104,7 @@ async def get_workflow(
     if not workflow:
         raise HTTPException(status_code=404, detail="Workflow not found")
     await require_org_role(workflow.organization_id, "viewer", user_id, repo.db)
-    await require_feature("workflow_automation", workflow.organization_id, "free", db)
+    await require_feature("workflow_automation", workflow.organization_id, "auto", db)
     return _format_response(workflow)
 
 
@@ -117,7 +117,7 @@ async def list_workflows(
     db: AsyncSession = Depends(get_db),
 ) -> list[dict]:
     await require_org_role(organization_id, "viewer", user_id, db)
-    await require_feature("workflow_automation", organization_id, "free", db)
+    await require_feature("workflow_automation", organization_id, "auto", db)
     use_case = ListWorkflowsUseCase(repo)
     workflows = await use_case.execute(organization_id, status)
     return [_format_response(w) for w in workflows]
@@ -136,7 +136,7 @@ async def update_workflow(
     if not existing:
         raise HTTPException(status_code=404, detail="Workflow not found")
     await require_org_role(existing.organization_id, "member", user_id, db)
-    await require_feature("workflow_automation", existing.organization_id, "free", db)
+    await require_feature("workflow_automation", existing.organization_id, "auto", db)
     use_case = UpdateWorkflowUseCase(repo)
     workflow = await use_case.execute(
         workflow_id=workflow_id,
@@ -158,7 +158,7 @@ async def execute_workflow(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     await require_org_role(request.organization_id, "member", user_id, db)
-    await require_feature("workflow_automation", request.organization_id, "free", db)
+    await require_feature("workflow_automation", request.organization_id, "auto", db)
     existing = await repo.find_by_id(workflow_id)
     if not existing or str(existing.organization_id) != str(request.organization_id):
         raise HTTPException(status_code=404, detail="Workflow not found") from None
@@ -181,7 +181,7 @@ async def list_executions(
     if not workflow:
         raise HTTPException(status_code=404, detail="Workflow not found")
     await require_org_role(workflow.organization_id, "viewer", user_id, db)
-    await require_feature("workflow_automation", workflow.organization_id, "free", db)
+    await require_feature("workflow_automation", workflow.organization_id, "auto", db)
     models = await repo.find_executions_by_workflow(workflow_id)
     return [
         {

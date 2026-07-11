@@ -3,14 +3,21 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from fastapi import Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.infrastructure.db.repositories.feature_flag_repository import FeatureFlagRepository
+from app.infrastructure.db.repositories.organization_repository import OrganizationRepositoryImpl
 from app.presentation.dependencies import get_db
 
 if TYPE_CHECKING:
     from uuid import UUID
 
-    from sqlalchemy.ext.asyncio import AsyncSession
+
+async def get_organization_plan_tier(organization_id: UUID, db: AsyncSession) -> str:
+    """Get the organization's current plan tier."""
+    org_repo = OrganizationRepositoryImpl(db)
+    org = await org_repo.find_by_id(organization_id)
+    return org.plan_tier if org else "free"
 
 FEATURE_PRESETS: dict[str, list[str]] = {
     "free": ["basic_analytics", "content_management"],
@@ -67,9 +74,12 @@ def get_plan_features(plan_tier: str) -> set[str]:
 async def require_feature(
     feature_key: str,
     organization_id: UUID,
-    plan_tier: str = "free",
+    plan_tier: str = "auto",
     db: AsyncSession = Depends(get_db),
 ) -> bool:
+    # Auto-fetch plan tier from organization if "auto" is specified
+    if plan_tier == "auto":
+        plan_tier = await get_organization_plan_tier(organization_id, db)
     repo = FeatureFlagRepository(db)
 
     plan_features = get_plan_features(plan_tier)
@@ -99,7 +109,7 @@ class FeatureGate:
     async def __call__(
         self,
         organization_id: UUID,
-        plan_tier: str = "free",
+        plan_tier: str = "auto",
         db: AsyncSession = Depends(get_db),
     ) -> None:
         await require_feature(self.feature_key, organization_id, plan_tier, db)
