@@ -84,9 +84,12 @@ async def list_budget_rules(
 @router.post("/automation/budget-rules/{rule_id}/calculate", summary="Calculate budget allocation")
 async def calculate_allocation(
     rule_id: UUID,
+    organization_id: UUID = Query(...),
     service: AutomationService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
+    await require_org_role(organization_id, "viewer", user_id, db)
     try:
         return await service.calculate_allocation(rule_id)
     except EntityNotFoundError:
@@ -96,9 +99,12 @@ async def calculate_allocation(
 @router.delete("/automation/budget-rules/{rule_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete a budget rule")
 async def delete_budget_rule(
     rule_id: UUID,
+    organization_id: UUID = Query(...),
     service: AutomationService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> None:
+    await require_org_role(organization_id, "admin", user_id, db)
     await service.delete_budget_rule(rule_id)
 
 
@@ -139,9 +145,12 @@ async def list_bid_rules(
 @router.post("/automation/bid-rules/{rule_id}/optimize", summary="Optimize bid for rule")
 async def optimize_bid(
     rule_id: UUID,
+    organization_id: UUID = Query(...),
     service: AutomationService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
+    await require_org_role(organization_id, "viewer", user_id, db)
     try:
         return await service.optimize_bid(rule_id)
     except EntityNotFoundError:
@@ -151,9 +160,12 @@ async def optimize_bid(
 @router.delete("/automation/bid-rules/{rule_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete a bid rule")
 async def delete_bid_rule(
     rule_id: UUID,
+    organization_id: UUID = Query(...),
     service: AutomationService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> None:
+    await require_org_role(organization_id, "admin", user_id, db)
     await service.delete_bid_rule(rule_id)
 
 
@@ -193,9 +205,12 @@ async def list_audience_segments(
 @router.post("/automation/audience-segments/{segment_id}/predict", summary="Predict audience size")
 async def predict_audience(
     segment_id: UUID,
+    organization_id: UUID = Query(...),
     service: AutomationService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
+    await require_org_role(organization_id, "viewer", user_id, db)
     try:
         return await service.predict_audience(segment_id)
     except EntityNotFoundError:
@@ -205,9 +220,12 @@ async def predict_audience(
 @router.delete("/automation/audience-segments/{segment_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete an audience segment")
 async def delete_audience_segment(
     segment_id: UUID,
+    organization_id: UUID = Query(...),
     service: AutomationService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> None:
+    await require_org_role(organization_id, "admin", user_id, db)
     await service.delete_audience_segment(segment_id)
 
 
@@ -247,9 +265,12 @@ async def list_recommendations(
 @router.post("/automation/recommendations/{rec_id}/apply", summary="Apply a recommendation")
 async def apply_recommendation(
     rec_id: UUID,
+    organization_id: UUID = Query(...),
     service: AutomationService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
+    await require_org_role(organization_id, "member", user_id, db)
     try:
         rec = await service.apply_recommendation(rec_id)
     except EntityNotFoundError:
@@ -297,9 +318,12 @@ async def list_automation_rules(
 async def toggle_automation_rule(
     rule_id: UUID,
     enabled: bool = Query(...),
+    organization_id: UUID = Query(...),
     service: AutomationService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
+    await require_org_role(organization_id, "member", user_id, db)
     try:
         rule = await service.toggle_rule(rule_id, enabled)
     except EntityNotFoundError:
@@ -321,7 +345,10 @@ async def evaluate_automation_rules(
 @router.delete("/automation/rules/{rule_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete an automation rule")
 async def delete_automation_rule(
     rule_id: UUID,
+    organization_id: UUID = Query(...),
     service: AutomationService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> None:
+    await require_org_role(organization_id, "admin", user_id, db)
     await service.delete_rule(rule_id)

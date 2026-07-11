@@ -169,9 +169,12 @@ async def get_jobs(
 async def update_job_status(
     job_id: UUID,
     request: UpdateJobStatusRequest,
+    organization_id: UUID = Query(...),
     service: SystemMonitorService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
+    await require_org_role(organization_id, "admin", user_id, db)
     try:
         job = await service.update_job_status(
             job_id=job_id, status=request.status,
@@ -185,9 +188,12 @@ async def update_job_status(
 @router.post("/jobs/{job_id}/retry", summary="Retry failed job")
 async def retry_job(
     job_id: UUID,
+    organization_id: UUID = Query(...),
     service: SystemMonitorService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
+    await require_org_role(organization_id, "admin", user_id, db)
     try:
         job = await service.retry_job(job_id)
     except ValidationError as e:

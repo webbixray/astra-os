@@ -257,9 +257,11 @@ async def list_brand_voices(
 async def update_brand_voice(
     voice_id: UUID,
     request: BrandVoiceUpdate,
+    organization_id: UUID = Query(...),
     db: AsyncSession = Depends(get_db),
     user_id: UUID = Depends(require_user_id),
 ) -> dict:
+    await require_org_role(organization_id, "member", user_id, db)
     repo = BrandVoiceRepository(db)
     voice = await repo.find_by_id(voice_id)
     if voice is None:
@@ -284,9 +286,11 @@ async def update_brand_voice(
 @router.delete("/brand-voices/{voice_id}", status_code=204, summary="Delete a brand voice")
 async def delete_brand_voice(
     voice_id: UUID,
+    organization_id: UUID = Query(...),
     db: AsyncSession = Depends(get_db),
     user_id: UUID = Depends(require_user_id),
 ) -> None:
+    await require_org_role(organization_id, "admin", user_id, db)
     repo = BrandVoiceRepository(db)
     await repo.delete(voice_id)
 
@@ -366,9 +370,11 @@ async def list_templates(
 @router.get("/content/templates/{template_id}", summary="Get a content template")
 async def get_template(
     template_id: UUID,
+    organization_id: UUID = Query(...),
     db: AsyncSession = Depends(get_db),
     user_id: UUID = Depends(require_user_id),
 ) -> dict:
+    await require_org_role(organization_id, "viewer", user_id, db)
     repo = ContentTemplateRepository(db)
     template = await repo.find_by_id(template_id)
     if template is None:
@@ -390,9 +396,11 @@ async def get_template(
 async def update_template(
     template_id: UUID,
     request: TemplateUpdate,
+    organization_id: UUID = Query(...),
     db: AsyncSession = Depends(get_db),
     user_id: UUID = Depends(require_user_id),
 ) -> dict:
+    await require_org_role(organization_id, "member", user_id, db)
     repo = ContentTemplateRepository(db)
     template = await repo.find_by_id(template_id)
     if template is None:
@@ -419,8 +427,10 @@ async def update_template(
 @router.delete("/content/templates/{template_id}", status_code=204, summary="Delete a content template")
 async def delete_template(
     template_id: UUID,
+    organization_id: UUID = Query(...),
     db: AsyncSession = Depends(get_db),
     user_id: UUID = Depends(require_user_id),
 ) -> None:
+    await require_org_role(organization_id, "admin", user_id, db)
     repo = ContentTemplateRepository(db)
     await repo.delete(template_id)

@@ -205,9 +205,11 @@ async def list_report_schedules(
 async def update_report_schedule(
     schedule_id: UUID,
     request: UpdateScheduleRequest,
+    organization_id: UUID = Query(...),
     db: AsyncSession = Depends(get_db),
     user_id: UUID = Depends(require_user_id),
 ) -> dict:
+    await require_org_role(organization_id, "member", user_id, db)
     repo = ReportScheduleRepository(db)
     schedule = await repo.find_by_id(schedule_id)
     if schedule is None:
@@ -232,8 +234,10 @@ async def update_report_schedule(
 @router.delete("/reports/schedules/{schedule_id}", status_code=204, summary="Delete report schedule")
 async def delete_report_schedule(
     schedule_id: UUID,
+    organization_id: UUID = Query(...),
     db: AsyncSession = Depends(get_db),
     user_id: UUID = Depends(require_user_id),
 ) -> None:
+    await require_org_role(organization_id, "admin", user_id, db)
     repo = ReportScheduleRepository(db)
     await repo.delete(schedule_id)

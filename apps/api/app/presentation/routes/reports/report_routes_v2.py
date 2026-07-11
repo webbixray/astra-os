@@ -85,9 +85,12 @@ async def list_templates(
 @router.get("/reports/templates/{template_id}", summary="Get report template")
 async def get_template(
     template_id: UUID,
+    organization_id: UUID = Query(...),
     service: EnhancedReportingService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
+    await require_org_role(organization_id, "viewer", user_id, db)
     try:
         t = await service.get_template(template_id)
     except EntityNotFoundError:
@@ -103,9 +106,12 @@ async def get_template(
 async def update_template(
     template_id: UUID,
     request: UpdateTemplateRequest,
+    organization_id: UUID = Query(...),
     service: EnhancedReportingService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
+    await require_org_role(organization_id, "member", user_id, db)
     try:
         t = await service.update_template(
             template_id, name=request.name,
@@ -119,9 +125,12 @@ async def update_template(
 @router.delete("/reports/templates/{template_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete report template")
 async def delete_template(
     template_id: UUID,
+    organization_id: UUID = Query(...),
     service: EnhancedReportingService = Depends(get_service),
     user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> None:
+    await require_org_role(organization_id, "admin", user_id, db)
     await service.delete_template(template_id)
 
 
