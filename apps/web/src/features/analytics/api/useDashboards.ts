@@ -121,7 +121,7 @@ export function useUpdateWidget() {
       height?: number;
       config?: Record<string, unknown>;
     }) => api.put(`/dashboards/widgets/${widget_id}`, body),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['dashboard'] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['dashboards'] }),
   });
 }
 
@@ -129,7 +129,7 @@ export function useDeleteWidget() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (widgetId: string) => api.delete(`/dashboards/widgets/${widgetId}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['dashboard'] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['dashboards'] }),
   });
 }
 

@@ -3,11 +3,17 @@ from __future__ import annotations
 import json
 import logging
 import uuid
-from typing import Any
+from contextlib import asynccontextmanager
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
 from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
 from fastapi.websockets import WebSocketState
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
+
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.use_cases.agents.orchestrator import AgentOrchestrator
 from app.application.use_cases.agents.tool_registry import ToolRegistry
@@ -72,13 +78,21 @@ async def _verify_ws_token(token: str) -> UUID | None:
     return None
 
 
-def _build_use_case() -> ChatUseCase:
+@asynccontextmanager
+async def _get_session(websocket: WebSocket) -> AsyncGenerator[AsyncSession, None]:
+    """Create an async DB session from the app's session factory."""
+    session_factory = websocket.app.state.db
+    async with session_factory() as session:
+        yield session
+
+
+def _build_use_case(session: AsyncSession) -> ChatUseCase:
     registry = ToolRegistry()
     ai_router = AIRouter()
     orchestrator = AgentOrchestrator(tool_registry=registry, ai_router=ai_router)
     graph_store = None
     memory_service = MemoryService(graph_store) if graph_store else None
-    prompt_repo = SystemPromptRepositoryImpl.__new__(SystemPromptRepositoryImpl)
+    prompt_repo = SystemPromptRepositoryImpl(session)
     prompt_manager = PromptManager(repository=prompt_repo)
     return ChatUseCase(
         router=ai_router,
@@ -93,7 +107,6 @@ async def websocket_chat(
     websocket: WebSocket,
     token: str | None = Query(default=None),
 ) -> None:
-    # Authenticate via token query parameter
     user_id: UUID | None = None
     if token:
         user_id = await _verify_ws_token(token)
@@ -112,72 +125,74 @@ async def websocket_chat(
             "message": "Connected to ASTRA OS chat",
         })
 
-        while True:
-            raw = await websocket.receive_text()
-            try:
-                payload = json.loads(raw)
-            except json.JSONDecodeError:
-                await manager.send_json(client_id, {
-                    "type": "error",
-                    "message": "Invalid JSON payload",
-                })
-                continue
+        async with _get_session(websocket) as session:
+            use_case = _build_use_case(session)
 
-            message = payload.get("message", "")
-            conversation_id = payload.get("conversation_id", str(uuid.uuid4()))
-            organization_id = payload.get("organization_id", "")
-            history = payload.get("messages", [])
-
-            if not message:
-                await manager.send_json(client_id, {
-                    "type": "error",
-                    "message": "Message is required",
-                })
-                continue
-
-            await manager.send_json(client_id, {
-                "type": "thinking",
-                "conversation_id": conversation_id,
-            })
-
-            try:
-                domain_messages = [
-                    ChatMessage(role=MessageRole(m["role"]), content=m["content"])
-                    for m in history if isinstance(m, dict) and "role" in m and "content" in m
-                ]
-
-                domain_request = ChatRequest(
-                    organization_id=organization_id,
-                    user_id=str(user_id),
-                    message=message,
-                    conversation_id=conversation_id,
-                    messages=domain_messages,
-                )
-
-                full_response = ""
-                use_case = _build_use_case()
-
-                async for chunk in use_case.stream(domain_request):
-                    full_response += chunk
+            while True:
+                raw = await websocket.receive_text()
+                try:
+                    payload = json.loads(raw)
+                except json.JSONDecodeError:
                     await manager.send_json(client_id, {
-                        "type": "chunk",
-                        "content": chunk,
+                        "type": "error",
+                        "message": "Invalid JSON payload",
+                    })
+                    continue
+
+                message = payload.get("message", "")
+                conversation_id = payload.get("conversation_id", str(uuid.uuid4()))
+                organization_id = payload.get("organization_id", "")
+                history = payload.get("messages", [])
+
+                if not message:
+                    await manager.send_json(client_id, {
+                        "type": "error",
+                        "message": "Message is required",
+                    })
+                    continue
+
+                await manager.send_json(client_id, {
+                    "type": "thinking",
+                    "conversation_id": conversation_id,
+                })
+
+                try:
+                    domain_messages = [
+                        ChatMessage(role=MessageRole(m["role"]), content=m["content"])
+                        for m in history if isinstance(m, dict) and "role" in m and "content" in m
+                    ]
+
+                    domain_request = ChatRequest(
+                        organization_id=organization_id,
+                        user_id=str(user_id),
+                        message=message,
+                        conversation_id=conversation_id,
+                        messages=domain_messages,
+                    )
+
+                    full_response = ""
+
+                    async for chunk in use_case.stream(domain_request):
+                        full_response += chunk
+                        await manager.send_json(client_id, {
+                            "type": "chunk",
+                            "content": chunk,
+                            "conversation_id": conversation_id,
+                        })
+
+                    await manager.send_json(client_id, {
+                        "type": "done",
                         "conversation_id": conversation_id,
+                        "full_response": full_response,
                     })
 
-                await manager.send_json(client_id, {
-                    "type": "done",
-                    "conversation_id": conversation_id,
-                    "full_response": full_response,
-                })
-
-            except Exception:
-                logger.exception("WebSocket chat error for user %s", user_id)
-                await manager.send_json(client_id, {
-                    "type": "error",
-                    "message": "An error occurred while processing your message",
-                    "conversation_id": conversation_id,
-                })
+                except Exception:
+                    logger.exception("WebSocket chat error for user %s", user_id)
+                    await manager.send_json(client_id, {
+                        "type": "error",
+                        "message": "An error occurred while processing your message",
+                        "conversation_id": conversation_id,
+                    })
 
     except WebSocketDisconnect:
         manager.disconnect(client_id)
