@@ -52,7 +52,8 @@ export function useVirtualization<T>(
   itemHeight: number,
   containerHeight: number,
   overscan: number = 5,
-): { visibleItems: T[]; totalHeight: number; offsetY: number } {
+  scrollRef?: React.RefObject<HTMLDivElement | null>,
+): { visibleItems: T[]; totalHeight: number; offsetY: number; onScroll: (e: React.UIEvent<HTMLDivElement>) => void } {
   const [scrollTop, setScrollTop] = useState(0);
 
   const startIndex = Math.max(0, Math.floor(scrollTop / itemHeight) - overscan);
@@ -61,10 +62,15 @@ export function useVirtualization<T>(
     Math.ceil((scrollTop + containerHeight) / itemHeight) + overscan,
   );
 
+  const onScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    setScrollTop(e.currentTarget.scrollTop);
+  }, []);
+
   return {
     visibleItems: items.slice(startIndex, endIndex),
     totalHeight: items.length * itemHeight,
     offsetY: startIndex * itemHeight,
+    onScroll,
   };
 }
 
@@ -77,6 +83,8 @@ export function useLazyLoad<T>(
   const [error, setError] = useState<Error | null>(null);
   const [ref, setRef] = useState<HTMLDivElement | null>(null);
   const hasLoaded = useRef(false);
+  const fetchFnRef = useRef(fetchFn);
+  fetchFnRef.current = fetchFn;
 
   useEffect(() => {
     if (!ref || hasLoaded.current) return;
@@ -86,7 +94,7 @@ export function useLazyLoad<T>(
         if (entries[0]?.isIntersecting && !hasLoaded.current) {
           hasLoaded.current = true;
           setLoading(true);
-          fetchFn()
+          fetchFnRef.current()
             .then(setData)
             .catch(setError)
             .finally(() => setLoading(false));

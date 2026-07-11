@@ -240,13 +240,20 @@ async function request<T>(
 function combineAbortSignals(...signals: AbortSignal[]): AbortSignal {
   const controller = new AbortController();
   const onAbort = () => controller.abort();
+  const cleanup = () => {
+    for (const signal of signals) {
+      signal.removeEventListener('abort', onAbort);
+    }
+  };
   for (const signal of signals) {
     if (signal.aborted) {
       controller.abort();
+      cleanup();
       return controller.signal;
     }
     signal.addEventListener('abort', onAbort, { once: true });
   }
+  controller.signal.addEventListener('abort', cleanup, { once: true });
   return controller.signal;
 }
 

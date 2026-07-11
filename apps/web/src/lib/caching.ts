@@ -93,7 +93,7 @@ export class MemoryCache<T = unknown> {
   }
 }
 
-export class StorageCache<T = unknown> implements Cache<T> {
+export class StorageCache<T = unknown> {
   private cache: MemoryCache<T>;
   private storageKey: string;
 

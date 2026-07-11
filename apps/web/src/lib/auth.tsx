@@ -47,6 +47,7 @@ function clearStoredAuth() {
   localStorage.removeItem('astra_access_token');
   localStorage.removeItem('astra_refresh_token');
   localStorage.removeItem('astra_user');
+  localStorage.removeItem('astra_orgs');
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {

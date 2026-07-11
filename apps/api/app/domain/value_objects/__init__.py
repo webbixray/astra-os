@@ -183,13 +183,22 @@ class Percentage:
         return self.value / Decimal(100)
 
     def __add__(self, other: Percentage) -> Percentage:
-        return Percentage(self.value + other.value)
+        result = self.value + other.value
+        if result > Decimal(100):
+            raise ValueError(f"Percentage addition cannot exceed 100: {self.value} + {other.value} = {result}")
+        return Percentage(result)
 
     def __sub__(self, other: Percentage) -> Percentage:
-        return Percentage(self.value - other.value)
+        result = self.value - other.value
+        if result < Decimal(0):
+            raise ValueError(f"Percentage subtraction cannot go below 0: {self.value} - {other.value} = {result}")
+        return Percentage(result)
 
     def __mul__(self, factor: float | Decimal) -> Percentage:
-        return Percentage(self.value * Decimal(str(factor)))
+        result = self.value * Decimal(str(factor))
+        if result > Decimal(100):
+            raise ValueError(f"Percentage multiplication cannot exceed 100: {self.value} * {factor} = {result}")
+        return Percentage(result)
 
     def __str__(self) -> str:
         return f"{self.value}%"
