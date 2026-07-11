@@ -1,8 +1,8 @@
 # ASTRA OS — Task Specification: M0 Foundation Completion
 
-**Milestone**: M0 Foundation  
-**Target Date**: 2026-07-31  
-**Status**: 🟡 In Progress  
+**Milestone**: M0 Foundation + M1 Agent Core  
+**Target Date**: 2026-08-31  
+**Status**: 🟡 In Progress — M0 complete, M1 in progress  
 **Owner**: Platform Team  
 **Session**: This document updated at start of each session per SESSION_BOOTSTRAP.md
 
@@ -17,6 +17,15 @@ Complete all M0 Foundation epics to achieve **deployable, testable, documented f
 - CI pipeline (8 jobs) passes on `main` branch
 - `main` branch deployable to staging with single merge
 - All 10 M0 epics at 100% with exit criteria verified
+
+**Definition of Done for M1**:
+- CEO agent decomposes high-level goals → director tasks
+- Directors delegate to specialists, aggregate results
+- Model router selects optimal provider, falls back on failure
+- Memory persists across sessions (episodic + semantic)
+- All agent actions audited with reasoning trace
+- Unit + integration tests cover agent runtime
+- Inter-agent communication via Redis Pub/Sub
 
 ---
 
@@ -155,20 +164,27 @@ Complete all M0 Foundation epics to achieve **deployable, testable, documented f
 | 3 | Agent runtime with ReAct loop | E1.1 | ✅ Done — `agents/base.py` |
 | 4 | Concrete agent implementations (CEO, Director, Specialist) | E1.4 | ✅ Done — 31 types |
 | 5 | Model router with env-var keys + fallback chain | E1.2 | ✅ Done |
-| 6 | Agent orchestrator test suite (119 tests) | E1.8 | ✅ Done |
-| 7 | Memory system integration testing | E1.3 | Pending — needs DB |
-| 8 | Inter-agent communication via Redis Pub/Sub | E1.5 | Pending |
+| 6 | Agent orchestrator test suite (119 unit tests) | E1.8 | ✅ Done |
+| 7 | Memory system (Working/Episodic/Semantic) | E1.3 | ✅ Done — `memory.py` + migration 0027 |
+| 8 | Inter-agent communication via Redis Pub/Sub | E1.5 | ✅ Done — `comms.py` RedisMessageBus |
+| 9 | Agent audit trail (reasoning traces) | E1.7 | ✅ Done — `comms.py` AgentAuditTrail + migration 0027 |
+| 10 | DB migration for agent tables | E0.5 | ✅ Done — migration 0027 (agent_memories, agent_events, agent_traces) |
+| 11 | Integration tests (30 tests, full pipeline) | E1.8 | ✅ Done — `test_integration.py` |
+| 12 | Fix REACT_SYSTEM_SUFFIX format string bug | E1.1 | ✅ Done — JSON braces escaped |
+| 13 | Unify dual orchestrator (API + service) | E1.1 | Pending — API layer has simpler orchestrator |
+| 14 | Load test: 100 concurrent agent executions < 5s p95 | E1.8 | Pending |
 
 ### P2 — Can Defer
 
 | # | Task | Epic |
 |---|------|------|
-| 9 | ExternalSecrets operator + SecretStore manifests | E0.3 |
-| 10 | MFA + password reset flows (Supabase) | E0.4 |
-| 11 | Storybook setup for UI package | E0.8 |
-| 12 | Load test script (k6) for API baseline | E0.9 |
-| 13 | Knowledge graph (Neo4j) | E1.6 |
-| 14 | Agent observability dashboards | E1.7 |
+| 15 | ExternalSecrets operator + SecretStore manifests | E0.3 |
+| 16 | MFA + password reset flows (Supabase) | E0.4 |
+| 17 | Storybook setup for UI package | E0.8 |
+| 18 | Load test script (k6) for API baseline | E0.9 |
+| 19 | Knowledge graph (Neo4j) | E1.6 |
+| 20 | Agent observability dashboards | E1.7 |
+| 21 | `make bootstrap` end-to-end validation | E0.10 |
 
 ---
 
@@ -187,43 +203,41 @@ Before marking any P0 task complete, verify:
 
 ## 5. Session Log
 
-### Session 2026-07-12 (Continued)
+### Session 2026-07-12 (Continued — M1 Core)
 **Started**: 2026-07-12
-**Context**: Continued from compacted session. M0 Foundation epics audited and updated.
+**Context**: Continued from compacted session. M0 Foundation complete. M1 Agent Core progress.
 
 **Work Completed (This Turn)**:
-- [x] Audited all M0 epics — corrected outdated TASK_SPEC (most items already done)
-- [x] Fixed agent orchestrator critical bugs (10 files modified):
-  - Lock bugs in tools.py and registry.py
-  - Sandbox escape vectors removed
-  - EventBus publish race condition
-  - memory.py get_stats iteration bug
-  - Router API keys from env vars
-  - Anthropic streaming implementation
-  - Hierarchy _find_best_agent actual matching
-  - asyncio deprecation warning
-- [x] Implemented concrete agent hierarchy (5 new files, 870 lines):
-  - ReActAgent base with Reason+Act loop
-  - CEOAgent with goal decomposition
-  - DirectorAgent (7 directors with domain prompts)
-  - SpecialistAgent (22 specialist types)
-- [x] Added comprehensive test suite (8 files, 119 tests, all passing)
-- [x] Removed dead registry.py (duplicated by agent.py)
-- [x] Updated TASK_SPEC.md with accurate M0 status
-- [x] Committed and pushed to origin/main
+- [x] Created migration 0027: agent_memories, agent_events, agent_traces tables with pgvector + RLS
+- [x] Implemented RedisMessageBus — Redis Pub/Sub backed inter-agent communication (`comms.py`)
+- [x] Implemented AgentAuditTrail — persistent reasoning trace storage with buffered flush (`comms.py`)
+- [x] Fixed REACT_SYSTEM_SUFFIX format string bug — JSON curly braces were conflicting with Python str.format()
+- [x] Added 30 integration tests covering full agent pipeline:
+  - Registry creates all 31 agent types
+  - ReAct loop: single iteration, multi-iteration with tools, max iteration stop
+  - Event bus pub/sub, wildcards, history, filtering
+  - CommunicationProtocol send/receive/broadcast
+  - MemoryManager in-memory mode
+  - AuditTrail buffering and completion recording
+  - Hierarchy delegation rules, path-to-root, team creation
+  - HandoffManager accept/reject
+  - AgentCoordinator sequential and parallel execution
+- [x] Updated `__init__.py` with new module exports
+- [x] Updated TASK_SPEC.md with M1 progress
+- [x] All 149 tests passing (119 unit + 30 integration)
 
 **Session Log (Previous)**:
-- [x] Fixed agent orchestrator dependency, release pipeline, CI thresholds
-- [x] Fixed Docker Compose build context and volume mounts
-- [x] Fixed lint errors (142 files formatted with ruff)
-- [x] Enhanced seed script (3 users, 2 orgs, 10 campaigns, 5 content items)
-- [x] Fixed agent orchestrator import bugs (8 modules)
+- [x] Fixed agent orchestrator critical bugs (10 files modified)
+- [x] Implemented concrete agent hierarchy (5 new files, 870 lines)
+- [x] Added comprehensive test suite (8 files, 119 tests, all passing)
+- [x] Removed dead registry.py
+- [x] Updated TASK_SPEC.md with accurate M0 status
 
 **Next Session Priorities**:
-1. Validate `make bootstrap` end-to-end on clean clone
-2. Verify CI pipeline passes on GitHub
-3. Continue M1 Agent Core: memory system integration, inter-agent comms
-4. M1 Exit Criteria: CEO decomposition, director delegation, model routing
+1. Unify dual orchestrator — make API layer delegate to agent_orchestrator service
+2. Validate `make bootstrap` end-to-end on clean clone
+3. Verify CI pipeline passes on GitHub
+4. Load test: 100 concurrent agent executions < 5s p95
 
 ---
 

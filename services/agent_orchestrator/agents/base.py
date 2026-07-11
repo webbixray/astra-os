@@ -32,12 +32,12 @@ REACT_SYSTEM_SUFFIX = """
 You operate using a structured reasoning and action loop.
 
 When you receive a task, you must respond with a JSON object containing:
-{
+{{
   "thought": "Your reasoning about what to do next",
   "action": "tool_name or null if done",
-  "action_input": {"param": "value"} or null,
+  "action_input": {{"param": "value"}} or null,
   "final_answer": "your final response" or null
-}
+}}
 
 Rules:
 - Always include a "thought" explaining your reasoning

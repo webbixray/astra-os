@@ -55,6 +55,13 @@ from .router import (
     StreamingChunk,
     get_model_router,
 )
+from .comms import (
+    AgentAuditTrail,
+    AgentTraceEntry,
+    RedisMessageBus,
+    get_agent_audit_trail,
+    get_redis_message_bus,
+)
 
 # Concrete agent implementations (lazy to avoid circular imports)
 # Import from services.agent_orchestrator.agents directly:
@@ -110,6 +117,12 @@ __all__ = [
     "ModelRouter",
     "StreamingChunk",
     "get_model_router",
+    # Comms & Audit
+    "AgentAuditTrail",
+    "AgentTraceEntry",
+    "RedisMessageBus",
+    "get_agent_audit_trail",
+    "get_redis_message_bus",
 ]
 
 __version__ = "0.1.0"
