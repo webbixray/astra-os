@@ -1,9 +1,12 @@
 """Event bus for agent system."""
 
 import asyncio
+import inspect
+import json
 import logging
 from collections import defaultdict
-from dataclasses import dataclass
+from collections.abc import Callable
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID, uuid4
@@ -77,14 +80,13 @@ class EventBus:
 
     async def publish(self, event: Event) -> int:
         """Publish an event to all subscribers."""
-        # Add to history
-        self._event_history.append(event)
-        if len(self._event_history) > self._max_history:
-            self._event_history.pop(0)
-
-        # Notify subscribers
-        subscribers = self._subscribers.get(event.event_type, [])
-        wildcard = self._wildcard_subscribers
+        # Snapshot subscribers under lock + append to history atomically
+        async with self._lock:
+            subscribers = list(self._subscribers.get(event.event_type, []))
+            wildcard = list(self._wildcard_subscribers)
+            self._event_history.append(event)
+            if len(self._event_history) > self._max_history:
+                self._event_history.pop(0)
 
         all_handlers = subscribers + wildcard
         if not all_handlers:
@@ -94,7 +96,7 @@ class EventBus:
         tasks = []
         for handler in all_handlers:
             try:
-                if asyncio.iscoroutinefunction(handler):
+                if inspect.iscoroutinefunction(handler):
                     tasks.append(handler(event))
                 else:
                     tasks.append(asyncio.to_thread(handler, event))
@@ -199,7 +201,7 @@ class EventStore:
             ORDER BY timestamp DESC
             LIMIT ${len(params) + 1} OFFSET ${len(params) + 2}
         """
-        params.extend([100, 0])  # default limit/offset
+        params.extend([limit, offset])
 
         async with self.pool.acquire() as conn:
             rows = await conn.fetch(query, *params)

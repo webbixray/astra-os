@@ -14,10 +14,10 @@ import asyncpg
 import redis.asyncio as redis
 from pydantic_settings import BaseSettings
 
-from services.agent_orchestrator.runtime.agent import Agent, AgentConfig, AgentType
-from services.agent_orchestrator.runtime.events import get_event_bus
-from services.agent_orchestrator.runtime.memory import MemoryManager
-from services.agent_orchestrator.runtime.tools import default_sandbox, tool_registry
+from services.agent_orchestrator.agent import Agent, AgentConfig, AgentType
+from services.agent_orchestrator.events import get_event_bus
+from services.agent_orchestrator.memory import MemoryManager
+from services.agent_orchestrator.tools import default_sandbox, tool_registry
 
 logger = logging.getLogger(__name__)
 
@@ -94,7 +94,7 @@ class AgentOrchestrator:
 
     async def _register_default_tools(self) -> None:
         """Register built-in tools."""
-        from services.agent_orchestrator.runtime.tools import (
+        from services.agent_orchestrator.tools import (
             Tool,
             ToolDefinition,
             ToolParameter,

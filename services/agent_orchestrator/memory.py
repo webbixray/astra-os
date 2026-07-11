@@ -428,12 +428,12 @@ class MemoryManager:
 
                 where = "WHERE " + " AND ".join(conditions) if conditions else ""
 
-                row = await conn.fetchrow(
+                rows = await conn.fetch(
                     f"""
                     SELECT
                         memory_type,
                         COUNT(*) as count,
-                        SUM(pg_column_size(value)) as size_bytes
+                        COALESCE(SUM(pg_column_size(value)), 0) as size_bytes
                     FROM agent_memories
                     {where}
                     GROUP BY memory_type
@@ -441,12 +441,8 @@ class MemoryManager:
                     *params,
                 )
 
-                for row in row:
+                for row in rows:
                     stats[row["memory_type"]] = row["count"]
                     stats["total_size_mb"] += row["size_bytes"] / (1024 * 1024)
 
         return stats
-
-
-# Import timedelta
-from datetime import timedelta

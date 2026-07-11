@@ -137,7 +137,7 @@ class ToolRegistry:
     def __init__(self):
         self.tools: dict[str, Tool] = {}
         self._categories: dict[str, list[str]] = {}
-        _registry_lock: asyncio.Lock = asyncio.Lock()
+        self._registry_lock: asyncio.Lock = asyncio.Lock()
 
     def register(self, tool: Tool) -> None:
         """Register a tool."""
@@ -200,16 +200,19 @@ class ToolRegistry:
                 "tool_name": tool_name,
             }
 
-        # Check rate limit
-        if tool.definition.rate_limit:
-            now = time.time()
-            if now - tool._last_call_time < 60 / tool.definition.rate_limit:
-                return {
-                    "success": False,
-                    "error": f"Rate limit exceeded for tool '{tool_name}'",
-                    "tool_name": tool_name,
-                }
-            tool._last_call_time = now
+        # Check rate limit and increment call count under lock
+        async with self._registry_lock:
+            if tool.definition.rate_limit:
+                now = time.time()
+                if now - tool._last_call_time < 60 / tool.definition.rate_limit:
+                    return {
+                        "success": False,
+                        "error": f"Rate limit exceeded for tool '{tool_name}'",
+                        "tool_name": tool_name,
+                    }
+                tool._last_call_time = now
+
+            tool._call_count += 1
 
         # Validate parameters
         valid, error = tool.validate_params(params)
@@ -222,7 +225,6 @@ class ToolRegistry:
 
         # Execute with timeout
         try:
-            tool._call_count += 1
             result = await asyncio.wait_for(
                 tool.execute(**params, context=context),
                 timeout=tool.definition.timeout_seconds,
@@ -330,8 +332,7 @@ class ExecutionSandbox:
                 "zip": zip, "map": map, "filter": filter, "sum": sum,
                 "min": min, "max": max, "abs": abs, "round": round,
                 "sorted": sorted, "reversed": reversed, "any": any,
-                "all": all, "isinstance": isinstance, "hasattr": hasattr,
-                "getattr": getattr, "setattr": setattr, "type": type,
+                "all": all, "isinstance": isinstance,
                 "print": print, "Exception": Exception, "ValueError": ValueError,
                 "TypeError": TypeError, "KeyError": KeyError,
             },

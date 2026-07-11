@@ -59,7 +59,6 @@ ignore = [
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
-indent-width = 4
 
 [tool.mypy]
 strict = true

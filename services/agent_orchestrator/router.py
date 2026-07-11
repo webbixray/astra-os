@@ -3,6 +3,7 @@
 import asyncio
 import json
 import logging
+import os
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -228,7 +229,7 @@ class NVIDIANIMProvider(ModelProviderBase):
         self.base_url = config.base_url or "https://integrate.api.nvidia.com/v1"
 
     async def generate(self, request: ModelRequest) -> ModelResponse:
-        api_key = self.config.metadata.get("api_key", "")
+        api_key = self.config.metadata.get("api_key", "") or os.environ.get("NVIDIA_NIM_API_KEY", "")
         headers = {
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
@@ -276,7 +277,7 @@ class NVIDIANIMProvider(ModelProviderBase):
         )
 
     async def stream_generate(self, request: ModelRequest):
-        api_key = self.config.metadata.get("api_key", "")
+        api_key = self.config.metadata.get("api_key", "") or os.environ.get("NVIDIA_NIM_API_KEY", "")
         headers = {
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
@@ -321,7 +322,7 @@ class NVIDIANIMProvider(ModelProviderBase):
                         continue
 
     async def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
-        api_key = self.config.metadata.get("api_key", "")
+        api_key = self.config.metadata.get("api_key", "") or os.environ.get("NVIDIA_NIM_API_KEY", "")
         headers = {
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
@@ -344,7 +345,7 @@ class NVIDIANIMProvider(ModelProviderBase):
 
     async def health_check(self) -> bool:
         try:
-            api_key = self.config.metadata.get("api_key", "")
+            api_key = self.config.metadata.get("api_key", "") or os.environ.get("NVIDIA_NIM_API_KEY", "")
             headers = {"Authorization": f"Bearer {api_key}"}
             response = await self._make_request("GET", f"{self.base_url}/models", headers)
             return response.is_success
@@ -374,7 +375,7 @@ class OpenAIProvider(ModelProviderBase):
         self.base_url = config.base_url or "https://api.openai.com/v1"
 
     async def generate(self, request: ModelRequest) -> ModelResponse:
-        api_key = self.config.metadata.get("api_key", "")
+        api_key = self.config.metadata.get("api_key", "") or os.environ.get("OPENAI_API_KEY", "")
         headers = {
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
@@ -422,7 +423,7 @@ class OpenAIProvider(ModelProviderBase):
         )
 
     async def stream_generate(self, request: ModelRequest):
-        api_key = self.config.metadata.get("api_key", "")
+        api_key = self.config.metadata.get("api_key", "") or os.environ.get("OPENAI_API_KEY", "")
         headers = {
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
@@ -464,7 +465,7 @@ class OpenAIProvider(ModelProviderBase):
                         continue
 
     async def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
-        api_key = self.config.metadata.get("api_key", "")
+        api_key = self.config.metadata.get("api_key", "") or os.environ.get("OPENAI_API_KEY", "")
         headers = {
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
@@ -487,7 +488,7 @@ class OpenAIProvider(ModelProviderBase):
 
     async def health_check(self) -> bool:
         try:
-            api_key = self.config.metadata.get("api_key", "")
+            api_key = self.config.metadata.get("api_key", "") or os.environ.get("OPENAI_API_KEY", "")
             headers = {"Authorization": f"Bearer {api_key}"}
             response = await self._make_request("GET", f"{self.base_url}/models", headers)
             return response.is_success
@@ -517,7 +518,7 @@ class AnthropicProvider(ModelProviderBase):
         self.base_url = config.base_url or "https://api.anthropic.com/v1"
 
     async def generate(self, request: ModelRequest) -> ModelResponse:
-        api_key = self.config.metadata.get("api_key", "")
+        api_key = self.config.metadata.get("api_key", "") or os.environ.get("ANTHROPIC_API_KEY", "")
         headers = {
             "x-api-key": api_key,
             "Content-Type": "application/json",
@@ -567,8 +568,63 @@ class AnthropicProvider(ModelProviderBase):
         )
 
     async def stream_generate(self, request: ModelRequest):
-        # Similar implementation
-        yield StreamingChunk(content="", finish_reason="not_implemented")
+        """Generate a streaming response using Anthropic's Messages API."""
+        api_key = self.config.metadata.get("api_key", "") or os.environ.get("ANTHROPIC_API_KEY", "")
+        headers = {
+            "x-api-key": api_key,
+            "Content-Type": "application/json",
+            "anthropic-version": "2023-06-01",
+            "Accept": "text/event-stream",
+        }
+
+        messages = []
+        if request.system_prompt:
+            messages.append({"role": "user", "content": request.system_prompt})
+        if request.prompt:
+            messages.append({"role": "user", "content": request.prompt})
+        messages.extend(request.messages)
+
+        payload: dict[str, Any] = {
+            "model": request.model or self.config.model_name,
+            "messages": messages,
+            "temperature": request.temperature,
+            "max_tokens": request.max_tokens or self.config.max_tokens,
+            "top_p": request.top_p,
+            "stream": True,
+        }
+        if request.stop:
+            payload["stop_sequences"] = request.stop
+
+        client = self._get_client()
+        try:
+            async with client.stream(
+                "POST",
+                f"{self.base_url}/messages",
+                headers=headers,
+                json=payload,
+            ) as response:
+                response.raise_for_status()
+                async for line in response.aiter_lines():
+                    if line.startswith("data: "):
+                        data_str = line[6:]
+                        if data_str.strip() == "[DONE]":
+                            break
+                        try:
+                            data = json.loads(data_str)
+                            event_type = data.get("type", "")
+                            if event_type == "content_block_delta":
+                                delta = data.get("delta", {})
+                                text = delta.get("text", "")
+                                if text:
+                                    yield StreamingChunk(content=text)
+                            elif event_type == "message_stop":
+                                yield StreamingChunk(content="", finish_reason="stop")
+                                break
+                        except json.JSONDecodeError:
+                            continue
+        except httpx.HTTPStatusError as e:
+            logger.error("Anthropic streaming failed: %s", e)
+            yield StreamingChunk(content="", finish_reason="error")
 
     async def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         # Anthropic doesn't have embeddings API
@@ -576,7 +632,7 @@ class AnthropicProvider(ModelProviderBase):
 
     async def health_check(self) -> bool:
         try:
-            api_key = self.config.metadata.get("api_key", "")
+            api_key = self.config.metadata.get("api_key", "") or os.environ.get("ANTHROPIC_API_KEY", "")
             headers = {"x-api-key": api_key}
             response = await self._make_request("GET", f"{self.base_url}/models", headers)
             return response.is_success
@@ -818,7 +874,7 @@ DEFAULT_MODELS = {
 }
 
 
-class ModelRouter:
+class ModelRouterFacade:
     """Main model router facade."""
 
     def __init__(
@@ -876,8 +932,9 @@ class ModelRouter:
         await self.router.close()
 
 
-# Global instance
+# Global instances
 _model_router: ModelRouter | None = None
+_model_router_facade: ModelRouterFacade | None = None
 
 
 def get_model_router() -> ModelRouter:
@@ -888,9 +945,9 @@ def get_model_router() -> ModelRouter:
     return _model_router
 
 
-def get_model_router_facade() -> ModelRouter:
+def get_model_router_facade() -> ModelRouterFacade:
     """Get the ModelRouter facade (higher-level interface)."""
-    global _model_router
-    if _model_router is None:
-        _model_router = ModelRouter()
-    return _model_router
+    global _model_router_facade
+    if _model_router_facade is None:
+        _model_router_facade = ModelRouterFacade()
+    return _model_router_facade

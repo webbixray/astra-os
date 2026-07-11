@@ -204,6 +204,9 @@ class HandoffManager:
         # Get all available agent types
         agent_types = registry.list_agent_types()
 
+        best_match: AgentType | None = None
+        best_score = 0
+
         for agent_type in agent_types:
             config = registry.get_config(agent_type)
             if not config:
@@ -211,8 +214,16 @@ class HandoffManager:
 
             # Check if agent has required capabilities
             if all(cap in config.capabilities for cap in request.required_capabilities):
-                # In real implementation, would check actual instance availability
-                return uuid4()  # Placeholder
+                # Score by number of matching capabilities (higher is better)
+                matching = sum(1 for cap in request.required_capabilities if cap in config.capabilities)
+                if matching > best_score:
+                    best_score = matching
+                    best_match = agent_type
+
+        if best_match:
+            # Create and return the agent instance ID
+            agent = registry.create_agent(best_match, request.context.get("tenant_id", uuid4()))
+            return agent.agent_id
 
         return None
 

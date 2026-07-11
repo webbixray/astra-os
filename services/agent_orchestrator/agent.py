@@ -1,15 +1,15 @@
 """Agent Registry and Base Agent Class."""
 
-import asyncio
 import logging
 import time
-from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Callable
+from typing import Any
 from uuid import UUID, uuid4
+
+from pydantic import BaseModel, Field
 
 from .tools import (
     ExecutionSandbox,
@@ -92,6 +92,7 @@ class AgentConfig:
     tool_config: dict[str, Any] = field(default_factory=dict)
     sandbox_config: dict[str, Any] = field(default_factory=dict)
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    tenant_id: UUID | None = None
 
 
 class AgentContext:
@@ -293,10 +294,11 @@ class Agent(ABC):
         """Delegate a task to a sub-agent."""
         self.state = AgentState.WAITING_FOR_SUBAGENT
 
-        # Create sub-agent (in real impl, would get from registry)
-        subagent = AgentRegistry().create_agent(subagent_type, self.tenant_id)
+        # Use the global registry singleton
+        registry = get_agent_registry()
+        subagent = registry.create_agent(subagent_type, self.tenant_id)
 
-        sub_context = context.child_context(subagent.agent_id) if context else None
+        sub_context = context.child_context(subagent.agent_id) if context else context
         result = await subagent.run(sub_context, input_data)
 
         self._sub_agent_results.append(result)
@@ -422,10 +424,17 @@ Review and approve content from Copywriter, Designer, Brand Voice agents.""",
         tenant_id: UUID,
         config_overrides: dict[str, Any] | None = None,
     ) -> Agent:
-        """Create an agent instance."""
+        """Create an agent instance using the appropriate concrete class."""
         config = self._agent_configs.get(agent_type)
-        if not config:
-            raise ValueError(f"Unknown agent type: {agent_type}")
+        if config is None:
+            # Auto-register with a default config derived from the agent type
+            config = AgentConfig(
+                agent_type=agent_type,
+                name=agent_type.value.replace("_", " ").title(),
+                description=f"Agent for {agent_type.value}",
+                autonomy_level=1,
+            )
+            self._agent_configs[agent_type] = config
 
         # Apply overrides
         if config_overrides:
@@ -435,11 +444,60 @@ Review and approve content from Copywriter, Designer, Brand Voice agents.""",
 
         config.tenant_id = tenant_id
 
-        agent_class = self._agent_classes.get(agent_type, Agent)
-        agent = agent_class(config=config, tenant_id=tenant_id)
+        # Use registered class if available, otherwise resolve concrete class
+        agent_class = self._agent_classes.get(agent_type)
+        if agent_class is not None:
+            agent = agent_class(config=config, tenant_id=tenant_id)
+        else:
+            agent = self._create_concrete_agent(agent_type, config, tenant_id)
 
         self._instances[agent.config.agent_id] = agent
         return agent
+
+    @staticmethod
+    def _create_concrete_agent(
+        agent_type: AgentType,
+        config: AgentConfig,
+        tenant_id: UUID,
+    ) -> Agent:
+        """Create the appropriate concrete agent for a given type.
+
+        Uses lazy imports to avoid circular dependencies.
+        If the config has no system_prompt or capabilities (auto-registered),
+        the concrete agent will use its own built-in defaults.
+        """
+        from .agents.ceo import CEOAgent
+        from .agents.director import DirectorAgent
+        from .agents.specialist import SpecialistAgent
+
+        # If config was auto-registered (no system_prompt, no capabilities),
+        # let the concrete agent use its own defaults by passing config=None
+        use_defaults = not config.system_prompt and not config.capabilities
+
+        if agent_type == AgentType.CEO:
+            return CEOAgent(
+                config=config if not use_defaults else None,
+                tenant_id=tenant_id,
+            )
+
+        director_types = {
+            AgentType.MARKETING_DIRECTOR, AgentType.CREATIVE_DIRECTOR,
+            AgentType.ADVERTISING_DIRECTOR, AgentType.RESEARCH_DIRECTOR,
+            AgentType.ANALYTICS_DIRECTOR, AgentType.WORKFLOW_DIRECTOR,
+            AgentType.COMPLIANCE_DIRECTOR,
+        }
+        if agent_type in director_types:
+            return DirectorAgent(
+                agent_type=agent_type,
+                config=config if not use_defaults else None,
+                tenant_id=tenant_id,
+            )
+
+        return SpecialistAgent(
+            agent_type=agent_type,
+            config=config if not use_defaults else None,
+            tenant_id=tenant_id,
+        )
 
     def get_agent(self, agent_id: UUID) -> Agent | None:
         return self._instances.get(agent_id)
