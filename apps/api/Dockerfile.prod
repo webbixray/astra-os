@@ -1,0 +1,33 @@
+FROM python:3.12-slim AS builder
+
+WORKDIR /app
+
+RUN pip install uv
+
+COPY pyproject.toml uv.lock ./
+RUN uv sync --no-dev --frozen
+
+COPY . .
+
+FROM python:3.12-slim
+
+WORKDIR /app
+
+RUN groupadd -r astra && useradd -r -g astra -d /app astra
+
+COPY --from=builder /app/.venv /app/.venv
+COPY --from=builder /app /app
+
+RUN chown -R astra:astra /app
+
+USER astra
+
+ENV PATH="/app/.venv/bin:$PATH"
+ENV PYTHONPATH="/app"
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]

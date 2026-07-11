@@ -24,6 +24,8 @@ class StartupProbe:
         cls._check_redis_url()
         cls._check_ssl_certs()
         cls._check_env_file()
+        cls._check_ai_providers()
+        cls._check_supabase()
 
         if cls.errors:
             for err in cls.errors:
@@ -85,3 +87,33 @@ class StartupProbe:
                 "No .env file found. Create one based on .env.example "
                 "or set all required environment variables."
             )
+
+    @classmethod
+    def _check_ai_providers(cls) -> None:
+        has_any_provider = bool(
+            config.openai_api_key
+            or config.anthropic_api_key
+            or config.gemini_api_key
+            or config.nvidia_nim_base_url
+        )
+        if not has_any_provider:
+            if config.is_production:
+                cls.errors.append(
+                    "No AI provider configured. Set at least one of: "
+                    "OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, NVIDIA_NIM_BASE_URL"
+                )
+            else:
+                cls.warnings.append(
+                    "No AI provider configured. AI features will not work. "
+                    "Set at least one: OPENAI_API_KEY, ANTHROPIC_API_KEY, etc."
+                )
+
+    @classmethod
+    def _check_supabase(cls) -> None:
+        if not config.supabase_url:
+            if config.is_production:
+                cls.errors.append("SUPABASE_URL is required in production.")
+            else:
+                cls.warnings.append(
+                    "SUPABASE_URL not set. Authentication may not work correctly."
+                )

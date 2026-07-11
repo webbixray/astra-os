@@ -1,6 +1,6 @@
-# ASTRA OS - Changelog
+# Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes to Astra OS will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -8,74 +8,107 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Field-level encryption (HMAC-SHA256 + XOR CTR stream cipher) for sensitive database fields
-- EncryptedString, EncryptedText, EncryptedJSON SQLAlchemy TypeDecorator types
-- X-RateLimit-* response headers for client-side throttling
-- Audit logging infrastructure with structured logging
-- 27 loading skeleton components for all dashboard sub-pages
-- Loading.tsx for improved user experience during data fetch
-- Per-page ErrorBoundary wrappers on all 26 data-fetching pages
-- Rate limit headers (X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset)
-- 14 missing __init__.py files for proper Python package structure
-- Comprehensive developer quick-guide (DEVELOPMENT.md)
-- Release checklist and runbook (RELEASE_CHECKLIST.md)
-- Dependabot configuration for automated dependency updates
-- Issue templates (bug report, feature request)
-- Pull request template
-- Security headers: COOP, COEP, CORP, X-Permitted-Cross-Domain-Policies
-- Graceful shutdown with proper shutdown logging
-
-### Fixed
-- RBAC bypass in campaign update, AB test, template endpoints
-- Wrong variable bug in AB test creation (using campaign.organization_id instead of request.campaign_id)
-- Missing RBAC check on set_campaign_budget endpoint
-- Viewer escalation vulnerability (org update now requires admin role)
-- SQLAlchemy `not` operator incorrectly used (4 instances fixed in notification_repository.py)
-- Dashboard widget orphan deletion fixed
-- Workflow repository UNIQUE constraint violation on save
-- Auth verify_token unawaited coroutine bug
-- RefreshTokenStore revoke missing in-memory fallback
-- Auth logout use case missing await on RefreshTokenStore.revoke()
-- Frontend TrendWidget props mismatch (accepts both data and value/label patterns)
-- Frontend API base URL deduplication
-- Replaced window.location.reload() with React Query refetch in multiple places
-- Hardcoded mock data in analytics_routes.py replaced with real database query
-- 7 N+1 query patterns resolved with batch queries
-- Auth middleware singleton optimization (create verifier once, not per-request)
-- Prometheus cardinality fix (path normalization replaces UUIDs/numeric IDs with {id})
-- Rate limiter double-counting issue in Redis path
-
-### Security
-- Field-level encryption for email provider API keys and ad account credentials
-- Security headers hardening (COOP, COEP, CORP, X-Permitted-Cross-Domain-Policies)
-- Rate limit headers for client-side throttling awareness
-- Removed traceback.format_exc() from error responses
-- Added logging to encryption decryption fallback paths
+- Setup wizard for first-time installation (`/setup`)
+- Interactive onboarding tour for new users
+- API key management system
+- Webhook support for integrations
+- Data export/import functionality (CSV, JSON, XLSX)
+- User preferences page with theme, timezone, and notification settings
+- Toast notification system for user feedback
+- Version checking and update notifications
+- Keyboard shortcuts help modal (Cmd+/)
+- Configuration management utility
+- Health dashboard component for monitoring
+- Database seed script for development
+- Makefile with 25+ development commands
+- One-click setup script
+- Production Docker configurations
+- Vercel, Railway, and Fly.io deployment scripts
+- Comprehensive error types and messages
+- CONTRIBUTING.md guide
+- DEVELOPMENT.md comprehensive guide
+- CHANGELOG.md
+- Performance optimization utilities (debounce, lazy loading, virtualization)
+- Security headers and CSP configuration
+- Comprehensive test utilities and mock helpers
+- Enhanced error boundary with error reporting
+- Loading state components (spinner, overlay, card, table, page)
+- Form validation utilities with common validators
+- Notification preferences component
+- Activity log component with filtering
+- Quick actions menu (Cmd+K)
+- Status indicators and connection status components
+- Internationalization (i18n) support with 6 languages (en, es, fr, de, ja, zh)
+- Offline support with service worker and offline page
+- Accessibility utilities (focus trap, screen reader announcements)
+- Data table component with sorting, filtering, and pagination
+- Empty state components for various scenarios
+- Breadcrumb navigation and page header components
+- Confirmation dialog with hook for async operations
+- Progress indicators (linear, step, circular)
+- Avatar and user menu components
+- Theme switcher component
+- Analytics dashboard components (MetricCard, MetricsGrid, AnalyticsOverview, ConversionFunnel, RealTimeVisitors)
+- Campaign management components (CampaignCard, CampaignList, CampaignStats)
+- Content management components (ContentCard, ContentList, ContentCalendar)
+- Team management components (TeamMemberCard, TeamList, TeamStats)
+- Workflow builder components (WorkflowStepCard, WorkflowCard, WorkflowBuilder, WorkflowList)
+- Integration marketplace components (IntegrationCard, IntegrationList, ConnectedIntegrations)
+- Billing and subscription components (PricingCard, PricingSection, BillingHistory, SubscriptionStatus)
+- Help center components (HelpCenter, FAQSection, ContactSupport, QuickStartGuide)
+- Performance monitoring utilities (marks, measures, timers, Web Vitals observers)
+- Error tracking system with breadcrumbs and context
+- Structured logging utilities with levels and context
+- Caching utilities (MemoryCache, StorageCache, apiCache, uiCache)
+- Resilience utilities (retry, circuit breaker, timeout, debounce, throttle, memoize)
+- Rate limiting utilities with configurable windows
+- Health check utilities with checker class
+- Feature flag utilities with rollout percentages and user targeting
+- Comprehensive testing framework (test runner, assertions, reporters)
+- API testing utilities with request helpers and assertions
+- Snapshot testing utilities with comparison functions
+- Accessibility testing utilities with WCAG compliance checks
+- Performance testing utilities with benchmarking and memory profiling
+- Mock data generators for users, campaigns, content, analytics, teams
+- Test report generators (JSON, HTML, Markdown, Console formats)
+- Visual regression testing utilities with screenshot comparison
 
 ### Changed
-- Supabase JWKS now cached with 1-hour TTL
-- RefreshTokenStore now Redis-backed with cross-instance revoke capability
-- UsageTracker now bounded at 10,000 records with automatic eviction
-- Domain now() returns timezone-aware datetimes
-- Workflow transition_to raises ValidationError on invalid transitions
-- ExecuteWorkflowUseCase raises EntityNotFoundError instead of returning error dict
+- Protected all authenticated routes in middleware
+- Improved startup validation with AI provider checks
+- Enhanced health check endpoint with detailed status
+- Updated CI/CD pipeline with Docker build and deployment automation
 
-### Performance
-- 7 N+1 query patterns resolved (single batch queries replace per-row queries)
-- Auth middleware now creates verifier instances once, not per-request
-- UsageTracker bounded at 10,000 records
+### Fixed
+- Missing `@astra/ui` package reference
+- Invalid `services/*` workspace reference
+- Missing Kubernetes manifests for Temporal and Worker
+- Web deployment health probe path
+- Dependabot placeholder reviewer values
 
-### Documentation
-- OpenAPI/Swagger summaries added to all 186 route endpoints
-- Return type annotations added to all ~189 route handler functions
-- 99 B904 errors fixed (added `from None` to raise inside except blocks)
-- Comprehensive developer documentation
-- Release process documentation
+### Removed
+- Non-existent `services/*` workspace reference
 
-### Internal
-- 258 stale .cover files removed
-- 2 dead helper functions removed (ok(), paginated() in schemas/common.py)
-- All 1089 tests passing (0 failures)
-- 60+ FK constraints with CASCADE/SET NULL
-- 4 unique constraints added
-- 8 composite indexes for query performance
+## [0.0.1] - 2026-01-01
+
+### Added
+- Initial project setup
+- Backend API with FastAPI
+- Frontend with Next.js 15
+- PostgreSQL database with SQLAlchemy
+- Redis cache integration
+- JWT authentication
+- AI provider integration (OpenAI, NVIDIA NIM)
+- Campaign management
+- Content management
+- Analytics dashboard
+- Team management
+- Email marketing
+- Workflow automation
+- Ad platform integrations
+- Kubernetes deployment manifests
+- CI/CD pipeline with GitHub Actions
+- Comprehensive documentation
+
+[Unreleased]: https://github.com/webbixray/astra-os/compare/v0.0.1...HEAD
+[0.0.1]: https://github.com/webbixray/astra-os/releases/tag/v0.0.1

@@ -12,6 +12,7 @@ resources:
   - temporal-deployment.yaml
   - worker-deployment.yaml
   - ingress.yaml
+  - hpa.yaml
 
 configMapGenerator:
   - name: astra-config

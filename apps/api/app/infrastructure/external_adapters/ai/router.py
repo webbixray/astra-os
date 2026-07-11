@@ -34,6 +34,7 @@ NVIDIA_NIM_CHAT_URL = (
 )
 OPENAI_CHAT_URL = "https://api.openai.com/v1/chat/completions"
 ANTHROPIC_CHAT_URL = "https://api.anthropic.com/v1/messages"
+GEMINI_CHAT_URL = "https://generativelanguage.googleapis.com/v1beta/models"
 
 
 @dataclass
@@ -123,6 +124,53 @@ async def _stream_sse(
                     content = delta.get("content", "")
                     if content:
                         yield content
+                except json.JSONDecodeError:
+                    continue
+
+
+async def _stream_sse_anthropic(
+    client: httpx.AsyncClient,
+    url: str,
+    headers: dict[str, str],
+    json_data: dict[str, Any],
+) -> AsyncIterator[str]:
+    async with client.stream("POST", url, headers=headers, json=json_data) as response:
+        response.raise_for_status()
+        async for line in response.aiter_lines():
+            if line.startswith("data: "):
+                data = line[6:]
+                try:
+                    chunk = json.loads(data)
+                    if chunk.get("type") == "content_block_delta":
+                        delta = chunk.get("delta", {})
+                        text = delta.get("text", "")
+                        if text:
+                            yield text
+                except json.JSONDecodeError:
+                    continue
+
+
+async def _stream_sse_gemini(
+    client: httpx.AsyncClient,
+    url: str,
+    headers: dict[str, str],
+    json_data: dict[str, Any],
+) -> AsyncIterator[str]:
+    async with client.stream("POST", url, headers=headers, json=json_data) as response:
+        response.raise_for_status()
+        async for line in response.aiter_lines():
+            if line.startswith("data: "):
+                data = line[6:]
+                try:
+                    chunk = json.loads(data)
+                    candidates = chunk.get("candidates", [])
+                    if candidates:
+                        content = candidates[0].get("content", {})
+                        parts = content.get("parts", [])
+                        for part in parts:
+                            text = part.get("text", "")
+                            if text:
+                                yield text
                 except json.JSONDecodeError:
                     continue
 
@@ -238,6 +286,158 @@ class OpenAIProvider(AIProvider):
             return data["choices"][0]["message"]["content"]
 
 
+class AnthropicProvider(AIProvider):
+    def __init__(self) -> None:
+        self.api_key = config.anthropic_api_key
+        self.default_model = "claude-3-sonnet-20240229"
+
+    def _convert_messages(self, messages: list[dict]) -> tuple[str, list[dict]]:
+        system = ""
+        converted = []
+        for msg in messages:
+            if msg.get("role") == "system":
+                system = msg.get("content", "")
+            else:
+                converted.append({
+                    "role": msg.get("role", "user"),
+                    "content": msg.get("content", ""),
+                })
+        return system, converted
+
+    async def stream_chat(
+        self,
+        messages: list[dict],
+        model: str | None = None,
+    ) -> AsyncIterator[str]:
+        if not self.api_key:
+            return
+        model_name = model or self.default_model
+        system, converted_messages = self._convert_messages(messages)
+        payload: dict[str, Any] = {
+            "model": model_name,
+            "messages": converted_messages,
+            "max_tokens": 4096,
+            "stream": True,
+        }
+        if system:
+            payload["system"] = system
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            async for content in _stream_sse_anthropic(
+                client,
+                ANTHROPIC_CHAT_URL,
+                headers={
+                    "x-api-key": self.api_key,
+                    "anthropic-version": "2023-06-01",
+                    "Content-Type": "application/json",
+                },
+                json_data=payload,
+            ):
+                yield content
+
+    async def chat(
+        self,
+        messages: list[dict],
+        model: str | None = None,
+    ) -> str:
+        if not self.api_key:
+            return ""
+        model_name = model or self.default_model
+        system, converted_messages = self._convert_messages(messages)
+        payload: dict[str, Any] = {
+            "model": model_name,
+            "messages": converted_messages,
+            "max_tokens": 4096,
+            "stream": False,
+        }
+        if system:
+            payload["system"] = system
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            response = await client.post(
+                ANTHROPIC_CHAT_URL,
+                headers={
+                    "x-api-key": self.api_key,
+                    "anthropic-version": "2023-06-01",
+                    "Content-Type": "application/json",
+                },
+                json=payload,
+            )
+            response.raise_for_status()
+            data = response.json()
+            content_blocks = data.get("content", [])
+            return "".join(block.get("text", "") for block in content_blocks)
+
+
+class GeminiProvider(AIProvider):
+    def __init__(self) -> None:
+        self.api_key = config.gemini_api_key
+        self.default_model = "gemini-1.5-pro"
+
+    def _convert_messages(self, messages: list[dict]) -> dict[str, Any]:
+        contents = []
+        system_instruction = None
+        for msg in messages:
+            role = msg.get("role", "user")
+            content = msg.get("content", "")
+            if role == "system":
+                system_instruction = {"parts": [{"text": content}]}
+            else:
+                gemini_role = "model" if role == "assistant" else "user"
+                contents.append({
+                    "role": gemini_role,
+                    "parts": [{"text": content}],
+                })
+        result: dict[str, Any] = {"contents": contents}
+        if system_instruction:
+            result["systemInstruction"] = system_instruction
+        return result
+
+    async def stream_chat(
+        self,
+        messages: list[dict],
+        model: str | None = None,
+    ) -> AsyncIterator[str]:
+        if not self.api_key:
+            return
+        model_name = model or self.default_model
+        payload = self._convert_messages(messages)
+        payload["generationConfig"] = {"maxOutputTokens": 4096}
+        url = f"{GEMINI_CHAT_URL}/{model_name}:streamGenerateContent?alt=sse&key={self.api_key}"
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            async for content in _stream_sse_gemini(
+                client,
+                url,
+                headers={"Content-Type": "application/json"},
+                json_data=payload,
+            ):
+                yield content
+
+    async def chat(
+        self,
+        messages: list[dict],
+        model: str | None = None,
+    ) -> str:
+        if not self.api_key:
+            return ""
+        model_name = model or self.default_model
+        payload = self._convert_messages(messages)
+        payload["generationConfig"] = {"maxOutputTokens": 4096}
+        url = f"{GEMINI_CHAT_URL}/{model_name}:generateContent?key={self.api_key}"
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            response = await client.post(
+                url,
+                headers={"Content-Type": "application/json"},
+                json=payload,
+            )
+            response.raise_for_status()
+            data = response.json()
+            candidates = data.get("candidates", [])
+            if candidates:
+                content = candidates[0].get("content", {})
+                parts = content.get("parts", [])
+                return "".join(part.get("text", "") for part in parts)
+            return ""
+
+
 class AIRouter:
     def __init__(self) -> None:
         self.providers: list[AIProvider] = []
@@ -245,12 +445,20 @@ class AIRouter:
             self.providers.append(NvidiaNIMProvider())
         if config.openai_api_key:
             self.providers.append(OpenAIProvider())
+        if config.anthropic_api_key:
+            self.providers.append(AnthropicProvider())
+        if config.gemini_api_key:
+            self.providers.append(GeminiProvider())
 
     def _get_provider_name(self, provider: AIProvider) -> str:
         if isinstance(provider, NvidiaNIMProvider):
             return "nvidia_nim"
         if isinstance(provider, OpenAIProvider):
             return "openai"
+        if isinstance(provider, AnthropicProvider):
+            return "anthropic"
+        if isinstance(provider, GeminiProvider):
+            return "gemini"
         return type(provider).__name__.lower()
 
     async def stream_chat(
