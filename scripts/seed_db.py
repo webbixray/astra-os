@@ -31,39 +31,37 @@ SEED_PASSWORD = "AstraAdmin1!"
 
 SEED_USER = {
     "email": SEED_EMAIL,
-    "full_name": "Astra Admin",
-    "role": "owner",
+    "name": "Astra Admin",
     "is_active": True,
 }
 
 SEED_ORG = {
     "name": "Astra Demo Organization",
     "slug": "astra-demo",
-    "plan": "professional",
-    "is_active": True,
+    "plan_tier": "professional",
 }
 
 SEED_CAMPAIGNS = [
     {
         "name": "Q1 Product Launch",
         "status": "active",
-        "type": "product_launch",
+        "objective": "product_launch",
         "description": "Multi-channel product launch campaign for Q1 2026",
-        "budget": 50000.00,
+        "budget_amount": 50000.00,
     },
     {
         "name": "Brand Awareness Sprint",
         "status": "draft",
-        "type": "brand_awareness",
+        "objective": "brand_awareness",
         "description": "30-day brand awareness campaign across social channels",
-        "budget": 15000.00,
+        "budget_amount": 15000.00,
     },
     {
         "name": "Email Nurture Sequence",
         "status": "active",
-        "type": "email_nurture",
+        "objective": "email_nurture",
         "description": "Automated email nurture flow for new signups",
-        "budget": 0.00,
+        "budget_amount": 0.00,
     },
 ]
 
@@ -86,7 +84,7 @@ async def seed() -> None:
         session.add(user)
         await session.flush()
 
-        org = OrganizationModel(**SEED_ORG, owner_id=user.id)
+        org = OrganizationModel(**SEED_ORG)
         session.add(org)
         await session.flush()
 
@@ -94,7 +92,7 @@ async def seed() -> None:
             user_id=user.id,
             organization_id=org.id,
             role="owner",
-            is_active=True,
+            permissions=[],
         )
         session.add(membership)
 
