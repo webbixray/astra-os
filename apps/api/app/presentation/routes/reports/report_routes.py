@@ -153,7 +153,7 @@ async def create_report_schedule(
     db: AsyncSession = Depends(get_db),
     user_id: UUID = Depends(require_user_id),
 ) -> dict:
-    await require_org_role(request.organization_id, "viewer", user_id, db)
+    await require_org_role(request.organization_id, "member", user_id, db)
     from app.domain.entities.reports.report_schedule import ReportSchedule
 
     schedule = ReportSchedule.create(

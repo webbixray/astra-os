@@ -59,7 +59,7 @@ async def create_dashboard(
     user_id: UUID = Depends(require_user_id),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    await require_org_role(request.organization_id, "viewer", user_id, db)
+    await require_org_role(request.organization_id, "member", user_id, db)
     try:
         dash = await service.create_dashboard(
             org_id=request.organization_id,

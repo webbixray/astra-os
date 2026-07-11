@@ -63,7 +63,7 @@ async def create_content(
     user_id: UUID = Depends(require_user_id),
     db: AsyncSession = Depends(get_db),
 ) -> ContentResponse:
-    await require_org_role(request.organization_id, "viewer", user_id, db)
+    await require_org_role(request.organization_id, "member", user_id, db)
     try:
         content = await use_case.execute(
             organization_id=request.organization_id,

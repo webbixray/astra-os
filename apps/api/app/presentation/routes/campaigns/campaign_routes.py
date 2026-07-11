@@ -491,7 +491,7 @@ async def create_template(
     user_id: UUID = Depends(require_user_id),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    await require_org_role(request.organization_id, "viewer", user_id, db)
+    await require_org_role(request.organization_id, "member", user_id, db)
     template = await use_case.execute(
         organization_id=request.organization_id,
         name=request.name,

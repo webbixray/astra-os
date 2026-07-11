@@ -166,6 +166,9 @@ async def mark_notification_read(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     await require_org_role(organization_id, "viewer", user_id, db)
+    notif = await service.notif_repo.find_by_id(notification_id)
+    if not notif or notif.organization_id != organization_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Notification not found") from None
     await service.mark_read(notification_id)
     return {"status": "ok"}
 
@@ -191,6 +194,9 @@ async def archive_notification(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     await require_org_role(organization_id, "viewer", user_id, db)
+    notif = await service.notif_repo.find_by_id(notification_id)
+    if not notif or notif.organization_id != organization_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Notification not found") from None
     await service.archive_notification(notification_id)
     return {"status": "ok"}
 
@@ -303,6 +309,8 @@ async def get_template(
         t = await service.get_template(template_id)
     except EntityNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Template not found") from None
+    if t.org_id is not None and t.org_id != organization_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Template not found") from None
     return {
         "id": str(t.id), "name": t.name, "type": t.type,
         "channel": t.channel, "title_template": t.title_template,
@@ -320,6 +328,9 @@ async def delete_template(
     db: AsyncSession = Depends(get_db),
 ) -> None:
     await require_org_role(organization_id, "admin", user_id, db)
+    existing = await service.template_repo.find_by_id(template_id)
+    if not existing or (existing.org_id is not None and existing.org_id != organization_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Template not found") from None
     await service.delete_template(template_id)
 
 
@@ -392,6 +403,9 @@ async def dismiss_announcement(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     await require_org_role(organization_id, "viewer", user_id, db)
+    announcement = await service.announcement_repo.find_by_id(announcement_id)
+    if not announcement or announcement.organization_id != organization_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Announcement not found") from None
     await service.dismiss_announcement(announcement_id, user_id)
     return {"status": "ok"}
 

@@ -130,7 +130,7 @@ async def create_job(
     user_id: UUID = Depends(require_user_id),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    await require_org_role(organization_id, "viewer", user_id, db)
+    await require_org_role(organization_id, "member", user_id, db)
     job = await service.create_job(
         org_id=organization_id, job_type=request.job_type,
         payload=request.payload, max_retries=request.max_retries,

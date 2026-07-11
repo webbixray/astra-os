@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -118,8 +118,9 @@ async def get_node_relations(
 ) -> list[dict]:
     service = KnowledgeGraphService(graph_store)
     node = await service.get_node(node_id)
-    if node:
-        await require_org_role(node.organization_id, "viewer", user_id, db)
+    if not node:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Node not found") from None
+    await require_org_role(node.organization_id, "viewer", user_id, db)
     return await service.get_node_relations(
         node_id=node_id,
         relation_type=relation_type,

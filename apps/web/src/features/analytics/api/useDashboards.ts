@@ -62,11 +62,11 @@ export function useDashboards(orgId: string) {
   });
 }
 
-export function useDashboardDetail(dashboardId: string | undefined) {
+export function useDashboardDetail(dashboardId: string | undefined, orgId: string) {
   return useQuery<DashboardDetail>({
-    queryKey: ['dashboard', dashboardId],
-    queryFn: () => api.get<DashboardDetail>(`/dashboards/${dashboardId}`),
-    enabled: !!dashboardId,
+    queryKey: ['dashboard', dashboardId, orgId],
+    queryFn: () => api.get<DashboardDetail>(`/dashboards/${dashboardId}?organization_id=${orgId}`),
+    enabled: !!dashboardId && !!orgId,
   });
 }
 
@@ -82,7 +82,8 @@ export function useCreateDashboard() {
 export function useDeleteDashboard() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (dashboardId: string) => api.delete(`/dashboards/${dashboardId}`),
+    mutationFn: ({ dashboardId, orgId }: { dashboardId: string; orgId: string }) =>
+      api.delete(`/dashboards/${dashboardId}?organization_id=${orgId}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['dashboards'] }),
   });
 }
@@ -129,7 +130,8 @@ export function useUpdateWidget() {
 export function useDeleteWidget() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (widgetId: string) => api.delete(`/dashboards/widgets/${widgetId}`),
+    mutationFn: ({ widgetId, orgId }: { widgetId: string; orgId: string }) =>
+      api.delete(`/dashboards/widgets/${widgetId}?organization_id=${orgId}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['dashboards'] }),
   });
 }

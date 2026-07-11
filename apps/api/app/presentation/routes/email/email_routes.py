@@ -69,7 +69,7 @@ async def create_provider(
     user_id: UUID = Depends(require_user_id),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    await require_org_role(request.organization_id, "viewer", user_id, db)
+    await require_org_role(request.organization_id, "member", user_id, db)
     await require_feature("email_marketing", request.organization_id, "free", db)
     try:
         provider = await service.create_provider(
@@ -122,7 +122,7 @@ async def create_email_campaign(
     user_id: UUID = Depends(require_user_id),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    await require_org_role(request.organization_id, "viewer", user_id, db)
+    await require_org_role(request.organization_id, "member", user_id, db)
     await require_feature("email_marketing", request.organization_id, "free", db)
     try:
         campaign = await service.create_campaign(
