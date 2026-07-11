@@ -1,105 +1,105 @@
 'use client';
 
-import React from 'react';
+import { Component, ErrorInfo, ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
+import { AlertCircle, RefreshCw, Home, Bug } from 'lucide-react';
+import Link from 'next/link';
 
-interface ErrorBoundaryProps {
-  children: React.ReactNode;
-  fallback?: React.ReactNode;
-  onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
+interface Props {
+  children: ReactNode;
+  fallback?: ReactNode;
+  onError?: (error: Error, errorInfo: ErrorInfo) => void;
 }
 
-interface ErrorBoundaryState {
+interface State {
   hasError: boolean;
   error: Error | null;
-  errorInfo: React.ErrorInfo | null;
+  errorInfo: ErrorInfo | null;
 }
 
-export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  constructor(props: ErrorBoundaryProps) {
+export class ErrorBoundary extends Component<Props, State> {
+  constructor(props: Props) {
     super(props);
     this.state = { hasError: false, error: null, errorInfo: null };
   }
 
-  static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
+  static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
-    this.setState({ errorInfo });
+  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    this.setState({ error, errorInfo });
     this.props.onError?.(error, errorInfo);
+
+    // Log to error tracking service
+    if (typeof window !== 'undefined') {
+      console.error('ErrorBoundary caught an error:', error, errorInfo);
+
+      // Could send to Sentry, LogRocket, etc.
+      // if (window.Sentry) window.Sentry.captureException(error);
+    }
   }
 
-  handleReset = (): void => {
+  reset = (): void => {
     this.setState({ hasError: false, error: null, errorInfo: null });
   };
 
-  handleReportError = (): void => {
-    const { error, errorInfo } = this.state;
-    if (!error) return;
-
-    const errorReport = {
-      message: error.message,
-      stack: error.stack,
-      componentStack: errorInfo?.componentStack,
-      timestamp: new Date().toISOString(),
-      url: window.location.href,
-      userAgent: navigator.userAgent,
-    };
-
-    console.error('Error report:', errorReport);
-    navigator.clipboard.writeText(JSON.stringify(errorReport, null, 2));
-    alert('Error details copied to clipboard. Please share with support.');
-  };
-
-  render(): React.ReactNode {
+  render(): ReactNode {
     if (this.state.hasError) {
+      // If custom fallback provided, use it
       if (this.props.fallback) {
         return this.props.fallback;
       }
 
+      // Default fallback UI
       return (
-        <div className="flex min-h-[400px] flex-col items-center justify-center p-8 text-center">
-          <div className="mb-4 rounded-full bg-red-100 p-4 dark:bg-red-900/20">
-            <svg
-              className="h-12 w-12 text-red-600 dark:text-red-400"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
-              />
-            </svg>
+        <div className="min-h-[300px] flex items-center justify-center p-8">
+          <div className="max-w-md w-full text-center space-y-6">
+            <div className="mx-auto w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
+              <AlertCircle className="w-8 h-8 text-destructive" />
+            </div>
+
+            <div>
+              <h2 className="text-xl font-semibold text-foreground">Something went wrong</h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                We&apos;re sorry, but an unexpected error occurred in this component.
+              </p>
+            </div>
+
+            {process.env.NODE_ENV === 'development' && this.state.error && (
+              <details className="text-left bg-muted p-4 rounded-lg text-sm space-y-2">
+                <summary className="font-mono cursor-pointer">Error Details (Development)</summary>
+                <pre className="whitespace-pre-wrap text-xs overflow-auto max-h-60 font-mono">
+                  {this.state.error.toString()}
+                  {this.state.error.stack && `\n\n${this.state.error.stack}`}
+                </pre>
+                {this.state.errorInfo && (
+                  <pre className="whitespace-pre-wrap text-xs overflow-auto max-h-40 font-mono">
+                    {this.state.errorInfo.componentStack}
+                  </pre>
+                )}
+              </details>
+            )}
+
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button onClick={this.reset} className="w-full sm:w-auto">
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Try Again
+              </Button>
+              <Button variant="outline" asChild className="w-full sm:w-auto">
+                <Link href="/">
+                  <Home className="mr-2 h-4 w-4" />
+                  Go Home
+                </Link>
+              </Button>
+              <Button variant="outline" asChild className="w-full sm:w-auto">
+                <Link href="mailto:support@astra-os.com?subject=Component Error Report">
+                  <Bug className="mr-2 h-4 w-4" />
+                  Report Issue
+                </Link>
+              </Button>
+            </div>
           </div>
-          <h2 className="mb-2 text-xl font-semibold text-gray-900 dark:text-white">
-            Something went wrong
-          </h2>
-          <p className="mb-6 max-w-md text-gray-600 dark:text-gray-400">
-            {this.state.error?.message || 'An unexpected error occurred. Please try again.'}
-          </p>
-          <div className="flex gap-3">
-            <Button onClick={this.handleReset} variant="outline">
-              Try Again
-            </Button>
-            <Button onClick={this.handleReportError} variant="destructive">
-              Report Error
-            </Button>
-          </div>
-          {process.env.NODE_ENV === 'development' && this.state.error && (
-            <details className="mt-6 w-full max-w-2xl">
-              <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700">
-                Error Details (Development Only)
-              </summary>
-              <pre className="mt-2 overflow-auto rounded-lg bg-gray-100 p-4 text-left text-xs dark:bg-gray-800">
-                {this.state.error.stack}
-                {this.state.errorInfo?.componentStack}
-              </pre>
-            </details>
-          )}
         </div>
       );
     }
@@ -108,19 +108,106 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 }
 
-export function withErrorBoundary<P extends object>(
-  Component: React.ComponentType<P>,
-  fallback?: React.ReactNode,
-): React.ComponentType<P> {
-  function WithErrorBoundary(props: P) {
-    return (
-      <ErrorBoundary fallback={fallback}>
-        <Component {...props} />
-      </ErrorBoundary>
-    );
+// Specialized error boundaries for different contexts
+export class PageErrorBoundary extends ErrorBoundary {
+  render(): ReactNode {
+    if (this.state.hasError) {
+      return this.props.fallback ?? (
+        <div className="min-h-screen bg-background flex items-center justify-center p-8">
+          <div className="max-w-md w-full text-center space-y-6">
+            <div className="mx-auto w-20 h-20 rounded-full bg-destructive/10 flex items-center justify-center">
+              <AlertCircle className="w-10 h-10 text-destructive" />
+            </div>
+
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Page Error</h1>
+              <p className="mt-2 text-sm text-muted-foreground">
+                This page encountered an error. Try navigating back or refreshing the page.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button onClick={this.reset} className="w-full sm:w-auto">
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Refresh Page
+              </Button>
+              <Button variant="outline" asChild className="w-full sm:w-auto">
+                <Link href="/">
+                  <Home className="mr-2 h-4 w-4" />
+                  Go Home
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+export class WidgetErrorBoundary extends ErrorBoundary {
+  render(): ReactNode {
+    if (this.state.hasError) {
+      return (
+        <div className="bg-muted p-4 rounded-lg border border-border/50">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground">Widget failed to load</p>
+              <p className="text-xs text-muted-foreground">
+                This widget encountered an error. Try refreshing the page.
+              </p>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={this.reset}
+              className="flex-shrink-0"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Retry
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+export class AsyncErrorBoundary extends ErrorBoundary {
+  state: State = { hasError: false, error: null, errorInfo: null };
+
+  static getDerivedStateFromError(error: Error): Partial<State> {
+    return { hasError: true, error };
   }
 
-  WithErrorBoundary.displayName = `withErrorBoundary(${Component.displayName || Component.name})`;
+  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    super.componentDidCatch(error, errorInfo);
+  }
 
-  return WithErrorBoundary;
+  render(): ReactNode {
+    if (this.state.hasError) {
+      return this.props.fallback ?? (
+        <div className="p-4 bg-destructive/5 border border-destructive/20 rounded-lg">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-5 h-5 text-destructive" />
+            <span className="text-sm font-medium text-destructive">Async operation failed</span>
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            {this.state.error?.message ?? 'An async error occurred'}
+          </p>
+          <Button variant="ghost" size="sm" onClick={this.reset} className="mt-2">
+            <RefreshCw className="h-3 w-3 mr-1" />
+            Retry
+          </Button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
 }

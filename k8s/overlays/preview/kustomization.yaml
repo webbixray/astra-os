@@ -1,0 +1,116 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: astra-preview
+
+resources:
+  - ../../base
+
+commonLabels:
+  environment: preview
+
+patches:
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: astra-api
+      spec:
+        replicas: 1
+        template:
+          spec:
+            containers:
+              - name: astra-api
+                env:
+                  - name: ENVIRONMENT
+                    value: "preview"
+                resources:
+                  requests:
+                    memory: "512Mi"
+                    cpu: "250m"
+                  limits:
+                    memory: "1Gi"
+                    cpu: "1000m"
+    target:
+      kind: Deployment
+      name: astra-api
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: astra-web
+      spec:
+        replicas: 1
+        template:
+          spec:
+            containers:
+              - name: astra-web
+                env:
+                  - name: NODE_ENV
+                    value: "production"
+                resources:
+                  requests:
+                    memory: "256Mi"
+                    cpu: "100m"
+                  limits:
+                    memory: "512Mi"
+                    cpu: "500m"
+    target:
+      kind: Deployment
+      name: astra-web
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: astra-worker
+      spec:
+        replicas: 1
+        template:
+          spec:
+            containers:
+              - name: astra-worker
+                env:
+                  - name: ENVIRONMENT
+                    value: "preview"
+                resources:
+                  requests:
+                    memory: "256Mi"
+                    cpu: "100m"
+                  limits:
+                    memory: "512Mi"
+                    cpu: "500m"
+    target:
+      kind: Deployment
+      name: astra-worker
+
+configMapGenerator:
+  - name: astra-config
+    behavior: merge
+    literals:
+      - ENVIRONMENT=preview
+      - CORS_ORIGINS=https://preview.astra.com
+      - APP_VERSION=preview
+
+images:
+  - name: astra-api
+    newName: astraos/api
+    newTag: preview
+  - name: astra-web
+    newName: astraos/web
+    newTag: preview
+
+replacements:
+  - source:
+      kind: ConfigMap
+      name: astra-config
+    targets:
+      - select:
+          kind: Deployment
+          name: astra-api
+        fieldPaths:
+          - spec.template.spec.containers.[name=astra-api].env.[name=ENVIRONMENT].value
+      - select:
+          kind: Deployment
+          name: astra-web
+        fieldPaths:
+          - spec.template.spec.containers.[name=astra-web].env.[name=NODE_ENV].value

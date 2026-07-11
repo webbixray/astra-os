@@ -44,6 +44,10 @@ class AppConfig(BaseSettings):
     sentry_dsn: str = ""
     otlp_endpoint: str = ""
 
+    # Tenant subdomain configuration
+    tenant_subdomain_enabled: bool = False
+    root_domain: str = ""
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     @field_validator("secret_key", mode="before")
@@ -89,6 +93,13 @@ class AppConfig(BaseSettings):
     @property
     def is_production(self) -> bool:
         return self.environment.lower() == "production"
+
+    @property
+    def tenant_base_domain(self) -> str | None:
+        """Base domain for subdomain tenant resolution (e.g., 'astra.dev')."""
+        if self.tenant_subdomain_enabled and self.root_domain:
+            return self.root_domain
+        return None
 
     @property
     def csp_policy(self) -> str | None:

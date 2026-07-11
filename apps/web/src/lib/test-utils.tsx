@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from 'next-themes';
 import { ToastProvider } from '@/components/ui/toast';
 import React from 'react';
+import { vi } from 'vitest';
 
 function createTestQueryClient() {
   return new QueryClient({
@@ -61,7 +62,7 @@ export const mockOrganization = {
 };
 
 export function createMockFetch(responses: Record<string, unknown>) {
-  return jest.fn().mockImplementation((url: string) => {
+  return vi.fn().mockImplementation((url: string) => {
     const key = Object.keys(responses).find((k) => url.includes(k));
     if (key) {
       return Promise.resolve({
@@ -77,13 +78,13 @@ export function createMockFetch(responses: Record<string, unknown>) {
 }
 
 export function setupIntersectionObserverMock() {
-  const mockIntersectionObserver = jest.fn();
+  const mockIntersectionObserver = vi.fn();
   mockIntersectionObserver.mockReturnValue({
-    observe: jest.fn(),
-    unobserve: jest.fn(),
-    disconnect: jest.fn(),
+    observe: vi.fn(),
+    unobserve: vi.fn(),
+    disconnect: vi.fn(),
   });
-  window.IntersectionObserver = mockIntersectionObserver;
+  window.IntersectionObserver = mockIntersectionObserver as unknown as typeof IntersectionObserver;
 }
 
 export function setupResizeObserverMock() {
@@ -92,9 +93,9 @@ export function setupResizeObserverMock() {
     constructor(callback: ResizeObserverCallback) {
       this.callback = callback;
     }
-    observe = jest.fn();
-    unobserve = jest.fn();
-    disconnect = jest.fn();
+    observe = vi.fn();
+    unobserve = vi.fn();
+    disconnect = vi.fn();
   }
   window.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
 }
@@ -102,8 +103,8 @@ export function setupResizeObserverMock() {
 export function mockClipboard() {
   Object.assign(navigator, {
     clipboard: {
-      writeText: jest.fn(),
-      readText: jest.fn(),
+      writeText: vi.fn(),
+      readText: vi.fn(),
     },
   });
 }
@@ -111,14 +112,14 @@ export function mockClipboard() {
 export function mockLocalStorage() {
   const store: Record<string, string> = {};
 
-  jest.spyOn(Storage.prototype, 'getItem').mockImplementation((key) => store[key as string] || null);
-  jest.spyOn(Storage.prototype, 'setItem').mockImplementation((key, value) => {
+  vi.spyOn(Storage.prototype, 'getItem').mockImplementation((key) => store[key as string] || null);
+  vi.spyOn(Storage.prototype, 'setItem').mockImplementation((key, value) => {
     store[key as string] = value;
   });
-  jest.spyOn(Storage.prototype, 'removeItem').mockImplementation((key) => {
+  vi.spyOn(Storage.prototype, 'removeItem').mockImplementation((key) => {
     delete store[key as string];
   });
-  jest.spyOn(Storage.prototype, 'clear').mockImplementation(() => {
+  vi.spyOn(Storage.prototype, 'clear').mockImplementation(() => {
     Object.keys(store).forEach((key) => delete store[key]);
   });
 

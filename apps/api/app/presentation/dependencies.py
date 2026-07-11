@@ -1,7 +1,7 @@
 from collections.abc import AsyncGenerator
 
 from fastapi import Depends, Query, Request
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.application.use_cases.organizations import (
     CreateOrganizationUseCase,
@@ -13,6 +13,11 @@ from app.application.use_cases.users import CreateUserUseCase, GetUserUseCase, U
 from app.infrastructure.db.repositories.organization_repository import OrganizationRepositoryImpl
 from app.infrastructure.db.repositories.team_member_repository import TeamMemberRepositoryImpl
 from app.infrastructure.db.repositories.user_repository import UserRepositoryImpl
+
+
+def get_db_session_factory(request: Request) -> async_sessionmaker[AsyncSession] | None:
+    """Get the database session factory from app state."""
+    return getattr(request.app.state, "db", None)
 
 
 async def get_db(request: Request) -> AsyncGenerator[AsyncSession, None]:

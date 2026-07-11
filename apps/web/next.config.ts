@@ -1,6 +1,6 @@
 import type { NextConfig } from 'next';
 
-let nextConfig: NextConfig = {
+const nextConfig: NextConfig = {
   output: 'standalone',
   transpilePackages: ['@astra/shared', '@astra/ui'],
   experimental: {
@@ -27,11 +27,5 @@ let nextConfig: NextConfig = {
     return config;
   },
 };
-
-if (process.env.ANALYZE === 'true') {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const withBundleAnalyzer = require('@next/bundle-analyzer')({ enabled: true });
-  nextConfig = withBundleAnalyzer(nextConfig);
-}
 
 export default nextConfig;

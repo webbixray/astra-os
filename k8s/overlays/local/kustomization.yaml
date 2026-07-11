@@ -1,0 +1,118 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: astra
+
+resources:
+  - ../../base
+
+commonLabels:
+  environment: local
+
+patches:
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: astra-api
+      spec:
+        replicas: 1
+        template:
+          spec:
+            containers:
+              - name: astra-api
+                env:
+                  - name: ENVIRONMENT
+                    value: "development"
+                  - name: DEBUG
+                    value: "true"
+                resources:
+                  requests:
+                    memory: "256Mi"
+                    cpu: "100m"
+                  limits:
+                    memory: "512Mi"
+                    cpu: "500m"
+    target:
+      kind: Deployment
+      name: astra-api
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: astra-web
+      spec:
+        replicas: 1
+        template:
+          spec:
+            containers:
+              - name: astra-web
+                env:
+                  - name: NODE_ENV
+                    value: "development"
+                resources:
+                  requests:
+                    memory: "128Mi"
+                    cpu: "50m"
+                  limits:
+                    memory: "256Mi"
+                    cpu: "250m"
+    target:
+      kind: Deployment
+      name: astra-web
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: astra-worker
+      spec:
+        replicas: 1
+        template:
+          spec:
+            containers:
+              - name: astra-worker
+                env:
+                  - name: ENVIRONMENT
+                    value: "development"
+                resources:
+                  requests:
+                    memory: "128Mi"
+                    cpu: "50m"
+                  limits:
+                    memory: "256Mi"
+                    cpu: "250m"
+    target:
+      kind: Deployment
+      name: astra-worker
+
+configMapGenerator:
+  - name: astra-config
+    behavior: merge
+    literals:
+      - ENVIRONMENT=development
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:3001
+      - APP_VERSION=dev
+
+images:
+  - name: astra-api
+    newName: astraos/api
+    newTag: dev
+  - name: astra-web
+    newName: astraos/web
+    newTag: dev
+
+replacements:
+  - source:
+      kind: ConfigMap
+      name: astra-config
+    targets:
+      - select:
+          kind: Deployment
+          name: astra-api
+        fieldPaths:
+          - spec.template.spec.containers.[name=astra-api].env.[name=ENVIRONMENT].value
+      - select:
+          kind: Deployment
+          name: astra-web
+        fieldPaths:
+          - spec.template.spec.containers.[name=astra-web].env.[name=NODE_ENV].value

@@ -30,6 +30,7 @@ from app.infrastructure.events import (  # noqa: F401 - registers event handlers
 from app.infrastructure.logging import configure_logging
 from app.infrastructure.startup import StartupProbe
 from app.presentation.error_handlers import register_error_handlers
+from app.presentation.middleware.audit import AuditMiddleware
 from app.presentation.middleware.api_version import APIVersionMiddleware
 from app.presentation.middleware.auth import AuthMiddleware
 from app.presentation.middleware.csrf import CSRFMiddleware
@@ -38,6 +39,8 @@ from app.presentation.middleware.metrics import MetricsMiddleware
 from app.presentation.middleware.ratelimit import RateLimitMiddleware
 from app.presentation.middleware.response_envelope import EnvelopeMiddleware
 from app.presentation.middleware.security_headers import SecurityHeadersMiddleware
+from app.presentation.middleware.tenant import TenantResolutionMiddleware
+from app.presentation.middleware.tenant import TenantResolutionMiddleware
 from app.presentation.routes import auth, health, metrics, organizations, users
 from app.presentation.routes.advertising import advertising_routes
 from app.presentation.routes.agents import agent_routes
@@ -234,6 +237,8 @@ def create_app() -> FastAPI:
     )
     app.add_middleware(EnvelopeMiddleware)
     app.add_middleware(APIVersionMiddleware)
+    app.add_middleware(TenantResolutionMiddleware)
+    app.add_middleware(AuditMiddleware)
 
     app.include_router(health.router, prefix="/api/v1", tags=["health"])
     app.include_router(metrics.router, prefix="/api/v1", tags=["metrics"])

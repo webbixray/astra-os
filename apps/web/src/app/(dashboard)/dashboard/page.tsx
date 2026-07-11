@@ -335,37 +335,38 @@ export default function DashboardPage() {
                         </button>
                       </div>
 
-                      {/* Widget body */}
+{/* Widget body */}
                       <div className="p-4">
-                        {w.widget_type === 'kpi_card' && (
-                          <KpiCardWidget value={rawValue} label={metricLabel} />
+                        {dataItem ? (
+                          <>
+                            {w.widget_type === 'kpi_card' && (
+                              <KpiCardWidget value={rawValue} label={metricLabel} />
+                            )}
+                            {(w.widget_type === 'line_chart' || w.widget_type === 'bar_chart') && (
+                              <ChartWidget type={w.widget_type} data={dataItem?.data} />
+                            )}
+                            {w.widget_type === 'pie_chart' && (
+                              <PieChartWidget data={dataItem?.data} />
+                            )}
+                            {w.widget_type === 'data_table' && (
+                              <DataTableWidget data={dataItem?.data} />
+                            )}
+                            {w.widget_type === 'trend_indicator' && (
+                              <TrendWidget value={rawValue} label={metricLabel} />
+                            )}
+                          </>
+                        ) : (
+                          [1, 2, 3].map((i) => (
+                            <div
+                              key={i}
+                              className="rounded-lg border bg-card p-4"
+                              style={{ gridColumn: `span ${Math.min(4, cols)}` }}
+                            >
+                              <div className="h-3 w-20 animate-pulse rounded bg-muted" />
+                              <div className="mt-3 h-12 animate-pulse rounded bg-muted" />
+                            </div>
+                          ))
                         )}
-                        {(w.widget_type === 'line_chart' || w.widget_type === 'bar_chart') && (
-                          <ChartWidget type={w.widget_type} data={dataItem?.data} />
-                        )}
-                        {w.widget_type === 'pie_chart' && (
-                          <PieChartWidget data={dataItem?.data} />
-                        )}
-                        {w.widget_type === 'data_table' && (
-                          <DataTableWidget data={dataItem?.data} />
-                        )}
-                        {w.widget_type === 'trend_indicator' && (
-                          <TrendWidget value={rawValue} label={metricLabel} />
-                        )}
-                      </div>
-                    </div>
-                ) : (
-                  [1, 2, 3].map((i) => (
-                    <div
-                      key={i}
-                      className="rounded-lg border bg-card p-4"
-                      style={{ gridColumn: `span ${Math.min(4, cols)}` }}
-                    >
-                      <div className="h-3 w-20 animate-pulse rounded bg-muted" />
-                      <div className="mt-3 h-12 animate-pulse rounded bg-muted" />
-                    </div>
-                  ))
-                )}
               </div>
 
               {canvasWidgets.length === 0 && (

@@ -30,8 +30,9 @@ def _safe_get(counter) -> int:
         return 0
 
 
-@router.get("/metrics", summary="Prometheus metrics")
-async def metrics(user_id: UUID = Depends(require_user_id)) -> Response:
+@router.get("/metrics", summary="Prometheus metrics (public)")
+async def metrics() -> Response:
+    """Public Prometheus metrics endpoint - no authentication required."""
     try:
         return Response(
             content=generate_latest(),
@@ -42,7 +43,7 @@ async def metrics(user_id: UUID = Depends(require_user_id)) -> Response:
         return Response(content="# Error generating metrics\n", media_type="text/plain", status_code=500)
 
 
-@router.get("/metrics/business", summary="Business metrics")
+@router.get("/metrics/business", summary="Business metrics (authenticated)")
 async def business_metrics(user_id: UUID = Depends(require_user_id)) -> dict[str, int]:
     return {
         "users_signed_up": _safe_get(users_signed_up),

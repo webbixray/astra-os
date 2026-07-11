@@ -21,7 +21,7 @@ export function Avatar({ src, alt, fallback, size = 'md', className }: AvatarPro
     lg: 'h-12 w-12 text-base',
   };
 
-  const initials = fallback || (alt ? alt.charAt(0).toUpperCase()) : '?';
+  const initials = fallback || (alt ? alt.charAt(0).toUpperCase() : '?');
 
   if (src) {
     return (
