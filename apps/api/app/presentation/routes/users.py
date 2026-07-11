@@ -2,11 +2,13 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, EmailStr
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.use_cases.users import CreateUserUseCase, GetUserUseCase, UpdateUserUseCase
 from app.domain.exceptions.domain_exceptions import EntityNotFoundError
 from app.presentation.dependencies import (
     get_create_user_use_case,
+    get_db,
     get_get_user_use_case,
     get_update_user_use_case,
 )
@@ -30,7 +32,11 @@ class UpdateUserRequest(BaseModel):
 async def create_user(
     request: CreateUserRequest,
     use_case: CreateUserUseCase = Depends(get_create_user_use_case),
+    user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
 ) -> UserResponse:
+    # Only authenticated users can create users; regular signup uses /auth/signup
+    # Additional admin check could be added here if needed
     user = await use_case.execute(email=request.email, name=request.name)
     return UserResponse(
         id=user.id,
