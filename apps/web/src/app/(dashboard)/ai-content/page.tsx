@@ -17,12 +17,12 @@ import { ErrorBoundary } from '@/components/ui/error-boundary';
 
 const ContentSettingsPanel = dynamic(
   () => import('./content-settings-panel').then((m) => ({ default: m.ContentSettingsPanel })),
-  { ssr: false },
+  { ssr: false, loading: () => <div className="animate-pulse rounded-lg border bg-card p-6 h-96" /> },
 );
 
 const ContentResultPanel = dynamic(
   () => import('./content-result-panel').then((m) => ({ default: m.ContentResultPanel })),
-  { ssr: false },
+  { ssr: false, loading: () => <div className="animate-pulse rounded-lg border bg-card p-6 h-96" /> },
 );
 
 const instructionsSchema = z.string().max(1000, 'Instructions too long').optional();

@@ -10,8 +10,6 @@ export function ServiceWorkerRegistration() {
     navigator.serviceWorker
       .register('/sw.js')
       .then((registration) => {
-        console.log('Service Worker registered:', registration.scope);
-
         registration.addEventListener('updatefound', () => {
           const newWorker = registration.installing;
           if (!newWorker) return;
@@ -25,13 +23,9 @@ export function ServiceWorkerRegistration() {
           });
         });
       })
-      .catch((error) => {
-        console.error('Service Worker registration failed:', error);
-      });
+      .catch(() => {});
 
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      console.log('Service Worker controller changed');
-    });
+    navigator.serviceWorker.addEventListener('controllerchange', () => {});
   }, []);
 
   return null;
