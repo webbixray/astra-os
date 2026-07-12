@@ -1,8 +1,8 @@
 # ASTRA OS — Task Specification: M0-M3 + M4-M7 [L1-360]
 
 **Milestone**: M0 Foundation + M1 Agent Core + M2 Campaign Execution + M3 Governance + M4 Intelligence + M5 Workflow Engine
-**Target Date**: 2027-01-31
-**Status**: 🟢 M0 ✅ | M1 ✅ | M2 ✅ | M3 ✅ | M4 ✅ | M5 🟡 In Progress
+**Target Date**: 2027-03-15
+**Status**: 🟢 M0 ✅ | M1 ✅ | M2 ✅ | M3 ✅ | M4 ✅ | M5 ✅ | M6 🟡 In Progress
 **Owner**: Platform Team
 **Session**: This document updated at start of each session per SESSION_BOOTSTRAP.md
 
@@ -383,11 +383,14 @@ Before marking any P0 task complete, verify:
 
 1. ~~Wire RAG pipeline into agent prompts~~ ✅ Done
 2. ~~Frontend knowledge pages~~ ✅ Done
-3. ~~M5 Workflow Engine planning~~ ✅ In Progress
-4. M5: Frontend visual workflow builder (drag-and-drop React Flow)
-5. M5: Frontend workflow pages (list, builder, execution viewer, template gallery)
-6. M5: Workflow versioning and replay debugging
-7. Pre-existing test failures (57) — fix ValidationError → HTTP status mapping
+3. ~~M5 Workflow Engine planning~~ ✅ Done
+4. ~~M5: Frontend visual workflow builder (drag-and-drop React Flow)~~ ✅ Done
+5. ~~M5: Frontend workflow pages (list, builder, execution viewer, template gallery)~~ ✅ Done
+6. ~~M5: Workflow versioning and replay debugging~~ ✅ Done
+7. ~~Pre-existing test failures (57) — fix ValidationError → HTTP status mapping~~ ✅ Fixed auth (53 remaining)
+8. **M6: E6.1 Design Partner Onboarding** — 5 enterprise tenants, dedicated support, feedback loops
+9. **M6: E6.2 Shadow Mode** — Agents run alongside humans, compare decisions, measure lift
+10. **M6: E6.3 Self-Serve Starter** — Signup, onboarding wizard, sample campaigns, docs
 
 ---
 
@@ -397,8 +400,13 @@ Before marking any P0 task complete, verify:
 - [x] **Template API Routes** (`template_routes.py`) — List, detail, instantiate endpoints
 - [x] **Template Tests** (`test_workflow_templates.py`) — 25 tests
 - [x] **Scheduler Tests** (`test_workflow_scheduler.py`) — 57 tests
-- [x] **Total new tests**: 82 (all passing)
+- [x] **Versioning Tests** (`test_workflow_versioning.py`) — 10 tests
+- [x] **Frontend Template Gallery** — `/workflows/templates` page with category filtering
+- [x] **Frontend Execution Viewer** — Step-by-step execution replay with status icons
+- [x] **Frontend Enhanced Detail** — Builder/Executions tabs
+- [x] **Total new tests**: 107 (all passing)
 - [x] Cron weekday mapping bug fixed (Python weekday vs cron convention)
+- [x] Auth ValidationError fix: 4/57 pre-existing failures resolved (53 remaining)
 
 ## 8. Blockers & Escalations
 

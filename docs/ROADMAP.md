@@ -17,7 +17,8 @@
 | **M2** | Campaign Execution | 2026-09-30 | ✅ Done | Campaign CRUD, manual launch, ad platform adapters |
 | **M3** | Governance | 2026-10-31 | ✅ Done | Approvals, audit, autonomy levels, explainability — 340+ tests |
 | **M4** | Intelligence | 2026-12-15 | ✅ Done | Knowledge graph, RAG, predictive optimization — 434+ tests total |
-| **M5** | Workflow Engine | 2027-01-31 | 🟡 In Progress | Scheduler, templates, visual builder — 82 new tests (516+ total) |
+| **M5** | Workflow Engine | 2027-01-31 | ✅ Done | Scheduler, templates, versioning, replay, frontend — 107 new tests (540+ total) |
+| **M6** | Beta Launch | 2027-03-15 | 🟡 In Progress | Design partners, shadow mode, self-serve, observability |
 | **M6** | Beta Launch | 2027-03-15 | ⏳ Planned | Design partners, shadow mode, observability |
 | **M7** | GA Release | 2027-06-30 | ⏳ Planned | Semi-auto, marketplace, enterprise features |
 
