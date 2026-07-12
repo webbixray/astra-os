@@ -182,7 +182,7 @@ Complete all M0 Foundation epics to achieve **deployable, testable, documented f
 | 13 | Unify dual orchestrator (API + service) | E1.1 | ✅ Done — `agent_service_bridge.py` |
 | 14 | Load test: 100 concurrent agent executions < 5s p95 | E1.8 | ✅ Done — P95 = 2.1ms (100 req) |
 
-### P1 — M2 Campaign Execution (In Progress)
+### P1 — M2 Campaign Execution ✅ DONE
 
 | # | Task | Epic | Status |
 |---|------|------|--------|
@@ -190,12 +190,17 @@ Complete all M0 Foundation epics to achieve **deployable, testable, documented f
 | 16 | Campaign Lifecycle Use Cases | E2.2 | ✅ Done — `lifecycle_use_cases.py` (launch/pause/resume/complete/archive) |
 | 17 | Creative Management Use Cases | E2.6 | ✅ Done — `creative_use_cases.py` (CRUD + approval workflow) |
 | 18 | Campaign Sync Service | E2.3 | ✅ Done — `sync_use_cases.py` (platform sync + insights refresh) |
-| 19 | Campaign Lifecycle API Routes | E2.2 | ✅ Done — 5 lifecycle endpoints added to campaign_routes.py |
+| 19 | Campaign Lifecycle API Routes | E2.2 | ✅ Done — 5 lifecycle endpoints |
 | 20 | Creative Management API Routes | E2.6 | ✅ Done — `creative_routes.py` (10 endpoints) |
 | 21 | DB Migration 0028 (ad_creatives indexes) | E0.5 | ✅ Done — composite indexes for query performance |
-| 22 | M2 Test Suite (71 tests) | E1.8 | ✅ Done — budget pacing (25) + lifecycle (21) + creative (25) |
-| 23 | Frontend Campaign Builder | E2.8 | 🟡 Existing pages need verification |
-| 24 | Full M2 Integration Tests | E1.8 | ⏳ Pending — end-to-end campaign lifecycle test |
+| 22 | M2 Test Suite (77 tests) | E1.8 | ✅ Done — pacing (25) + lifecycle (21) + creative (25) + integration (6) |
+| 23 | Frontend Campaign Builder | E2.8 | ✅ Done — list, detail, new, pacing card, templates |
+| 24 | Full M2 Integration Tests | E1.8 | ✅ Done — 6 end-to-end tests |
+| 25 | Campaign Pacing API | E2.7 | ✅ Done — 2 endpoints (analysis + schedule) |
+| 26 | Campaign Sync API | E2.3 | ✅ Done — 3 endpoints (sync-all, sync-single, insights) |
+| 27 | Sync Repository | E2.3 | ✅ Done — AdCampaignRepoImpl + AdInsightRepoImpl |
+| 28 | Frontend Pacing Component | E2.7 | ✅ Done — PacingCard + usePacing hook |
+| 29 | Fix EventBus.get_history() | E1.7 | ✅ Done — deque slicing bug fixed |
 
 ### P2 — Can Defer
 

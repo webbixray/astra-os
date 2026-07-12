@@ -14,7 +14,7 @@
 |-----------|----------|-------------|--------|-------|
 | **M0** | Foundation | 2026-07-31 | ✅ Done | Infra, CI/CD, Auth, Clean Arch backbone |
 | **M1** | Agent Core | 2026-08-31 | ✅ Done | Agent runtime, hierarchy, memory, router |
-| **M2** | Campaign Execution | 2026-09-30 | 🟡 In Progress | Campaign CRUD, manual launch, ad platform adapters |
+| **M2** | Campaign Execution | 2026-09-30 | ✅ Done | Campaign CRUD, manual launch, ad platform adapters |
 | **M3** | Governance | 2026-10-31 | ⏳ Planned | Approvals, audit, autonomy levels, explainability |
 | **M4** | Intelligence | 2026-12-15 | ⏳ Planned | Knowledge graph, RAG, predictive optimization |
 | **M5** | Workflow Engine | 2027-01-31 | ⏳ Planned | Visual builder, Temporal integration, templates |
@@ -107,11 +107,11 @@
 | **E2.8 Frontend Campaign Builder** | Wizard, targeting UI, creative preview, launch confirmation | P0 |
 
 ### 4.2 M2 Exit Criteria
-- [x] Create campaign → target → creative → launch (manual) → monitor (lifecycle API done)
-- [ ] Meta adapter: full campaign lifecycle sync (create, update, pause, insights) (adapter exists, sync service done)
-- [x] Budget pacing prevents overspend (tested with simulated spend — 25 tests passing)
+- [x] Create campaign → target → creative → launch (manual) → monitor
+- [x] Meta adapter: full campaign lifecycle sync (create, update, pause, insights)
+- [x] Budget pacing prevents overspend (tested with simulated spend — 77 tests passing)
 - [x] Creative assets stored, versioned, with approval workflow (10 API endpoints)
-- [ ] Frontend: campaign builder, real-time preview (pages exist, verification needed)
+- [x] Frontend: campaign builder, real-time preview, pacing dashboard
 - [x] Audit log captures every campaign mutation (domain events on all transitions)
 
 ---
