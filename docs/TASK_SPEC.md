@@ -292,57 +292,52 @@ Before marking any P0 task complete, verify:
 
 ### Session 2026-07-12 (M3 Governance — Complete)
 **Started**: 2026-07-12
-**Context**: M2 Campaign Execution complete. Started M3 Governance.
+**Context**: M2 Campaign Execution complete. M3 Governance fully implemented.
 
-**Work Completed (This Turn)**:
+**Work Completed (This Turn — Part 1: Core Engine)**:
 - [x] **Domain Entities** (previously created):
   - `approval.py` — ApprovalRule, ApprovalRequest, ApprovalDecision, RuleTrigger, ApprovalStatus, DecisionAction
   - `autonomy.py` — AutonomyConfig, AutonomyLevel, AgentAction, ACTION_RISK_LEVELS
 - [x] **Domain Services** (4 services):
-  - `approval_service.py` — ApprovalEvaluationService: stateless rule evaluation against action contexts
-  - `autonomy_enforcement.py` — AutonomyEnforcementService: runtime gate for agent actions (FULL_AUTO/SEMI_AUTO/ADVISORY)
-  - `explainability.py` — ExplainabilityService: reasoning trace extraction, natural language summaries, decision replay, audit summary
-  - `audit_enhancement.py` — AuditEnhancementService: SHA-256 tamper-evident hash chain, retention policy (7yr), GDPR/CCPA export
-- [x] **Use Cases** (12 use cases):
-  - `approval_use_cases.py` — CreateApprovalRule, EvaluateApprovalRules, CreateApprovalRequest, DecideApproval, ListPendingApprovals, ExpireStaleApprovals
-  - `autonomy_use_cases.py` — GetAutonomyConfig, UpdateAutonomyConfig, CheckAgentAction, RecordAgentAction, GetAgentActions, GetExplainabilityReport
-- [x] **DB Models** (5 models):
-  - ApprovalRuleModel, ApprovalRequestModel, ApprovalDecisionModel, AutonomyConfigModel, AgentActionModel
-- [x] **DB Migration 0029** — 5 tables: approval_rules, approval_requests, approval_decisions, autonomy_configs, agent_actions with indexes
-- [x] **Repositories** (5 implementations):
-  - ApprovalRuleRepositoryImpl, ApprovalRequestRepositoryImpl, ApprovalDecisionRepositoryImpl
-  - AutonomyConfigRepositoryImpl, AgentActionRepositoryImpl
-- [x] **API Routes** (3 route modules, 16+ endpoints):
-  - `approval_routes.py` — Rules CRUD, evaluate, request/decision management, expire
-  - `autonomy_routes.py` — Config CRUD, action check, record, list, explain, replay, summary
-  - `audit_routes.py` — Chain verification, export (GDPR/CCPA), retention info
-- [x] **Domain Events** — Added 5 governance events to EventBus (rule_created, rule_evaluated, action_checked, action_blocked, autonomy_changed)
-- [x] **Tests** — 88 governance tests covering:
-  - ApprovalRule entity (13 tests) — spend, brand, audience, channel, inactive, validation
-  - ApprovalRequest lifecycle (9 tests) — create, approve, reject, expire, cancel, state guards
-  - ApprovalDecision (3 tests) — factory methods, validation
-  - AutonomyConfig (10 tests) — levels, overrides, auto-execute, spend limits
-  - AgentAction (6 tests) — create, record, reasoning, explanation
-  - Risk levels (4 tests) — low/high/unknown risk classification
-  - ApprovalEvaluationService (6 tests) — rule matching, convenience methods
-  - AutonomyEnforcementService (7 tests) — FULL_AUTO, SEMI_AUTO, ADVISORY enforcement
-  - ExplainabilityService (6 tests) — explain, summary, replay, audit summary
-  - AuditEnhancementService (10 tests) — hash, chain verify, tamper detect, export, retention
-  - Use case integration (14 tests) — all use cases with mock repos
-- [x] **Full test suite**: 314 tests passing (226 M0-M2 + 88 M3)
+  - `approval_service.py` — ApprovalEvaluationService
+  - `autonomy_enforcement.py` — AutonomyEnforcementService
+  - `explainability.py` — ExplainabilityService
+  - `audit_enhancement.py` — AuditEnhancementService
+- [x] **Use Cases** (12 use cases) — approval CRUD, autonomy config, action check, explainability
+- [x] **DB Models** (5) + **Migration 0029** — 5 tables with indexes
+- [x] **Repositories** (5 implementations)
+- [x] **API Routes** (3 modules, 16+ endpoints)
+- [x] **Domain Events** — 5 governance events added
+- [x] **Tests** — 88 governance tests
+- [x] **Full test suite**: 314 tests passing
+
+**Work Completed (This Turn — Part 2: Integration + Frontend)**:
+- [x] **Agent Governance Middleware** (`services/agent_orchestrator/governance.py`):
+  - GovernanceMiddleware: runtime enforcement of autonomy on agent tool calls
+  - Tool-to-action mapping: 20+ agent tools mapped to governance risk levels
+  - Integrated into `Agent.call_tool()` — blocks/requires approval based on config
+  - `set_governance()` and `get_governance_log()` on Agent base class
+- [x] **Frontend Governance Pages** (7 files):
+  - `types.ts` — TypeScript types for all governance entities
+  - `api/useApprovals.ts` — React Query hooks: pending approvals, rules, decide
+  - `api/useAutonomy.ts` — React Query hooks: config, actions, explanations, summary
+  - `components/approval-queue.tsx` — Human approval dashboard with approve/reject
+  - `components/autonomy-settings.tsx` — Config editor: default level, agent overrides, spend limit
+  - `components/audit-log-viewer.tsx` — Audit log table + explanation panel with reasoning steps
+  - `index.ts` — Feature barrel export
+- [x] **26 new agent governance tests** — 340 total passing
 
 **M3 Exit Criteria Status**:
-- [x] Human approval required for spend >$100, new audience, brand-sensitive content (via ApprovalRule + evaluate)
-- [x] Autonomy level enforced at runtime (AutonomyEnforcementService.check)
-- [x] Audit log: append-only, queryable, exportable, 7-year retention (AuditEnhancementService)
-- [x] Every agent decision explainable in plain English (ExplainabilityService.to_explanation)
+- [x] Human approval required for spend >$100, new audience, brand-sensitive content
+- [x] Autonomy level enforced at runtime (agent checks before action)
+- [x] Audit log: append-only, queryable, exportable, 7-year retention
+- [x] Every agent decision explainable in plain English
 - [ ] SOC2 Type II readiness (deferred — requires controls documentation + evidence collection)
 
 **Next Session Priorities**:
-1. Frontend governance pages (approval queue, autonomy settings, audit viewer)
-2. Wire approval enforcement into agent base loop (services/agent_orchestrator/agents/base.py)
-3. SOC2 controls documentation
-4. Begin M4 Intelligence planning
+1. SOC2 controls documentation
+2. Begin M4 Intelligence (Knowledge Graph, RAG Pipeline)
+3. Integration tests with real DB (testcontainers)
 
 ---
 
