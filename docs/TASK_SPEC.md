@@ -1,8 +1,8 @@
 # ASTRA OS — Task Specification: M0-M3 + M4-M7 [L1-360]
 
-**Milestone**: M0 Foundation + M1 Agent Core + M2 Campaign Execution + M3 Governance + M4 Intelligence
-**Target Date**: 2026-12-15
-**Status**: 🟢 M0 ✅ | M1 ✅ | M2 ✅ | M3 ✅ | M4 🟡 In Progress
+**Milestone**: M0 Foundation + M1 Agent Core + M2 Campaign Execution + M3 Governance + M4 Intelligence + M5 Workflow Engine
+**Target Date**: 2027-01-31
+**Status**: 🟢 M0 ✅ | M1 ✅ | M2 ✅ | M3 ✅ | M4 ✅ | M5 🟡 In Progress
 **Owner**: Platform Team
 **Session**: This document updated at start of each session per SESSION_BOOTSTRAP.md
 
@@ -381,19 +381,30 @@ Before marking any P0 task complete, verify:
 
 ## 6. Next Session Priorities (Update at End)
 
-1. Wire RAG pipeline into agent prompts (agent base class integration)
-2. Frontend knowledge pages (RAG search UI, knowledge graph visualization, optimization dashboard)
-3. SOC2 Type II controls documentation and evidence collection
-4. Additional M4 tests (integration tests for RAG with real DB)
-5. M5 Workflow Engine planning
+1. ~~Wire RAG pipeline into agent prompts~~ ✅ Done
+2. ~~Frontend knowledge pages~~ ✅ Done
+3. ~~M5 Workflow Engine planning~~ ✅ In Progress
+4. M5: Frontend visual workflow builder (drag-and-drop React Flow)
+5. M5: Frontend workflow pages (list, builder, execution viewer, template gallery)
+6. M5: Workflow versioning and replay debugging
+7. Pre-existing test failures (57) — fix ValidationError → HTTP status mapping
 
 ---
 
-## 7. Blockers & Escalations
+## 7. M5 Workflow Engine — Completed This Session
+
+- [x] **Workflow Scheduler** (`workflow_scheduler.py`) — Cron, event-driven, webhook, manual triggers
+- [x] **Template API Routes** (`template_routes.py`) — List, detail, instantiate endpoints
+- [x] **Template Tests** (`test_workflow_templates.py`) — 25 tests
+- [x] **Scheduler Tests** (`test_workflow_scheduler.py`) — 57 tests
+- [x] **Total new tests**: 82 (all passing)
+- [x] Cron weekday mapping bug fixed (Python weekday vs cron convention)
+
+## 8. Blockers & Escalations
 
 | Blocker | Impact | Owner | Resolution Target |
 |---------|--------|-------|-------------------|
-| None currently | — | — | — |
+| 57 pre-existing test failures (mostly ValidationError mapping) | Low | Backend | Next session |
 
 ---
 
