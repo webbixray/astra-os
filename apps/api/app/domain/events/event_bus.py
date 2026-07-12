@@ -323,9 +323,11 @@ class EventBus:
         event_type: DomainEventType | None = None,
         limit: int = 50,
     ) -> list[DomainEvent]:
+        items = list(cls._history)
+        recent = items[-limit:] if len(items) > limit else items
         if event_type:
-            return [e for e in cls._history[-limit:] if e.event_type == event_type]
-        return list(cls._history[-limit:])
+            return [e for e in recent if e.event_type == event_type]
+        return recent
 
     @classmethod
     def clear_history(cls) -> None:

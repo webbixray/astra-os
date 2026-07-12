@@ -1159,3 +1159,136 @@ async def record_variant_metrics(
             status_code=status.HTTP_404_NOT_FOUND, detail="Variant not found"
         ) from None
     return {"id": str(test.id), "status": "metrics_recorded"}
+
+
+# ── Pacing endpoints ──────────────────────────────────────────────────────────
+
+
+@router.get("/{campaign_id}/pacing", summary="Get campaign pacing analysis")
+async def get_campaign_pacing(
+    campaign_id: UUID,
+    strategy: str = Query("even", description="even|front_loaded|back_loaded"),
+    user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    try:
+        from app.infrastructure.db.repositories.campaigns.campaign_repository import (
+            CampaignRepositoryImpl,
+        )
+        from app.infrastructure.db.repositories.campaigns.campaign_budget_repository import (
+            CampaignBudgetRepository,
+        )
+        from app.domain.services.campaigns.budget_pacing import (
+            BudgetPacingService,
+            PacingStrategy,
+        )
+        from app.domain.exceptions.domain_exceptions import (
+            EntityNotFoundError as ENF,
+        )
+
+        campaign_repo = CampaignRepositoryImpl(db)
+        campaign = await campaign_repo.find_by_id(campaign_id)
+        if not campaign:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found"
+            ) from None
+        await require_org_role(campaign.organization_id, "viewer", user_id, db)
+
+        budget_repo = CampaignBudgetRepository(db)
+        budget = await budget_repo.find_by_campaign(campaign_id)
+        if not budget:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No budget set for this campaign",
+            ) from None
+
+        pacing_strategy = PacingStrategy(strategy)
+        service = BudgetPacingService()
+        rec = service.analyze(campaign, budget, strategy=pacing_strategy)
+
+        return {
+            "campaign_id": rec.campaign_id,
+            "strategy": rec.strategy.value,
+            "status": rec.status.value,
+            "daily_target": rec.daily_target,
+            "today_spend": rec.today_spend,
+            "total_budget": rec.total_budget,
+            "total_spent": rec.total_spent,
+            "remaining_budget": rec.remaining_budget,
+            "days_elapsed": rec.days_elapsed,
+            "days_remaining": rec.days_remaining,
+            "percent_time_elapsed": rec.percent_time_elapsed,
+            "percent_budget_spent": rec.percent_budget_spent,
+            "pace_ratio": rec.pace_ratio,
+            "recommended_daily_limit": rec.recommended_daily_limit,
+            "should_pause": rec.should_pause,
+            "alert_message": rec.alert_message,
+        }
+    except (EntityNotFoundError, ValidationError) as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND
+            if isinstance(e, EntityNotFoundError)
+            else status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(e),
+        ) from None
+
+
+@router.get("/{campaign_id}/pacing/schedule", summary="Get pacing daily schedule")
+async def get_pacing_schedule(
+    campaign_id: UUID,
+    strategy: str = Query("even", description="even|front_loaded|back_loaded"),
+    user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    try:
+        from app.infrastructure.db.repositories.campaigns.campaign_repository import (
+            CampaignRepositoryImpl,
+        )
+        from app.infrastructure.db.repositories.campaigns.campaign_budget_repository import (
+            CampaignBudgetRepository,
+        )
+        from app.domain.services.campaigns.budget_pacing import (
+            BudgetPacingService,
+            PacingStrategy,
+        )
+
+        campaign_repo = CampaignRepositoryImpl(db)
+        campaign = await campaign_repo.find_by_id(campaign_id)
+        if not campaign:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found"
+            ) from None
+        await require_org_role(campaign.organization_id, "viewer", user_id, db)
+
+        budget_repo = CampaignBudgetRepository(db)
+        budget = await budget_repo.find_by_campaign(campaign_id)
+        if not budget:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No budget set for this campaign",
+            ) from None
+
+        pacing_strategy = PacingStrategy(strategy)
+        service = BudgetPacingService()
+        schedule = service.generate_daily_schedule(campaign, budget, pacing_strategy)
+
+        return {
+            "campaign_id": str(campaign_id),
+            "strategy": pacing_strategy.value,
+            "total_budget": budget.total_budget,
+            "schedule": [
+                {
+                    "day": s.day.isoformat(),
+                    "target": s.target,
+                    "cumulative_target": s.cumulative_target,
+                }
+                for s in schedule
+            ],
+        }
+    except (EntityNotFoundError, ValidationError) as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND
+            if isinstance(e, EntityNotFoundError)
+            else status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(e),
+        ) from None
