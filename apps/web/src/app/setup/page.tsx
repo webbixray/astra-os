@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { api } from '@/lib/api';
 
-type SetupStep = 'welcome' | 'account' | 'organization' | 'ai-provider' | 'complete';
+type SetupStep = 'welcome' | 'account' | 'sample-campaigns' | 'ai-provider' | 'complete';
 
 interface SetupData {
   name: string;
@@ -22,13 +22,14 @@ export default function SetupPage() {
   const router = useRouter();
   const [step, setStep] = useState<SetupStep>('welcome');
   const [data, setData] = useState<SetupData>({
-    name: '',
-    email: '',
-    password: '',
-    organizationName: '',
-    openaiApiKey: '',
-    anthropicApiKey: '',
-  });
+      name: '',
+      email: '',
+      password: '',
+      organizationName: '',
+      openaiApiKey: '',
+      anthropicApiKey: '',
+    });
+    const [sampleCount, setSampleCount] = useState(3);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -37,26 +38,50 @@ export default function SetupPage() {
   };
 
   const handleAccountSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
+      e.preventDefault();
+      setError('');
+      setLoading(true);
 
-    try {
-      await api.post('/auth/signup', {
-        name: data.name,
-        email: data.email,
-        password: data.password,
-        organization_name: data.organizationName || `${data.name}'s Organization`,
-      });
-      setStep('ai-provider');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create account');
-    } finally {
-      setLoading(false);
-    }
-  };
+      try {
+        const response = await api.post('/auth/signup', {
+          name: data.name,
+          email: data.email,
+          password: data.password,
+          organization_name: data.organizationName || `${data.name}'s Organization`,
+        });
+        // Store organization ID for sample campaigns step
+        localStorage.setItem('astra_setup_org_id', response.organization_id);
+        setStep('sample-campaigns');
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to create account');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const handleAiProviderSubmit = async (e: React.FormEvent) => {
+    const handleSampleCampaignsSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setError('');
+      setLoading(true);
+
+      try {
+        const orgId = localStorage.getItem('astra_setup_org_id');
+        if (!orgId) throw new Error('Organization ID not found');
+
+        await api.post('/campaigns/sample', {
+          organization_id: orgId,
+          count: sampleCount,
+        });
+        localStorage.removeItem('astra_setup_org_id');
+        setStep('ai-provider');
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to create sample campaigns');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const handleAiProviderSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
@@ -168,6 +193,53 @@ export default function SetupPage() {
             <button
               type="button"
               onClick={() => setStep('welcome')}
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              Back
+            </button>
+          </form>
+        )}
+
+        {step === 'sample-campaigns' && (
+          <form onSubmit={handleSampleCampaignsSubmit} className="space-y-6">
+            <div className="space-y-2 text-center">
+              <h1 className="text-2xl font-semibold tracking-tight">Create Sample Campaigns</h1>
+              <p className="text-sm text-muted-foreground">
+                We'll set up a few starter campaigns to get you going (you can customize later)
+              </p>
+            </div>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="campaign-count">Number of Sample Campaigns</Label>
+                <select
+                  id="campaign-count"
+                  value={sampleCount}
+                  onChange={(e) => setSampleCount(Number(e.target.value))}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value={3}>3 Campaigns (Recommended)</option>
+                  <option value={5}>5 Campaigns</option>
+                  <option value={1}>Just 1</option>
+                </select>
+                <p className="text-xs text-muted-foreground">
+                  Pre-built campaigns for awareness, leads, conversions, and more
+                </p>
+              </div>
+              {error && <p className="text-sm text-destructive">{error}</p>}
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? 'Creating campaigns...' : 'Create Sample Campaigns'}
+              </Button>
+              <button
+                type="button"
+                onClick={() => setStep('ai-provider')}
+                className="w-full text-sm text-muted-foreground hover:text-foreground"
+              >
+                Skip for now
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => setStep('account')}
               className="text-sm text-muted-foreground hover:text-foreground"
             >
               Back
