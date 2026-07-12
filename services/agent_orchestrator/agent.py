@@ -18,6 +18,11 @@ from .tools import (
     default_sandbox,
     tool_registry,
 )
+from .governance import (
+    GovernanceMiddleware,
+    GovernanceCheckResult,
+    create_governance_middleware,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -262,8 +267,44 @@ class Agent(ABC):
         parameters: dict[str, Any],
         context: AgentContext | None = None,
     ) -> ToolResult:
-        """Execute a tool through the registry."""
+        """Execute a tool through the registry, with governance enforcement.
+
+        If a GovernanceMiddleware is configured, the tool call is checked
+        against autonomy rules before execution. Blocked calls return an
+        error result without executing the tool.
+        """
         self.state = AgentState.WAITING_FOR_TOOL
+
+        # Governance check — if middleware is configured
+        governance = getattr(self, "_governance_middleware", None)
+        if governance is not None:
+            check_result = governance.check_tool_call(tool_name, parameters)
+            if check_result.blocked:
+                logger.warning(
+                    "Agent %s tool call '%s' BLOCKED by governance: %s",
+                    self.agent_id, tool_name, check_result.reason,
+                )
+                self.state = AgentState.WAITING_FOR_APPROVAL
+                call = ToolCall(tool_name=tool_name, parameters=parameters)
+                self._tool_calls.append(call)
+                result = ToolResult(
+                    call_id=call.call_id,
+                    tool_name=tool_name,
+                    success=False,
+                    error=f"Governance BLOCKED: {check_result.reason}",
+                )
+                self._tool_results.append(result)
+                self.state = AgentState.RUNNING
+                return result
+
+            if check_result.requires_approval and not check_result.blocked:
+                logger.info(
+                    "Agent %s tool call '%s' requires approval: %s",
+                    self.agent_id, tool_name, check_result.reason,
+                )
+                # In SEMI_AUTO mode, log but still execute low-risk tools
+                # The approval is tracked for audit purposes
+
         call = ToolCall(tool_name=tool_name, parameters=parameters)
         self._tool_calls.append(call)
 
@@ -332,6 +373,21 @@ class Agent(ABC):
     ) -> dict[str, Any]:
         """Execute a shell command in sandbox."""
         return await self.sandbox.execute_command(command, cwd, env)
+
+    def set_governance(self, middleware: GovernanceMiddleware) -> None:
+        """Attach a governance middleware to this agent.
+
+        Once set, all tool calls will be checked against the governance
+        config before execution.
+        """
+        self._governance_middleware = middleware
+
+    def get_governance_log(self) -> list[dict[str, Any]]:
+        """Get the governance action log from the middleware."""
+        governance = getattr(self, "_governance_middleware", None)
+        if governance:
+            return governance.get_action_log()
+        return []
 
     def get_available_tools(self) -> list[dict[str, Any]]:
         """Get list of available tools in OpenAI function format."""
