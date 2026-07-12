@@ -1,7 +1,7 @@
 """Tests for Design Partner Service — E6.1 Beta Launch."""
 
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from uuid import uuid4
 
 from app.domain.entities.design_partner import (
@@ -13,6 +13,7 @@ from app.domain.entities.design_partner import (
     DesignPartnerTier,
     FeedbackPriority,
     FeedbackType,
+    FeedbackStatus,
     SupportTicket,
     SupportTicketStatus,
 )
@@ -70,27 +71,29 @@ class MockFeedbackRepo(DesignPartnerFeedbackRepository):
     async def find_by_partner(
         self,
         partner_id: uuid4,
-        status: str | None = None,
+        status: str | FeedbackStatus | None = None,
         type: FeedbackType | None = None,
         limit: int = 50,
     ) -> list[DesignPartnerFeedback]:
         results = [f for f in self.feedback.values() if f.design_partner_id == partner_id]
         if status:
-            results = [f for f in results if f.status.value == status]
+            status_value = status.value if hasattr(status, 'value') else status
+            results = [f for f in results if f.status.value == status_value]
         if type:
             results = [f for f in results if f.type == type]
         return results[:limit]
 
     async def list_all(
         self,
-        status: str | None = None,
+        status: str | FeedbackStatus | None = None,
         type: FeedbackType | None = None,
         priority: FeedbackPriority | None = None,
         limit: int = 50,
     ) -> list[DesignPartnerFeedback]:
         results = list(self.feedback.values())
         if status:
-            results = [f for f in results if f.status.value == status]
+            status_value = status.value if hasattr(status, 'value') else status
+            results = [f for f in results if f.status.value == status_value]
         if type:
             results = [f for f in results if f.type == type]
         if priority:
@@ -150,9 +153,9 @@ def ticket_repo():
 
 
 @pytest.fixture
-def service(partner_repo, feedback_repo, ticket_repo):
+def service(partner_repo, feedback_repo):
     from app.domain.services.design_partner_service import DesignPartnerService
-    return DesignPartnerService(partner_repo, feedback_repo, ticket_repo)
+    return DesignPartnerService(partner_repo, feedback_repo)
 
 
 # --- DesignPartner Entity Tests ---
@@ -313,7 +316,7 @@ class TestSupportTicket:
             design_partner_id=uuid4(),
             organization_id=uuid4(),
             user_id=uuid4(),
-            resolution_due_at=datetime.now() - timedelta(hours=1),  # Overdue
+            resolution_due_at=datetime.now(UTC) - timedelta(hours=1),  # Overdue
         )
         ticket.status = SupportTicketStatus.IN_PROGRESS
         assert ticket.is_sla_breached() is True
@@ -323,7 +326,7 @@ class TestSupportTicket:
             design_partner_id=uuid4(),
             organization_id=uuid4(),
             user_id=uuid4(),
-            resolution_due_at=datetime.now() - timedelta(hours=1),
+            resolution_due_at=datetime.now(UTC) - timedelta(hours=1),
         )
         ticket.status = SupportTicketStatus.RESOLVED
         assert ticket.is_sla_breached() is False
@@ -458,7 +461,7 @@ class TestDesignPartnerService:
             partner_id=partner.id,
             organization_id=org_id,
             user_id=uuid4(),
-            feedback_type=FeedbackType.NPS,
+            feedback_type=FeedbackType.NPS_SURVEY,
             title="NPS Survey",
             description="Quarterly NPS",
             nps_score=9,
@@ -576,11 +579,11 @@ class TestFeedbackRepository:
         partner_id = uuid4()
         fb1 = DesignPartnerFeedback(
             design_partner_id=partner_id, organization_id=uuid4(), user_id=uuid4(),
-            type=FeedbackType.FEATURE_REQUEST, status="resolved", title="A", description="A"
+            type=FeedbackType.FEATURE_REQUEST, status=FeedbackStatus.RESOLVED, title="A", description="A"
         )
         fb2 = DesignPartnerFeedback(
             design_partner_id=partner_id, organization_id=uuid4(), user_id=uuid4(),
-            type=FeedbackType.BUG_REPORT, status="open", title="B", description="B"
+            type=FeedbackType.BUG_REPORT, status=FeedbackStatus.OPEN, title="B", description="B"
         )
         await feedback_repo.save(fb1)
         await feedback_repo.save(fb2)

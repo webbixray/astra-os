@@ -1,6 +1,5 @@
 """Tests for Workflow Templates — M5 Workflow Engine."""
 
-import pytest
 from uuid import uuid4
 
 from app.domain.entities.workflows.workflow import (
@@ -196,6 +195,7 @@ class TestWorkflowTemplateRegistry:
         )
         registry.register_template(new_version)
         updated = registry.get_template("campaign_launch")
+        assert updated is not None
         assert updated.name == "Campaign Launch V2"
 
     def test_registry_instantiate_template(self):
@@ -218,6 +218,7 @@ class TestWorkflowTemplateRegistry:
         workflow = registry.instantiate_template(
             "creative_review", uuid4(), uuid4(), name="My Review Flow"
         )
+        assert workflow is not None
         assert workflow.name == "My Review Flow"
 
     def test_builtin_template_categories(self):
@@ -242,17 +243,20 @@ class TestWorkflowTemplateRegistry:
 class TestBuiltinTemplateStructure:
     def test_campaign_launch_has_trigger_and_end(self):
         tmpl = template_registry.get_template("campaign_launch")
+        assert tmpl is not None
         types = [n.type for n in tmpl.nodes]
         assert NodeType.TRIGGER in types
         assert NodeType.END in types
 
     def test_campaign_launch_has_approval(self):
         tmpl = template_registry.get_template("campaign_launch")
+        assert tmpl is not None
         types = [n.type for n in tmpl.nodes]
         assert NodeType.APPROVAL in types
 
     def test_creative_review_has_loop(self):
         tmpl = template_registry.get_template("creative_review")
+        assert tmpl is not None
         # Creative review has a revision loop: condition → revision → back to action
         assert len(tmpl.edges) == 7  # 7 edges for the loop structure
         # Check there's an edge that creates a cycle
@@ -262,12 +266,14 @@ class TestBuiltinTemplateStructure:
 
     def test_optimization_loop_has_cron_trigger(self):
         tmpl = template_registry.get_template("optimization_loop")
+        assert tmpl is not None
         trigger = [n for n in tmpl.nodes if n.type == NodeType.TRIGGER][0]
         assert trigger.config.get("trigger_type") == "cron"
         assert trigger.config.get("cron") == "0 9 * * *"
 
     def test_brand_compliance_has_two_checks(self):
         tmpl = template_registry.get_template("brand_compliance")
+        assert tmpl is not None
         actions = [n for n in tmpl.nodes if n.type == NodeType.ACTION]
         action_types = [n.config.get("action_type") for n in actions]
         assert "brand.check" in action_types

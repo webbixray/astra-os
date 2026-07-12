@@ -6,6 +6,7 @@ feedback collection, and support ticketing.
 
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
@@ -16,6 +17,7 @@ from app.domain.common import now
 
 
 # --- Enums ---
+
 
 class DesignPartnerTier(str, Enum):
     DESIGN_PARTNER = "design_partner"
@@ -69,7 +71,82 @@ class SupportTicketStatus(str, Enum):
     CLOSED = "closed"
 
 
+# --- Repository Interfaces ---
+
+
+class DesignPartnerRepository(ABC):
+    """Abstract repository for DesignPartner entities."""
+
+    @abstractmethod
+    async def save(self, partner: DesignPartner) -> DesignPartner:
+        """Save a design partner."""
+        ...
+
+    @abstractmethod
+    async def find_by_id(self, partner_id: UUID) -> DesignPartner | None:
+        """Find a design partner by ID."""
+        ...
+
+    @abstractmethod
+    async def find_by_organization(self, org_id: UUID) -> DesignPartner | None:
+        """Find a design partner by organization ID."""
+        ...
+
+    @abstractmethod
+    async def list_all(
+        self,
+        status: DesignPartnerStatus | None = None,
+        tier: DesignPartnerTier | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[DesignPartner]:
+        """List design partners with optional filters."""
+        ...
+
+    @abstractmethod
+    async def count(self, status: DesignPartnerStatus | None = None) -> int:
+        """Count design partners with optional status filter."""
+        ...
+
+
+class DesignPartnerFeedbackRepository(ABC):
+    """Abstract repository for DesignPartnerFeedback entities."""
+
+    @abstractmethod
+    async def save(self, feedback: DesignPartnerFeedback) -> DesignPartnerFeedback:
+        """Save feedback."""
+        ...
+
+    @abstractmethod
+    async def find_by_id(self, feedback_id: UUID) -> DesignPartnerFeedback | None:
+        """Find feedback by ID."""
+        ...
+
+    @abstractmethod
+    async def find_by_partner(
+        self,
+        partner_id: UUID,
+        status: str | None = None,
+        type: FeedbackType | None = None,
+        limit: int = 50,
+    ) -> list[DesignPartnerFeedback]:
+        """Find feedback by design partner with optional filters."""
+        ...
+
+    @abstractmethod
+    async def list_all(
+        self,
+        status: str | None = None,
+        type: FeedbackType | None = None,
+        priority: FeedbackPriority | None = None,
+        limit: int = 50,
+    ) -> list[DesignPartnerFeedback]:
+        """List all feedback with optional filters."""
+        ...
+
+
 # --- Entities ---
+
 
 @dataclass
 class DesignPartner:

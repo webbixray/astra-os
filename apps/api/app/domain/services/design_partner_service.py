@@ -203,7 +203,7 @@ class DesignPartnerService:
 
         # Update partner stats
         partner.record_feedback(feedback_type)
-        if feedback_type == FeedbackType.NPS and nps_score is not None:
+        if feedback_type == FeedbackType.NPS_SURVEY and nps_score is not None:
             partner.update_nps(nps_score)
         await self.repo.save(partner)
 
