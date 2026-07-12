@@ -1,6 +1,6 @@
 from uuid import uuid4
 
-from sqlalchemy import JSON, Column, DateTime, ForeignKey, String, Text
+from sqlalchemy import JSON, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 
@@ -25,6 +25,37 @@ class WorkflowModel(Base):
     created_by = Column(UUID(as_uuid=True), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class WorkflowVersionModel(Base):
+    __tablename__ = "workflow_versions"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    workflow_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("workflows.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    organization_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    version_number = Column(Integer, nullable=False)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, default="")
+    nodes = Column(JSON, default=list)
+    edges = Column(JSON, default=list)
+    change_summary = Column(Text, default="")
+    created_by = Column(UUID(as_uuid=True), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Composite unique constraint for workflow_id + version_number
+    __table_args__ = (
+        # UniqueConstraint('workflow_id', 'version_number', name='uq_workflow_version'),
+    )
 
 
 class WorkflowExecutionModel(Base):
