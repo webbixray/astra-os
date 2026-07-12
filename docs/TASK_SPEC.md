@@ -184,7 +184,8 @@ Complete all M0 Foundation epics to achieve **deployable, testable, documented f
 | 18 | Load test script (k6) for API baseline | E0.9 |
 | 19 | Knowledge graph (Neo4j) | E1.6 |
 | 20 | Agent observability dashboards | E1.7 |
-| 21 | `make bootstrap` end-to-end validation | E0.10 |
+| 21 | `make bootstrap` end-to-end validation | E0.10 | ✅ Done — setup.sh + Makefile target |
+| 22 | CI workflow fix (pip install, YAML validation) | E0.2 | ✅ Done |
 
 ---
 

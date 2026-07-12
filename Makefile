@@ -1,4 +1,4 @@
-.PHONY: help setup dev stop clean test lint format build db-migrate db-upgrade db-seed docker-up docker-down docker-build
+.PHONY: help bootstrap setup setup-docker dev dev-api dev-web stop test test-api test-web test-e2e test-cov lint lint-api lint-web format format-api typecheck db-migrate db-upgrade db-downgrade db-seed db-reset docker-up docker-down docker-build docker-logs docker-ps k8s-deploy k8s-status k8s-logs k8s-delete clean build version check
 
 # Default target
 help: ## Show this help message
@@ -9,6 +9,9 @@ help: ## Show this help message
 # ============================================
 # Setup & Installation
 # ============================================
+
+bootstrap: ## Full setup from clean clone (installs deps, starts infra, migrates, seeds)
+	@bash setup.sh
 
 setup: ## Initial project setup (install deps, create .env, start services)
 	@echo "Setting up Astra OS..."
