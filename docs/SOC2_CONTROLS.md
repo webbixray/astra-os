@@ -96,8 +96,8 @@ This document catalogs the SOC2 Type II controls implemented in ASTRA OS, organi
 
 | Control | Implementation | Evidence |
 |---------|---------------|----------|
-| Unit tests | ≥80% line coverage, ≥70% branch coverage | pytest + vitest, 340+ tests |
-| Integration tests | Critical path coverage | `test_m2_integration.py`, `test_governance.py` |
+| Unit tests | ≥80% line coverage, ≥70% branch coverage | pytest + vitest, 413+ tests |
+| Integration tests | Critical path coverage | `test_m2_integration.py`, `test_governance.py`, `test_knowledge_routes.py` |
 | E2E tests | Critical user journeys | Playwright (planned for M6) |
 | Security scanning | SAST + dependency audit | bandit, trivy, semgrep in CI |
 
@@ -148,6 +148,10 @@ This document catalogs the SOC2 Type II controls implemented in ASTRA OS, organi
 | Audit trail | Agent actions stored with reasoning, cost, model | `agent_actions` table |
 | Tamper evidence | SHA-256 hash chain on audit entries | `AuditEnhancementService` |
 | Cost tracking | Token usage and cost per action | `AgentAction.tokens_used`, `cost_usd` |
+| Knowledge grounding | RAG pipeline provides context for agent decisions | `rag_pipeline.py` — `assemble_context()` |
+| Brand safety | Brand guidelines ingested into knowledge graph | `RagPipeline.ingest_brand_guidelines()` |
+| Predictive guardrails | Creative fatigue detection prevents ad blindness | `predictive_optimization.py` — `detect_creative_fatigue()` |
+| Cross-campaign isolation | Each campaign's data is scoped by organization_id | RLS policies + KnowledgeGraphService queries |
 
 ---
 
@@ -177,9 +181,10 @@ For SOC2 Type II audit, collect evidence for:
 | System Operations | 🟡 65% | Logging/monitoring in place, need SLO dashboards |
 | Change Management | 🟢 85% | CI/CD, PR reviews, testing all working |
 | Risk Mitigation | 🟢 80% | AI governance strong, need formal risk register |
-| Documentation | 🟡 60% | Constitution, architecture, task specs — need runbooks |
+| Documentation | 🟡 65% | Constitution, architecture, task specs, SOC2 controls — need runbooks |
+| Knowledge Security | 🟢 75% | RAG pipeline, brand guidelines, cross-campaign isolation via RLS |
 
-**Overall Readiness**: ~72% — Needs targeted work on formal policies, access reviews, and runbooks for full SOC2 Type II.
+**Overall Readiness**: ~73% — Improved with M4 knowledge controls. Needs targeted work on formal policies, access reviews, and runbooks for full SOC2 Type II.
 
 ---
 

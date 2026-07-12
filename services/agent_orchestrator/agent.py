@@ -27,6 +27,19 @@ from .governance import (
 logger = logging.getLogger(__name__)
 
 
+# RAG pipeline type — imported lazily to avoid circular deps
+class _RAGPipelineStub:
+    """Lazy proxy for RagPipeline to avoid import at module level."""
+    def __init__(self, pipeline: Any) -> None:
+        self._pipeline = pipeline
+
+    async def search(self, query: str, organization_id: UUID, **kwargs: Any) -> list[Any]:
+        return await self._pipeline.search(query, organization_id, **kwargs)
+
+    async def assemble_context(self, query: str, organization_id: UUID, **kwargs: Any) -> Any:
+        return await self._pipeline.assemble_context(query, organization_id, **kwargs)
+
+
 class AgentType(str, Enum):
     """Agent types in the hierarchy."""
 
@@ -195,6 +208,8 @@ class Agent(ABC):
         self.sandbox = sandbox
         self.state = AgentState.INITIALIZING
         self.context: AgentContext | None = None
+        self._governance_middleware = None
+        self._rag_pipeline = None
         self._iteration = 0
         self._start_time: float = 0
         self._tool_calls: list[ToolCall] = []
@@ -388,6 +403,75 @@ class Agent(ABC):
         if governance:
             return governance.get_action_log()
         return []
+
+    # ------------------------------------------------------------------
+    # RAG / Knowledge integration
+    # ------------------------------------------------------------------
+
+    def set_rag_pipeline(self, pipeline: Any) -> None:
+        """Attach a RAG pipeline to this agent.
+
+        Once set, the agent can query the knowledge graph for context
+        before making decisions.
+        """
+        self._rag_pipeline = pipeline
+
+    async def get_rag_context(
+        self,
+        query: str,
+        organization_id: UUID,
+        **kwargs: Any,
+    ) -> Any | None:
+        """Assemble RAG context for the current query.
+
+        Returns a RAGContext object with search results, memory context,
+        and brand guidelines, or None if no pipeline is attached.
+        """
+        if self._rag_pipeline is None:
+            return None
+        try:
+            return await self._rag_pipeline.assemble_context(
+                query=query,
+                organization_id=organization_id,
+                agent_id=str(self.agent_id),
+                **kwargs,
+            )
+        except Exception:
+            logger.exception("RAG context assembly failed for agent %s", self.agent_id)
+            return None
+
+    async def search_knowledge(
+        self,
+        query: str,
+        organization_id: UUID,
+        limit: int = 10,
+    ) -> list[dict[str, Any]]:
+        """Search the knowledge graph for relevant information.
+
+        Returns a list of search result dicts, or empty list if no
+        pipeline is attached or search fails.
+        """
+        if self._rag_pipeline is None:
+            return []
+        try:
+            results = await self._rag_pipeline.search(
+                query=query,
+                organization_id=organization_id,
+                limit=limit,
+            )
+            return [
+                {
+                    "node_id": r.node_id,
+                    "name": r.name,
+                    "description": r.description[:200],
+                    "score": round(r.score, 3),
+                    "relevance": r.relevance_label,
+                }
+                for r in results
+            ]
+        except Exception:
+            logger.exception("Knowledge search failed for agent %s", self.agent_id)
+            return []
 
     def get_available_tools(self) -> list[dict[str, Any]]:
         """Get list of available tools in OpenAI function format."""

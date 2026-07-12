@@ -359,6 +359,24 @@ Before marking any P0 task complete, verify:
 - [ ] RAG retrieval accuracy >85% (requires integration testing with real embeddings)
 - [ ] Budget optimization lift >15% (requires production data validation)
 
+**Work Completed (This Turn — M4 Intelligence — Part 2: Integration + Frontend)**:
+- [x] **Agent RAG Integration** (`services/agent_orchestrator/agent.py`):
+  - `set_rag_pipeline()` — attach RAG pipeline to any agent
+  - `get_rag_context()` — assemble context for agent decisions
+  - `search_knowledge()` — query knowledge graph from agent
+  - Error handling: graceful fallback when pipeline unavailable
+- [x] **Frontend Knowledge Feature** (`apps/web/src/features/knowledge/`):
+  - `types.ts` — TypeScript types for all M4 entities
+  - `api/useKnowledge.ts` — 10 React Query hooks (RAG search, context, ingestion, optimization, patterns)
+  - `components/rag-search.tsx` — Hybrid search UI with brand guidelines ingestion
+  - `components/optimization-dashboard.tsx` — Budget/fatigue/audience tabs
+  - `components/knowledge-graph.tsx` — Patterns, transfer learning, insights views
+  - `index.ts` — barrel export
+- [x] **Route Integration Tests** (`test_knowledge_routes.py`) — 12 tests covering all 10 API endpoints
+- [x] **Agent RAG Tests** (`test_agent_rag.py`) — 9 tests for agent-pipeline integration
+- [x] **SOC2 Controls Updated** — M4 knowledge security controls added
+- [x] **Total new tests this session**: 94 (73 domain + 12 routes + 9 agent RAG)
+
 ---
 
 ## 6. Next Session Priorities (Update at End)
