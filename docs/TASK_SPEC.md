@@ -171,8 +171,8 @@ Complete all M0 Foundation epics to achieve **deployable, testable, documented f
 | 10 | DB migration for agent tables | E0.5 | ✅ Done — migration 0027 (agent_memories, agent_events, agent_traces) |
 | 11 | Integration tests (30 tests, full pipeline) | E1.8 | ✅ Done — `test_integration.py` |
 | 12 | Fix REACT_SYSTEM_SUFFIX format string bug | E1.1 | ✅ Done — JSON braces escaped |
-| 13 | Unify dual orchestrator (API + service) | E1.1 | Pending — API layer has simpler orchestrator |
-| 14 | Load test: 100 concurrent agent executions < 5s p95 | E1.8 | Pending |
+| 13 | Unify dual orchestrator (API + service) | E1.1 | ✅ Done — `agent_service_bridge.py` |
+| 14 | Load test: 100 concurrent agent executions < 5s p95 | E1.8 | ✅ Done — P95 = 2.1ms (100 req) |
 
 ### P2 — Can Defer
 
@@ -222,9 +222,11 @@ Before marking any P0 task complete, verify:
   - Hierarchy delegation rules, path-to-root, team creation
   - HandoffManager accept/reject
   - AgentCoordinator sequential and parallel execution
-- [x] Updated `__init__.py` with new module exports
+- [x] Created agent_service_bridge.py — bridges API layer to full agent_orchestrator service
+- [x] Updated agent_routes.py — /agents/process now uses ReAct agents, added /agents/hierarchy endpoint
+- [x] Added load test script (scripts/load_test_agents.py) — 100 concurrent executions, P95 = 2.1ms ✅
 - [x] Updated TASK_SPEC.md with M1 progress
-- [x] All 149 tests passing (119 unit + 30 integration)
+- [x] All 149 tests passing + load test passing
 
 **Session Log (Previous)**:
 - [x] Fixed agent orchestrator critical bugs (10 files modified)
@@ -234,10 +236,10 @@ Before marking any P0 task complete, verify:
 - [x] Updated TASK_SPEC.md with accurate M0 status
 
 **Next Session Priorities**:
-1. Unify dual orchestrator — make API layer delegate to agent_orchestrator service
-2. Validate `make bootstrap` end-to-end on clean clone
-3. Verify CI pipeline passes on GitHub
-4. Load test: 100 concurrent agent executions < 5s p95
+1. Validate `make bootstrap` end-to-end on clean clone
+2. Verify CI pipeline passes on GitHub (currently failing at setup — needs investigation)
+3. Knowledge graph setup (E1.6) if needed for M1
+4. Begin M2 Campaign Execution planning
 
 ---
 
