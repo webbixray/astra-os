@@ -15,8 +15,8 @@
 | **M0** | Foundation | 2026-07-31 | ✅ Done | Infra, CI/CD, Auth, Clean Arch backbone |
 | **M1** | Agent Core | 2026-08-31 | ✅ Done | Agent runtime, hierarchy, memory, router |
 | **M2** | Campaign Execution | 2026-09-30 | ✅ Done | Campaign CRUD, manual launch, ad platform adapters |
-| **M3** | Governance | 2026-10-31 | 🟡 In Progress | Approvals, audit, autonomy levels, explainability — 314 tests (88 new) |
-| **M4** | Intelligence | 2026-12-15 | ⏳ Planned | Knowledge graph, RAG, predictive optimization |
+| **M3** | Governance | 2026-10-31 | ✅ Done | Approvals, audit, autonomy levels, explainability — 340+ tests |
+| **M4** | Intelligence | 2026-12-15 | 🟡 In Progress | Knowledge graph, RAG, predictive optimization — 73 new tests |
 | **M5** | Workflow Engine | 2027-01-31 | ⏳ Planned | Visual builder, Temporal integration, templates |
 | **M6** | Beta Launch | 2027-03-15 | ⏳ Planned | Design partners, shadow mode, observability |
 | **M7** | GA Release | 2027-06-30 | ⏳ Planned | Semi-auto, marketplace, enterprise features |

@@ -1,9 +1,9 @@
 # ASTRA OS — Task Specification: M0-M3 + M4-M7 [L1-360]
 
-**Milestone**: M0 Foundation + M1 Agent Core + M2 Campaign Execution  
-**Target Date**: 2026-09-30  
-**Status**: 🟢 M0 ✅ | M1 ✅ | M2 🟡 In Progress  
-**Owner**: Platform Team  
+**Milestone**: M0 Foundation + M1 Agent Core + M2 Campaign Execution + M3 Governance + M4 Intelligence
+**Target Date**: 2026-12-15
+**Status**: 🟢 M0 ✅ | M1 ✅ | M2 ✅ | M3 ✅ | M4 🟡 In Progress
+**Owner**: Platform Team
 **Session**: This document updated at start of each session per SESSION_BOOTSTRAP.md
 
 ---
@@ -339,15 +339,35 @@ Before marking any P0 task complete, verify:
 2. Begin M4 Intelligence (Knowledge Graph, RAG Pipeline)
 3. Integration tests with real DB (testcontainers)
 
+**Work Completed (This Turn — M4 Intelligence — Part 1)**:
+- [x] **Domain Services** (3 new services):
+  - `rag_pipeline.py` — RagPipeline: hybrid search (vector + keyword + graph traversal), context assembly, brand guideline ingestion, campaign data ingestion
+  - `predictive_optimization.py` — PredictiveOptimizer: budget reallocation, creative fatigue detection, audience expansion suggestions
+  - `cross_campaign_learning.py` — CrossCampaignLearner: pattern mining, transfer learning, learning insights
+- [x] **API Routes** (3 new modules, 10+ endpoints):
+  - `rag_routes.py` — POST /knowledge/rag/search, /context, /ingest/brand-guidelines, /ingest/campaign-data
+  - `optimization_routes.py` — POST /knowledge/optimization/budget, /creative-fatigue, /audience-expansion, /suggestions
+  - `cross_campaign_routes.py` — POST /knowledge/patterns/mine, /transfer, /insights
+- [x] **Value Objects**: SearchResult, RAGContext, IngestionResult, BudgetAllocation, CreativeFatigueResult, AudienceExpansionSuggestion, CampaignPattern, TransferRecommendation, LearningInsight, OptimizationSuggestion
+- [x] **Tests** — 73 new M4 tests (33 RAG + 23 optimization + 17 cross-campaign)
+- [x] **Full test suite**: 73 new tests passing, 340+ existing tests unaffected
+- [x] **No new migration needed** — knowledge tables exist from migration 0004
+
+**M4 Exit Criteria Status**:
+- [x] Knowledge graph ingests campaign data, answers queries (RAG pipeline)
+- [x] All agent actions audited with reasoning trace (done in M3)
+- [ ] RAG retrieval accuracy >85% (requires integration testing with real embeddings)
+- [ ] Budget optimization lift >15% (requires production data validation)
+
 ---
 
 ## 6. Next Session Priorities (Update at End)
 
-1. Frontend governance dashboard (approval queue, autonomy settings, audit log viewer)
-2. Wire autonomy enforcement into agent base loop for runtime checks
+1. Wire RAG pipeline into agent prompts (agent base class integration)
+2. Frontend knowledge pages (RAG search UI, knowledge graph visualization, optimization dashboard)
 3. SOC2 Type II controls documentation and evidence collection
-4. Begin M4 Intelligence (Knowledge Graph, RAG Pipeline)
-5. Integration tests for governance with real DB (testcontainers)
+4. Additional M4 tests (integration tests for RAG with real DB)
+5. M5 Workflow Engine planning
 
 ---
 
@@ -361,4 +381,4 @@ Before marking any P0 task complete, verify:
 
 **End of Task Spec**
 
-*Update this file at end of each session. Commit with `chore(task-spec): update M3 progress`*
+*Update this file at end of each session. Commit with `chore(task-spec): update M4 progress`*
