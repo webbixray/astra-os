@@ -92,6 +92,55 @@ class AdCreativeModel(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
+    def to_domain(self):
+        from app.domain.entities.advertising.ad_creative import AdCreative, CreativeStatus, CreativeType
+        from datetime import UTC, datetime as dt
+        created = self.created_at
+        if created and created.tzinfo is None:
+            created = created.replace(tzinfo=UTC)
+        updated = self.updated_at
+        if updated and updated.tzinfo is None:
+            updated = updated.replace(tzinfo=UTC)
+        return AdCreative(
+            id=self.id,
+            organization_id=self.organization_id,
+            ad_campaign_id=self.ad_campaign_id,
+            name=self.name,
+            type=CreativeType(self.type),
+            status=CreativeStatus(self.status),
+            headline=self.headline or "",
+            body=self.body or "",
+            destination_url=self.destination_url or "",
+            asset_urls=list(self.asset_urls) if self.asset_urls else [],
+            platform_creative_ids=dict(self.platform_creative_ids) if self.platform_creative_ids else {},
+            dimensions=dict(self.dimensions) if self.dimensions else {},
+            thumbnail_url=self.thumbnail_url,
+            created_by=self.created_by,
+            created_at=created.replace(tzinfo=None) if created else None,
+            updated_at=updated.replace(tzinfo=None) if updated else None,
+        )
+
+    @classmethod
+    def from_domain(cls, creative):
+        return cls(
+            id=creative.id,
+            organization_id=creative.organization_id,
+            ad_campaign_id=creative.ad_campaign_id,
+            name=creative.name,
+            type=creative.type.value,
+            status=creative.status.value,
+            headline=creative.headline,
+            body=creative.body,
+            destination_url=creative.destination_url,
+            asset_urls=creative.asset_urls,
+            platform_creative_ids=creative.platform_creative_ids,
+            dimensions=creative.dimensions,
+            thumbnail_url=creative.thumbnail_url,
+            created_by=creative.created_by,
+            created_at=creative.created_at,
+            updated_at=creative.updated_at,
+        )
+
 
 class AdInsightModel(Base):
     __tablename__ = "ad_insights"

@@ -1,8 +1,8 @@
-# ASTRA OS — Task Specification: M0 Foundation Completion
+# ASTRA OS — Task Specification: M0 Foundation + M1 Agent Core + M2 Campaign Execution
 
-**Milestone**: M0 Foundation + M1 Agent Core  
-**Target Date**: 2026-08-31  
-**Status**: 🟡 In Progress — M0 complete, M1 in progress  
+**Milestone**: M0 Foundation + M1 Agent Core + M2 Campaign Execution  
+**Target Date**: 2026-09-30  
+**Status**: 🟢 M0 ✅ | M1 ✅ | M2 🟡 In Progress  
 **Owner**: Platform Team  
 **Session**: This document updated at start of each session per SESSION_BOOTSTRAP.md
 
@@ -26,6 +26,14 @@ Complete all M0 Foundation epics to achieve **deployable, testable, documented f
 - All agent actions audited with reasoning trace
 - Unit + integration tests cover agent runtime
 - Inter-agent communication via Redis Pub/Sub
+
+**Definition of Done for M2**:
+- Create campaign → target → creative → launch (manual) → monitor
+- Meta adapter: full campaign lifecycle sync (create, update, pause, insights)
+- Budget pacing prevents overspend (tested with simulated spend)
+- Creative assets stored, versioned, with approval workflow
+- Frontend: campaign builder, real-time preview
+- Audit log captures every campaign mutation
 
 ---
 
@@ -157,7 +165,7 @@ Complete all M0 Foundation epics to achieve **deployable, testable, documented f
 | 1 | Validate `make bootstrap` end-to-end on clean clone | E0.10 | Manual validation needed |
 | 2 | Verify CI pipeline passes on main (pushed commits) | E0.2 | Check GitHub Actions |
 
-### P1 — M1 Agent Core (Started)
+### P1 — M1 Agent Core ✅ DONE
 
 | # | Task | Epic | Status |
 |---|------|------|--------|
@@ -174,18 +182,33 @@ Complete all M0 Foundation epics to achieve **deployable, testable, documented f
 | 13 | Unify dual orchestrator (API + service) | E1.1 | ✅ Done — `agent_service_bridge.py` |
 | 14 | Load test: 100 concurrent agent executions < 5s p95 | E1.8 | ✅ Done — P95 = 2.1ms (100 req) |
 
+### P1 — M2 Campaign Execution (In Progress)
+
+| # | Task | Epic | Status |
+|---|------|------|--------|
+| 15 | Budget Pacing Domain Service | E2.7 | ✅ Done — `budget_pacing.py` (3 strategies, 5 statuses) |
+| 16 | Campaign Lifecycle Use Cases | E2.2 | ✅ Done — `lifecycle_use_cases.py` (launch/pause/resume/complete/archive) |
+| 17 | Creative Management Use Cases | E2.6 | ✅ Done — `creative_use_cases.py` (CRUD + approval workflow) |
+| 18 | Campaign Sync Service | E2.3 | ✅ Done — `sync_use_cases.py` (platform sync + insights refresh) |
+| 19 | Campaign Lifecycle API Routes | E2.2 | ✅ Done — 5 lifecycle endpoints added to campaign_routes.py |
+| 20 | Creative Management API Routes | E2.6 | ✅ Done — `creative_routes.py` (10 endpoints) |
+| 21 | DB Migration 0028 (ad_creatives indexes) | E0.5 | ✅ Done — composite indexes for query performance |
+| 22 | M2 Test Suite (71 tests) | E1.8 | ✅ Done — budget pacing (25) + lifecycle (21) + creative (25) |
+| 23 | Frontend Campaign Builder | E2.8 | 🟡 Existing pages need verification |
+| 24 | Full M2 Integration Tests | E1.8 | ⏳ Pending — end-to-end campaign lifecycle test |
+
 ### P2 — Can Defer
 
 | # | Task | Epic |
 |---|------|------|
-| 15 | ExternalSecrets operator + SecretStore manifests | E0.3 |
-| 16 | MFA + password reset flows (Supabase) | E0.4 |
-| 17 | Storybook setup for UI package | E0.8 |
-| 18 | Load test script (k6) for API baseline | E0.9 |
-| 19 | Knowledge graph (Neo4j) | E1.6 |
-| 20 | Agent observability dashboards | E1.7 |
-| 21 | `make bootstrap` end-to-end validation | E0.10 | ✅ Done — setup.sh + Makefile target |
-| 22 | CI workflow fix (pip install, YAML validation) | E0.2 | ✅ Done |
+| 25 | ExternalSecrets operator + SecretStore manifests | E0.3 |
+| 26 | MFA + password reset flows (Supabase) | E0.4 |
+| 27 | Storybook setup for UI package | E0.8 |
+| 28 | Load test script (k6) for API baseline | E0.9 |
+| 29 | Knowledge graph (Neo4j) | E1.6 |
+| 30 | Agent observability dashboards | E1.7 |
+| 31 | `make bootstrap` end-to-end validation | E0.10 | ✅ Done — setup.sh + Makefile target |
+| 32 | CI workflow fix (pip install, YAML validation) | E0.2 | ✅ Done |
 
 ---
 
@@ -229,6 +252,23 @@ Before marking any P0 task complete, verify:
 - [x] Updated TASK_SPEC.md with M1 progress
 - [x] All 149 tests passing + load test passing
 
+### Session 2026-07-12 (M2 Campaign Execution — Part 1)
+**Started**: 2026-07-12
+**Context**: Continued from M1 completion. Started M2 Campaign Execution.
+
+**Work Completed (This Turn)**:
+- [x] Budget Pacing Domain Service (`budget_pacing.py`) — 3 strategies (even/front-loaded/back-loaded), 5 status categories, overspend detection, daily schedule generation
+- [x] Campaign Lifecycle Use Cases (`lifecycle_use_cases.py`) — launch, pause, resume, complete, archive with state machine validation and domain events
+- [x] Creative Management Use Cases (`creative_use_cases.py`) — full CRUD + approval workflow (submit/approve/reject) + campaign association
+- [x] Campaign Sync Service (`sync_use_cases.py`) — pull performance data from ad platforms, sync campaign status, refresh insights
+- [x] Campaign Lifecycle API Routes — 5 new endpoints: launch, pause, resume, complete, archive
+- [x] Creative Management API Routes (`creative_routes.py`) — 10 endpoints for creative CRUD + approval workflow
+- [x] DB Migration 0028 — composite indexes for ad_creatives (org_status, campaign)
+- [x] Creative Repository implementation (`creative_repository.py`)
+- [x] Creative DB Model updates — added to_domain/from_domain methods to existing AdCreativeModel
+- [x] 71 new tests (25 budget pacing + 21 lifecycle + 25 creative) — all passing
+- [x] Full test suite: 220 tests passing (149 M1 + 71 M2)
+
 **Session Log (Previous)**:
 - [x] Fixed agent orchestrator critical bugs (10 files modified)
 - [x] Implemented concrete agent hierarchy (5 new files, 870 lines)
@@ -237,19 +277,20 @@ Before marking any P0 task complete, verify:
 - [x] Updated TASK_SPEC.md with accurate M0 status
 
 **Next Session Priorities**:
-1. Validate `make bootstrap` end-to-end on clean clone
-2. Verify CI pipeline passes on GitHub (currently failing at setup — needs investigation)
-3. Knowledge graph setup (E1.6) if needed for M1
-4. Begin M2 Campaign Execution planning
+1. Frontend Campaign Builder verification and enhancement
+2. Full M2 integration test (end-to-end campaign lifecycle)
+3. Creative approval workflow integration with agent system
+4. Campaign insights dashboard (real-time data display)
+5. Begin M3 Governance planning
 
 ---
 
 ## 6. Next Session Priorities (Update at End)
 
-1. Complete remaining P0 tasks from above
-2. Validate `make bootstrap` end-to-end
-3. Run full CI pipeline locally (`act` or push to trigger)
-4. Begin M1 Agent Core epic breakdown
+1. Verify frontend campaign builder pages work correctly
+2. Write end-to-end integration test for campaign lifecycle
+3. Connect pacing service to agent system for AI-optimized pacing
+4. Begin M3 Governance milestone planning
 
 ---
 

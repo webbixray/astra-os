@@ -49,6 +49,7 @@ from app.presentation.routes.analytics import analytics_routes
 from app.presentation.routes.calendar import calendar_routes
 from app.presentation.routes.campaigns import campaign_routes
 from app.presentation.routes.campaigns.automation_routes import router as automation_router
+from app.presentation.routes.campaigns.creative_routes import router as creative_router
 from app.presentation.routes.content import content_routes, gen_routes
 from app.presentation.routes.content.publishing import publishing_routes
 from app.presentation.routes.dashboards.dashboard_routes import router as dashboard_router
@@ -252,6 +253,7 @@ def create_app() -> FastAPI:
     app.include_router(users.router, prefix="/api/v1/users", tags=["users"])
     app.include_router(organizations.router, prefix="/api/v1/organizations", tags=["organizations"])
     app.include_router(campaign_routes.router, prefix="/api/v1/campaigns", tags=["campaigns"])
+    app.include_router(creative_router, prefix="/api/v1/creatives", tags=["creatives"])
     app.include_router(content_routes.router, prefix="/api/v1/content", tags=["content"])
     app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
     app.include_router(chat_routes.router, prefix="/api/v1", tags=["ai"])

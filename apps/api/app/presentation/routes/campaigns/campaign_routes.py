@@ -24,6 +24,13 @@ from app.application.use_cases.campaigns.campaign_use_cases import (
     ListCampaignsUseCase,
     UpdateCampaignUseCase,
 )
+from app.application.use_cases.campaigns.lifecycle_use_cases import (
+    ArchiveCampaignUseCase,
+    CompleteCampaignUseCase,
+    LaunchCampaignUseCase,
+    PauseCampaignUseCase,
+    ResumeCampaignUseCase,
+)
 from app.application.use_cases.campaigns.template_use_cases import (
     CloneCampaignFromTemplateUseCase,
     CreateTemplateUseCase,
@@ -419,6 +426,174 @@ async def update_campaign(
         created_at=campaign.created_at,
         updated_at=campaign.updated_at,
     )
+
+
+# ── Campaign Lifecycle endpoints ──────────────────────────────────────────────
+
+
+@router.post("/{campaign_id}/launch", summary="Launch a campaign")
+async def launch_campaign(
+    campaign_id: UUID,
+    user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    try:
+        from app.infrastructure.db.repositories.campaigns.campaign_repository import (
+            CampaignRepositoryImpl,
+        )
+
+        campaign_repo = CampaignRepositoryImpl(db)
+        campaign = await campaign_repo.find_by_id(campaign_id)
+        if not campaign:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found"
+            ) from None
+        await require_org_role(campaign.organization_id, "member", user_id, db)
+
+        use_case = LaunchCampaignUseCase(campaign_repo)
+        campaign = await use_case.execute(campaign_id)
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
+
+    return {
+        "id": str(campaign.id),
+        "status": campaign.status,
+        "name": campaign.name,
+    }
+
+
+@router.post("/{campaign_id}/pause", summary="Pause an active campaign")
+async def pause_campaign(
+    campaign_id: UUID,
+    user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    try:
+        from app.infrastructure.db.repositories.campaigns.campaign_repository import (
+            CampaignRepositoryImpl,
+        )
+
+        campaign_repo = CampaignRepositoryImpl(db)
+        campaign = await campaign_repo.find_by_id(campaign_id)
+        if not campaign:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found"
+            ) from None
+        await require_org_role(campaign.organization_id, "member", user_id, db)
+
+        use_case = PauseCampaignUseCase(campaign_repo)
+        campaign = await use_case.execute(campaign_id)
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
+
+    return {
+        "id": str(campaign.id),
+        "status": campaign.status,
+        "name": campaign.name,
+    }
+
+
+@router.post("/{campaign_id}/resume", summary="Resume a paused campaign")
+async def resume_campaign(
+    campaign_id: UUID,
+    user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    try:
+        from app.infrastructure.db.repositories.campaigns.campaign_repository import (
+            CampaignRepositoryImpl,
+        )
+
+        campaign_repo = CampaignRepositoryImpl(db)
+        campaign = await campaign_repo.find_by_id(campaign_id)
+        if not campaign:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found"
+            ) from None
+        await require_org_role(campaign.organization_id, "member", user_id, db)
+
+        use_case = ResumeCampaignUseCase(campaign_repo)
+        campaign = await use_case.execute(campaign_id)
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
+
+    return {
+        "id": str(campaign.id),
+        "status": campaign.status,
+        "name": campaign.name,
+    }
+
+
+@router.post("/{campaign_id}/complete", summary="Mark campaign as completed")
+async def complete_campaign(
+    campaign_id: UUID,
+    user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    try:
+        from app.infrastructure.db.repositories.campaigns.campaign_repository import (
+            CampaignRepositoryImpl,
+        )
+
+        campaign_repo = CampaignRepositoryImpl(db)
+        campaign = await campaign_repo.find_by_id(campaign_id)
+        if not campaign:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found"
+            ) from None
+        await require_org_role(campaign.organization_id, "member", user_id, db)
+
+        use_case = CompleteCampaignUseCase(campaign_repo)
+        campaign = await use_case.execute(campaign_id)
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
+
+    return {
+        "id": str(campaign.id),
+        "status": campaign.status,
+        "name": campaign.name,
+    }
+
+
+@router.post("/{campaign_id}/archive", summary="Archive a campaign")
+async def archive_campaign(
+    campaign_id: UUID,
+    user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    try:
+        from app.infrastructure.db.repositories.campaigns.campaign_repository import (
+            CampaignRepositoryImpl,
+        )
+
+        campaign_repo = CampaignRepositoryImpl(db)
+        campaign = await campaign_repo.find_by_id(campaign_id)
+        if not campaign:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found"
+            ) from None
+        await require_org_role(campaign.organization_id, "member", user_id, db)
+
+        use_case = ArchiveCampaignUseCase(campaign_repo)
+        campaign = await use_case.execute(campaign_id)
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
+
+    return {
+        "id": str(campaign.id),
+        "status": campaign.status,
+        "name": campaign.name,
+    }
 
 
 # ── Budget endpoints ──────────────────────────────────────────────────────────
