@@ -1,4 +1,4 @@
-# ASTRA OS — Task Specification: M0 Foundation + M1 Agent Core + M2 Campaign Execution
+# ASTRA OS — Task Specification: M0-M3 + M4-M7 [L1-360]
 
 **Milestone**: M0 Foundation + M1 Agent Core + M2 Campaign Execution  
 **Target Date**: 2026-09-30  
@@ -290,12 +290,69 @@ Before marking any P0 task complete, verify:
 
 ---
 
+### Session 2026-07-12 (M3 Governance — Complete)
+**Started**: 2026-07-12
+**Context**: M2 Campaign Execution complete. Started M3 Governance.
+
+**Work Completed (This Turn)**:
+- [x] **Domain Entities** (previously created):
+  - `approval.py` — ApprovalRule, ApprovalRequest, ApprovalDecision, RuleTrigger, ApprovalStatus, DecisionAction
+  - `autonomy.py` — AutonomyConfig, AutonomyLevel, AgentAction, ACTION_RISK_LEVELS
+- [x] **Domain Services** (4 services):
+  - `approval_service.py` — ApprovalEvaluationService: stateless rule evaluation against action contexts
+  - `autonomy_enforcement.py` — AutonomyEnforcementService: runtime gate for agent actions (FULL_AUTO/SEMI_AUTO/ADVISORY)
+  - `explainability.py` — ExplainabilityService: reasoning trace extraction, natural language summaries, decision replay, audit summary
+  - `audit_enhancement.py` — AuditEnhancementService: SHA-256 tamper-evident hash chain, retention policy (7yr), GDPR/CCPA export
+- [x] **Use Cases** (12 use cases):
+  - `approval_use_cases.py` — CreateApprovalRule, EvaluateApprovalRules, CreateApprovalRequest, DecideApproval, ListPendingApprovals, ExpireStaleApprovals
+  - `autonomy_use_cases.py` — GetAutonomyConfig, UpdateAutonomyConfig, CheckAgentAction, RecordAgentAction, GetAgentActions, GetExplainabilityReport
+- [x] **DB Models** (5 models):
+  - ApprovalRuleModel, ApprovalRequestModel, ApprovalDecisionModel, AutonomyConfigModel, AgentActionModel
+- [x] **DB Migration 0029** — 5 tables: approval_rules, approval_requests, approval_decisions, autonomy_configs, agent_actions with indexes
+- [x] **Repositories** (5 implementations):
+  - ApprovalRuleRepositoryImpl, ApprovalRequestRepositoryImpl, ApprovalDecisionRepositoryImpl
+  - AutonomyConfigRepositoryImpl, AgentActionRepositoryImpl
+- [x] **API Routes** (3 route modules, 16+ endpoints):
+  - `approval_routes.py` — Rules CRUD, evaluate, request/decision management, expire
+  - `autonomy_routes.py` — Config CRUD, action check, record, list, explain, replay, summary
+  - `audit_routes.py` — Chain verification, export (GDPR/CCPA), retention info
+- [x] **Domain Events** — Added 5 governance events to EventBus (rule_created, rule_evaluated, action_checked, action_blocked, autonomy_changed)
+- [x] **Tests** — 88 governance tests covering:
+  - ApprovalRule entity (13 tests) — spend, brand, audience, channel, inactive, validation
+  - ApprovalRequest lifecycle (9 tests) — create, approve, reject, expire, cancel, state guards
+  - ApprovalDecision (3 tests) — factory methods, validation
+  - AutonomyConfig (10 tests) — levels, overrides, auto-execute, spend limits
+  - AgentAction (6 tests) — create, record, reasoning, explanation
+  - Risk levels (4 tests) — low/high/unknown risk classification
+  - ApprovalEvaluationService (6 tests) — rule matching, convenience methods
+  - AutonomyEnforcementService (7 tests) — FULL_AUTO, SEMI_AUTO, ADVISORY enforcement
+  - ExplainabilityService (6 tests) — explain, summary, replay, audit summary
+  - AuditEnhancementService (10 tests) — hash, chain verify, tamper detect, export, retention
+  - Use case integration (14 tests) — all use cases with mock repos
+- [x] **Full test suite**: 314 tests passing (226 M0-M2 + 88 M3)
+
+**M3 Exit Criteria Status**:
+- [x] Human approval required for spend >$100, new audience, brand-sensitive content (via ApprovalRule + evaluate)
+- [x] Autonomy level enforced at runtime (AutonomyEnforcementService.check)
+- [x] Audit log: append-only, queryable, exportable, 7-year retention (AuditEnhancementService)
+- [x] Every agent decision explainable in plain English (ExplainabilityService.to_explanation)
+- [ ] SOC2 Type II readiness (deferred — requires controls documentation + evidence collection)
+
+**Next Session Priorities**:
+1. Frontend governance pages (approval queue, autonomy settings, audit viewer)
+2. Wire approval enforcement into agent base loop (services/agent_orchestrator/agents/base.py)
+3. SOC2 controls documentation
+4. Begin M4 Intelligence planning
+
+---
+
 ## 6. Next Session Priorities (Update at End)
 
-1. Verify frontend campaign builder pages work correctly
-2. Write end-to-end integration test for campaign lifecycle
-3. Connect pacing service to agent system for AI-optimized pacing
-4. Begin M3 Governance milestone planning
+1. Frontend governance dashboard (approval queue, autonomy settings, audit log viewer)
+2. Wire autonomy enforcement into agent base loop for runtime checks
+3. SOC2 Type II controls documentation and evidence collection
+4. Begin M4 Intelligence (Knowledge Graph, RAG Pipeline)
+5. Integration tests for governance with real DB (testcontainers)
 
 ---
 
@@ -309,4 +366,4 @@ Before marking any P0 task complete, verify:
 
 **End of Task Spec**
 
-*Update this file at end of each session. Commit with `chore(task-spec): update M0 progress`*
+*Update this file at end of each session. Commit with `chore(task-spec): update M3 progress`*

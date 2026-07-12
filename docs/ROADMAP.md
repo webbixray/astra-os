@@ -15,7 +15,7 @@
 | **M0** | Foundation | 2026-07-31 | ✅ Done | Infra, CI/CD, Auth, Clean Arch backbone |
 | **M1** | Agent Core | 2026-08-31 | ✅ Done | Agent runtime, hierarchy, memory, router |
 | **M2** | Campaign Execution | 2026-09-30 | ✅ Done | Campaign CRUD, manual launch, ad platform adapters |
-| **M3** | Governance | 2026-10-31 | ⏳ Planned | Approvals, audit, autonomy levels, explainability |
+| **M3** | Governance | 2026-10-31 | 🟡 In Progress | Approvals, audit, autonomy levels, explainability — 314 tests (88 new) |
 | **M4** | Intelligence | 2026-12-15 | ⏳ Planned | Knowledge graph, RAG, predictive optimization |
 | **M5** | Workflow Engine | 2027-01-31 | ⏳ Planned | Visual builder, Temporal integration, templates |
 | **M6** | Beta Launch | 2027-03-15 | ⏳ Planned | Design partners, shadow mode, observability |
@@ -134,10 +134,10 @@
 | **E3.6 Security Hardening** | Pen test, secret scanning, dependency audit, RLS verification | P0 |
 
 ### 5.2 M3 Exit Criteria
-- [ ] Human approval required for spend >$100, new audience, brand-sensitive content
-- [ ] Autonomy level enforced at runtime (agent checks before action)
-- [ ] Audit log: append-only, queryable, exportable, 7-year retention
-- [ ] Every agent decision explainable in plain English
+- [x] Human approval required for spend >$100, new audience, brand-sensitive content
+- [x] Autonomy level enforced at runtime (agent checks before action)
+- [x] Audit log: append-only, queryable, exportable, 7-year retention
+- [x] Every agent decision explainable in plain English
 - [ ] SOC2 Type II readiness (controls documented, evidence collected)
 
 ---

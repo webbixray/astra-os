@@ -70,6 +70,13 @@ class DomainEventType(Enum):
     TEAM_MEMBER_ADDED = "team.member_added"
     TEAM_MEMBER_REMOVED = "team.member_removed"
 
+    # Governance events
+    GOVERNANCE_RULE_CREATED = "governance.rule_created"
+    GOVERNANCE_RULE_EVALUATED = "governance.rule_evaluated"
+    GOVERNANCE_ACTION_CHECKED = "governance.action_checked"
+    GOVERNANCE_ACTION_BLOCKED = "governance.action_blocked"
+    GOVERNANCE_AUTONOMY_CHANGED = "governance.autonomy_changed"
+
     # AI events
     AI_CONTENT_GENERATED = "ai.content_generated"
     AI_AGENT_TASK_COMPLETED = "ai.agent_task_completed"
