@@ -1,227 +1,413 @@
-# Contributing to Astra OS
+# ASTRA OS — Contributing Guide
 
-Thank you for your interest in contributing to Astra OS! This guide will help you get started.
+**Version**: 1.0  
+**Welcome!** We're excited you want to contribute to ASTRA OS.
+
+---
 
 ## Table of Contents
 
-- [Code of Conduct](#code-of-conduct)
-- [Getting Started](#getting-started)
-- [Development Workflow](#development-workflow)
-- [Code Style](#code-style)
-- [Commit Messages](#commit-messages)
-- [Pull Request Process](#pull-request-process)
-- [Reporting Issues](#reporting-issues)
+1. [Code of Conduct](#code-of-conduct)
+2. [Getting Started](#getting-started)
+3. [How to Contribute](#how-to-contribute)
+4. [Pull Request Process](#pull-request-process)
+5. [Coding Standards](#coding-standards)
+6. [Testing](#testing)
+7. [Documentation](#documentation)
+8. [Security](#security)
+9. [Community](#community)
+
+---
 
 ## Code of Conduct
 
-We are committed to providing a welcoming and inclusive experience for everyone. Please be respectful and constructive in all interactions.
+### Our Pledge
+
+We are committed to providing a welcoming, inclusive environment for everyone. We pledge to:
+
+- **Be respectful** of differing viewpoints and experiences
+- **Accept constructive criticism** gracefully
+- **Focus on what's best** for the community
+- **Show empathy** towards other contributors
+- **Zero tolerance** for harassment, discrimination, or toxic behavior
+
+### Enforcement
+
+Violations will be addressed by project maintainers. Consequences may include:
+- Warning
+- Temporary ban
+- Permanent ban
+
+Report violations to: conduct@astra-os.com
+
+---
 
 ## Getting Started
 
-### Prerequisites
-
-- Node.js >= 20.0.0
-- pnpm >= 9.0.0
-- Python >= 3.12
-- Docker (recommended)
-
-### Setup
-
-1. Fork the repository on GitHub
-
-2. Clone your fork:
-   ```bash
-   git clone https://github.com/your-username/astra-os.git
-   cd astra-os
-   ```
-
-3. Run the setup script:
-   ```bash
-   chmod +x scripts/setup.sh
-   ./scripts/setup.sh
-   ```
-
-4. Create a feature branch:
-   ```bash
-   git checkout -b feature/my-feature
-   ```
-
-## Development Workflow
-
-### Making Changes
-
-1. **Create a feature branch** from `main`
-2. **Make your changes** following the code style guidelines
-3. **Write tests** for new functionality
-4. **Run tests** to ensure nothing is broken
-5. **Commit your changes** with a clear message
-6. **Push to your fork** and create a Pull Request
-
-### Running Tests
+### 1. Set Up Development Environment
 
 ```bash
-# Run all tests
-make test
+# Clone
+git clone https://github.com/webbixray/astra-os.git
+cd astra-os
 
-# Run API tests only
-make test-api
-
-# Run Web tests only
-make test-web
-
-# Run E2E tests
-make test-e2e
-```
-
-### Code Quality
-
-```bash
-# Lint all code
-make lint
-
-# Format all code
-make format
-
-# Type check
-make typecheck
-```
-
-## Code Style
-
-### Python (API)
-
-- **Formatter**: Ruff
-- **Linter**: Ruff
-- **Type Checker**: mypy
-- **Line Length**: 100 characters max
-
-```bash
+# Backend
 cd apps/api
-ruff format .
-ruff check .
-mypy . --ignore-missing-imports
+python -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+alembic upgrade head
+python scripts/seed_db.py
+
+# Frontend
+cd ../web
+pnpm install
+
+# Start dev servers
+# Terminal 1: Backend
+cd apps/api && uvicorn app.main:app --reload
+
+# Terminal 2: Frontend
+cd apps/web && pnpm dev
 ```
 
-### TypeScript (Web)
+### 2. Verify Setup
 
-- **Formatter**: Prettier
-- **Linter**: ESLint
-- **Type Checker**: TypeScript
+- API: http://localhost:8000/api/v1/docs
+- Frontend: http://localhost:3000
+- Health: http://localhost:8000/api/v1/health
+
+### 3. Run Tests
 
 ```bash
-pnpm format
+# Backend
+cd apps/api && PYTHONPATH=. pytest tests/ -v
+
+# Frontend
+cd apps/web && pnpm test --run
+```
+
+---
+
+## How to Contribute
+
+### 1. Find Work
+
+- **Good First Issues**: Labelled `good first issue`
+- **Bug Fixes**: Labelled `bug`
+- **Features**: Labelled `enhancement`
+- **Docs**: Labelled `documentation`
+
+### 2. Create a Branch
+
+```bash
+git checkout main
+git pull origin main
+git checkout -b feat/your-feature-name
+# or fix/your-bug-fix
+```
+
+### 3. Make Changes
+
+- Write code
+- Write tests
+- Update documentation
+- Follow coding standards
+
+### 3. Run Quality Checks
+
+```bash
+# Backend
+cd apps/api
+PYTHONPATH=. pytest tests/ -v
+ruff check . && ruff format .
+mypy app/
+
+# Frontend
+cd apps/web
+pnpm test --run
 pnpm lint
+pnpm format --check
 pnpm typecheck
 ```
 
-### General Guidelines
+### 4. Commit
 
-- Write clear, descriptive comments
-- Keep functions small and focused
-- Use meaningful variable and function names
-- Follow the existing code patterns
-- Add tests for new features
+Follow [Conventional Commits](https://www.conventionalcommits.org/):
 
-## Commit Messages
+```bash
+git add .
+git commit -m "feat: add shadow mode lift calculation
 
-Follow the [Conventional Commits](https://www.conventionalcommits.org/) specification:
-
-### Format
-
-```
-<type>(<scope>): <description>
-
-[optional body]
-
-[optional footer(s)]
+- Add LiftMeasurementService for statistical lift calculation
+- Include significance testing with p-values
+- Add batch calculation endpoint
+"
 ```
 
-### Types
+**Types**: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `perf`, `security`
 
-- **feat**: A new feature
-- **fix**: A bug fix
-- **docs**: Documentation changes
-- **style**: Code style changes (formatting, etc.)
-- **refactor**: Code refactoring
-- **test**: Adding or updating tests
-- **chore**: Maintenance tasks
+### 5. Push & Create PR
 
-### Examples
-
+```bash
+git push origin feat/your-feature-name
+# Create PR on GitHub
 ```
-feat(campaigns): add budget tracking
-fix(auth): resolve token refresh issue
-docs(readme): update installation guide
-test(api): add tests for user endpoints
-```
+
+---
 
 ## Pull Request Process
 
-### Before Submitting
+### PR Requirements
 
-1. **Update documentation** if needed
-2. **Add tests** for new functionality
-3. **Ensure all tests pass** (`make test`)
-4. **Lint your code** (`make lint`)
-5. **Update the changelog** if applicable
+- [ ] Clear title and description
+- [ ] Linked to issue (if applicable)
+- [ ] Tests pass
+- [ ] Linting passes
+- [ ] Type checking passes
+- [ ] Documentation updated
+- [ ] CHANGELOG.md entry added
+- [ ] No merge conflicts
 
 ### PR Template
 
 ```markdown
-## Description
-
+## Summary
 Brief description of changes
 
-## Type of Change
+## Related Issue
+Fixes #123
 
-- [ ] Bug fix
-- [ ] New feature
-- [ ] Breaking change
-- [ ] Documentation update
+## Changes
+- [ ] Added feature X
+- [ ] Fixed bug Y
+- [ ] Updated docs Z
 
 ## Testing
+- [ ] Unit tests added
+- [ ] Integration tests pass
+- [ ] Manual testing done
 
-- [ ] Unit tests pass
-- [ ] E2E tests pass
-- [ ] Manual testing completed
+## Screenshots (if UI)
+[Add screenshots]
 
 ## Checklist
-
-- [ ] Code follows project style
-- [ ] Self-review completed
-- [ ] Documentation updated
-- [ ] No breaking changes (or documented)
+- [ ] Tests pass
+- [ ] Lint passes
+- [ ] Types pass
+- [ ] Docs updated
+- [ ] CHANGELOG updated
 ```
 
 ### Review Process
 
-1. All PRs require at least one review
-2. CI must pass before merging
-3. Address review feedback
-4. Squash and merge when approved
+1. **Automated Checks**: CI runs (lint, typecheck, tests, security)
+2. **Code Review**: 1+ maintainer approval
+3. **Merge**: Squash and merge after approval
+4. **Cleanup**: Branch deleted after merge
 
-## Reporting Issues
+---
 
-### Bug Reports
+## Coding Standards
+
+### Python (Backend)
+
+Follow the [Engineering Constitution](ENGINEERING_CONSTITUTION.md):
+
+- **Formatter**: Ruff (100 char line)
+- **Linter**: Ruff (all rules + pydantic, fastapi, sqlalchemy)
+- **Types**: MyPy strict mode
+- **Imports**: Absolute, grouped (stdlib, third-party, local)
+
+```python
+# Good
+from uuid import UUID
+from fastapi import APIRouter
+from app.domain.entities.campaign import Campaign
+
+# Bad
+from app.domain.entities.campaign import *
+import app.domain.entities.campaign as c
+```
+
+### TypeScript (Frontend)
+
+- **Formatter**: Prettier (single quotes, trailing commas)
+- **Linter**: ESLint (Airbnb + TypeScript)
+- **Strict Mode**: Enabled
+- **No `any`**: Use `unknown` if needed
+
+```typescript
+// Good
+interface Campaign {
+  id: string;
+  name: string;
+  budget: number;
+}
+
+// Bad
+interface Campaign {
+  id: any;
+  name: string;
+  budget: any;
+}
+```
+
+### Database
+
+- **Tables**: snake_case, plural
+- **Columns**: snake_case
+- **PKs**: UUID
+- **FKs**: Explicit, indexed
+- **Enums**: Native PostgreSQL enums
+- **JSONB**: For flexible data
+
+---
+
+## Testing
+
+### Backend
+
+```bash
+# All tests
+PYTHONPATH=. pytest tests/ -v
+
+# Unit only
+PYTHONPATH=. pytest tests/unit/ -v
+
+# Integration
+PYTHONPATH=. pytest tests/integration/ -v
+
+# Coverage
+PYTHONPATH=. pytest --cov=app --cov-report=html
+```
+
+### Frontend
+
+```bash
+# All tests
+pnpm test --run
+
+# Watch mode
+pnpm test
+
+# UI mode
+pnpm test:ui
+
+# Coverage
+pnpm test:coverage
+```
+
+### Test Patterns
+
+```python
+# Unit test example
+def test_campaign_creation():
+    campaign = Campaign.create(
+        organization_id=uuid4(),
+        name="Test Campaign",
+        created_by=uuid4(),
+    )
+    assert campaign.name == "Test Campaign"
+    assert campaign.status == CampaignStatus.DRAFT
+```
+
+```typescript
+// Frontend test example
+import { render, screen } from '@testing-library/react';
+import { CampaignCard } from '@/features/campaigns/components/campaign-card';
+
+describe('CampaignCard', () => {
+  it('renders campaign name', () => {
+    render(<CampaignCard campaign={{ id: '1', name: 'Test Campaign' }} />);
+    expect(screen.getByText('Test Campaign')).toBeInTheDocument();
+  });
+});
+```
+
+---
+
+## Documentation
+
+### When to Update
+
+- New API endpoints → API_REFERENCE.md
+- Architecture changes → ARCHITECTURE.md
+- New features → DEVELOPMENT.md
+- Config changes → DEPLOYMENT.md
+- Process changes → SESSION_BOOTSTRAP.md
+
+### Style
+
+- Clear, concise, examples
+- Code blocks for all examples
+- Links to related docs
+- Keep it current
+
+---
+
+## Security
+
+### Reporting Vulnerabilities
+
+**DO NOT** create public issues for security vulnerabilities.
+
+Email: security@astra-os.com
 
 Include:
+- Description
 - Steps to reproduce
-- Expected behavior
-- Actual behavior
-- Environment details
-- Screenshots (if applicable)
+- Impact assessment
+- Suggested fix (if any)
 
-### Feature Requests
+### Response Timeline
 
-Include:
-- Problem description
-- Proposed solution
-- Alternatives considered
-- Additional context
+- **Acknowledgement**: 24 hours
+- **Assessment**: 72 hours
+- **Fix Timeline**: Based on severity
+- **Disclosure**: Coordinated after fix
 
-## Questions?
+### Security Practices
 
-- Open a [Discussion](https://github.com/webbixray/astra-os/discussions)
-- Check the [Documentation](docs/)
+- Never commit secrets
+- Rotate keys quarterly
+- Use dependabot/renovate
+- Run `pip-audit` / `pnpm audit` weekly
 
-Thank you for contributing to Astra OS!
+---
+
+## Community
+
+### Communication Channels
+
+| Channel | Purpose |
+|---------|---------|
+| **GitHub Discussions** | Questions, ideas, RFCs |
+| **GitHub Issues** | Bugs, features, tasks |
+| **Discord** | Real-time chat, help |
+| **Email** | security@astra-os.com, conduct@astra-os.com |
+
+### Getting Help
+
+1. Search existing issues/discussions
+2. Read docs (ARCHITECTURE.md, DEVELOPMENT.md)
+3. Ask in Discord #help channel
+4. Create GitHub Discussion
+
+### Recognition
+
+Contributors recognized in:
+- CHANGELOG.md
+- Release notes
+- GitHub Contributors graph
+- Annual contributors report
+
+---
+
+## License
+
+By contributing, you agree your contributions are licensed under the project's license (MIT).
+
+---
+
+*Thank you for contributing to ASTRA OS! 🚀*

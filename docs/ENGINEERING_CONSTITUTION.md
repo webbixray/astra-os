@@ -1,373 +1,328 @@
 # ASTRA OS — Engineering Constitution
 
-**Version**: 1.0.0  
-**Status**: Immutable — Requires Architecture Review Board approval to amend  
-**Effective Date**: 2026-07-11
+**Version**: 1.0  
+**Status**: Binding  
+**Authority**: CTO + Engineering Leads  
+**Review**: Quarterly  
 
 ---
 
 ## Preamble
 
-ASTRA OS is an enterprise-grade AI operating system for marketing organizations. This Constitution establishes the immutable engineering principles, architectural mandates, quality gates, and governance processes that govern all development. No feature, refactor, or hotfix may violate these principles without explicit Architecture Review Board (ARB) approval.
+This Constitution establishes the immutable engineering standards for ASTRA OS. All code, architecture decisions, and processes must comply. Exceptions require written approval from CTO + 2 Engineering Leads.
 
 ---
 
-## Article I: Foundational Principles
+## Article I: Architecture Standards
 
-### 1.1 Professional Engineering Discipline
-We operate as a Tier-1 software company. Every change undergoes the full SDLC: discovery → design → implementation → review → test → deploy → observe. No phase is optional.
+### 1.1 Clean Architecture (ADR-002)
+- **Domain Layer**: Pure Python, zero external dependencies
+- **Application Layer**: Use cases, DTOs, orchestration
+- **Infrastructure Layer**: SQLAlchemy, Redis, HTTP clients, external APIs
+- **Presentation Layer**: FastAPI routes, Pydantic schemas, middleware
 
-### 1.2 Architecture Governance
-- **Architecture Decision Records (ADRs)** are mandatory for all architectural decisions (ADR-001 through ADR-009 are ratified)
-- **Architecture Review Board (ARB)**: CTO, Chief Architect, Principal Engineer, Security Architect — quorum of 3 required
-- **Architectural drift is technical debt** — detected automatically via archunit tests in CI
+**Rule**: Domain never imports from Infrastructure or Presentation.
 
-### 1.3 Quality Is Non-Negotiable
-A change is not "done" until it passes all quality gates:
-- Static analysis (lint, type-check, security scan)
-- Unit tests (≥80% coverage, branch coverage ≥70%)
-- Integration tests (all critical paths)
-- E2E tests (critical user journeys)
-- Security scan (SAST + dependency audit)
-- Performance benchmarks (no regression >5%)
-- Accessibility audit (WCAG 2.1 AA)
-- Documentation updated (ADR, API specs, runbooks)
+### 1.2 Domain-Driven Design
+- Aggregates enforce invariants
+- Entities have identity, Value Objects are immutable
+- Domain Events for cross-aggregate communication
+- Repository interfaces in Domain, implementations in Infrastructure
 
-### 1.4 Observability First
-Every service must expose: health checks, structured logs (JSON), metrics (Prometheus), traces (OpenTelemetry), and audit logs for AI decisions.
+### 1.3 Event-Driven Architecture (ADR-005)
+- Domain Events published to Redis Pub/Sub
+- Event Handlers in Application layer
+- Async processing for non-critical paths
+- Event sourcing for audit trails (Shadow Mode, Audit Logs)
 
-### 1.5 Security by Default
-- Zero-trust networking
-- Secrets in vaults (never in repo, never in env files committed)
-- All AI actions auditable with immutable logs
-- Human approval required for: data export, external API calls, destructive actions, PII access
+### 1.4 Multi-Tenancy
+- All data scoped to `organization_id`
+- Row-Level Security (RLS) policies on all tables
+- Feature flags per organization
+- No cross-org queries allowed
 
 ---
 
-## Article II: Architecture Mandates
+## Article II: Code Standards
 
-### 2.1 Clean Architecture (ADR-002)
-**Backend (FastAPI)**: Four-layer separation — Presentation → Application → Domain → Infrastructure  
-**Frontend (Next.js)**: Pages/Layouts → Features → Shared/UI → Lib/Utils
+### 2.1 Python (Backend)
 
-**Dependency Rule**: Inner layers never depend on outer layers. Dependency inversion via interfaces/ports.
+#### Style
+- **Formatter**: Ruff (line-length=100)
+- **Linter**: Ruff (all rules + pydantic, fastapi, sqlalchemy)
+- **Type Checker**: MyPy (strict mode)
+- **Imports**: Absolute, grouped (stdlib, third-party, local)
 
-### 2.2 Domain-Driven Design
-- Feature-first module organization (ADR-001, ADR-002)
-- Each domain module: `domain/`, `application/`, `infrastructure/`, `presentation/`, `tests/`
-- Aggregates enforce invariants; domain events for cross-module communication
+#### Patterns
+- **Async First**: All I/O async, sync only for CPU-bound
+- **Type Hints**: Required on all public functions
+- **Dataclasses**: Use `@dataclass` for entities, `slots=True` when possible
+- **Exceptions**: Custom domain exceptions, never bare `Exception`
 
-### 2.3 Hexagonal Architecture (Ports & Adapters)
-- Domain defines **ports** (interfaces)
-- Infrastructure provides **adapters** (PostgreSQL, Redis, NVIDIA NIM, Supabase, ad platforms)
-- Application layer orchestrates via dependency injection
+#### Prohibited
+- Global mutable state
+- Circular imports
+- `Any` type without justification
+- `**kwargs` in public APIs
+- Bare `except:`
+- Mutating function arguments
 
-### 2.4 Event-Driven Architecture (ADR-009)
-- Redis Pub/Sub + PostgreSQL LISTEN/NOTIFY for intra-service events
-- Outbox pattern for reliable event publishing
-- Event schema versioning via shared types package
+### 2.2 TypeScript (Frontend)
 
-### 2.5 API-First Development
-- OpenAPI 3.1 specs defined **before** implementation
-- Contract tests enforce provider/consumer compatibility
-- Versioning via URL path (`/api/v1/`, `/api/v2/`)
+#### Style
+- **Formatter**: Prettier (single quotes, trailing commas)
+- **Linter**: ESLint (Airbnb + TypeScript)
+- **Strict Mode**: Enabled
+- **Explicit Types**: No `any`, use `unknown` if needed
 
-### 2.6 AI Engineering Standards (ASTRA-Specific)
-Per ADR-003, ADR-006:
-- **Agent Orchestrator**: Custom hierarchical system (CEO → Directors → Specialists)
-- **Model Router**: NVIDIA NIM primary → OpenAI → Anthropic → Gemini fallbacks
-- **RAG**: pgvector for embeddings, hybrid search (vector + keyword)
-- **Knowledge Graph**: Neo4j for entity-relationship reasoning
+#### Patterns
+- **React**: Functional components, hooks, Server Components by default
+- **State**: TanStack Query for server state, Zustand for client state
+- **Forms**: React Hook Form + Zod validation
+- **Components**: shadcn/ui primitives, composition over inheritance
+
+#### Prohibited
+- Class components
+- `useEffect` for data fetching (use TanStack Query)
+- Inline styles (use Tailwind)
+- `any` type
+- Direct DOM manipulation
+
+### 2.3 Database (PostgreSQL)
+
+#### Conventions
+- **Tables**: snake_case, plural (`campaigns`, `workflow_executions`)
+- **Columns**: snake_case, descriptive (`created_at`, not `c_at`)
+- **Primary Keys**: UUID (`uuid_generate_v4()`)
+- **Foreign Keys**: Explicit, indexed, `ON DELETE CASCADE` where appropriate
+- **Enums**: Native PostgreSQL enums, not CHECK constraints
+- **JSONB**: For flexible schemas (nodes, edges, config)
+- **Indexes**: Composite for query patterns, partial for filters
+
+#### Migrations
+- **Tool**: Alembic
+- **Naming**: `YYYYMMDD_HHMMSS_description.py`
+- **Reversible**: Every migration must have `downgrade()`
+- **Data Migrations**: Separate from schema migrations
+- **Review Required**: All migrations reviewed by 2 engineers
+
+---
+
+## Article III: AI & Agent Standards
+
+### 3.1 Model Router (ADR-006)
+- **Primary**: NVIDIA NIM (local/GPU)
+- **Fallback Chain**: OpenAI → Anthropic → Gemini
+- **Cost Tracking**: Per-request, per-organization
+- **Rate Limits**: Per-provider, per-organization
+- **Fallback Logic**: Automatic on error/timeout
+
+### 3.2 Agent Hierarchy (ADR-003)
+```
+CEOAgent (Level 2 autonomy)
+├── MarketingDirector → [ContentSpecialist, SEOSpecialist, SocialSpecialist]
+├── CreativeDirector → [Copywriter, Designer, BrandVoice]
+├── AdvertisingDirector → [CampaignOptimizer, BidManager, AudienceResearcher]
+├── ResearchDirector → [MarketResearcher, CompetitorAnalyst, TrendAnalyzer]
+├── AnalyticsDirector → [DataAnalyst, AttributionModeler, ReportGenerator]
+├── WorkflowDirector → [WorkflowBuilder, AutomationScheduler, IntegrationManager]
+└── ComplianceDirector → [ContentReviewer, PrivacyAuditor, PolicyEnforcer]
+```
+
+### 3.3 Agent Runtime
+- **Base Class**: `ReActAgent` (Reasoning + Acting loop)
+- **Tools**: Registered via decorator, typed schemas
 - **Memory**: Working (in-context), Episodic (PostgreSQL), Semantic (pgvector)
-- **Tool Execution**: Sandbox with timeout, resource limits, audit logging
-- **Human-in-the-Loop**: Required for destructive actions, PII, spend > $100
-- **Explainability**: Every agent decision emits reasoning trace
-- **Autonomy Levels**: Configurable per agent (0=advisory, 1=semi-auto, 2=full-auto with audit)
+- **Governance**: Middleware enforces autonomy level at runtime
+- **Audit Trail**: Every action logged with reasoning trace
+
+### 3.4 Governance (M3)
+- **Autonomy Levels**: 0=Advisory, 1=Semi-auto, 2=Full-auto
+- **Approval Rules**: Spend >$100, new audiences, brand-sensitive content
+- **Explainability**: Every decision traceable to reasoning + context
+- **Audit Log**: Immutable, queryable, exportable (GDPR/CCPA)
 
 ---
 
-## Article III: Repository Governance
+## Article IV: Testing Standards
 
-### 3.1 Branch Strategy (GitFlow + Trunk-Based Hybrid)
-```
-main          → protected, always deployable, tagged releases only
-develop       → integration branch, CI must pass
-feature/*     → one per issue, short-lived (<5 days), rebased onto develop
-release/*     → stabilization, version bump, changelog, RC tags
-hotfix/*      → from main, emergency fixes, fast-track to main + develop
-```
+### 4.1 Coverage Requirements
+| Layer | Minimum | Target |
+|-------|---------|--------|
+| Domain | 95% | 100% |
+| Application | 90% | 95% |
+| Infrastructure | 80% | 90% |
+| Presentation | 70% | 80% |
+| **Overall** | **85%** | **90%** |
 
-### 3.2 Commit Discipline (Conventional Commits 1.0)
-```
-<type>(<scope>): <subject>
+### 4.2 Test Types
+| Type | Scope | Speed | Location |
+|------|-------|-------|----------|
+| Unit | Single function/class | <10ms | `tests/unit/` |
+| Integration | Multiple layers | <1s | `tests/integration/` |
+| Contract | API contracts | <5s | `tests/contract/` |
+| E2E | Full user flows | <30s | `tests/e2e/` (Playwright) |
 
-<type> ∈ {feat, fix, docs, style, refactor, perf, test, chore, ci, build, revert}
-<scope> = module name (campaigns, agents, workflows, etc.)
-```
-**Examples**:
-```
-feat(campaigns): add budget pacing algorithm
-fix(agents): resolve memory leak in agent orchestrator
-docs(adr): add ADR-010 event sourcing for campaigns
-refactor(workflows)!: migrate to temporal workflow engine
-```
+### 4.3 Test Patterns
+- **AAA Pattern**: Arrange, Act, Assert
+- **Fixtures**: Shared in `conftest.py`, scoped appropriately
+- **Mocks**: Only for external dependencies, use `AsyncMock` for async
+- **Data**: Factory functions, not fixtures for complex objects
+- **Deterministic**: No random, no time-dependent, no external calls
 
-### 3.3 Semantic Versioning (SemVer 2.0)
-- MAJOR: Breaking API changes, schema migrations without backward compat
-- MINOR: Backward-compatible features
-- PATCH: Bug fixes, security patches
-- Pre-release: `-rc.1`, `-beta.2`, `-alpha.1`
-
-### 3.4 Pull Request Requirements
-Every PR must include:
-- Linked GitHub Issue with acceptance criteria
-- Technical design (for features >2 SP)
-- Checklist: tests, docs, lint, typecheck, security, migration
-- At least 2 approvals (1 from domain owner, 1 from ARB for architectural changes)
-- All CI gates passing
-- Changelog entry (auto-generated from conventional commits)
-
-### 3.5 GitHub Standards
-- **Issues**: Template with problem, acceptance criteria, definition of done
-- **Projects**: Kanban board per milestone (Backlog → Ready → In Progress → Review → Done)
-- **Discussions**: Architecture decisions, RFCs, design reviews
-- **ADRs**: Stored in `docs/adr/` with index in `ADR-INDEX.md`
+### 4.4 Property-Based Testing
+- Use Hypothesis for complex domain logic
+- Required for: parsers, serializers, validators, algorithms
 
 ---
 
-## Article IV: Docker & Infrastructure Standards
+## Article V: Security Standards
 
-### 4.1 Multi-Stage Dockerfiles
-```dockerfile
-# Build stage
-FROM python:3.12-slim AS builder
-# Install build deps, compile wheels, run tests
+### 5.1 Authentication & Authorization
+- **JWT**: RS256, 15min access, 7d refresh, rotation
+- **RBAC**: Org roles (owner, admin, member, viewer)
+- **Feature Flags**: Per-org, per-user override
+- **Session Management**: Redis-backed, secure cookies
 
-# Runtime stage
-FROM python:3.12-slim AS runtime
-# Copy only runtime artifacts, non-root user, healthcheck
+### 5.2 Data Protection
+- **Encryption at Rest**: PostgreSQL TDE + S3 SSE-KMS
+- **Encryption in Transit**: TLS 1.3 everywhere
+- **Field-Level Encryption**: PII, secrets, API keys
+- **Key Management**: HashiCorp Vault / AWS KMS
+
+### 5.3 Application Security
+- **Input Validation**: Pydantic on all inputs
+- **Output Encoding**: Auto-escaping in templates
+- **Rate Limiting**: Per-endpoint, per-organization
+- **CORS**: Restrictive, configurable per org
+- **CSP**: Strict, nonce-based
+- **Dependencies**: `pip-audit` / `pnpm audit` weekly
+
+### 5.4 Compliance
+- **SOC2 Type II**: Audit logs, access controls, retention
+- **GDPR**: Right to deletion, portability, consent
+- **CCPA**: Opt-out, disclosure, non-discrimination
+- **Audit Trail**: All mutations logged with actor, timestamp, diff
+
+---
+
+## Article V: Observability Standards
+
+### 5.1 Four Pillars
+| Pillar | Tool | Standard |
+|--------|------|----------|
+| **Metrics** | Prometheus | RED (Rate, Errors, Duration) + USE (Utilization, Saturation, Errors) |
+| **Logs** | Loki | Structured JSON, correlation IDs, structured levels |
+| **Traces** | Tempo | 100% sampling for errors, 10% for success |
+| **Alerts** | Alertmanager | Multi-channel, routing, inhibition, silences |
+
+### 5.2 Key Metrics (RED)
+| Metric | Target | Alert |
+|--------|--------|-------|
+| **Request Rate** | >1000/s | N/A |
+| **Error Rate** | <0.1% | >0.5% |
+| **Latency p99** | <500ms | >1s |
+| **Availability** | 99.9% | <99.5% |
+
+### 5.3 Logging Standards
+```json
+{
+  "timestamp": "2024-01-15T10:30:00.123Z",
+  "level": "INFO",
+  "trace_id": "abc123",
+  "span_id": "def456",
+  "service": "astra-api",
+  "message": "Campaign launched",
+  "organization_id": "uuid",
+  "user_id": "uuid",
+  "duration_ms": 45,
+  "metadata": {}
+}
 ```
 
-### 4.2 Docker Compose Profiles
-- `docker-compose.yml` — base infrastructure (PostgreSQL, Redis, Temporal, MinIO)
-- `docker-compose.dev.yml` — dev overrides (hot reload, debug ports, mailhog)
-- `docker-compose.prod.yml` — production (replicas, resources, secrets, monitoring)
+### 5.3 Alerting Rules
+- **No alert fatigue**: <5 alerts/day/engineer
+- **Actionable**: Every alert has runbook
+- **Tiered**: Critical (page), Warning (slack), Info (log)
+- **Deduplication**: Group by fingerprint
+- **Silences**: Planned maintenance windows
 
-### 4.3 Required Services (Development)
-| Service | Purpose | Health Check |
-|---------|---------|--------------|
-| PostgreSQL 16 + pgvector | Primary DB, vectors | `pg_isready` |
-| Redis 7 | Cache, queue, pub/sub | `redis-cli ping` |
-| Temporal | Workflow durability | gRPC health check |
-| MinIO (S3-compatible) | Object storage | `/minio/health/live` |
-| NVIDIA NIM (local) | LLM inference | `/v1/health` |
-| Mailhog | Email testing | HTTP 200 |
+---
 
-### 4.4 Single-Command Bootstrap
-```bash
-git clone <repo> && cd astra-os && make bootstrap
-# Must: clone → install deps → start infra → migrate DB → seed → verify health
+## Article VI: Deployment Standards
+
+### 6.1 CI/CD Pipeline
+```
+Push → Lint → TypeCheck → UnitTests → IntegrationTests → Build → SecurityScan → Deploy Staging → E2E Tests → Deploy Production
 ```
 
----
+### 6.2 Environments
+| Env | Purpose | Auto-Deploy | Approval |
+|-----|---------|-------------|----------|
+| **Dev** | Development | On push to develop | None |
+| **Staging** | Integration testing | On PR merge | Auto |
+| **Production** | Live traffic | On tag | Manual (2 approvals) |
 
-## Article V: CI/CD Pipeline (Quality Gates)
+### 6.3 Deployment Strategies
+- **API**: Rolling (maxSurge=25%, maxUnavailable=0)
+- **Workers**: Rolling with drain
+- **Frontend**: Blue-Green (CloudFront invalidation)
+- **Database**: Expand/Contract (backward compatible)
 
-### 5.1 Pipeline Stages (All Required)
-
-| Stage | Tools | Gate Criteria |
-|-------|-------|---------------|
-| **Lint/Format** | ruff, prettier, eslint | Zero violations |
-| **Type Check** | mypy, tsc --noEmit | Zero errors |
-| **Static Analysis** | bandit, trivy, semgrep | No HIGH/CRITICAL |
-| **Unit Tests** | pytest, vitest | ≥80% line, ≥70% branch |
-| **Integration Tests** | pytest + testcontainers | All critical paths pass |
-| **E2E Tests** | playwright | All critical journeys pass |
-| **Performance** | k6, locust | p95 < 200ms (API), < 3s (Web) |
-| **Accessibility** | axe-core | WCAG 2.1 AA |
-| **Build** | docker buildx | Multi-arch images, SBOM |
-| **Security Scan** | trivy, snyk | Zero CRITICAL, 0 HIGH in prod deps |
-
-### 5.2 Merge Policy
-- **No merge if any gate fails** — no exceptions, no `continue-on-error`
-- **Auto-merge** enabled after all checks + approvals
-- **Deploy on merge to main** → staging → production (progressive)
-
-### 5.3 Release Process
-1. Create `release/vX.Y.Z` branch from `develop`
-2. CI runs full pipeline + performance benchmarks
-3. CHANGELOG.md generated from conventional commits
-4. GitHub Release with artifacts, SBOM, release notes
-5. Tag `vX.Y.Z` → triggers production deploy
-6. Merge release branch → `main` + `develop`
+### 6.4 Rollback
+- **Automatic**: Health check failure → auto-rollback
+- **Manual**: `kubectl rollout undo` (≤30s)
+- **Database**: `alembic downgrade` (tested in staging)
 
 ---
 
-## Article VI: Testing Standards
+## Article VI: Review & Evolution
 
-### 6.1 Test Pyramid (Enforced by CI)
-- **Unit (70%)**: Pure domain logic, use cases, utilities — fast, isolated
-- **Integration (20%)**: Repository adapters, external API clients, event handlers
-- **E2E (10%)**: Critical user journeys (login → create campaign → launch)
+### 6.1 Amendment Process
+1. Propose via RFC (GitHub Discussion)
+2. Discussion period: 1 week minimum
+3. Approval: CTO + 2 Engineering Leads
+4. Document in ADR, update Constitution
+5. Communicate to all engineers
 
-### 6.2 Test Organization
-```
-tests/
-├── unit/           # Domain, application layer
-├── integration/    # Infrastructure adapters
-├── e2e/            # Playwright (web), API contracts
-├── contract/       # Pact/OpenAPI contract tests
-├── performance/    # k6 scripts
-├── accessibility/  # axe-core
-└── fixtures/       # Shared test data builders
-```
+### 6.2 Compliance
+- **Automated**: CI enforces formatting, linting, types, tests
+- **Manual**: Architecture reviews for new services
+- **Audit**: Quarterly Constitution compliance audit
+- **Exceptions**: Documented in ADR with expiry date
 
-### 6.3 Test Data Management
-- **No shared fixtures** — each test builds own data via builders/factories
-- **Database per test** (testcontainers) or transaction rollback
-- **Deterministic seeds** for property-based testing
-
-### 6.4 AI-Specific Testing
-- **Agent behavior tests**: Scenario-based, deterministic seeds
-- **Prompt regression**: Golden master comparison
-- **Tool execution**: Sandbox isolation, timeout, resource limits
-- **Hallucination detection**: Fact-checking against knowledge graph
+### 6.3 Versioning
+- **Constitution Version**: Semantic (MAJOR.MINOR.PATCH)
+- **MAJOR**: Breaking architectural change
+- **MINOR**: New standard, backward compatible
+- **PATCH**: Clarification, typo fix
 
 ---
 
-## Article VII: Documentation as Code
+## Appendix: ADR Index
 
-### 7.1 Documentation Structure
-```
-docs/
-├── PRODUCT_VISION.md        # Business goals, personas, success metrics
-├── ROADMAP.md               # Milestones, timeline, dependencies
-├── ARCHITECTURE.md          # System context, container, component, code (C4)
-├── ADR/
-│   ├── ADR-INDEX.md
-│   └── ADR-XXX-title.md
-├── API/
-│   ├── openapi.yaml         # Generated from code
-│   └── changelog.md
-├── DATABASE.md              # Schema, migrations, conventions
-├── SECURITY.md              # Threat model, data classification, incident response
-├── DEPLOYMENT.md            # Environments, runbooks, rollback procedures
-├── RUNBOOKS/
-│   ├── incident-response.md
-│   ├── scaling.md
-│   └── disaster-recovery.md
-├── CONTRIBUTING.md          # Onboarding, workflow, standards
-├── TESTING.md               # Strategy, tools, patterns
-└── RELEASE_PROCESS.md       # Versioning, branching, hotfix procedure
-```
-
-### 7.2 Documentation Rules
-- **Co-located**: Docs live with code (README.md per module, ADR per decision)
-- **Generated**: API specs from code, DB docs from migrations, diagrams from code
-- **Updated in same PR** — no "doc later" commits
-- **Reviewed** — docs changes require technical writer or domain owner review
+| ADR | Title | Status |
+|-----|-------|--------|
+| ADR-001 | Monorepo with Turborepo | Accepted |
+| ADR-002 | Clean Architecture | Accepted |
+| ADR-003 | Custom Agent Orchestrator | Accepted |
+| ADR-004 | PostgreSQL + pgvector | Accepted |
+| ADR-005 | Redis Pub/Sub for Events | Accepted |
+| ADR-006 | Model Router (NVIDIA NIM → OpenAI → Anthropic → Gemini) | Accepted |
+| ADR-007 | Next.js 15 + App Router | Accepted |
+| ADR-008 | Supabase Auth + Custom RBAC | Accepted |
 
 ---
 
-## Article VIII: AI Agent Governance (ASTRA-Specific)
+## Ratification
 
-### 8.1 Agent Lifecycle
-1. **Specification** → ADR + Agent Spec (role, tools, memory, autonomy level)
-2. **Implementation** → TDD with behavior scenarios
-3. **Simulation** → Deterministic replay, chaos testing
-4. **Shadow Mode** → Run alongside human, compare decisions
-5. **Gradual Rollout** → Advisory → Semi-auto → Full-auto (per tenant config)
-6. **Continuous Evaluation** → Drift detection, A/B testing, human feedback loops
+**Signed**: _________________________  
+**CTO**: _________________________  
+**Date**: _________________________  
 
-### 8.2 Audit & Compliance
-- Every agent action: timestamp, agent_id, input, reasoning, tool_calls, output, human_approval (if required)
-- Immutable audit log (append-only PostgreSQL + WAL archival)
-- Quarterly compliance review (GDPR, CCPA, SOC2)
-
-### 8.3 Model Governance
-- Model registry with versioning, provenance, evaluation metrics
-- A/B testing framework for model routing
-- Cost budgets per agent/tenant with alerts
-- Fallback chains with SLA guarantees
+**Engineering Leads**: _________________________  
+**Date**: _________________________  
 
 ---
 
-## Article IX: Incident & Operational Excellence
-
-### 9.1 Incident Response
-- **Severity Levels**: SEV-1 (customer-facing outage), SEV-2 (degraded), SEV-3 (minor), SEV-4 (cosmetic)
-- **On-call rotation**: Primary + secondary, 30-min acknowledgment SLA
-- **Blameless postmortems** within 5 business days
-- **Action items** tracked as GitHub issues with due dates
-
-### 9.2 SLOs (Target)
-| Service | Availability | Latency (p95) | Error Rate |
-|---------|--------------|---------------|------------|
-| API Gateway | 99.9% | <200ms | <0.1% |
-| Agent Orchestrator | 99.5% | <5s | <1% |
-| Workflow Engine | 99.9% | <1s | <0.1% |
-| Frontend | 99.9% | <3s (LCP) | <0.1% |
-
-### 9.3 Capacity Planning
-- Load testing quarterly
-- Auto-scaling policies defined per service
-- Chaos engineering monthly (Litmus/Gremlin)
-
----
-
-## Article X: Amendment Process
-
-1. **Proposal** — Any engineer submits ADR with `PROPOSED` status
-2. **Review** — ARB reviews within 5 business days
-3. **Discussion** — GitHub Discussion for 10 business days
-4. **Decision** — ARB votes (3/4 majority required)
-5. **Ratification** — ADR marked `ACCEPTED`, Constitution version bumped
-6. **Migration** — Implementation plan with timeline, rollback criteria
-
-**Emergency amendments** (security, data loss): CTO + 1 ARB member can approve immediate hotfix with retroactive ratification within 30 days.
-
----
-
-## Appendix A: Technology Stack (Ratified)
-
-| Layer | Technology | Version | ADR |
-|-------|------------|---------|-----|
-| Monorepo | Turborepo + pnpm | 2.x / 9.x | ADR-001 |
-| Backend | FastAPI | 0.115+ | ADR-002 |
-| Frontend | Next.js 15 + React 19 | App Router, RSC | ADR-007 |
-| Database | PostgreSQL 16 + pgvector | 16 / 0.7+ | ADR-005 |
-| Cache/Queue | Redis 7 | 7.2+ | ADR-005 |
-| Workflow | Temporal | 1.24+ | ADR-004 |
-| AI Router | Custom (NVIDIA NIM primary) | — | ADR-006 |
-| Auth | Supabase Auth v1 | — | ADR-008 |
-| Event Bus | Redis Pub/Sub + LISTEN/NOTIFY | — | ADR-009 |
-| Observability | OpenTelemetry, Prometheus, Grafana, Tempo | — | — |
-| CI/CD | GitHub Actions | — | — |
-| Container | Docker, Docker Compose, Kubernetes | — | — |
-
----
-
-## Appendix B: Definition of Done (Per Feature)
-
-A feature is **DONE** when:
-- [ ] Linked GitHub Issue with acceptance criteria
-- [ ] Technical design reviewed (ADR if architectural)
-- [ ] Implementation complete with conventional commits
-- [ ] Unit tests ≥80% coverage (domain/application)
-- [ ] Integration tests for all adapters
-- [ ] E2E test for critical path
-- [ ] Security review passed (SAST, secrets, deps)
-- [ ] Performance benchmark baseline recorded
-- [ ] Accessibility audit (WCAG 2.1 AA)
-- [ ] Documentation updated (API, DB, runbook, user guide)
-- [ ] PR approved by 2 reviewers (1 domain owner)
-- [ ] All CI gates green
-- [ ] Deployed to staging, validated
-- [ ] Changelog entry added
-- [ ] Merged to `develop` (or `release/*`)
-
----
-
-**End of Constitution**
-
-*This document is the supreme engineering authority for ASTRA OS. All code, processes, and decisions must conform. Violations are technical debt by definition and must be remediated within the sprint they are discovered.*
+*This Constitution is a living document. All engineers are expected to know and follow it. Ignorance is not a valid defense for non-compliance.*

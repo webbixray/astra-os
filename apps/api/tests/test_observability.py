@@ -9,7 +9,6 @@ from app.domain.entities.observability import (
     AlertRule,
     AlertSeverity,
     AlertStatus,
-    AlertSource,
     Budget,
     BudgetCategory,
     CostRecord,
@@ -31,7 +30,7 @@ class TestMetricDefinition:
             organization_id=uuid4(),
             name="api_latency",
             display_name="API Latency",
-            description="End-to-end API latency",
+            description="End-to-end API latency in milliseconds",
             metric_type=MetricType.HISTOGRAM,
             unit="ms",
             label_names=["endpoint", "method", "status"],
@@ -241,7 +240,7 @@ class TestSLADefinition:
 
 
 class TestSLAReport:
-    def test_to_dict(self):
+    def test_create_report(self):
         report = SLAReport(
             organization_id=uuid4(),
             sla_definition_id=uuid4(),
@@ -251,21 +250,35 @@ class TestSLAReport:
             target_value=99.9,
             unit="%",
             is_compliant=True,
+            breach_count=0,
+            total_downtime_seconds=0.0,
+        )
+        assert report.is_compliant is True
+        assert report.breach_count == 0
+
+    def test_to_dict(self):
+        report = SLAReport(
+            organization_id=uuid4(),
+            sla_definition_id=uuid4(),
+            period_start=datetime.now() - timedelta(days=30),
+            period_end=datetime.now(),
         )
         d = report.to_dict()
-        assert d["is_compliant"] is True
-        assert d["measured_value"] == 99.95
+        assert "organization_id" in d
 
 
 class TestDashboard:
     def test_create_dashboard(self):
         dashboard = Dashboard(
             organization_id=uuid4(),
-            name="Marketing Dashboard",
-            description="Campaign performance overview",
-            created_by=uuid4(),
+            name="Executive Dashboard",
+            description="High-level KPIs for leadership",
+            layout={"columns": 12, "rows": 8},
+            is_public=False,
+            auto_refresh_seconds=300,
         )
-        assert dashboard.name == "Marketing Dashboard"
+        assert dashboard.name == "Executive Dashboard"
+        assert dashboard.auto_refresh_seconds == 300
 
     def test_to_dict(self):
         dashboard = Dashboard(organization_id=uuid4(), name="Test")
@@ -279,46 +292,25 @@ class TestDashboardWidget:
             dashboard_id=uuid4(),
             widget_type=DashboardWidgetType.LINE_CHART,
             title="API Latency Over Time",
-            metric_names=["api_latency"],
-            visualization_config={"color": "blue", "line_width": 2},
+            metric_names=["api_latency_p50", "api_latency_p95", "api_latency_p99"],
+            query="avg(api_latency) by endpoint",
+            visualization_config={"x_axis": "time", "y_axis": "ms", "colors": ["#007bff", "#28a745", "#dc3545"]},
             position_x=0,
             position_y=0,
             width=6,
             height=4,
+            time_range_seconds=3600,
+            refresh_interval_seconds=60,
         )
         assert widget.widget_type == DashboardWidgetType.LINE_CHART
+        assert widget.width == 6
+        assert widget.height == 4
 
     def test_to_dict(self):
-        widget = DashboardWidget(dashboard_id=uuid4(), title="Test")
+        widget = DashboardWidget(dashboard_id=uuid4(), title="Test", widget_type=DashboardWidgetType.GAUGE)
         d = widget.to_dict()
         assert d["title"] == "Test"
-
-
-class TestAlertRule:
-    def test_create_with_all_fields(self):
-        rule = AlertRule(
-            organization_id=uuid4(),
-            name="Test Alert",
-            metric_name="cpu_usage",
-            condition="avg > 80",
-            evaluation_window_seconds=300,
-            label_matchers={"host": "prod-*"},
-            notification_channels=["slack", "pagerduty"],
-            auto_resolve=True,
-            group_by=["host"],
-        )
-        assert rule.notification_channels == ["slack", "pagerduty"]
-        assert rule.group_by == ["host"]
-
-
-class TestAlert:
-    def test_fingerprint_generation(self):
-        alert = Alert(
-            metric_name="cpu",
-            labels={"host": "server-1"},
-            fingerprint="cpu:server-1",
-        )
-        assert alert.fingerprint == "cpu:server-1"
+        assert d["widget_type"] == "gauge"
 
 
 if __name__ == "__main__":

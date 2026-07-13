@@ -1,215 +1,323 @@
-# ASTRA OS — Session Bootstrap Prompt
+# ASTRA OS — Session Bootstrap Protocol
 
-**Purpose**: Paste this at the start of every new AI development session to establish context, verify repository state, and resume from the highest-priority unfinished work.
-
----
-
-## ⚡ SESSION INITIALIZATION PROTOCOL
-
-### Step 0: Read This Entire Document First
-Do not skip. Do not summarize. Read every section.
+**Version**: 1.0  
+**Purpose**: Standardized process for starting each development session
 
 ---
 
-### Step 1: Load Immutable Context
-Read these files **in order** and confirm understanding:
+## Session Startup Checklist
+
+Run this checklist at the start of **every** development session:
+
+### 1. Environment Verification
 
 ```bash
-# 1. Constitution (immutable rules)
-cat docs/ENGINEERING_CONSTITUTION.md
-
-# 2. Product Vision (what we're building, why, for whom)
-cat docs/PRODUCT_VISION.md
-
-# 3. Architecture (technical decisions, diagrams, domain model)
-cat docs/ARCHITECTURE.md
-
-# 4. Roadmap (milestones, priorities, dependencies)
-cat docs/ROADMAP.md
-
-# 5. Current Sprint/Task Spec (what to do NOW)
-cat docs/TASK_SPEC.md
-```
-
-**Confirm**: "I have read and understood all five documents."
-
----
-
-### Step 2: Inspect Repository State
-Run these commands and report findings:
-
-```bash
-# Git status
+# 1. Verify git status
 git status
-git log --oneline -10
-git branch -a
+git log --oneline -5
 
-# Check for uncommitted changes, untracked files
-git diff --stat
-git diff --cached --stat
+# 2. Verify branch
+git branch --show-current
 
-# Verify main is deployable
-git diff main..HEAD --stat
+# 3. Pull latest changes
+git pull origin main
 
-# Check CI status of latest commit (if GH CLI available)
-gh run list --limit 5
+# 4. Verify Python environment
+cd apps/api
+source .venv/bin/activate
+python --version  # Should be 3.12+
+
+# 5. Verify Node environment
+cd ../web
+node --version  # Should be 20+
+pnpm --version
+
+# 6. Verify infrastructure
+docker-compose ps  # postgres, redis running?
 ```
 
-**Report**:
-- Current branch & relationship to main/develop
-- Uncommitted changes (if any)
-- Last 3 commits
-- CI status of HEAD
+### 2. Context Loading
 
----
+Read these files to understand current state:
 
-### Step 3: Verify Development Environment
 ```bash
-# One-command bootstrap verification
-make bootstrap 2>&1 | tail -20
+# 1. Current task status
+cat docs/TASK_SPEC.md | head -100
 
-# Verify all services healthy
-docker compose ps
-docker compose exec api curl -sf http://localhost:8000/health
-docker compose exec web curl -sf http://localhost:3000/api/health
+# 2. Recent decisions
+cat docs/SESSION_LOG.md | tail -50
 
-# Run quick quality gate
-make check 2>&1 | tail -30
+# 3. Architecture reference
+cat docs/ARCHITECTURE.md | head -50
 ```
 
-**Report**: All services healthy? Quality gates pass? Any failures?
+### 3. Test Baseline
 
----
+```bash
+# Quick sanity check
+cd apps/api
+PYTHONPATH=. pytest tests/unit/test_basic.py -v -x -q
 
-### Step 4: Compare Implementation vs. Roadmap
-Using `docs/ROADMAP.md` and `docs/TASK_SPEC.md`:
-
-1. **List completed milestones** (✅ Done — verified in code)
-2. **Identify current milestone** (🎯 In Progress — from TASK_SPEC.md)
-3. **Find gaps**: Features in roadmap not in code, or code not in roadmap
-4. **Detect drift**: Architecture violations (layer violations, missing tests, undocumented APIs)
-
-**Report**: "Current milestone: [X]. Gaps found: [list]. Drift detected: [list]."
-
----
-
-### Step 5: Produce Engineering Plan
-Based on Steps 1-4, output a **prioritized plan** for this session:
-
-```
-## SESSION ENGINEERING PLAN
-
-### Objective
-[One sentence: what milestone/feature will be advanced/completed this session]
-
-### Priority Order
-1. [Highest priority task - specific, verifiable]
-2. [Next task]
-3. [Next task]
-
-### Quality Gates This Session
-- [ ] Lint/Format/Typecheck pass
-- [ ] Unit tests added/passing (≥80% coverage)
-- [ ] Integration tests for new adapters
-- [ ] E2E test for user journey
-- [ ] Documentation updated (ADR, API, runbook)
-- [ ] CI pipeline green
-
-### Risks / Blockers
-- [Risk 1]: Mitigation
-- [Risk 2]: Mitigation
-
-### Estimated Scope
-- Files to create: ~N
-- Files to modify: ~N
-- Tests to add: ~N
-- Est. time: X hours
+cd ../web
+pnpm test --run --reporter=dot 2>&1 | tail -5
 ```
 
 ---
 
-### Step 6: Human Confirmation
-**STOP. Present the Engineering Plan to the human.**
+## Session Workflow
 
-Wait for explicit approval: "Approved — proceed" or modifications.
+### Planning (First 15 min)
 
-Do not begin implementation until approved.
+1. **Review TASK_SPEC.md** - Current priorities
+2. **Check GitHub Issues** - Assigned/related
+3. **Review PRs** - Need review?
+4. **Plan work** - Break into 2-4 hour chunks
+5. **Update TASK_SPEC.md** - Mark planned items
+
+### Execution (Core Time)
+
+Follow this loop:
+
+```
+1. Pick next task from TASK_SPEC.md
+2. Create feature branch: git checkout -b feat/xxx
+3. Write failing test first (TDD)
+4. Implement feature
+4. Run tests: make test
+5. Lint/format: make lint && make format
+6. Type check: make typecheck
+7. Commit: git commit -m "feat(scope): description"
+8. Push: git push origin feat/xxx
+9. Create PR
+10. Repeat
+```
+
+### Documentation (Continuous)
+
+Update as you go:
+
+- **API_REFERENCE.md** - New endpoints
+- **ARCHITECTURE.md** - Structural changes
+- **DEVELOPMENT.md** - New tools/workflows
+- **CHANGELOG.md** - Every commit (brief)
+
+### Session Wrap-up (Last 15 min)
+
+```bash
+# 1. Run full test suite
+make test
+
+# 2. Final lint/format
+make lint && make format
+
+# 3. Update TASK_SPEC.md
+# - Mark completed items ✅
+# - Add notes for next session
+# - Update "Next Session Priorities"
+
+# 4. Update SESSION_LOG.md
+# - Date, branch, commits
+# - What was completed
+# - Blockers, decisions, notes
+
+# 5. Push all changes
+git push origin main
+
+# 6. Verify CI passes
+# Check GitHub Actions
+```
 
 ---
 
-## 📋 SESSION TEMPLATE (Copy & Paste)
+## Required Session Artifacts
+
+### TASK_SPEC.md Updates
+
+At session end, ensure:
+
+- [ ] Completed items marked ✅
+- [ ] In-progress items marked 🔄
+- [ ] Blockers documented 🔴
+- [ ] Next priorities listed
+- [ ] Session log entry added
+
+### SESSION_LOG.md Format
 
 ```markdown
-# Session Log — YYYY-MM-DD
+## Session YYYY-MM-DD
 
-## Context Loaded
-- [ ] ENGINEERING_CONSTITUTION.md
-- [ ] PRODUCT_VISION.md
-- [ ] ARCHITECTURE.md
-- [ ] ROADMAP.md
-- [ ] TASK_SPEC.md
+**Branch**: feat/xxx
+**Commits**: 3
+**Duration**: 4h
 
-## Repository State
-- Branch: 
-- Last commit: 
-- Uncommitted changes: 
-- CI status: 
+### Completed
+- ✅ Shadow mode lift calculation for ROAS
+- ✅ Observability API routes for SLA reporting
 
-## Environment Health
-- Services: 
-- Quality gates: 
+### Decisions
+- Used Prometheus for metrics (not Datadog) - cost savings
+- Shadow session auto-approve threshold: 0.85 confidence
 
-## Implementation vs Roadmap
-- Completed milestones: 
-- Current milestone: 
-- Gaps: 
-- Drift: 
+### Blockers
+- 🔴 Frontend tests failing on Node 20 - upgrading to 20.12
 
-## Engineering Plan
-[Paste plan from Step 5]
+### Next Session Priorities
+1. Fix frontend test environment
+2. Implement shadow mode batch compare API
+3. Add SLA breach alerting
 
-## Human Approval
-- [ ] Approved by: @username at HH:MM
-
-## Work Completed
-[Fill in during session]
-
-## Quality Gate Results
-- Lint: 
-- Typecheck: 
-- Unit tests: 
-- Integration tests: 
-- E2E tests: 
-- Docs updated: 
-
-## Next Session Priorities
-[Update TASK_SPEC.md and ROADMAP.md accordingly]
+### Blockers
 ```
 
 ---
 
-## 🔄 CONTINUITY RULES
+## Quality Gates
 
-1. **Never assume context** — always run Steps 1-4 fresh
-2. **Never skip quality gates** — Constitution Article I.3 is absolute
-3. **Update TASK_SPEC.md** at session end with progress, blockers, next steps
-4. **Commit frequently** — conventional commits, small atomic changes
-5. **End session with**: `git status`, test summary, updated TASK_SPEC.md
+### Before Commit
+
+- [ ] Tests pass (`make test`)
+- [ ] Lint passes (`make lint`)
+- [ ] Format correct (`make format`)
+- [ ] Types check (`make typecheck`)
+- [ ] No `console.log` / `print()` / `debugger`
+- [ ] No commented-out code
+- [ ] Commit message follows convention
+
+### Before PR
+
+- [ ] All quality gates pass
+- [ ] Tests cover new behavior (90%+ domain)
+- [ ] Documentation updated
+- [ ] CHANGELOG.md entry added
+- [ ] No merge conflicts
+- [ ] CI passes (or known flaky tests documented)
+
+### Before Merge
+
+- [ ] 1+ approvals
+- [ ] All CI checks green
+- [ ] No merge conflicts
+- [ ] Squash and merge
+- [ ] Branch deleted
 
 ---
 
-## 🚨 ESCALATION TRIGGERS
+## Emergency Procedures
 
-Stop and ask human if:
-- Architecture violation detected (layer crossing, missing ADR)
-- Quality gate failure that cannot be fixed in <30 min
-- Scope creep beyond TASK_SPEC.md
-- Security vulnerability discovered
-- CI/CD pipeline broken
-- Database migration needed without rollback plan
+### Hotfix Process
+
+```bash
+# 1. Create hotfix branch from main
+git checkout main
+git pull
+git checkout -b hotfix/critical-bug
+
+# 2. Fix + test
+# ... make changes ...
+make test
+
+# 2. Commit + PR
+git commit -m "fix: critical bug description"
+git push origin hotfix/critical-bug
+
+# 3. Fast-track review (1 approval)
+# 4. Merge + tag
+git tag -a v0.1.1 -m "Hotfix: critical bug"
+git push origin v0.1.1
+```
+
+### Rollback
+
+```bash
+# If bad deploy:
+kubectl rollout undo deployment/astra-api -n astra-prod
+
+# If bad migration:
+alembic downgrade -1
+```
 
 ---
 
-**Remember**: You are ASTRA OS Engineering. You execute the SDLC. You do not "write code" — you deliver production-grade increments through disciplined process.
+## Tools Reference
 
-*Constitution Article I.1: "We operate as a Tier-1 software company. Every change undergoes the full SDLC. No phase is optional."*
+### Make Targets (Create Makefile in root)
+
+```makefile
+.PHONY: test lint format typecheck migrate seed dev build deploy
+
+test:
+	cd apps/api && PYTHONPATH=. pytest tests/ -v --cov=app --cov-fail-under=80
+	cd apps/web && pnpm test --run
+
+lint:
+	cd apps/api && ruff check .
+	cd apps/web && pnpm lint
+
+format:
+	cd apps/api && ruff format .
+	cd apps/web && pnpm format
+
+typecheck:
+	cd apps/api && mypy app/
+	cd apps/web && pnpm typecheck
+
+migrate:
+	cd apps/api && alembic upgrade head
+
+seed:
+	cd apps/api && python scripts/seed_db.py
+
+dev:
+	docker-compose up -d postgres redis
+	cd apps/api && uvicorn app.main:app --reload &
+	cd apps/web && pnpm dev
+
+build:
+	docker build -t astra-api:latest -f docker/api.Dockerfile .
+	docker build -t astra-web:latest -f docker/web.Dockerfile .
+
+deploy:
+	kubectl apply -k k8s/overlays/prod
+```
+
+---
+
+## Quick Reference
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `docs/TASK_SPEC.md` | Current sprint tasks |
+| `docs/ROADMAP.md` | Milestone roadmap |
+| `docs/ARCHITECTURE.md` | System architecture |
+| `docs/API_REFERENCE.md` | API documentation |
+| `docs/DEVELOPMENT.md` | Dev guide |
+| `docs/ENGINEERING_CONSTITUTION.md` | Coding standards |
+| `CHANGELOG.md` | Release history |
+
+### Key Commands
+
+```bash
+# Backend
+cd apps/api
+PYTHONPATH=. pytest tests/ -v          # Run tests
+PYTHONPATH=. pytest tests/unit/ -v      # Unit only
+PYTHONPATH=. pytest tests/integration/  # Integration
+ruff check . && ruff format .           # Lint + format
+mypy app/                               # Type check
+alembic upgrade head                    # Migrate
+python scripts/seed_db.py               # Seed
+
+# Frontend
+cd apps/web
+pnpm test --run                         # Tests
+pnpm test:ui                            # UI mode
+pnpm lint && pnpm format                # Lint + format
+pnpm typecheck                          # Type check
+pnpm build                              # Build
+```
+
+---
+
+*Follow this protocol every session for consistent, high-quality delivery.*

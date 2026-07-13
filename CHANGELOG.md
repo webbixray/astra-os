@@ -1,114 +1,160 @@
-# Changelog
+# ASTRA OS — Changelog
 
-All notable changes to Astra OS will be documented in this file.
+**Version**: 1.0  
+**Format**: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)  
+**Versioning**: [Semantic Versioning](https://semver.org/)
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+---
 
 ## [Unreleased]
 
 ### Added
-- Setup wizard for first-time installation (`/setup`)
-- Interactive onboarding tour for new users
-- API key management system
-- Webhook support for integrations
-- Data export/import functionality (CSV, JSON, XLSX)
-- User preferences page with theme, timezone, and notification settings
-- Toast notification system for user feedback
-- Version checking and update notifications
-- Keyboard shortcuts help modal (Cmd+/)
-- Configuration management utility
-- Health dashboard component for monitoring
-- Database seed script for development
-- Makefile with 25+ development commands
-- One-click setup script
-- Production Docker configurations
-- Vercel, Railway, and Fly.io deployment scripts
-- Comprehensive error types and messages
-- CONTRIBUTING.md guide
-- DEVELOPMENT.md comprehensive guide
-- CHANGELOG.md
-- Performance optimization utilities (debounce, lazy loading, virtualization)
-- Security headers and CSP configuration
-- Comprehensive test utilities and mock helpers
-- Enhanced error boundary with error reporting
-- Loading state components (spinner, overlay, card, table, page)
-- Form validation utilities with common validators
-- Notification preferences component
-- Activity log component with filtering
-- Quick actions menu (Cmd+K)
-- Status indicators and connection status components
-- Internationalization (i18n) support with 6 languages (en, es, fr, de, ja, zh)
-- Offline support with service worker and offline page
-- Accessibility utilities (focus trap, screen reader announcements)
-- Data table component with sorting, filtering, and pagination
-- Empty state components for various scenarios
-- Breadcrumb navigation and page header components
-- Confirmation dialog with hook for async operations
-- Progress indicators (linear, step, circular)
-- Avatar and user menu components
-- Theme switcher component
-- Analytics dashboard components (MetricCard, MetricsGrid, AnalyticsOverview, ConversionFunnel, RealTimeVisitors)
-- Campaign management components (CampaignCard, CampaignList, CampaignStats)
-- Content management components (ContentCard, ContentList, ContentCalendar)
-- Team management components (TeamMemberCard, TeamList, TeamStats)
-- Workflow builder components (WorkflowStepCard, WorkflowCard, WorkflowBuilder, WorkflowList)
-- Integration marketplace components (IntegrationCard, IntegrationList, ConnectedIntegrations)
-- Billing and subscription components (PricingCard, PricingSection, BillingHistory, SubscriptionStatus)
-- Help center components (HelpCenter, FAQSection, ContactSupport, QuickStartGuide)
-- Performance monitoring utilities (marks, measures, timers, Web Vitals observers)
-- Error tracking system with breadcrumbs and context
-- Structured logging utilities with levels and context
-- Caching utilities (MemoryCache, StorageCache, apiCache, uiCache)
-- Resilience utilities (retry, circuit breaker, timeout, debounce, throttle, memoize)
-- Rate limiting utilities with configurable windows
-- Health check utilities with checker class
-- Feature flag utilities with rollout percentages and user targeting
-- Comprehensive testing framework (test runner, assertions, reporters)
-- API testing utilities with request helpers and assertions
-- Snapshot testing utilities with comparison functions
-- Accessibility testing utilities with WCAG compliance checks
-- Performance testing utilities with benchmarking and memory profiling
-- Mock data generators for users, campaigns, content, analytics, teams
-- Test report generators (JSON, HTML, Markdown, Console formats)
-- Visual regression testing utilities with screenshot comparison
+- Shadow Mode (E6.2): Agent/human decision comparison with lift measurement
+- Observability Suite (E6.4): Metrics, alerting, cost tracking, SLA monitoring, dashboards
+- Social Intelligence (E6.1): Comment monitoring, AI auto-reply, moderation
+- Sample Campaigns API for onboarding
+- Enhanced Setup Wizard with sample campaigns step
 
 ### Changed
-- Protected all authenticated routes in middleware
-- Improved startup validation with AI provider checks
-- Enhanced health check endpoint with detailed status
-- Updated CI/CD pipeline with Docker build and deployment automation
+- Auth routes: ValidationError now properly returns 422 instead of 500
+- Workflow canvas: Enhanced with execution viewer tab
 
 ### Fixed
-- Missing `@astra/ui` package reference
-- Invalid `services/*` workspace reference
-- Missing Kubernetes manifests for Temporal and Worker
-- Web deployment health probe path
-- Dependabot placeholder reviewer values
+- CronExpression weekday mapping (Python vs cron convention)
+- Auth integration test failures (4 tests)
 
-### Removed
-- Non-existent `services/*` workspace reference
+---
 
-## [0.0.1] - 2026-01-01
+## [0.0.1] - 2024-07-12
 
-### Added
-- Initial project setup
-- Backend API with FastAPI
-- Frontend with Next.js 15
-- PostgreSQL database with SQLAlchemy
-- Redis cache integration
-- JWT authentication
-- AI provider integration (OpenAI, NVIDIA NIM)
-- Campaign management
-- Content management
-- Analytics dashboard
-- Team management
-- Email marketing
-- Workflow automation
-- Ad platform integrations
-- Kubernetes deployment manifests
-- CI/CD pipeline with GitHub Actions
-- Comprehensive documentation
+### Added - M5 Workflow Engine
 
-[Unreleased]: https://github.com/webbixray/astra-os/compare/v0.0.1...HEAD
-[0.0.1]: https://github.com/webbixray/astra-os/releases/tag/v0.0.1
+#### Backend
+- **Workflow Scheduler**: Cron, event-driven, webhook, manual triggers
+- **Workflow Templates**: 4 built-in (Campaign Launch, Creative Review, Optimization Loop, Brand Compliance)
+- **Workflow Versioning**: Immutable snapshots, restore, compare, replay debugging
+- **API Routes**: Template CRUD, instantiation, version management, replay
+
+#### Frontend
+- **Template Gallery**: `/workflows/templates` with category filtering
+- **Execution Viewer**: Step-by-step execution status with icons
+- **Enhanced Detail Page**: Builder / Executions tabs
+- **API Hooks**: useWorkflowTemplates, useInstantiateTemplate, useWorkflowExecutions
+
+#### Tests
+- 57 Scheduler tests (cron parsing, triggers, lifecycle)
+- 25 Template tests (creation, instantiation, registry)
+- 10 Versioning tests (create, restore, compare, replay)
+
+### Added - M4 Intelligence (Previous)
+
+#### Core Intelligence Services
+- **RAG Pipeline**: Hybrid search (vector + keyword), context assembly
+- **Predictive Optimization**: Budget allocation, creative fatigue, audience expansion
+- **Cross-Campaign Learning**: Pattern mining, transfer learning
+
+#### API Routes
+- 4 RAG endpoints (query, context, search, ingest)
+- 4 Optimization endpoints (budget, fatigue, audience, cross-campaign)
+- 3 Cross-campaign endpoints (patterns, transfer, insights)
+
+#### Frontend
+- RAG Search UI with brand guidelines ingestion
+- Optimization Dashboard (budget, fatigue, audience tabs)
+- Knowledge Graph Visualization
+
+#### Tests
+- 33 RAG tests
+- 23 Optimization tests
+- 17 Cross-campaign tests
+- 12 Route integration tests
+- 9 Agent RAG integration tests
+
+### Added - M3 Governance (Previous)
+
+- Approval Engine (spend, brand, audience rules)
+- Autonomy Levels (0=Advisory, 1=Semi-auto, 2=Full-auto)
+- Audit & Compliance (immutable log, export, retention)
+- Explainability (reasoning trace, natural language summaries)
+- Agent Governance Middleware (runtime enforcement)
+
+### Added - M2 Campaign Execution (Previous)
+
+- Campaign Domain (CRUD, lifecycle, budget pacing)
+- Meta Ads Adapter (full lifecycle sync)
+- Creative Management (assets, variants, approval)
+- Frontend Campaign Builder
+
+### Added - M1 Agent Core (Previous)
+
+- Agent Runtime (base class, registry, hierarchy)
+- Model Router (NVIDIA NIM → OpenAI → Anthropic → Gemini)
+- Memory System (working, episodic, semantic)
+- Agent Hierarchy (CEO → 7 Directors → Specialists)
+
+### Added - M0 Foundation (Previous)
+
+- Monorepo (Turborepo, pnpm workspace)
+- CI/CD Pipeline (GitHub Actions: lint, typecheck, test, build, docker)
+- Docker & K8s (multi-stage, Kustomize)
+- Auth (Supabase JWT, RBAC, feature flags)
+- Database (PostgreSQL + pgvector, Alembic, RLS)
+- Clean Architecture (Domain/Application/Infrastructure/Presentation)
+- API Gateway (FastAPI, health, OpenAPI, rate limiting)
+- Frontend Shell (Next.js 15, App Router, shadcn/ui)
+
+---
+
+## Release Notes Format
+
+Each release includes:
+- **Added**: New features
+- **Changed**: Changes in existing functionality
+- **Deprecated**: Soon-to-be removed features
+- **Removed**: Removed features
+- **Fixed**: Bug fixes
+- **Security**: Vulnerability fixes
+
+---
+
+## Upgrade Guide
+
+### From 0.0.1 to 0.0.2 (Upcoming)
+
+```bash
+# 1. Pull latest
+git pull origin main
+
+# 2. Update dependencies
+cd apps/api
+pip install -e ".[dev]"
+cd ../web
+pnpm install
+
+# 3. Run migrations
+cd apps/api
+alembic upgrade head
+
+# 4. Restart services
+# ... restart API and workers
+```
+
+### Breaking Changes
+
+None in 0.0.1. All additions are backward compatible.
+
+---
+
+## Release Schedule
+
+| Version | Target Date | Focus |
+|---------|-------------|-------|
+| 0.0.1 | 2024-07-12 | M0-M5 Complete |
+| 0.1.0 | 2024-08-15 | E6.3 Self-Serve + E6.5 Docs |
+| 0.2.0 | 2024-09-30 | E6.2 Shadow Mode Polish |
+| 0.5.0 | 2024-12-15 | M6 Beta Launch |
+| 1.0.0 | 2025-06-30 | M7 GA Release |
+
+---
+
+*Changelog maintained per release. See git log for detailed commit history.*
