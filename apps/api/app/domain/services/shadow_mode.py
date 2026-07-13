@@ -110,9 +110,9 @@ class ShadowSessionService:
         self,
         organization_id: UUID,
         name: str,
-        description: str,
-        agent_type: str,
-        agent_model: str,
+        description: str = "",
+        agent_type: str = "",
+        agent_model: str = "",
         created_by: UUID,
         campaigns: list[UUID] | None = None,
         ad_accounts: list[str] | None = None,
@@ -124,6 +124,7 @@ class ShadowSessionService:
         lift_threshold: float = 0.05,
         max_human_override_rate: float = 0.3,
         schedule_cron: str | None = None,
+        agent_config: dict[str, Any] | None = None,
     ) -> ShadowSession:
         session = ShadowSession(
             organization_id=organization_id,
