@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { ArrowLeft, BookOpen, Code, Terminal, Shield, Zap, Users, Search, ChevronRight, ChevronLeft, ExternalLink } from 'lucide-react';
+import { ChevronRight, Zap, Code, Shield, ExternalLink, Terminal, AlertCircle, CheckCircle, Zap as ZapIcon, Database, Globe, Users, Search, ChevronRight as ChevronRightIcon, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -149,10 +148,8 @@ const CATEGORIES = [
 ];
 
 export default function DocsPage() {
-  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
-  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const filteredSections = DOC_SECTIONS.filter((section) => {
     const matchesSearch = section.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -172,24 +169,13 @@ export default function DocsPage() {
   return (
     <div className="flex h-screen bg-background">
       {/* Sidebar */}
-      <aside
-        className={cn(
-          'fixed left-0 top-0 z-40 h-screen w-72 bg-card border-r transition-all duration-300',
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        )}
-      >
+      <aside className="fixed left-0 top-0 z-40 h-screen w-72 bg-card border-r transition-all duration-300 lg:relative lg:translate-x-0">
         <div className="flex h-full flex-col">
           <div className="flex h-16 items-center justify-between border-b px-4">
             <Link href="/docs" className="flex items-center gap-2">
               <BookOpen className="h-6 w-6 text-primary" />
               <span className="font-semibold">Astra OS Docs</span>
             </Link>
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="lg:hidden p-2 text-muted-foreground hover:text-foreground"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
           </div>
 
           <div className="flex-1 overflow-y-auto p-4">
@@ -237,7 +223,7 @@ export default function DocsPage() {
                           {section.icon}
                         </span>
                         <span className="flex-1 truncate">{section.title}</span>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        <ChevronRightIcon className="h-4 w-4 text-muted-foreground" />
                       </Link>
                     ))}
                   </div>
@@ -246,12 +232,10 @@ export default function DocsPage() {
             </div>
 
           <div className="border-t p-4">
-            <p className="text-xs text-muted-foreground">
-              <a href="https://github.com/webbixray/astra-os" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
-                <ExternalLink className="h-3 w-3" />
-                View on GitHub
-              </a>
-            </p>
+            <a href="https://github.com/webbixray/astra-os" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
+              <ExternalLink className="h-3 w-3" />
+              View on GitHub
+            </a>
           </div>
         </div>
       </aside>
@@ -266,10 +250,7 @@ export default function DocsPage() {
 
       {/* Main Content */}
       <main
-        className={cn(
-          'flex-1 overflow-y-auto transition-all duration-300 lg:ml-72',
-          sidebarOpen ? 'ml-72' : 'ml-0'
-        )}
+        className="flex-1 overflow-y-auto transition-all duration-300 lg:ml-72"
       >
         <div className="max-w-4xl mx-auto p-8">
           <div className="mb-8">
@@ -277,7 +258,7 @@ export default function DocsPage() {
               <Link href="/dashboard" className="hover:text-foreground">
                 Dashboard
               </Link>
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRightIcon className="h-4 w-4" />
               <span>Documentation</span>
             </nav>
             <h1 className="text-3xl font-bold tracking-tight">Documentation</h1>
@@ -319,7 +300,7 @@ export default function DocsPage() {
                           <span className="text-sm font-medium text-primary group-hover:text-primary/80 transition-colors">
                             Read more
                           </span>
-                          <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                          <ChevronRightIcon className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                         </div>
                       </Link>
                     ))}
@@ -327,40 +308,40 @@ export default function DocsPage() {
                 </div>
               ))}
             </div>
-          </div>
 
-          {/* Quick Links */}
-          <div className="mt-12 rounded-xl border bg-muted/30 p-6">
-            <h2 className="text-lg font-semibold mb-4">Quick Links</h2>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Link href="/docs/quickstart" className="flex items-center gap-3 p-4 rounded-lg border hover:bg-accent transition-colors">
-                <Zap className="h-5 w-5 text-primary" />
-                <div>
-                  <p className="font-medium">Quick Start</p>
-                  <p className="text-sm text-muted-foreground">5-minute setup guide</p>
-                </div>
-              </Link>
-              <Link href="/docs/api-reference" className="flex items-center gap-3 p-4 rounded-lg border hover:bg-accent transition-colors">
-                <Code className="h-5 w-5 text-primary" />
-                <div>
-                  <p className="font-medium">API Reference</p>
-                  <p className="text-sm text-muted-foreground">Complete endpoint docs</p>
-                </div>
-              </Link>
-              <Link href="/docs/best-practices" className="flex items-center gap-3 p-4 rounded-lg border hover:bg-accent transition-colors">
-                <Zap className="h-5 w-5 text-primary" />
-                <div>
-                  <p className="font-medium">Best Practices</p>
-                  <p className="text-sm text-muted-foreground">Tips for success</p>
-                </div>
-              </Link>
-              <Link href="https://github.com/webbixray/astra-os" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 rounded-lg border hover:bg-accent transition-colors">
-                <ExternalLink className="h-5 w-5 text-primary" />
-                <div>
-                  <p className="font-medium">GitHub Repository</p>
-                  <p className="text-sm text-muted-foreground">Source code & issues</p>
-                </div>
-              </Link>
+            {/* Quick Links */}
+            <div className="mt-12 rounded-xl border bg-muted/30 p-6">
+              <h2 className="text-lg font-semibold mb-4">Quick Links</h2>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <Link href="/docs/quickstart" className="flex items-center gap-3 p-4 rounded-lg border hover:bg-accent transition-colors">
+                  <Zap className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="font-medium">Quick Start</p>
+                    <p className="text-sm text-muted-foreground">5-minute setup guide</p>
+                  </div>
+                </Link>
+                <Link href="/docs/api-reference" className="flex items-center gap-3 p-4 rounded-lg border hover:bg-accent transition-colors">
+                  <Code className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="font-medium">API Reference</p>
+                    <p className="text-sm text-muted-foreground">Complete endpoint docs</p>
+                  </div>
+                </Link>
+                <Link href="/docs/best-practices" className="flex items-center gap-3 p-4 rounded-lg border hover:bg-accent transition-colors">
+                  <Zap className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="font-medium">Best Practices</p>
+                    <p className="text-sm text-muted-foreground">Tips for success</p>
+                  </div>
+                </Link>
+                <Link href="https://github.com/webbixray/astra-os" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 rounded-lg border hover:bg-accent transition-colors">
+                  <ExternalLink className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="font-medium">GitHub Repository</p>
+                    <p className="text-sm text-muted-foreground">Source code & issues</p>
+                  </div>
+                </Link>
+              </div>
             </div>
           </div>
         </div>
