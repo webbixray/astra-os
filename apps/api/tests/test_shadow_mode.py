@@ -18,7 +18,6 @@ from app.domain.services.shadow_mode import (
     ShadowDecisionService,
     LiftMeasurementService,
     ShadowSessionService,
-    ShadowEventService,
 )
 
 
@@ -201,12 +200,6 @@ def lift_service(decision_repo):
     session_repo_for_lift = MockSessionRepository()
     decision_repo_for_lift = MockDecisionRepository()
     return LiftMeasurementService(lift_repo, decision_repo, session_repo_for_lift)
-
-@pytest.fixture
-def event_service(event_repo):
-    from app.domain.services.shadow_mode import ShadowEventService
-    return ShadowEventService(event_repo)
-
 
 # --- Entity Tests ---
 
@@ -686,55 +679,11 @@ class TestLiftMeasurementService:
         assert summary["significant_lifts"] == 3
 
 
-class TestShadowEventService:
-    @pytest.mark.asyncio
-    async def test_get_session_events(self, event_service, event_repo):
-        session_id = uuid4()
-        org_id = uuid4()
-
-        # Add some events
-        for i in range(3):
-            event = ShadowEvent(
-                organization_id=org_id,
-                shadow_session_id=session_id,
-                event_type=ShadowEventType.DECISION_MADE,
-                description=f"Event {i}",
-            )
-            await event_repo.save(event)
-
-        events = await event_service.get_session_events(session_id)
-        assert len(events) == 3
-
-    @pytest.mark.asyncio
-    async def test_get_session_events_filtered(self, event_service, event_repo):
-        session_id = uuid4()
-        org_id = uuid4()
-
-        event1 = ShadowEvent(
-            organization_id=org_id,
-            shadow_session_id=session_id,
-            event_type=ShadowEventType.DECISION_MADE,
-            description="Agent decision",
-        )
-        event2 = ShadowEvent(
-            organization_id=org_id,
-            shadow_session_id=session_id,
-            event_type=ShadowEventType.DECISION_COMPARED,
-            description="Human comparison",
-        )
-        await event_repo.save(event1)
-        await event_repo.save(event2)
-
-        events = await event_service.get_session_events(session_id, ShadowEventType.DECISION_MADE)
-        assert len(events) == 1
-        assert events[0].event_type == ShadowEventType.DECISION_MADE
-
-
 class TestShadowModeEntitiesIntegration:
     @pytest.mark.asyncio
     async def test_full_shadow_cycle(self, session_repo, decision_repo, event_repo):
         """Test a complete shadow mode cycle."""
-        from app.domain.services.shadow_mode import ShadowSessionService, ShadowDecisionService, ShadowEventService
+        from app.domain.services.shadow_mode import ShadowSessionService, ShadowDecisionService
 
         org_id = uuid4()
         user_id = uuid4()

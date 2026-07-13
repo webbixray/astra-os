@@ -302,6 +302,12 @@ class LiftMeasurement:
     agent_value: float = 0.0     # Agent performance
     lift_percentage: float = 0.0  # (agent - baseline) / baseline * 100
 
+    def __post_init__(self) -> None:
+        if self.baseline_value != 0:
+            self.lift_percentage = ((self.agent_value - self.baseline_value) / self.baseline_value) * 100
+        else:
+            self.lift_percentage = 0.0
+
     # Statistical significance
     sample_size: int = 0
     p_value: float | None = None

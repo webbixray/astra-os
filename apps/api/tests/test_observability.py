@@ -1,16 +1,17 @@
 """Tests for Observability Services — E6.4 Beta Launch."""
 
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from uuid import uuid4
 
 from app.domain.entities.observability import (
     Alert,
     AlertRule,
     AlertSeverity,
+    AlertSource,
     AlertStatus,
     Budget,
-    BudgetCategory,
+    CostCategory,
     CostRecord,
     Dashboard,
     DashboardWidget,
@@ -137,7 +138,7 @@ class TestAlert:
         assert resolved.is_active() is False
 
     def test_duration_seconds(self):
-        started = datetime.now() - timedelta(seconds=300)
+        started = datetime.now(UTC) - timedelta(seconds=300)
         alert = Alert(started_at=started)
         duration = alert.duration_seconds()
         assert 290 < duration < 310
@@ -157,7 +158,7 @@ class TestCostRecord:
     def test_create_cost_record(self):
         record = CostRecord(
             organization_id=uuid4(),
-            category=BudgetCategory.AI_INFERENCE,
+            category=CostCategory.AI_INFERENCE,
             amount_usd=150.50,
             resource_type="tokens",
             resource_id="gpt-4",
@@ -166,11 +167,11 @@ class TestCostRecord:
             unit_cost_usd=0.00015,
             provider="openai",
         )
-        assert record.category == BudgetCategory.AI_INFERENCE
+        assert record.category == CostCategory.AI_INFERENCE
         assert record.amount_usd == 150.50
 
     def test_to_dict(self):
-        record = CostRecord(organization_id=uuid4(), category=BudgetCategory.COMPUTE, amount_usd=100.0)
+        record = CostRecord(organization_id=uuid4(), category=CostCategory.COMPUTE, amount_usd=100.0)
         d = record.to_dict()
         assert d["amount_usd"] == 100.0
         assert d["category"] == "compute"
@@ -183,7 +184,7 @@ class TestBudget:
             name="Monthly AI Budget",
             amount_usd=10000.0,
             period="monthly",
-            category=BudgetCategory.AI_INFERENCE,
+            category=CostCategory.AI_INFERENCE,
             warning_threshold_pct=0.8,
             critical_threshold_pct=0.95,
         )
