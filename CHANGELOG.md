@@ -34,6 +34,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added pip-audit dependency vulnerability scanning
 - Added hadolint Dockerfile linting
 
+## [0.2.0] - 2025-07-14
+
+### Added
+- Content Publishing Scheduler: Background worker that automatically publishes scheduled content to platforms (Website, Twitter, LinkedIn, Facebook, Instagram, Email)
+- Configuration options: `content_publishing_poll_interval` (default 60s) and `content_publishing_batch_size` (default 10)
+- Manual trigger endpoint: `POST /api/v1/content/publishing/scheduler/trigger`
+- Scheduler status endpoint: `GET /api/v1/content/publishing/scheduler/status`
+- Idempotent processing with "publishing" status guard to prevent duplicate publishes
+- Batch commit with error isolation - failed items marked individually, batch commits per batch
+- Comprehensive unit tests (12 test cases covering start/stop, due processing, adapter errors, batch processing, manual trigger)
+- Clean FastAPI lifespan integration with graceful shutdown
+
+### Changed
+- Fixed `datetime.UTC` compatibility for Python 3.9+ (uses `timezone.utc` with noqa)
+- Linting fixes: import sorting, unused imports removed, contextlib.suppress for CancelledError
+
+### Fixed
+- Scheduled content now actually publishes at the scheduled time (previously `find_scheduled_due()` existed but was never called)
+
 ## [0.1.0] - 2025-07-14
 
 ### Added
