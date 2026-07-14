@@ -6,22 +6,16 @@ Endpoints for shadow mode sessions, decisions, lift measurement, and events.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.entities.shadow_mode import (
-    ComparisonResult,
     DecisionType,
-    LiftMeasurement,
-    ShadowDecision,
-    ShadowEvent,
     ShadowEventType,
     ShadowModeStatus,
-    ShadowSession,
 )
 from app.domain.services.shadow_mode import (
     LiftMeasurementService,
@@ -242,9 +236,9 @@ async def _require_org_admin(
 
 def get_shadow_session_service(db: AsyncSession = Depends(get_db)) -> ShadowSessionService:
     from app.infrastructure.db.repositories.shadow_repository import (
-        ShadowSessionRepositoryImpl,
         ShadowDecisionRepositoryImpl,
         ShadowEventRepositoryImpl,
+        ShadowSessionRepositoryImpl,
     )
     session_repo = ShadowSessionRepositoryImpl(db)
     decision_repo = ShadowDecisionRepositoryImpl(db)
@@ -254,9 +248,9 @@ def get_shadow_session_service(db: AsyncSession = Depends(get_db)) -> ShadowSess
 
 def get_shadow_decision_service(db: AsyncSession = Depends(get_db)) -> ShadowDecisionService:
     from app.infrastructure.db.repositories.shadow_repository import (
-        ShadowSessionRepositoryImpl,
         ShadowDecisionRepositoryImpl,
         ShadowEventRepositoryImpl,
+        ShadowSessionRepositoryImpl,
     )
     session_repo = ShadowSessionRepositoryImpl(db)
     decision_repo = ShadowDecisionRepositoryImpl(db)
@@ -266,9 +260,9 @@ def get_shadow_decision_service(db: AsyncSession = Depends(get_db)) -> ShadowDec
 
 def get_lift_measurement_service(db: AsyncSession = Depends(get_db)) -> LiftMeasurementService:
     from app.infrastructure.db.repositories.shadow_repository import (
-        ShadowSessionRepositoryImpl,
-        ShadowDecisionRepositoryImpl,
         LiftMeasurementRepositoryImpl,
+        ShadowDecisionRepositoryImpl,
+        ShadowSessionRepositoryImpl,
     )
     session_repo = ShadowSessionRepositoryImpl(db)
     decision_repo = ShadowDecisionRepositoryImpl(db)
@@ -299,9 +293,9 @@ async def create_shadow_session(
 ) -> dict:
     from app.domain.services.shadow_mode import ShadowSessionService
     from app.infrastructure.db.repositories.shadow_repository import (
-        ShadowSessionRepositoryImpl,
         ShadowDecisionRepositoryImpl,
         ShadowEventRepositoryImpl,
+        ShadowSessionRepositoryImpl,
     )
     session_repo = ShadowSessionRepositoryImpl(db)
     decision_repo = ShadowDecisionRepositoryImpl(db)
@@ -344,8 +338,6 @@ async def list_shadow_sessions(
     from app.domain.services.shadow_mode import ShadowSessionService
     from app.infrastructure.db.repositories.shadow_repository import (
         ShadowSessionRepositoryImpl,
-        ShadowDecisionRepositoryImpl,
-        ShadowEventRepositoryImpl,
     )
     session_repo = ShadowSessionRepositoryImpl(db)
     decision_repo = __import__("app.infrastructure.db.repositories.shadow_repository", fromlist=["ShadowDecisionRepositoryImpl"]).ShadowDecisionRepositoryImpl
@@ -390,8 +382,6 @@ async def start_shadow_session(
 ) -> dict:
     from app.infrastructure.db.repositories.shadow_repository import (
         ShadowSessionRepositoryImpl,
-        ShadowDecisionRepositoryImpl,
-        ShadowEventRepositoryImpl,
     )
     session_repo = ShadowSessionRepositoryImpl(db)
     decision_repo = __import__("app.infrastructure.db.repositories.shadow_repository", fromlist=["ShadowDecisionRepositoryImpl"]).ShadowDecisionRepositoryImpl
@@ -414,11 +404,10 @@ async def pause_shadow_session(
     org_id: UUID = Depends(_require_org_admin),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
+    from app.domain.services.shadow_mode import ShadowSessionService
     from app.infrastructure.db.repositories.shadow_repository import (
         ShadowSessionRepositoryImpl,
     )
-    from app.domain.services.shadow_mode import ShadowSessionService
-    from app.infrastructure.db.repositories.shadow_repository import ShadowDecisionRepositoryImpl, ShadowEventRepositoryImpl
     session_repo = ShadowSessionRepositoryImpl(db)
     decision_repo = __import__("app.infrastructure.db.repositories.shadow_repository", fromlist=["ShadowDecisionRepositoryImpl"]).ShadowDecisionRepositoryImpl
     event_repo = __import__("app.infrastructure.db.repositories.shadow_repository", fromlist=["ShadowEventRepositoryImpl"]).ShadowEventRepositoryImpl
@@ -439,11 +428,10 @@ async def end_shadow_session(
     org_id: UUID = Depends(_require_org_admin),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
+    from app.domain.services.shadow_mode import ShadowSessionService
     from app.infrastructure.db.repositories.shadow_repository import (
         ShadowSessionRepositoryImpl,
     )
-    from app.domain.services.shadow_mode import ShadowSessionService
-    from app.infrastructure.db.repositories.shadow_repository import ShadowDecisionRepositoryImpl, ShadowEventRepositoryImpl
     session_repo = ShadowSessionRepositoryImpl(db)
     decision_repo = __import__("app.infrastructure.db.repositories.shadow_repository", fromlist=["ShadowDecisionRepositoryImpl"]).ShadowDecisionRepositoryImpl
     event_repo = __import__("app.infrastructure.db.repositories.shadow_repository", fromlist=["ShadowEventRepositoryImpl"]).ShadowEventRepositoryImpl
@@ -463,12 +451,10 @@ async def get_session_stats(
     org_id: UUID = Depends(_require_org_access),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
+    from app.domain.services.shadow_mode import ShadowSessionService
     from app.infrastructure.db.repositories.shadow_repository import (
         ShadowSessionRepositoryImpl,
-        ShadowDecisionRepositoryImpl,
-        ShadowEventRepositoryImpl,
     )
-    from app.domain.services.shadow_mode import ShadowSessionService
     session_repo = ShadowSessionRepositoryImpl(db)
     decision_repo = __import__("app.infrastructure.db.repositories.shadow_repository", fromlist=["ShadowDecisionRepositoryImpl"]).ShadowDecisionRepositoryImpl
     event_repo = __import__("app.infrastructure.db.repositories.shadow_repository", fromlist=["ShadowEventRepositoryImpl"]).ShadowEventRepositoryImpl
@@ -492,12 +478,10 @@ async def record_agent_decision(
     org_id: UUID = Depends(_require_org_access),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
+    from app.domain.services.shadow_mode import ShadowDecisionService
     from app.infrastructure.db.repositories.shadow_repository import (
         ShadowSessionRepositoryImpl,
-        ShadowDecisionRepositoryImpl,
-        ShadowEventRepositoryImpl,
     )
-    from app.domain.services.shadow_mode import ShadowDecisionService
     session_repo = ShadowSessionRepositoryImpl(db)
     decision_repo = __import__("app.infrastructure.db.repositories.shadow_repository", fromlist=["ShadowDecisionRepositoryImpl"]).ShadowDecisionRepositoryImpl
     event_repo = __import__("app.infrastructure.db.repositories.shadow_repository", fromlist=["ShadowEventRepositoryImpl"]).ShadowEventRepositoryImpl
@@ -530,12 +514,10 @@ async def record_human_decision(
     org_id: UUID = Depends(_require_org_access),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
+    from app.domain.services.shadow_mode import ShadowDecisionService
     from app.infrastructure.db.repositories.shadow_repository import (
         ShadowSessionRepositoryImpl,
-        ShadowDecisionRepositoryImpl,
-        ShadowEventRepositoryImpl,
     )
-    from app.domain.services.shadow_mode import ShadowDecisionService
     session_repo = ShadowSessionRepositoryImpl(db)
     decision_repo = __import__("app.infrastructure.db.repositories.shadow_repository", fromlist=["ShadowDecisionRepositoryImpl"]).ShadowDecisionRepositoryImpl
     event_repo = __import__("app.infrastructure.db.repositories.shadow_repository", fromlist=["ShadowEventRepositoryImpl"]).ShadowEventRepositoryImpl
@@ -563,12 +545,10 @@ async def list_decisions(
     org_id: UUID = Depends(_require_org_access),
     db: AsyncSession = Depends(get_db),
 ) -> list[dict]:
+    from app.domain.services.shadow_mode import ShadowDecisionService
     from app.infrastructure.db.repositories.shadow_repository import (
         ShadowSessionRepositoryImpl,
-        ShadowDecisionRepositoryImpl,
-        ShadowEventRepositoryImpl,
     )
-    from app.domain.services.shadow_mode import ShadowDecisionService
     session_repo = ShadowSessionRepositoryImpl(db)
     decision_repo = __import__("app.infrastructure.db.repositories.shadow_repository", fromlist=["ShadowDecisionRepositoryImpl"]).ShadowDecisionRepositoryImpl
     event_repo = __import__("app.infrastructure.db.repositories.shadow_repository", fromlist=["ShadowEventRepositoryImpl"]).ShadowEventRepositoryImpl
@@ -590,12 +570,10 @@ async def get_pending_comparisons(
     org_id: UUID = Depends(_require_org_access),
     db: AsyncSession = Depends(get_db),
 ) -> list[dict]:
+    from app.domain.services.shadow_mode import ShadowDecisionService
     from app.infrastructure.db.repositories.shadow_repository import (
         ShadowSessionRepositoryImpl,
-        ShadowDecisionRepositoryImpl,
-        ShadowEventRepositoryImpl,
     )
-    from app.domain.services.shadow_mode import ShadowDecisionService
     session_repo = ShadowSessionRepositoryImpl(db)
     decision_repo = __import__("app.infrastructure.db.repositories.shadow_repository", fromlist=["ShadowDecisionRepositoryImpl"]).ShadowDecisionRepositoryImpl
     event_repo = __import__("app.infrastructure.db.repositories.shadow_repository", fromlist=["ShadowEventRepositoryImpl"]).ShadowEventRepositoryImpl
@@ -616,7 +594,6 @@ async def get_decision(
     org_id: UUID = Depends(_require_org_access),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    from app.infrastructure.db.repositories.shadow_repository import ShadowDecisionRepositoryImpl
     decision_repo = __import__("app.infrastructure.db.repositories.shadow_repository", fromlist=["ShadowDecisionRepositoryImpl"]).ShadowDecisionRepositoryImpl
     decision = await decision_repo(db).find_by_id(decision_id)
     if not decision or decision.organization_id != organization_id:
@@ -637,12 +614,10 @@ async def record_outcome(
     org_id: UUID = Depends(_require_org_access),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
+    from app.domain.services.shadow_mode import ShadowDecisionService
     from app.infrastructure.db.repositories.shadow_repository import (
         ShadowSessionRepositoryImpl,
-        ShadowDecisionRepositoryImpl,
-        ShadowEventRepositoryImpl,
     )
-    from app.domain.services.shadow_mode import ShadowDecisionService
     session_repo = ShadowSessionRepositoryImpl(db)
     decision_repo = __import__("app.infrastructure.db.repositories.shadow_repository", fromlist=["ShadowDecisionRepositoryImpl"]).ShadowDecisionRepositoryImpl
     event_repo = __import__("app.infrastructure.db.repositories.shadow_repository", fromlist=["ShadowEventRepositoryImpl"]).ShadowEventRepositoryImpl
@@ -664,12 +639,10 @@ async def batch_compare_decisions(
     org_id: UUID = Depends(_require_org_access),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
+    from app.domain.services.shadow_mode import ShadowDecisionService
     from app.infrastructure.db.repositories.shadow_repository import (
         ShadowSessionRepositoryImpl,
-        ShadowDecisionRepositoryImpl,
-        ShadowEventRepositoryImpl,
     )
-    from app.domain.services.shadow_mode import ShadowDecisionService
     session_repo = ShadowSessionRepositoryImpl(db)
     decision_repo = __import__("app.infrastructure.db.repositories.shadow_repository", fromlist=["ShadowDecisionRepositoryImpl"]).ShadowDecisionRepositoryImpl
     event_repo = __import__("app.infrastructure.db.repositories.shadow_repository", fromlist=["ShadowEventRepositoryImpl"]).ShadowEventRepositoryImpl
@@ -708,12 +681,10 @@ async def calculate_lift(
     org_id: UUID = Depends(_require_org_admin),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
+    from app.domain.services.shadow_mode import LiftMeasurementService
     from app.infrastructure.db.repositories.shadow_repository import (
         ShadowSessionRepositoryImpl,
-        ShadowDecisionRepositoryImpl,
-        LiftMeasurementRepositoryImpl,
     )
-    from app.domain.services.shadow_mode import LiftMeasurementService
     session_repo = ShadowSessionRepositoryImpl(db)
     decision_repo = __import__("app.infrastructure.db.repositories.shadow_repository", fromlist=["ShadowDecisionRepositoryImpl"]).ShadowDecisionRepositoryImpl
     measurement_repo = __import__("app.infrastructure.db.repositories.shadow_repository", fromlist=["LiftMeasurementRepositoryImpl"]).LiftMeasurementRepositoryImpl
@@ -741,12 +712,10 @@ async def list_lift_measurements(
     org_id: UUID = Depends(_require_org_access),
     db: AsyncSession = Depends(get_db),
 ) -> list[dict]:
+    from app.domain.services.shadow_mode import LiftMeasurementService
     from app.infrastructure.db.repositories.shadow_repository import (
         ShadowSessionRepositoryImpl,
-        ShadowDecisionRepositoryImpl,
-        LiftMeasurementRepositoryImpl,
     )
-    from app.domain.services.shadow_mode import LiftMeasurementService
     session_repo = ShadowSessionRepositoryImpl(db)
     decision_repo = __import__("app.infrastructure.db.repositories.shadow_repository", fromlist=["ShadowDecisionRepositoryImpl"]).ShadowDecisionRepositoryImpl
     measurement_repo = __import__("app.infrastructure.db.repositories.shadow_repository", fromlist=["LiftMeasurementRepositoryImpl"]).LiftMeasurementRepositoryImpl
@@ -766,12 +735,10 @@ async def get_lift_summary(
     org_id: UUID = Depends(_require_org_access),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
+    from app.domain.services.shadow_mode import LiftMeasurementService
     from app.infrastructure.db.repositories.shadow_repository import (
         ShadowSessionRepositoryImpl,
-        ShadowDecisionRepositoryImpl,
-        LiftMeasurementRepositoryImpl,
     )
-    from app.domain.services.shadow_mode import LiftMeasurementService
     session_repo = ShadowSessionRepositoryImpl(db)
     decision_repo = __import__("app.infrastructure.db.repositories.shadow_repository", fromlist=["ShadowDecisionRepositoryImpl"]).ShadowDecisionRepositoryImpl
     measurement_repo = __import__("app.infrastructure.db.repositories.shadow_repository", fromlist=["LiftMeasurementRepositoryImpl"]).LiftMeasurementRepositoryImpl
@@ -795,8 +762,8 @@ async def get_session_events(
     org_id: UUID = Depends(_require_org_access),
     db: AsyncSession = Depends(get_db),
 ) -> list[dict]:
-    from app.infrastructure.db.repositories.shadow_repository import ShadowEventRepositoryImpl
     from app.domain.services.shadow_mode import ShadowEventService
+    from app.infrastructure.db.repositories.shadow_repository import ShadowEventRepositoryImpl
     event_repo = ShadowEventRepositoryImpl(db)
     service = ShadowEventService(event_repo)
 
@@ -819,12 +786,10 @@ async def calculate_multiple_lifts(
     org_id: UUID = Depends(_require_org_admin),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
+    from app.domain.services.shadow_mode import LiftMeasurementService
     from app.infrastructure.db.repositories.shadow_repository import (
         ShadowSessionRepositoryImpl,
-        ShadowDecisionRepositoryImpl,
-        LiftMeasurementRepositoryImpl,
     )
-    from app.domain.services.shadow_mode import LiftMeasurementService
     session_repo = ShadowSessionRepositoryImpl(db)
     decision_repo = __import__("app.infrastructure.db.repositories.shadow_repository", fromlist=["ShadowDecisionRepositoryImpl"]).ShadowDecisionRepositoryImpl
     measurement_repo = __import__("app.infrastructure.db.repositories.shadow_repository", fromlist=["LiftMeasurementRepositoryImpl"]).LiftMeasurementRepositoryImpl

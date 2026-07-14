@@ -13,9 +13,8 @@ lives in CampaignBudget + Campaign entities.
 
 from __future__ import annotations
 
-import math
-from dataclasses import dataclass, field
-from datetime import date, datetime
+from dataclasses import dataclass
+from datetime import date
 from enum import Enum
 from typing import TYPE_CHECKING
 
@@ -103,6 +102,7 @@ class BudgetPacingService:
             strategy: Pacing strategy to apply.
             today: Override for current date (useful in tests).
             today_spend: How much was spent today so far.
+
         """
         today = today or date.today()
         total_budget = budget.total_budget

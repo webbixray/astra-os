@@ -7,14 +7,12 @@ from app.domain.entities.workflows.workflow import (
     Workflow,
     WorkflowEdge,
     WorkflowNode,
-    WorkflowStatus,
 )
 from app.domain.services.workflow_templates import (
     WorkflowTemplate,
     WorkflowTemplateRegistry,
     template_registry,
 )
-
 
 # ---------------------------------------------------------------------------
 # WorkflowTemplate unit tests

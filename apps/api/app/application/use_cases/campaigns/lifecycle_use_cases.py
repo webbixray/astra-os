@@ -27,11 +27,11 @@ class LaunchCampaignUseCase:
     - Budget must be set if channels include 'ads'
     """
 
-    def __init__(self, repo: "CampaignRepository", pacing_service: "BudgetPacingService | None" = None):
+    def __init__(self, repo: CampaignRepository, pacing_service: BudgetPacingService | None = None):
         self.repo = repo
         self.pacing_service = pacing_service
 
-    async def execute(self, campaign_id: UUID) -> "Campaign":
+    async def execute(self, campaign_id: UUID) -> Campaign:
         campaign = await self.repo.find_by_id(campaign_id)
         if campaign is None:
             raise EntityNotFoundError("Campaign", str(campaign_id))
@@ -78,10 +78,10 @@ class LaunchCampaignUseCase:
 class PauseCampaignUseCase:
     """Transition campaign from active → paused."""
 
-    def __init__(self, repo: "CampaignRepository"):
+    def __init__(self, repo: CampaignRepository):
         self.repo = repo
 
-    async def execute(self, campaign_id: UUID, reason: str = "") -> "Campaign":
+    async def execute(self, campaign_id: UUID, reason: str = "") -> Campaign:
         campaign = await self.repo.find_by_id(campaign_id)
         if campaign is None:
             raise EntityNotFoundError("Campaign", str(campaign_id))
@@ -115,10 +115,10 @@ class PauseCampaignUseCase:
 class ResumeCampaignUseCase:
     """Transition campaign from paused → active."""
 
-    def __init__(self, repo: "CampaignRepository"):
+    def __init__(self, repo: CampaignRepository):
         self.repo = repo
 
-    async def execute(self, campaign_id: UUID) -> "Campaign":
+    async def execute(self, campaign_id: UUID) -> Campaign:
         campaign = await self.repo.find_by_id(campaign_id)
         if campaign is None:
             raise EntityNotFoundError("Campaign", str(campaign_id))
@@ -152,10 +152,10 @@ class ResumeCampaignUseCase:
 class CompleteCampaignUseCase:
     """Transition campaign from active/paused → completed."""
 
-    def __init__(self, repo: "CampaignRepository"):
+    def __init__(self, repo: CampaignRepository):
         self.repo = repo
 
-    async def execute(self, campaign_id: UUID) -> "Campaign":
+    async def execute(self, campaign_id: UUID) -> Campaign:
         campaign = await self.repo.find_by_id(campaign_id)
         if campaign is None:
             raise EntityNotFoundError("Campaign", str(campaign_id))
@@ -189,10 +189,10 @@ class CompleteCampaignUseCase:
 class ArchiveCampaignUseCase:
     """Transition any terminal-state campaign → archived."""
 
-    def __init__(self, repo: "CampaignRepository"):
+    def __init__(self, repo: CampaignRepository):
         self.repo = repo
 
-    async def execute(self, campaign_id: UUID) -> "Campaign":
+    async def execute(self, campaign_id: UUID) -> Campaign:
         campaign = await self.repo.find_by_id(campaign_id)
         if campaign is None:
             raise EntityNotFoundError("Campaign", str(campaign_id))
@@ -223,5 +223,5 @@ class ArchiveCampaignUseCase:
 # Avoid circular imports — use a forward reference for the repo type
 # This is resolved at runtime by the concrete CampaignRepositoryImpl
 class CampaignRepository:
-    async def save(self, campaign: "Campaign") -> "Campaign": ...  # noqa: F821
-    async def find_by_id(self, campaign_id: UUID) -> "Campaign | None": ...  # noqa: F821
+    async def save(self, campaign: Campaign) -> Campaign: ...
+    async def find_by_id(self, campaign_id: UUID) -> Campaign | None: ...

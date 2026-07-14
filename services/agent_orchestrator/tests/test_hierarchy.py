@@ -3,23 +3,19 @@
 import uuid
 
 import pytest
-
 from services.agent_orchestrator.agent import (
-    AgentConfig,
-    AgentContext,
     AgentMessage,
     AgentRegistry,
     AgentType,
 )
+from services.agent_orchestrator.events import EventBus
 from services.agent_orchestrator.hierarchy import (
     AgentHierarchy,
     CommunicationProtocol,
     HandoffManager,
     HandoffRequest,
-    HandoffResponse,
     HandoffType,
 )
-from services.agent_orchestrator.events import EventBus
 
 
 @pytest.fixture
@@ -169,7 +165,6 @@ class TestHandoffManager:
     async def test_handle_handoff_request_accept(
         self, handoff_manager: HandoffManager
     ) -> None:
-        from services.agent_orchestrator.agent import Agent
 
         registry = AgentRegistry()
         agent = registry.create_agent(AgentType.CONTENT_SPECIALIST, uuid.uuid4())
@@ -188,7 +183,6 @@ class TestHandoffManager:
     async def test_handle_handoff_request_reject(
         self, handoff_manager: HandoffManager
     ) -> None:
-        from services.agent_orchestrator.agent import Agent
 
         registry = AgentRegistry()
         agent = registry.create_agent(AgentType.CONTENT_SPECIALIST, uuid.uuid4())

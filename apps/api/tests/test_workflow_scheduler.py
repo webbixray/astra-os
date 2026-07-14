@@ -1,6 +1,6 @@
 """Tests for Workflow Scheduler — M5 Workflow Engine."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock
 from uuid import uuid4
 
@@ -13,7 +13,6 @@ from app.domain.services.workflow_scheduler import (
     WorkflowSchedule,
     WorkflowScheduler,
 )
-
 
 # ---------------------------------------------------------------------------
 # CronExpression tests
@@ -63,27 +62,27 @@ class TestCronExpression:
 
     def test_should_trigger_wildcard(self):
         cron = CronExpression.from_string("* * * * *")
-        assert cron.should_trigger(datetime(2026, 7, 12, 10, 30, tzinfo=timezone.utc))
+        assert cron.should_trigger(datetime(2026, 7, 12, 10, 30, tzinfo=UTC))
 
     def test_should_trigger_specific_time(self):
         cron = CronExpression.from_string("0 9 * * *")
-        assert cron.should_trigger(datetime(2026, 7, 12, 9, 0, tzinfo=timezone.utc))
-        assert not cron.should_trigger(datetime(2026, 7, 12, 9, 1, tzinfo=timezone.utc))
-        assert not cron.should_trigger(datetime(2026, 7, 12, 10, 0, tzinfo=timezone.utc))
+        assert cron.should_trigger(datetime(2026, 7, 12, 9, 0, tzinfo=UTC))
+        assert not cron.should_trigger(datetime(2026, 7, 12, 9, 1, tzinfo=UTC))
+        assert not cron.should_trigger(datetime(2026, 7, 12, 10, 0, tzinfo=UTC))
 
     def test_should_trigger_step(self):
         cron = CronExpression.from_string("*/15 * * * *")
-        assert cron.should_trigger(datetime(2026, 7, 12, 10, 0, tzinfo=timezone.utc))
-        assert cron.should_trigger(datetime(2026, 7, 12, 10, 15, tzinfo=timezone.utc))
-        assert cron.should_trigger(datetime(2026, 7, 12, 10, 30, tzinfo=timezone.utc))
-        assert cron.should_trigger(datetime(2026, 7, 12, 10, 45, tzinfo=timezone.utc))
-        assert not cron.should_trigger(datetime(2026, 7, 12, 10, 10, tzinfo=timezone.utc))
+        assert cron.should_trigger(datetime(2026, 7, 12, 10, 0, tzinfo=UTC))
+        assert cron.should_trigger(datetime(2026, 7, 12, 10, 15, tzinfo=UTC))
+        assert cron.should_trigger(datetime(2026, 7, 12, 10, 30, tzinfo=UTC))
+        assert cron.should_trigger(datetime(2026, 7, 12, 10, 45, tzinfo=UTC))
+        assert not cron.should_trigger(datetime(2026, 7, 12, 10, 10, tzinfo=UTC))
 
     def test_should_trigger_specific_weekday(self):
         # Cron day_of_week: 1=Monday
         cron = CronExpression.from_string("0 9 * * 1")
-        monday = datetime(2026, 7, 13, 9, 0, tzinfo=timezone.utc)  # Monday
-        tuesday = datetime(2026, 7, 14, 9, 0, tzinfo=timezone.utc)  # Tuesday
+        monday = datetime(2026, 7, 13, 9, 0, tzinfo=UTC)  # Monday
+        tuesday = datetime(2026, 7, 14, 9, 0, tzinfo=UTC)  # Tuesday
         assert cron.should_trigger(monday)
         assert not cron.should_trigger(tuesday)
 
@@ -93,7 +92,7 @@ class TestCronExpression:
 
     def test_next_trigger_time(self):
         cron = CronExpression.from_string("0 9 * * *")
-        after = datetime(2026, 7, 12, 10, 0, 0, tzinfo=timezone.utc)
+        after = datetime(2026, 7, 12, 10, 0, 0, tzinfo=UTC)
         next_t = cron.next_trigger_time(after)
         # Next 9:00 after 10:00 should be next day
         assert next_t.hour == 9

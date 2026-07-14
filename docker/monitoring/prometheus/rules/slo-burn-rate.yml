@@ -1,0 +1,194 @@
+groups:
+- name: slo-burn-rate
+  interval: 30s
+  rules:
+  # Agent Availability Burn Rate Alerts
+  - alert: AgentAvailabilityFastBurnRate
+    expr: |
+      (
+        (1 - (sum(rate(agent_runs_total{success="true"}[5m])) / sum(rate(agent_runs_total[5m])))
+      ) / 0.001 > 12
+    for: 2m
+    labels:
+      severity: critical
+      slo: agent_availability
+      burn_rate: fast
+    annotations:
+      summary: "Agent availability fast burn rate (12x budget)"
+      description: "Agent availability is consuming error budget at 12x rate. Error budget remaining: {{ $value | humanizePercentage }}"
+
+  - alert: AgentAvailabilityMediumBurnRate
+    expr: |
+      (
+        (1 - (sum(rate(agent_runs_total{success="true"}[1h])) / sum(rate(agent_runs_total[1h])))
+      ) / 0.001 > 2
+    for: 15m
+    labels:
+      severity: warning
+      slo: agent_availability
+      burn_rate: medium
+    annotations:
+      summary: "Agent availability medium burn rate (2x budget)"
+      description: "Agent availability is consuming error budget at 2x rate over 1h."
+
+  - alert: AgentAvailabilitySlowBurnRate
+    expr: |
+      (
+        (1 - (sum(rate(agent_runs_total{success="true"}[6h])) / sum(rate(agent_runs_total[6h])))
+      ) / 0.001 > 0.5
+    for: 1h
+    labels:
+      severity: warning
+      slo: agent_availability
+      burn_rate: slow
+    annotations:
+      summary: "Agent availability slow burn rate (0.5x budget)"
+      description: "Agent availability is consuming error budget at 0.5x rate over 6h."
+
+  # Tool Call Success Rate Burn Rate Alerts
+  - alert: ToolCallSuccessFastBurnRate
+    expr: |
+      (
+        (1 - (sum(rate(agent_tool_calls_total{success="true"}[5m])) / sum(rate(agent_tool_calls_total[5m])))
+      ) / 0.005 > 12
+    for: 2m
+    labels:
+      severity: critical
+      slo: tool_call_success_rate
+      burn_rate: fast
+    annotations:
+      summary: "Tool call success rate fast burn rate (12x budget)"
+
+  - alert: ToolCallSuccessMediumBurnRate
+    expr: |
+      (
+        (1 - (sum(rate(agent_tool_calls_total{success="true"}[1h])) / sum(rate(agent_tool_calls_total[1h])))
+      ) / 0.005 > 2
+    for: 15m
+    labels:
+      severity: warning
+      slo: tool_call_success_rate
+      burn_rate: medium
+    annotations:
+      summary: "Tool call success rate medium burn rate (2x budget)"
+
+  - alert: ToolCallSuccessSlowBurnRate
+    expr: |
+      (
+        (1 - (sum(rate(agent_tool_calls_total{success="true"}[6h])) / sum(rate(agent_tool_calls_total[6h])))
+      ) / 0.005 > 0.5
+    for: 1h
+    labels:
+      severity: warning
+      slo: tool_call_success_rate
+      burn_rate: slow
+    annotations:
+      summary: "Tool call success rate slow burn rate (0.5x budget)"
+
+  # DLQ Depth Burn Rate Alerts
+  - alert: DLQDepthFastBurnRate
+    expr: |
+      astra_dlq_pending / 100 > 12
+    for: 2m
+    labels:
+      severity: critical
+      slo: dlq_depth
+      burn_rate: fast
+    annotations:
+      summary: "DLQ depth fast burn rate (12x threshold)"
+
+  - alert: DLQDepthMediumBurnRate
+    expr: |
+      astra_dlq_pending / 100 > 2
+    for: 15m
+    labels:
+      severity: warning
+      slo: dlq_depth
+      burn_rate: medium
+    annotations:
+      summary: "DLQ depth medium burn rate (2x threshold)"
+
+  - alert: DLQDepthSlowBurnRate
+    expr: |
+      astra_dlq_pending / 100 > 0.5
+    for: 1h
+    labels:
+      severity: warning
+      slo: dlq_depth
+      burn_rate: slow
+    annotations:
+      summary: "DLQ depth slow burn rate (0.5x threshold)"
+
+  # Circuit Breaker Closed Burn Rate Alerts
+  - alert: CircuitBreakerOpenFastBurnRate
+    expr: |
+      (1 - (sum(circuit_breaker_state{state="closed"}) / (sum(circuit_breaker_state{state="closed"}) + sum(circuit_breaker_state{state="open"})))) / 0.01 > 12
+    for: 2m
+    labels:
+      severity: critical
+      slo: circuit_breaker_closed
+      burn_rate: fast
+    annotations:
+      summary: "Circuit breaker open rate fast burn rate (12x budget)"
+
+  - alert: CircuitBreakerOpenMediumBurnRate
+    expr: |
+      (1 - (sum(circuit_breaker_state{state="closed"}) / (sum(circuit_breaker_state{state="closed"}) + sum(circuit_breaker_state{state="open"})))) / 0.01 > 2
+    for: 15m
+    labels:
+      severity: warning
+      slo: circuit_breaker_closed
+      burn_rate: medium
+    annotations:
+      summary: "Circuit breaker open rate medium burn rate (2x budget)"
+
+  - alert: CircuitBreakerOpenSlowBurnRate
+    expr: |
+      (1 - (sum(circuit_breaker_state{state="closed"}) / (sum(circuit_breaker_state{state="closed"}) + sum(circuit_breaker_state{state="open"})))) / 0.01 > 0.5
+    for: 1h
+    labels:
+      severity: warning
+      slo: circuit_breaker_closed
+      burn_rate: slow
+    annotations:
+      summary: "Circuit breaker open rate slow burn rate (0.5x budget)"
+
+  # Delegation Success Rate Burn Rate Alerts
+  - alert: DelegationSuccessFastBurnRate
+    expr: |
+      (
+        (1 - (sum(rate(agent_delegations_total{success="true"}[5m])) / sum(rate(agent_delegations_total[5m])))
+      ) / 0.01 > 12
+    for: 2m
+    labels:
+      severity: critical
+      slo: delegation_success_rate
+      burn_rate: fast
+    annotations:
+      summary: "Delegation success rate fast burn rate (12x budget)"
+
+  - alert: DelegationSuccessMediumBurnRate
+    expr: |
+      (
+        (1 - (sum(rate(agent_delegations_total{success="true"}[1h])) / sum(rate(agent_delegations_total[1h])))
+      ) / 0.01 > 2
+    for: 15m
+    labels:
+      severity: warning
+      slo: delegation_success_rate
+      burn_rate: medium
+    annotations:
+      summary: "Delegation success rate medium burn rate (2x budget)"
+
+  - alert: DelegationSuccessSlowBurnRate
+    expr: |
+      (
+        (1 - (sum(rate(agent_delegations_total{success="true"}[6h])) / sum(rate(agent_delegations_total[6h])))
+      ) / 0.01 > 0.5
+    for: 1h
+    labels:
+      severity: warning
+      slo: delegation_success_rate
+      burn_rate: slow
+    annotations:
+      summary: "Delegation success rate slow burn rate (0.5x budget)"

@@ -1,0 +1,378 @@
+# Kyverno Policies for Astra OS
+# Install: kubectl apply -f https://github.com/kyverno/kyverno/releases/latest/download/install.yaml
+# Apply policies: kubectl apply -f k8s/kyverno-policies.yaml
+
+---
+# Policy: Require non-root containers
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-non-root-containers
+  annotations:
+    policies.kyverno.io/title: "Require Non-Root Containers"
+    policies.kyverno.io/category: "Pod Security Standards (Restricted)"
+    policies.kyverno.io/severity: "high"
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: require-non-root
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        message: "Containers must not run as root"
+        pattern:
+          spec:
+            securityContext:
+              runAsNonRoot: true
+            containers:
+              - securityContext:
+                  runAsNonRoot: true
+
+---
+# Policy: Drop all capabilities
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: drop-all-capabilities
+  annotations:
+    policies.kyverno.io/title: "Drop All Capabilities"
+    policies.kyverno.io/category: "Pod Security Standards (Restricted)"
+    policies.kyverno.io/severity: "high"
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: drop-all-capabilities
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        message: "All containers must drop all capabilities"
+        pattern:
+          spec:
+            containers:
+              - securityContext:
+                  capabilities:
+                    drop:
+                      - "ALL"
+
+---
+# Policy: Require read-only root filesystem
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-readonly-root-fs
+  annotations:
+    policies.kyverno.io/title: "Require Read-Only Root Filesystem"
+    policies.kyverno.io/category: "Pod Security Standards (Restricted)"
+    policies.kyverno.io/severity: "high"
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: require-readonly-root-fs
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        message: "Containers must use read-only root filesystem"
+        pattern:
+          spec:
+            containers:
+              - securityContext:
+                  readOnlyRootFilesystem: true
+
+---
+# Policy: Require resource limits and requests
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-resource-limits
+  annotations:
+    policies.kyverno.io/title: "Require Resource Limits and Requests"
+    policies.kyverno.io/category: "Resource Management"
+    policies.kyverno.io/severity: "medium"
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: require-limits
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        message: "Containers must have CPU and memory limits and requests"
+        pattern:
+          spec:
+            containers:
+              - resources:
+                  limits:
+                    cpu: "?*"
+                    memory: "?*"
+                  requests:
+                    cpu: "?*"
+                    memory: "?*"
+
+---
+# Policy: Disallow host namespace sharing
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-host-namespaces
+  annotations:
+    policies.kyverno.io/title: "Disallow Host Namespaces"
+    policies.kyverno.io/category: "Pod Security Standards (Restricted)"
+    policies.kyverno.io/severity: "high"
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: disallow-host-pid
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        message: "Host PID namespace sharing is not allowed"
+        deny:
+          conditions:
+            all:
+              - key: "{{ request.object.spec.hostPID }}"
+                operator: Equals
+                value: true
+    - name: disallow-host-ipc
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        message: "Host IPC namespace sharing is not allowed"
+        deny:
+          conditions:
+            all:
+              - key: "{{ request.object.spec.hostIPC }}"
+                operator: Equals
+                value: true
+    - name: disallow-host-network
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        message: "Host network sharing is not allowed"
+        deny:
+          conditions:
+            all:
+              - key: "{{ request.object.spec.hostNetwork }}"
+                operator: Equals
+                value: true
+
+---
+# Policy: Require image pull secrets for private registries
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-image-pull-secrets
+  annotations:
+    policies.kyverno.io/title: "Require Image Pull Secrets"
+    policies.kyverno.io/category: "Supply Chain Security"
+    policies.kyverno.io/severity: "medium"
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: require-pull-secrets
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        message: "Pods must specify imagePullSecrets for private images"
+        deny:
+          conditions:
+            all:
+              - key: "{{ request.object.spec.imagePullSecrets }}"
+                operator: NotEquals
+                value: []
+
+---
+# Policy: Require labels for governance
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-labels
+  annotations:
+    policies.kyverno.io/title: "Require Required Labels"
+    policies.kyverno.io/category: "Governance"
+    policies.kyverno.io/severity: "medium"
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: require-app-label
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+                - Deployment
+                - Service
+                - ConfigMap
+                - Secret
+      validate:
+        message: "Resource must have 'app' label"
+        deny:
+          conditions:
+            all:
+              - key: "{{ request.object.metadata.labels.app }}"
+                operator: NotEquals
+                value: ""
+    - name: require-environment-label
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+                - Deployment
+      validate:
+        message: "Resource must have 'environment' label (production, staging, development)"
+        deny:
+          conditions:
+            all:
+              - key: "{{ request.object.metadata.labels.environment }}"
+                operator: NotEquals
+                value: ""
+
+---
+# Policy: Mutate - Add default labels
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: add-default-labels
+  annotations:
+    policies.kyverno.io/title: "Add Default Labels"
+    policies.kyverno.io/category: "Governance"
+    policies.kyverno.io/severity: "low"
+spec:
+  mutating: true
+  background: true
+  rules:
+    - name: add-managed-by
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      mutate:
+        patchStrategicMerge:
+          metadata:
+            labels:
+              managed-by: "kyverno"
+    - name: add-creation-timestamp
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      mutate:
+        patchStrategicMerge:
+          metadata:
+            annotations:
+              kyverno.io/created-at: "{{ time_now('2006-01-02T15:04:05Z07:00') }}"
+
+---
+# Policy: Block containers running as root (additional check)
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: block-root-containers
+  annotations:
+    policies.kyverno.io/title: "Block Root Containers"
+    policies.kyverno.io/category: "Pod Security Standards (Restricted)"
+    policies.kyverno.io/severity: "critical"
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: check-run-as-user
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        message: "Containers must not run as root (UID 0). Set runAsUser to a non-zero value."
+        deny:
+          conditions:
+            all:
+              - key: "{{ request.object.spec.containers[*].securityContext.runAsUser }}"
+                operator: Equals
+                value: 0
+    - name: check-run-as-group
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        message: "Containers must not run as root group (GID 0). Set runAsGroup to a non-zero value."
+        deny:
+          conditions:
+            all:
+              - key: "{{ request.object.spec.containers[*].securityContext.runAsGroup }}"
+                operator: Equals
+                value: 0
+
+---
+# Policy: Verify container images are signed (cosign)
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: verify-image-signatures
+  annotations:
+    policies.kyverno.io/title: "Verify Image Signatures"
+    policies.kyverno.io/category: "Supply Chain Security"
+    policies.kyverno.io/severity: "critical"
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: verify-signatures
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      verifyImages:
+        - image: "ghcr.io/astra-os/*"
+          key: |-
+            -----BEGIN PUBLIC KEY-----
+            MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE...
+            -----END PUBLIC KEY-----
+        - image: "docker.io/astraos/*"
+          key: |-
+            -----BEGIN PUBLIC KEY-----
+            MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE...
+            -----END PUBLIC KEY-----
+      # Skip verification in non-production namespaces
+      exclude:
+        resources:
+          namespaces:
+            - development
+            - staging
+            - kube-system
+            - kyverno

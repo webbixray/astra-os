@@ -3,15 +3,12 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
-from typing import Any
 from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.entities.shadow_mode import (
-    ComparisonResult,
     DecisionType,
     LiftMeasurement,
     ShadowDecision,
@@ -19,12 +16,6 @@ from app.domain.entities.shadow_mode import (
     ShadowEventType,
     ShadowModeStatus,
     ShadowSession,
-)
-from app.infrastructure.db.models.shadow import (
-    ShadowDecisionModel,
-    ShadowEventModel,
-    LiftMeasurementModel,
-    ShadowSessionModel,
 )
 
 
@@ -176,7 +167,7 @@ class ShadowDecisionRepository:
             human_confidence=float(model.human_confidence) if model.human_confidence else None,
             human_reasoning=model.human_reasoning or "",
             decided_by=model.decided_by,
-            comparison_result=model.comparison_result if model.comparison_result else None,
+            comparison_result=model.comparison_result or None,
             comparison_notes=model.comparison_notes or "",
             compared_at=model.compared_at,
             compared_by=model.compared_by,

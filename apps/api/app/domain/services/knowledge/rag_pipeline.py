@@ -406,7 +406,7 @@ class RagPipeline:
 
     def _extract_keywords(self, query: str) -> list[str]:
         """Extract meaningful keywords from query, removing stop words."""
-        words = re.findall(r'\b[a-zA-Z]{3,}\b', query.lower())
+        words = re.findall(r"\b[a-zA-Z]{3,}\b", query.lower())
         return [w for w in words if w not in _STOP_WORDS]
 
     def _keyword_score(self, keyword: str, raw_node: dict) -> float:

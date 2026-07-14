@@ -1,8 +1,9 @@
 """Tests for Design Partner Service — E6.1 Beta Launch."""
 
-import pytest
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
 from uuid import uuid4
+
+import pytest
 
 from app.domain.entities.design_partner import (
     DesignPartner,
@@ -12,8 +13,8 @@ from app.domain.entities.design_partner import (
     DesignPartnerStatus,
     DesignPartnerTier,
     FeedbackPriority,
-    FeedbackType,
     FeedbackStatus,
+    FeedbackType,
     SupportTicket,
     SupportTicketStatus,
 )
@@ -77,7 +78,7 @@ class MockFeedbackRepo(DesignPartnerFeedbackRepository):
     ) -> list[DesignPartnerFeedback]:
         results = [f for f in self.feedback.values() if f.design_partner_id == partner_id]
         if status:
-            status_value = status.value if hasattr(status, 'value') else status
+            status_value = status.value if hasattr(status, "value") else status
             results = [f for f in results if f.status.value == status_value]
         if type:
             results = [f for f in results if f.type == type]
@@ -92,7 +93,7 @@ class MockFeedbackRepo(DesignPartnerFeedbackRepository):
     ) -> list[DesignPartnerFeedback]:
         results = list(self.feedback.values())
         if status:
-            status_value = status.value if hasattr(status, 'value') else status
+            status_value = status.value if hasattr(status, "value") else status
             results = [f for f in results if f.status.value == status_value]
         if type:
             results = [f for f in results if f.type == type]

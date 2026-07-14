@@ -8,7 +8,7 @@ campaign status, pulling insights, and updating local state.
 from __future__ import annotations
 
 import logging
-from datetime import date, datetime
+from datetime import date
 from typing import TYPE_CHECKING
 from uuid import UUID
 
@@ -19,7 +19,6 @@ from app.domain.events.event_bus import DomainEvent, DomainEventType, EventBus
 
 if TYPE_CHECKING:
     from app.application.ports.ad_platform_port import AdPlatformPort
-    from app.domain.entities.campaigns.campaign import Campaign
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +71,7 @@ class SyncCampaignFromPlatformUseCase:
 
         Returns:
             The updated AdCampaign entity.
+
         """
         # Fetch performance data from platform
         campaigns = await adapter.get_performance(account_id, [platform_campaign_id])
@@ -120,7 +120,7 @@ class SyncCampaignFromPlatformUseCase:
                 organization_id=organization_id,
                 ad_account_id=UUID(),
                 name=platform_campaign.name,
-                objective=platform_campaign.objective if hasattr(platform_campaign, 'objective') else None,
+                objective=platform_campaign.objective if hasattr(platform_campaign, "objective") else None,
                 status=platform_campaign.status.value,
                 platform=adapter.platform.value,
                 platform_campaign_id=platform_campaign_id,
@@ -200,6 +200,7 @@ class SyncAllCampaignsUseCase:
 
         Returns:
             List of synced AdCampaign entities.
+
         """
         synced: list[AdCampaign] = []
 
@@ -257,6 +258,7 @@ class RefreshInsightsUseCase:
 
         Returns:
             List of refreshed AdInsight entities.
+
         """
         campaigns = await adapter.get_performance(account_id)
 

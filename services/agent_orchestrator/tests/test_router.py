@@ -1,9 +1,7 @@
 """Tests for the model router."""
 
-import uuid
 
 import pytest
-
 from services.agent_orchestrator.router import (
     ModelCapability,
     ModelConfig,

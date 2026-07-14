@@ -1,35 +1,68 @@
-FROM python:3.12-alpine AS builder
+# ============================================================
+# ASTRA API - Hardened Multi-Stage Dockerfile
+# Security: distroless runtime, non-root, read-only, signed
+# ============================================================
 
-RUN apk add --no-cache gcc musl-dev libffi-dev postgresql-dev cargo
+# Stage 1: Builder with all build tools
+FROM python:3.12-slim AS builder
 
-RUN pip install uv --no-cache-dir
+# Install build dependencies only
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    libpq-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
+# Install uv for fast dependency resolution
+RUN pip install --no-cache-dir uv
+
+# Create virtual environment
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Set working directory
 WORKDIR /app
-COPY pyproject.toml uv.lock ./
-RUN uv sync --no-dev --no-cache
 
-FROM python:3.12-alpine AS runner
+# Copy dependency files
+COPY pyproject.toml uv.lock* ./
 
-RUN apk add --no-cache libffi postgresql-client wget curl
+# Install production dependencies only
+RUN uv pip install --no-cache-dir -r pyproject.toml
 
-RUN addgroup -S astra && adduser -S astra -G astra
+# ============================================================
+# Stage 2: Runtime - Distroless for minimal attack surface
+# ============================================================
+FROM gcr.io/distroless/python3-debian12:nonroot AS runtime
 
+# Copy virtual environment from builder
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Set working directory
 WORKDIR /app
 
-COPY --from=builder /app/.venv ./.venv
-COPY alembic.ini alembic/ entrypoint.sh ./
-COPY app/ ./app/
+# Copy application code (as nonroot user)
+COPY --from=builder --chown=nonroot:nonroot /app /app
+COPY --chown=nonroot:nonroot alembic.ini alembic/ ./
+COPY --chown=nonroot:nonroot app/ ./app/
+COPY --chown=nonroot:nonroot entrypoint.py ./
 
-RUN chmod +x /app/entrypoint.sh && chown -R astra:astra /app
+# Use non-root user (distroless provides 'nonroot' UID 65532)
+USER nonroot
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:8000/api/v1/health || \
-        curl -sf http://localhost:8000/api/v1/health || exit 1
-
-USER astra
-
+# Expose port
 EXPOSE 8000
 
-ENV PATH="/app/.venv/bin:$PATH"
+# Default command - runs as nonroot
+CMD ["python", "entrypoint.py"]
 
-CMD ["/app/entrypoint.sh"]
+# ============================================================
+# Build metadata labels (for SBOM and provenance)
+# ============================================================
+LABEL org.opencontainers.image.title="Astra API" \
+      org.opencontainers.image.description="AI-Native Marketing & Business Growth Operating System API" \
+      org.opencontainers.image.vendor="Astra OS" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.source="https://github.com/astra-os/astra-os" \
+      org.opencontainers.image.documentation="https://docs.astra-os.io" \
+      org.opencontainers.image.base.name="astra.build-dateastra.os.versionastra.vcs-ref

@@ -6,25 +6,23 @@ methods added to the Agent base class.
 
 from __future__ import annotations
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock
 from typing import Any
-from uuid import UUID, uuid4
+from unittest.mock import AsyncMock, MagicMock
+from uuid import uuid4
 
+import pytest
+from app.domain.services.knowledge.rag_pipeline import (
+    RAGContext,
+    RagPipeline,
+    SearchResult,
+)
 from services.agent_orchestrator.agent import (
     Agent,
     AgentConfig,
     AgentContext,
     AgentResult,
-    AgentState,
     AgentType,
 )
-from app.domain.services.knowledge.rag_pipeline import (
-    RagPipeline,
-    RAGContext,
-    SearchResult,
-)
-
 
 # ---------------------------------------------------------------------------
 # Concrete agent for testing

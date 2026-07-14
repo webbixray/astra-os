@@ -2,27 +2,22 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-from typing import Any
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import Column, DateTime, ForeignKey, String, Text, select
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql import func
 
 from app.domain.entities.design_partner import (
     DesignPartner,
     DesignPartnerFeedback,
-    DesignPartnerRepository,
-    DesignPartnerFeedbackRepository,
     DesignPartnerStatus,
     DesignPartnerTier,
     FeedbackStatus,
     FeedbackType,
 )
 from app.infrastructure.db.base import Base
-from sqlalchemy import Column, DateTime, ForeignKey, String, Text
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from sqlalchemy.sql import func
 
 
 class DesignPartnerModel(Base):

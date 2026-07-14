@@ -1,9 +1,7 @@
 """Memory Manager for agent memory systems."""
 
-import asyncio
 import json
 import logging
-import time
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -11,8 +9,6 @@ from uuid import UUID, uuid4
 
 import asyncpg
 import redis.asyncio as redis
-
-from .agent import AgentContext
 
 logger = logging.getLogger(__name__)
 

@@ -1,8 +1,9 @@
 """Tests for Observability Services — E6.4 Beta Launch."""
 
-import pytest
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
 from uuid import uuid4
+
+import pytest
 
 from app.domain.entities.observability import (
     Alert,

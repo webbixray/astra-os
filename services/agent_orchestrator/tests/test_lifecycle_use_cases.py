@@ -3,10 +3,10 @@
 All tests are pure unit tests with a mock repository — no DB required.
 """
 
-import pytest
 from datetime import date
 from uuid import uuid4
 
+import pytest
 from app.application.use_cases.campaigns.lifecycle_use_cases import (
     ArchiveCampaignUseCase,
     CompleteCampaignUseCase,
@@ -16,7 +16,6 @@ from app.application.use_cases.campaigns.lifecycle_use_cases import (
 )
 from app.domain.entities.campaigns.campaign import Campaign
 from app.domain.exceptions.domain_exceptions import ValidationError
-
 
 # ── Helpers ──────────────────────────────────────────────────────────
 

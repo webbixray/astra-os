@@ -6,7 +6,6 @@ associate with campaigns, and list/search.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 from uuid import UUID
 
 from app.domain.common import now
@@ -17,9 +16,6 @@ from app.domain.entities.advertising.ad_creative import (
 )
 from app.domain.events.event_bus import DomainEvent, DomainEventType, EventBus
 from app.domain.exceptions.domain_exceptions import EntityNotFoundError, ValidationError
-
-if TYPE_CHECKING:
-    pass
 
 
 class CreativeRepository:

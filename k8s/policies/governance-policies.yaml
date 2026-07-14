@@ -1,0 +1,376 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: add-default-resource-limits
+  annotations:
+    policies.kyverno.io/title: Add Default Resource Limits
+    policies.kyverno.io/category: Resource Management
+    policies.kyverno.io/severity: medium
+spec:
+  mutating: true
+  background: true
+  rules:
+    - name: set-default-limits
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+                - Deployment
+                - StatefulSet
+                - DaemonSet
+                - Job
+                - CronJob
+      mutate:
+        patchStrategicMerge:
+          spec:
+            containers:
+              - (name): "*"
+                resources:
+                  limits:
+                    cpu: "1000m"
+                    memory: "1Gi"
+                  requests:
+                    cpu: "100m"
+                    memory: "128Mi"
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: add-default-probes
+  annotations:
+    policies.kyverno.io/title: Add Default Health Probes
+    policies.kyverno.io/category: Reliability
+    policies.kyverno.io/severity: medium
+spec:
+  mutating: true
+  background: true
+  rules:
+    - name: set-default-liveness
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+                - Deployment
+                - StatefulSet
+                - DaemonSet
+      mutate:
+        patchStrategicMerge:
+          spec:
+            containers:
+              - (name): "*"
+                livenessProbe:
+                  httpGet:
+                    path: /health/live
+                    port: 8081
+                  initialDelaySeconds: 10
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+    - name: set-default-readiness
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+                - Deployment
+                - StatefulSet
+                - DaemonSet
+      mutate:
+        patchStrategicMerge:
+          spec:
+            containers:
+              - (name): "*"
+                readinessProbe:
+                  httpGet:
+                    path: /health/ready
+                    port: 8081
+                  initialDelaySeconds: 5
+                  periodSeconds: 5
+                  timeoutSeconds: 3
+                  failureThreshold: 3
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: inject-sidecar-otel
+  annotations:
+    policies.kyverno.io/title: Inject OpenTelemetry Sidecar
+    policies.kyverno.io/category: Observability
+    policies.kyverno.io/severity: medium
+spec:
+  mutating: true
+  background: true
+  rules:
+    - name: inject-otel-collector
+      match:
+        any:
+          - resources:
+              kinds:
+                - Deployment
+                - StatefulSet
+              namespaces:
+                - astra-production
+                - astra-staging
+      mutate:
+        patchStrategicMerge:
+          spec:
+            template:
+              spec:
+                containers:
+                  - name: otel-collector
+                    image: otel/opentelemetry-collector-contrib:0.106
+                    args:
+                      - "--config=/etc/otel/config.yaml"
+                    volumeMounts:
+                      - name: otel-config
+                        mountPath: /etc/otel
+                    ports:
+                      - containerPort: 4317
+                        name: otlp-grpc
+                      - containerPort: 4318
+                        name: otlp-http
+                      - containerPort: 8888
+                        name: prometheus
+                    resources:
+                      limits:
+                        cpu: 100m
+                        memory: 128Mi
+                      requests:
+                        cpu: 50m
+                        memory: 64Mi
+                volumes:
+                  - name: otel-config
+                    configMap:
+                      name: otel-collector-config
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: add-service-mesh-sidecar
+  annotations:
+    policies.kyverno.io/title: Inject Service Mesh Sidecar
+    policies.kyverno.io/category: Network Security
+    policies.kyverno.io/severity: medium
+spec:
+  mutating: true
+  background: true
+  rules:
+    - name: inject-linkerd-sidecar
+      match:
+        any:
+          - resources:
+              kinds:
+                - Deployment
+                - StatefulSet
+              namespaces:
+                - astra-production
+                - astra-staging
+              annotations:
+                linkerd.io/inject: "enabled"
+      mutate:
+        patchStrategicMerge:
+          metadata:
+            annotations:
+              linkerd.io/inject: "enabled"
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-pod-annotations
+  annotations:
+    policies.kyverno.io/title: Require Pod Annotations
+    policies.kyverno.io/category: Governance
+    policies.kyverno.io/severity: low
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: check-owner-annotation
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+                - Deployment
+                - StatefulSet
+      validate:
+        message: "Pod should have owner annotation"
+        pattern:
+          metadata:
+            annotations:
+              astra.io/owner: "?*"
+    - name: check-cost-center-annotation
+      match:
+        any:
+          - resources:
+              kinds:
+                - Namespace
+      validate:
+        message: "Namespace should have cost center annotation"
+        pattern:
+          metadata:
+            annotations:
+              astra.io/cost-center: "?*"
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: validate-helms
+  annotations:
+    policies.kyverno.io/title: Validate Helm Releases
+    policies.kyverno.io/category: GitOps
+    policies.kyverno.io/severity: medium
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: check-helm-release
+      match:
+        any:
+          - resources:
+              kinds:
+                - HelmRelease
+      validate:
+        message: "HelmRelease must specify chart version and values"
+        pattern:
+          spec:
+            chart:
+              spec:
+                version: "?*"
+            values: "?*"
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: restrict-image-registries
+  annotations:
+    policies.kyverno.io/title: Restrict Image Registries
+    policies.kyverno.io/category: Supply Chain Security
+    policies.kyverno.io/severity: high
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: allowed-registries
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+                - Deployment
+                - StatefulSet
+                - DaemonSet
+                - Job
+                - CronJob
+      validate:
+        message: "Image must be from allowed registry (ghcr.io, docker.io/library, gcr.io)"
+        pattern:
+          spec:
+            containers:
+              - image: "ghcr.io/*"
+            initContainers:
+              - image: "ghcr.io/*"
+        anyPattern:
+          - spec:
+              containers:
+                - image: "docker.io/library/*"
+              initContainers:
+                - image: "docker.io/library/*"
+          - spec:
+              containers:
+                - image: "gcr.io/*"
+              initContainers:
+                - image: "gcr.io/*"
+          - spec:
+              containers:
+                - image: "ghcr.io/*"
+              initContainers:
+                - image: "ghcr.io/*"
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: validate-prometheus-rules
+  annotations:
+    policies.kyverno.io/title: Validate Prometheus Rules
+    policies.kyverno.io/category: Observability
+    policies.kyverno.io/severity: low
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: check-prometheus-rule-groups
+      match:
+        any:
+          - resources:
+              kinds:
+                - PrometheusRule
+      validate:
+        message: "PrometheusRule must have valid groups with alerts"
+        pattern:
+          spec:
+            groups:
+              - name: "?*"
+                rules:
+                  - alert: "?*"
+                    expr: "?*"
+                    for: "?*"
+                    labels:
+                      severity: "?*"
+                    annotations:
+                      summary: "?*"
+                      description: "?*"
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: enforce-label-standards
+  annotations:
+    policies.kyverno.io/title: Enforce Label Standards
+    policies.kyverno.io/category: Governance
+    policies.kyverno.io/severity: low
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: required-labels
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+                - Deployment
+                - StatefulSet
+                - Service
+                - Ingress
+                - ConfigMap
+                - Secret
+      validate:
+        message: "Resource must have required labels: app, version, environment, team"
+        pattern:
+          metadata:
+            labels:
+              app: "?*"
+              version: "?*"
+              environment: "?*"
+              team: "?*"
+    - name: environment-values
+      match:
+        any:
+          - resources:
+              kinds:
+                - Namespace
+      validate:
+        message: "Environment label must be one of: development, staging, production"
+        deny:
+          conditions:
+            - all:
+                - key: "{{ metadata.labels.environment }}"
+                  operator: NotIn
+                  value:
+                    - development
+                    - staging
+                    - production
+                    - test

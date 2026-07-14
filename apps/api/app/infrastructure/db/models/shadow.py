@@ -2,27 +2,14 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-from typing import Any
-from uuid import UUID
-
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.domain.entities.shadow_mode import (
-    ComparisonResult,
-    DecisionType,
-    LiftMeasurement,
-    ShadowDecision,
-    ShadowEvent,
-    ShadowEventType,
-    ShadowModeStatus,
-    ShadowSession,
-)
-from app.infrastructure.db.base import Base
 from sqlalchemy import Column, DateTime, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.sql import func
+
+from app.domain.entities.shadow_mode import (
+    ShadowModeStatus,
+)
+from app.infrastructure.db.base import Base
 
 
 class ShadowSessionModel(Base):

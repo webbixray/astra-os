@@ -93,8 +93,13 @@ class AdCreativeModel(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     def to_domain(self):
-        from app.domain.entities.advertising.ad_creative import AdCreative, CreativeStatus, CreativeType
-        from datetime import UTC, datetime as dt
+        from datetime import UTC
+
+        from app.domain.entities.advertising.ad_creative import (
+            AdCreative,
+            CreativeStatus,
+            CreativeType,
+        )
         created = self.created_at
         if created and created.tzinfo is None:
             created = created.replace(tzinfo=UTC)

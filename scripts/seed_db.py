@@ -12,7 +12,7 @@ It is safe to run multiple times - it will skip existing data.
 import asyncio
 import os
 import sys
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))

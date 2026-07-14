@@ -9,11 +9,11 @@ from __future__ import annotations
 import asyncio
 import logging
 import re
-import time
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Callable, Awaitable
+from typing import Any
 from uuid import UUID, uuid4
 
 from app.domain.common import now
@@ -21,7 +21,6 @@ from app.domain.events.event_bus import (
     DomainEvent,
     DomainEventType,
     EventBus,
-    EventHandler,
 )
 
 logger = logging.getLogger(__name__)

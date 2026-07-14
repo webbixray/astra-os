@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 import statistics
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -23,7 +23,7 @@ from app.domain.entities.shadow_mode import (
     ShadowModeStatus,
     ShadowSession,
 )
-from app.domain.events.event_bus import DomainEvent, DomainEventType, EventBus
+from app.domain.events.event_bus import EventBus
 
 logger = logging.getLogger(__name__)
 
@@ -109,11 +109,11 @@ class ShadowSessionService:
     async def create_session(
         self,
         organization_id: UUID,
+        created_by: UUID,
         name: str,
         description: str = "",
         agent_type: str = "",
         agent_model: str = "",
-        created_by: UUID,
         campaigns: list[UUID] | None = None,
         ad_accounts: list[str] | None = None,
         decision_types: list[DecisionType] | None = None,
@@ -486,7 +486,6 @@ class ShadowDecisionService:
             actor_id=actor_id,
             data=data or {},
         )
-        from app.domain.events.event_bus import EventBus
         await EventBus.publish(event)
 
 

@@ -64,18 +64,18 @@ def upgrade() -> None:
         op.create_index("ix_audit_logs_entity_id", "audit_logs", ["entity_id"])
 
     if "organization_id" in columns:
-        org_col = [c for c in inspector.get_columns("audit_logs") if c["name"] == "organization_id"][0]
-        if not org_col["nullable"]:
+        org_col = next((c for c in inspector.get_columns("audit_logs") if c["name"] == "organization_id"), None)
+        if org_col and not org_col["nullable"]:
             op.alter_column("audit_logs", "organization_id", nullable=True)
 
     if "details" in columns:
-        details_col = [c for c in inspector.get_columns("audit_logs") if c["name"] == "details"][0]
-        if details_col["nullable"] is False:
+        details_col = next((c for c in inspector.get_columns("audit_logs") if c["name"] == "details"), None)
+        if details_col and details_col["nullable"] is False:
             op.alter_column("audit_logs", "details", nullable=True)
 
     if "ip_address" in columns:
-        ip_col = [c for c in inspector.get_columns("audit_logs") if c["name"] == "ip_address"][0]
-        if not ip_col["nullable"]:
+        ip_col = next((c for c in inspector.get_columns("audit_logs") if c["name"] == "ip_address"), None)
+        if ip_col and not ip_col["nullable"]:
             op.alter_column("audit_logs", "ip_address", nullable=True)
 
 

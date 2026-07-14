@@ -14,7 +14,6 @@ from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.entities.observability import (
-    Alert,
     AlertRule,
     AlertSeverity,
     AlertStatus,
@@ -30,11 +29,11 @@ from app.domain.entities.observability import (
     SLAType,
 )
 from app.domain.services.observability import (
-    MetricsService,
     AlertingService,
     CostTrackingService,
-    SLAService,
     DashboardService,
+    MetricsService,
+    SLAService,
     SystemHealthService,
 )
 from app.presentation.dependencies import get_db
@@ -203,11 +202,11 @@ async def _require_org_admin(
 
 
 def get_metrics_service(db: AsyncSession = Depends(get_db)) -> MetricsService:
+    from app.infrastructure.db.repositories.alerting_repository import AlertRuleRepositoryImpl
     from app.infrastructure.db.repositories.metrics_repository import (
         MetricDefinitionRepositoryImpl,
         MetricSampleRepositoryImpl,
     )
-    from app.infrastructure.db.repositories.alerting_repository import AlertRuleRepositoryImpl
     definition_repo = MetricDefinitionRepositoryImpl(db)
     sample_repo = MetricSampleRepositoryImpl(db)
     alert_repo = AlertRuleRepositoryImpl(db)
@@ -216,7 +215,6 @@ def get_metrics_service(db: AsyncSession = Depends(get_db)) -> MetricsService:
 
 def get_alerting_service(db: AsyncSession = Depends(get_db)) -> AlertingService:
     from app.infrastructure.db.repositories.alerting_repository import AlertRepositoryImpl
-    from app.infrastructure.db.repositories.metrics_repository import MetricDefinitionRepositoryImpl
     rule_repo = AlertRuleRepositoryImpl(db)
     alert_repo = AlertRepositoryImpl(db)
     metrics_service = get_metrics_service(db)
@@ -225,8 +223,8 @@ def get_alerting_service(db: AsyncSession = Depends(get_db)) -> AlertingService:
 
 def get_cost_service(db: AsyncSession = Depends(get_db)) -> CostTrackingService:
     from app.infrastructure.db.repositories.cost_repository import (
-        CostRecordRepositoryImpl,
         BudgetRepositoryImpl,
+        CostRecordRepositoryImpl,
     )
     cost_repo = CostRecordRepositoryImpl(db)
     budget_repo = BudgetRepositoryImpl(db)
@@ -235,8 +233,8 @@ def get_cost_service(db: AsyncSession = Depends(get_db)) -> CostTrackingService:
 
 def get_sla_service(db: AsyncSession = Depends(get_db)) -> SLAService:
     from app.infrastructure.db.repositories.sla_repository import (
-        SLARepositoryImpl,
         SLAReportRepositoryImpl,
+        SLARepositoryImpl,
     )
     sla_repo = SLARepositoryImpl(db)
     report_repo = SLAReportRepositoryImpl(db)

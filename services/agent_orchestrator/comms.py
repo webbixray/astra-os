@@ -8,7 +8,6 @@ This module provides:
 import asyncio
 import json
 import logging
-import time
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
@@ -103,7 +102,7 @@ class RedisMessageBus:
             if timeout:
                 return await asyncio.wait_for(queue.get(), timeout=timeout)
             return await queue.get()
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return None
         finally:
             async with self._lock:

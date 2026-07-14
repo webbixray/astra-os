@@ -1,0 +1,252 @@
+# Chaos Engineering Experiments for Astra OS
+# Using LitmusChaos / Chaos Mesh
+# Install: kubectl apply -f https://litmuschaos.github.io/litmus/litmus-operator-v3.0.0.yaml
+
+---
+# Experiment 1: Pod Kill - Test agent orchestrator resilience
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: pod-kill-agent-orchestrator
+  namespace: astra-production
+spec:
+  appinfo:
+    appns: astra-production
+    applabel: "app=astra-worker"
+  chaosServiceAccount: litmus-admin
+  experiments:
+    - name: pod-delete
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: '30'
+            - name: CHAOS_INTERVAL
+              value: '10'
+            - name: FORCE
+              value: 'false'
+            - name: PODS_AFFECTED_PERC
+              value: '50'
+---
+# Experiment 2: Network Latency - Test circuit breaker behavior
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: network-latency-model-router
+  namespace: astra-production
+spec:
+  appinfo:
+    appns: astra-production
+    applabel: "app=astra-api"
+  chaosServiceAccount: litmus-admin
+  experiments:
+    - name: network-latency
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: '60'
+            - name: CHAOS_INTERVAL
+              value: '10'
+            - name: NETWORK_LATENCY
+              value: '2000'  # 2 seconds
+            - name: NETWORK_JITTER
+              value: '500'
+            - name: TARGET_CONTAINER
+              value: 'api'
+---
+# Experiment 3: Pod CPU Hog - Test autoscaling
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: cpu-hog-worker-autoscaling
+  namespace: astra-production
+spec:
+  appinfo:
+    appns: astra-production
+    applabel: "app=astra-worker"
+  chaosServiceAccount: litmus-admin
+  experiments:
+    - name: pod-cpu-hog
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: '120'
+            - name: CHAOS_INTERVAL
+              value: '30'
+            - name: CPU_CORES
+              value: '1'
+            - name: CPU_PERCENTAGE
+              value: '80'
+---
+# Experiment 4: Pod Memory Hog - Test OOM handling
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: memory-hog-oom-handling
+  namespace: astra-production
+spec:
+  appinfo:
+    appns: astra-production
+    applabel: "app=astra-api"
+  chaosServiceAccount: litmus-admin
+  experiments:
+    - name: pod-memory-hog
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: '60'
+            - name: CHAOS_INTERVAL
+              value: '20'
+            - name: MEMORY_PERCENTAGE
+              value: '70'
+---
+# Experiment 5: Network Partition - Test multi-zone resilience
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: network-partition-zone-failure
+  namespace: astra-production
+spec:
+  appinfo:
+    appns: astra-production
+    applabel: "app=astra-api"
+  chaosServiceAccount: litmus-admin
+  experiments:
+    - name: pod-network-partition
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: '60'
+            - name: CHAOS_INTERVAL
+              value: '30'
+            - name: NETWORK_PARTITION_TYPE
+              value: 'pod'
+            - name: TARGET_PODS
+              value: '50'
+---
+# Experiment 6: Database Connection Failure - Test retry logic
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: db-connection-failure
+  namespace: astra-production
+spec:
+  appinfo:
+    appns: astra-production
+    applabel: "app=astra-api"
+  chaosServiceAccount: litmus-admin
+  experiments:
+    - name: pod-network-corruption
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: '30'
+            - name: CHAOS_INTERVAL
+              value: '10'
+            - name: NETWORK_CORRUPTION_PERCENTAGE
+              value: '50'
+            - name: TARGET_CONTAINER
+              value: 'api'
+---
+# Experiment 7: Redis Failure - Test cache fallback
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: redis-failure-cache-fallback
+  namespace: astra-production
+spec:
+  appinfo:
+    appns: astra-production
+    applabel: "app=redis"
+  chaosServiceAccount: litmus-admin
+  experiments:
+    - name: pod-delete
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: '30'
+            - name: CHAOS_INTERVAL
+              value: '10'
+            - name: FORCE
+              value: 'false'
+---
+# Experiment 8: DNS Failure - Test service discovery
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: dns-failure-service-discovery
+  namespace: astra-production
+spec:
+  appinfo:
+    appns: astra-production
+    applabel: "app=astra-api"
+  chaosServiceAccount: litmus-admin
+  experiments:
+    - name: pod-dns-chaos
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: '60'
+            - name: CHAOS_INTERVAL
+              value: '20'
+            - name: DNS_CHAOS_TYPE
+              value: 'error'
+            - name: TARGET_CONTAINER
+              value: 'api'
+---
+# Experiment 9: Time Skew - Test distributed tracing
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: time-skew-distributed-tracing
+  namespace: astra-production
+spec:
+  appinfo:
+    appns: astra-production
+    applabel: "app=astra-api"
+  chaosServiceAccount: litmus-admin
+  experiments:
+    - name: pod-time-chaos
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: '60'
+            - name: CHAOS_INTERVAL
+              value: '20'
+            - name: TIME_OFFSET
+              value: '300'  # 5 minutes
+            - name: TARGET_CONTAINER
+              value: 'api'
+---
+# Experiment 10: Disk Fill - Test logging persistence
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: disk-fill-logging
+  namespace: astra-production
+spec:
+  appinfo:
+    appns: astra-production
+    applabel: "app=astra-api"
+  chaosServiceAccount: litmus-admin
+  experiments:
+    - name: disk-fill
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: '60'
+            - name: CHAOS_INTERVAL
+              value: '20'
+            - name: FILL_PERCENTAGE
+              value: '80'
+            - name: TARGET_CONTAINER
+              value: 'api'

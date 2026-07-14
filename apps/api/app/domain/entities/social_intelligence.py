@@ -13,7 +13,6 @@ from uuid import UUID, uuid4
 
 from app.domain.common import now
 
-
 # --- Enums ---
 
 class SocialPlatform(str, Enum):

@@ -9,22 +9,17 @@ These tests exercise the full agent execution flow:
 - Memory manager operations (in-memory mode)
 """
 
-import asyncio
 import json
 import uuid
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
 from services.agent_orchestrator.agent import (
-    AgentConfig,
     AgentContext,
     AgentMessage,
     AgentRegistry,
     AgentResult,
-    AgentState,
     AgentType,
-    get_agent_registry,
 )
 from services.agent_orchestrator.agents.ceo import CEOAgent
 from services.agent_orchestrator.agents.director import DirectorAgent
@@ -33,17 +28,16 @@ from services.agent_orchestrator.comms import (
     AgentAuditTrail,
     AgentTraceEntry,
 )
-from services.agent_orchestrator.events import Event, EventBus, get_event_bus
+from services.agent_orchestrator.events import Event, EventBus
 from services.agent_orchestrator.hierarchy import (
     AgentCoordinator,
     AgentHierarchy,
     CommunicationProtocol,
     HandoffManager,
 )
-from services.agent_orchestrator.memory import MemoryEntry, MemoryManager
+from services.agent_orchestrator.memory import MemoryManager
 from services.agent_orchestrator.router import (
     ModelProvider,
-    ModelRequest,
     ModelResponse,
     ModelRouterFacade,
 )
@@ -53,7 +47,6 @@ from services.agent_orchestrator.tools import (
     ToolParameter,
     ToolRegistry,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers

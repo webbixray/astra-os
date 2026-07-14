@@ -3,11 +3,8 @@
 import asyncio
 
 import pytest
-
 from services.agent_orchestrator.tools import (
     ExecutionSandbox,
-    ToolDefinition,
-    ToolParameter,
     ToolRegistry,
 )
 

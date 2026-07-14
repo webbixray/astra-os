@@ -7,12 +7,12 @@ Target: 12+ tests.
 
 from __future__ import annotations
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
+import pytest
+
 from app.domain.services.knowledge.predictive_optimization import (
-    AudienceExpansionSuggestion,
     BudgetAllocation,
     CreativeFatigueResult,
     OptimizationSuggestion,
@@ -20,7 +20,6 @@ from app.domain.services.knowledge.predictive_optimization import (
     PredictiveOptimizer,
     UrgencyLevel,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

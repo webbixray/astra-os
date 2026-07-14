@@ -9,7 +9,6 @@ Builds on existing KnowledgeGraphService + MemoryService.
 from __future__ import annotations
 
 import logging
-import time
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
@@ -18,7 +17,6 @@ from uuid import UUID
 from app.application.use_cases.knowledge.knowledge_service import (
     KnowledgeGraphService,
 )
-from app.domain.entities.knowledge.node import NodeType
 
 logger = logging.getLogger(__name__)
 

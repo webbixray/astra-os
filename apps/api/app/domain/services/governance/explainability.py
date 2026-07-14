@@ -17,7 +17,7 @@ from dataclasses import dataclass, field
 from typing import Any
 from uuid import UUID
 
-from app.domain.entities.governance.autonomy import AgentAction, AutonomyLevel
+from app.domain.entities.governance.autonomy import AgentAction
 
 
 @dataclass
@@ -183,7 +183,7 @@ class ExplainabilityService:
 
         # Reasoning
         if action.reasoning:
-            sentences.append(f"Its reasoning was: \"{action.reasoning}\"")
+            sentences.append(f'Its reasoning was: "{action.reasoning}"')
 
         # Autonomy context
         if action.was_auto_executed:
@@ -217,7 +217,7 @@ class ExplainabilityService:
     def _generate_detailed(self, action: AgentAction) -> str:
         """Detailed explanation with reasoning trace."""
         sections = [
-            f"=== Action Explanation ===",
+            "=== Action Explanation ===",
             f"Action: {action.action}",
             f"Agent: {action.agent_type} ({action.agent_id})",
             f"Resource: {action.resource_type} ({action.resource_id})",

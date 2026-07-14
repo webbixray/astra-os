@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import logging
 import re
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -17,7 +17,6 @@ from app.domain.entities.social_intelligence import (
     CommentAnalytics,
     CommentIntent,
     CommentSentiment,
-    CommentType,
     ModerationAction,
     ReplyStatus,
     ReplyTemplate,
@@ -104,7 +103,7 @@ class CommentAnalyzer:
 
     TOXIC_WORDS = {
         "hate", "stupid", "idiot", "moron", "garbage", "trash", "scam", "fraud",
-        "die", "kill", "die", "worthless", "pathetic", "disgusting", "vile"
+        "die", "kill", "worthless", "pathetic", "disgusting", "vile"
     }
 
     SPAM_INDICATORS = [
@@ -174,14 +173,13 @@ class CommentAnalyzer:
 
         if score >= 0.5:
             return CommentSentiment.VERY_POSITIVE, score
-        elif score > 0.1:
+        if score > 0.1:
             return CommentSentiment.POSITIVE, score
-        elif score >= -0.1:
+        if score >= -0.1:
             return CommentSentiment.NEUTRAL, score
-        elif score > -0.5:
+        if score > -0.5:
             return CommentSentiment.NEGATIVE, score
-        else:
-            return CommentSentiment.VERY_NEGATIVE, score
+        return CommentSentiment.VERY_NEGATIVE, score
 
     def _detect_intent(self, text: str) -> tuple[CommentIntent, float]:
         intent_scores: dict[CommentIntent, int] = {}
@@ -281,7 +279,6 @@ class AutoReplyGenerator:
         template: ReplyTemplate | None = None,
     ) -> AutoReply:
         """Generate an AI reply for a comment."""
-
         # Build context for generation
         gen_context = {
             "comment_text": comment.text,

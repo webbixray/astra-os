@@ -1,33 +1,33 @@
 """Governance use cases — approval rules, requests, decisions, autonomy config."""
 
 from app.application.use_cases.governance.approval_use_cases import (
-    CreateApprovalRuleUseCase,
-    EvaluateApprovalRulesUseCase,
     CreateApprovalRequestUseCase,
+    CreateApprovalRuleUseCase,
     DecideApprovalUseCase,
-    ListPendingApprovalsUseCase,
+    EvaluateApprovalRulesUseCase,
     ExpireStaleApprovalsUseCase,
+    ListPendingApprovalsUseCase,
 )
 from app.application.use_cases.governance.autonomy_use_cases import (
-    GetAutonomyConfigUseCase,
-    UpdateAutonomyConfigUseCase,
     CheckAgentActionUseCase,
-    RecordAgentActionUseCase,
     GetAgentActionsUseCase,
+    GetAutonomyConfigUseCase,
     GetExplainabilityReportUseCase,
+    RecordAgentActionUseCase,
+    UpdateAutonomyConfigUseCase,
 )
 
 __all__ = [
-    "CreateApprovalRuleUseCase",
-    "EvaluateApprovalRulesUseCase",
-    "CreateApprovalRequestUseCase",
-    "DecideApprovalUseCase",
-    "ListPendingApprovalsUseCase",
-    "ExpireStaleApprovalsUseCase",
-    "GetAutonomyConfigUseCase",
-    "UpdateAutonomyConfigUseCase",
     "CheckAgentActionUseCase",
-    "RecordAgentActionUseCase",
+    "CreateApprovalRequestUseCase",
+    "CreateApprovalRuleUseCase",
+    "DecideApprovalUseCase",
+    "EvaluateApprovalRulesUseCase",
+    "ExpireStaleApprovalsUseCase",
     "GetAgentActionsUseCase",
+    "GetAutonomyConfigUseCase",
     "GetExplainabilityReportUseCase",
+    "ListPendingApprovalsUseCase",
+    "RecordAgentActionUseCase",
+    "UpdateAutonomyConfigUseCase",
 ]

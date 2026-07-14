@@ -9,8 +9,29 @@ from enum import Enum
 from typing import Any
 from uuid import UUID, uuid4
 
+# OpenTelemetry tracing
+from opentelemetry import trace
+from opentelemetry.trace import SpanKind
 from pydantic import BaseModel, Field
 
+
+# Trace correlation utility
+def get_trace_context() -> dict[str, str]:
+    """Get current trace context for log correlation."""
+    span = trace.get_current_span()
+    span_context = span.get_span_context()
+    if span_context and span_context.trace_id != 0:
+        return {
+            "trace_id": format(span_context.trace_id, "032x"),
+            "span_id": format(span_context.span_id, "016x"),
+        }
+    return {}
+
+from .governance import (
+    GovernanceMiddleware,
+)
+from .metrics import AgentMetricsContext, record_agent_run, record_delegation, record_tool_call
+from .telemetry import get_tracer
 from .tools import (
     ExecutionSandbox,
     Tool,
@@ -18,18 +39,17 @@ from .tools import (
     default_sandbox,
     tool_registry,
 )
-from .governance import (
-    GovernanceMiddleware,
-    GovernanceCheckResult,
-    create_governance_middleware,
-)
 
 logger = logging.getLogger(__name__)
 
+# Tracer instance for this module
+TRACER = get_tracer()
 
+# RAG pipeline type — imported lazily to avoid circular deps
 # RAG pipeline type — imported lazily to avoid circular deps
 class _RAGPipelineStub:
     """Lazy proxy for RagPipeline to avoid import at module level."""
+
     def __init__(self, pipeline: Any) -> None:
         self._pipeline = pipeline
 
@@ -203,7 +223,7 @@ class Agent(ABC):
         sandbox: ExecutionSandbox = default_sandbox,
     ):
         self.config = config
-        self.tenant_id = config.tenant_id if hasattr(config, 'tenant_id') else None
+        self.tenant_id = config.tenant_id if hasattr(config, "tenant_id") else None
         self.tool_registry = tool_registry
         self.sandbox = sandbox
         self.state = AgentState.INITIALIZING
@@ -229,12 +249,10 @@ class Agent(ABC):
     @abstractmethod
     async def execute(self, context: AgentContext, input_data: Any) -> AgentResult:
         """Execute the agent's main logic."""
-        pass
 
     @abstractmethod
     async def reason(self, context: AgentContext, observation: Any) -> Any:
         """Reason about the current state and decide next action."""
-        pass
 
     async def initialize(self, context: AgentContext) -> None:
         """Initialize the agent before execution."""
@@ -251,23 +269,71 @@ class Agent(ABC):
         self._tool_results = []
         self._sub_agent_results = []
 
-        try:
-            self.state = AgentState.RUNNING
-            result = await self.execute(context, input_data)
-            self.state = AgentState.COMPLETED
-            return result
-        except Exception as e:
-            self.state = AgentState.FAILED
-            logger.exception("Agent %s failed: %s", self.agent_id, e)
-            return AgentResult(
-                agent_id=self.agent_id,
-                success=False,
-                error=str(e),
-                duration_ms=int((time.time() - self._start_time) * 1000),
-                iterations=self._iteration,
-            )
-        finally:
-            self._record_metrics()
+        # Use metrics context manager to track active agents
+        with AgentMetricsContext(self.agent_type.value) as metrics_ctx:
+            # Start OpenTelemetry span for agent run with semantic conventions
+            with TRACER.start_as_current_span(
+                f"agent.{self.agent_type.value}.run",
+                kind=SpanKind.INTERNAL,
+                attributes={
+                    "service.name": "astra-agent-orchestrator",
+                    "agent.id": str(self.agent_id),
+                    "agent.type": self.agent_type.value,
+                    "agent.autonomy_level": self.config.autonomy_level,
+                    "agent.tenant_id": str(self.tenant_id) if self.tenant_id else "",
+                }
+            ) as span:
+                try:
+                    self.state = AgentState.RUNNING
+                    result = await self.execute(context, input_data)
+                    self.state = AgentState.COMPLETED
+
+                    # Record success metrics on span
+                    span.set_attribute("agent.success", result.success)
+                    span.set_attribute("agent.duration_ms", result.duration_ms)
+                    span.set_attribute("agent.tokens_used", result.tokens_used)
+                    span.set_attribute("agent.cost_usd", result.cost_usd)
+                    span.set_attribute("agent.iterations", result.iterations)
+                    if result.error:
+                        span.set_attribute("agent.error", result.error)
+
+                    # Record Prometheus metrics
+                    record_agent_run(
+                        agent_type=self.agent_type.value,
+                        success=result.success,
+                        duration_seconds=result.duration_ms / 1000.0,
+                        tokens=result.tokens_used,
+                        cost_usd=result.cost_usd,
+                    )
+
+                    # Update metrics context
+                    metrics_ctx.tokens = result.tokens_used
+                    metrics_ctx.cost = result.cost_usd
+                    metrics_ctx.success = result.success
+
+                    return result
+                except Exception as e:
+                    self.state = AgentState.FAILED
+                    span.record_exception(e)
+                    span.set_attribute("agent.success", False)
+                    span.set_attribute("agent.error", str(e))
+
+                    # Add trace context to exception log
+                    trace_ctx = get_trace_context()
+                    logger.exception(
+                        "Agent %s failed: %s",
+                        self.agent_id, e,
+                        extra=trace_ctx,
+                    )
+                    return AgentResult(
+                        agent_id=self.agent_id,
+                        success=False,
+                        error=str(e),
+                        duration_ms=duration_ms,
+                        iterations=self._iteration,
+                    )
+                finally:
+                    self._record_metrics()
 
     def _record_metrics(self) -> None:
         duration_ms = int((time.time() - self._start_time) * 1000)
@@ -299,6 +365,12 @@ class Agent(ABC):
                     "Agent %s tool call '%s' BLOCKED by governance: %s",
                     self.agent_id, tool_name, check_result.reason,
                 )
+                # Add governance block event to span
+                span.add_event("governance.blocked", {
+                    "tool.name": tool_name,
+                    "reason": check_result.reason,
+                    "agent.autonomy_level": self.config.autonomy_level,
+                })
                 self.state = AgentState.WAITING_FOR_APPROVAL
                 call = ToolCall(tool_name=tool_name, parameters=parameters)
                 self._tool_calls.append(call)
@@ -317,29 +389,92 @@ class Agent(ABC):
                     "Agent %s tool call '%s' requires approval: %s",
                     self.agent_id, tool_name, check_result.reason,
                 )
+                # Add governance approval required event to span
+                span.add_event("governance.approval_required", {
+                    "tool.name": tool_name,
+                    "reason": check_result.reason,
+                })
                 # In SEMI_AUTO mode, log but still execute low-risk tools
                 # The approval is tracked for audit purposes
 
         call = ToolCall(tool_name=tool_name, parameters=parameters)
         self._tool_calls.append(call)
 
-        start = time.time()
-        result_data = await self.tool_registry.execute_tool(
-            tool_name, parameters, context
-        )
-        duration_ms = int((time.time() - start) * 1000)
+        # OpenTelemetry span for tool call with semantic conventions
+        with TRACER.start_as_current_span(
+            f"agent.{self.agent_type.value}.call_tool",
+            kind=SpanKind.CLIENT,
+            attributes={
+                "service.name": "astra-agent-orchestrator",
+                "agent.id": str(self.agent_id),
+                "agent.type": self.agent_type.value,
+                "tool.name": tool_name,
+            }
+        ) as span:
+            start = time.time()
+            try:
+                result_data = await self.tool_registry.execute_tool(
+                    tool_name, parameters, context
+                )
+                duration_ms = int((time.time() - start) * 1000)
+                duration_seconds = duration_ms / 1000.0
 
-        result = ToolResult(
-            call_id=call.call_id,
-            tool_name=tool_name,
-            success=result_data.get("success", False),
-            result=result_data.get("result"),
-            error=result_data.get("error"),
-            duration_ms=duration_ms,
-        )
-        self._tool_results.append(result)
-        self.state = AgentState.RUNNING
-        return result
+                result = ToolResult(
+                    call_id=call.call_id,
+                    tool_name=tool_name,
+                    success=result_data.get("success", False),
+                    result=result_data.get("result"),
+                    error=result_data.get("error"),
+                    duration_ms=duration_ms,
+                )
+
+                # Record on span with events
+                if result.success:
+                    span.add_event("tool.call.completed", {
+                        "tool.name": tool_name,
+                        "duration_ms": duration_ms,
+                    })
+                else:
+                    span.add_event("tool.call.failed", {
+                        "tool.name": tool_name,
+                        "error": result.error,
+                        "duration_ms": duration_ms,
+                    })
+
+                span.set_attribute("tool.success", result.success)
+                span.set_attribute("tool.duration_ms", duration_ms)
+                if result.error:
+                    span.set_attribute("tool.error", result.error)
+
+                # Record Prometheus metrics
+                record_tool_call(
+                    agent_type=self.agent_type.value,
+                    tool_name=tool_name,
+                    success=result.success,
+                    duration_seconds=duration_seconds,
+                )
+
+                self._tool_results.append(result)
+                self.state = AgentState.RUNNING
+                return result
+            except Exception as e:
+                duration_ms = int((time.time() - start) * 1000)
+                span.add_event("tool.call.exception", {
+                    "tool.name": tool_name,
+                    "error": str(e),
+                    "duration_ms": duration_ms,
+                })
+                span.record_exception(e)
+                span.set_attribute("tool.success", False)
+                span.set_attribute("tool.error", str(e))
+
+                record_tool_call(
+                    agent_type=self.agent_type.value,
+                    tool_name=tool_name,
+                    success=False,
+                    duration_seconds=duration_ms / 1000.0,
+                )
+                raise
 
     async def delegate_to_subagent(
         self,
@@ -355,10 +490,57 @@ class Agent(ABC):
         subagent = registry.create_agent(subagent_type, self.tenant_id)
 
         sub_context = context.child_context(subagent.agent_id) if context else context
-        result = await subagent.run(sub_context, input_data)
 
-        self._sub_agent_results.append(result)
-        return result
+        # OpenTelemetry span for delegation with semantic conventions
+        with TRACER.start_as_current_span(
+            f"agent.{self.agent_type.value}.delegate",
+            kind=SpanKind.INTERNAL,
+            attributes={
+                "service.name": "astra-agent-orchestrator",
+                "agent.id": str(self.agent_id),
+                "agent.type": self.agent_type.value,
+                "subagent.type": subagent_type.value,
+                "subagent.id": str(subagent.agent_id),
+            }
+        ) as span:
+            try:
+                result = await subagent.run(sub_context, input_data)
+
+                # Add delegation success event
+                span.add_event("agent.delegation.completed", {
+                    "subagent.id": str(subagent.agent_id),
+                    "subagent.type": subagent_type.value,
+                    "success": result.success,
+                    "duration_ms": result.duration_ms,
+                })
+
+                span.set_attribute("subagent.success", result.success)
+                span.set_attribute("subagent.duration_ms", result.duration_ms)
+
+                # Record Prometheus metrics
+                record_delegation(
+                    agent_type=self.agent_type.value,
+                    subagent_type=subagent_type.value,
+                    success=result.success,
+                )
+
+                self._sub_agent_results.append(result)
+                return result
+            except Exception as e:
+                span.add_event("agent.delegation.failed", {
+                    "subagent.id": str(subagent.agent_id),
+                    "subagent.type": subagent_type.value,
+                    "error": str(e),
+                })
+                span.set_attribute("subagent.success", False)
+                span.set_attribute("subagent.error", str(e))
+
+                record_delegation(
+                    agent_type=self.agent_type.value,
+                    subagent_type=subagent_type.value,
+                    success=False,
+                )
+                raise
 
     async def request_approval(
         self,

@@ -12,19 +12,15 @@ from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.entities.design_partner import (
-    DesignPartner,
-    DesignPartnerFeedback,
     DesignPartnerStatus,
     DesignPartnerTier,
     FeedbackPriority,
     FeedbackType,
-    SupportTicket,
     SupportTicketStatus,
 )
 from app.domain.services.design_partner_service import DesignPartnerService
 from app.infrastructure.db.session import get_db
 from app.presentation.middleware.auth import require_user_id
-from app.presentation.middleware.rbac import require_org_role
 
 router = APIRouter(prefix="/design-partners", tags=["design-partners"])
 
@@ -114,8 +110,8 @@ class TicketUpdateRequest(BaseModel):
 
 async def get_partner_service(db: AsyncSession = Depends(get_db)) -> DesignPartnerService:
     from app.infrastructure.db.repositories.design_partner_repository import (
-        DesignPartnerRepositoryImpl,
         DesignPartnerFeedbackRepositoryImpl,
+        DesignPartnerRepositoryImpl,
     )
     repo = DesignPartnerRepositoryImpl(db)
     feedback_repo = DesignPartnerFeedbackRepositoryImpl(db)

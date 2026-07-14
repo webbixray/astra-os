@@ -62,7 +62,7 @@ class WorkflowVersion:
         version_number: int,
         created_by: UUID,
         change_summary: str = "",
-    ) -> "WorkflowVersion":
+    ) -> WorkflowVersion:
         """Create a version snapshot from a workflow."""
         return cls(
             workflow_id=workflow.id,

@@ -14,23 +14,16 @@ from app.domain.common import now
 from app.domain.entities.observability import (
     Alert,
     AlertRule,
-    AlertSeverity,
     AlertStatus,
-    AlertSource,
     Budget,
-    BudgetCategory,
     CostRecord,
     Dashboard,
     DashboardWidget,
-    DashboardWidgetType,
     MetricDefinition,
     MetricSample,
-    MetricType,
     SLADefinition,
     SLAReport,
-    SLAType,
 )
-from app.domain.events.event_bus import DomainEvent, DomainEventType, EventBus
 
 logger = logging.getLogger(__name__)
 
@@ -560,7 +553,6 @@ class SystemHealthService:
     async def generate_health_report(self, organization_id: UUID) -> dict[str, Any]:
         """Generate a comprehensive system health report."""
         # Get active alerts
-        from app.domain.services.alerting import AlertRepository
         # In production, inject these properly
 
         # For now, return mock data structure
@@ -603,7 +595,7 @@ def generate_fingerprint(rule_id: UUID, labels: dict[str, str]) -> str:
 def parse_alert_condition(condition: str) -> tuple[str, str, float]:
     """Parse alert condition string like 'avg > 100'."""
     import re
-    match = re.match(r'(\w+)\s*(>=|<=|>|<|==|!=)\s*([\d.]+)', condition)
+    match = re.match(r"(\w+)\s*(>=|<=|>|<|==|!=)\s*([\d.]+)", condition)
     if not match:
         raise ValueError(f"Invalid condition: {condition}")
     return match.groups()

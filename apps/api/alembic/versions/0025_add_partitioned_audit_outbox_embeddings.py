@@ -46,7 +46,6 @@ def upgrade() -> None:
     # Create monthly partitions for the next 2 years (proper calendar months)
     for year in range(2026, 2028):
         for month in range(1, 13):
-            partition_name = f"audit_logs_y{year}m{month:02d}"
 
             # Calculate partition start and end dates (first day of month to first day of next month)
             if month == 12:

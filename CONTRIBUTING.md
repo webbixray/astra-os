@@ -1,413 +1,240 @@
-# ASTRA OS — Contributing Guide
+# Contributing to Astra OS
 
-**Version**: 1.0  
-**Welcome!** We're excited you want to contribute to ASTRA OS.
-
----
+Thank you for your interest in contributing to Astra OS! This document provides guidelines for contributing to the project.
 
 ## Table of Contents
 
 1. [Code of Conduct](#code-of-conduct)
 2. [Getting Started](#getting-started)
-3. [How to Contribute](#how-to-contribute)
+3. [Development Workflow](#development-workflow)
 4. [Pull Request Process](#pull-request-process)
-5. [Coding Standards](#coding-standards)
+5. [Code Style](#code-style)
 6. [Testing](#testing)
 7. [Documentation](#documentation)
 8. [Security](#security)
-9. [Community](#community)
-
----
 
 ## Code of Conduct
 
-### Our Pledge
-
-We are committed to providing a welcoming, inclusive environment for everyone. We pledge to:
-
-- **Be respectful** of differing viewpoints and experiences
-- **Accept constructive criticism** gracefully
-- **Focus on what's best** for the community
-- **Show empathy** towards other contributors
-- **Zero tolerance** for harassment, discrimination, or toxic behavior
-
-### Enforcement
-
-Violations will be addressed by project maintainers. Consequences may include:
-- Warning
-- Temporary ban
-- Permanent ban
-
-Report violations to: conduct@astra-os.com
-
----
+This project adheres to the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
 
 ## Getting Started
 
-### 1. Set Up Development Environment
+### Prerequisites
+
+- Python 3.11+
+- Node.js 20+ (for web dashboard)
+- pnpm 8+ (for monorepo management)
+- Docker & Docker Compose
+- PostgreSQL 15+ (for local development)
+- Redis 7+ (for local development)
+
+### Local Development Setup
 
 ```bash
-# Clone
-git clone https://github.com/webbixray/astra-os.git
+# Clone the repository
+git clone https://github.com/astra-os/astra-os.git
 cd astra-os
 
-# Backend
-cd apps/api
-python -m venv .venv
-source .venv/bin/activate
+# Install Python dependencies
 pip install -e ".[dev]"
-alembic upgrade head
-python scripts/seed_db.py
 
-# Frontend
-cd ../web
+# Install Node.js dependencies (uses pnpm workspaces)
 pnpm install
 
-# Start dev servers
-# Terminal 1: Backend
-cd apps/api && uvicorn app.main:app --reload
+# Start local infrastructure
+docker compose -f docker-compose.local.yml up -d
 
-# Terminal 2: Frontend
-cd apps/web && pnpm dev
+# Run database migrations
+alembic upgrade head
+
+# Run tests
+pytest
 ```
 
-### 2. Verify Setup
+## Development Workflow
 
-- API: http://localhost:8000/api/v1/docs
-- Frontend: http://localhost:3000
-- Health: http://localhost:8000/api/v1/health
+### Branch Naming
 
-### 3. Run Tests
+| Type | Prefix | Example |
+|------|--------|---------|
+| Feature | `feat/` | `feat/add-agent-scheduling` |
+| Bug Fix | `fix/` | `fix/circuit-breaker-timeout` |
+| Documentation | `docs/` | `docs/update-api-docs` |
+| Refactor | `refactor/` | `refactor/agent-registry` |
+| Chore | `chore/` | `chore/update-dependencies` |
 
-```bash
-# Backend
-cd apps/api && PYTHONPATH=. pytest tests/ -v
-
-# Frontend
-cd apps/web && pnpm test --run
-```
-
----
-
-## How to Contribute
-
-### 1. Find Work
-
-- **Good First Issues**: Labelled `good first issue`
-- **Bug Fixes**: Labelled `bug`
-- **Features**: Labelled `enhancement`
-- **Docs**: Labelled `documentation`
-
-### 2. Create a Branch
-
-```bash
-git checkout main
-git pull origin main
-git checkout -b feat/your-feature-name
-# or fix/your-bug-fix
-```
-
-### 3. Make Changes
-
-- Write code
-- Write tests
-- Update documentation
-- Follow coding standards
-
-### 3. Run Quality Checks
-
-```bash
-# Backend
-cd apps/api
-PYTHONPATH=. pytest tests/ -v
-ruff check . && ruff format .
-mypy app/
-
-# Frontend
-cd apps/web
-pnpm test --run
-pnpm lint
-pnpm format --check
-pnpm typecheck
-```
-
-### 4. Commit
+### Commit Messages
 
 Follow [Conventional Commits](https://www.conventionalcommits.org/):
 
-```bash
-git add .
-git commit -m "feat: add shadow mode lift calculation
+```
+<type>[optional scope]: <description>
 
-- Add LiftMeasurementService for statistical lift calculation
-- Include significance testing with p-values
-- Add batch calculation endpoint
-"
+[optional body]
+
+[optional footer(s)]
 ```
 
-**Types**: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `perf`, `security`
+Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`, `ci`, `build`, `revert`
 
-### 5. Push & Create PR
-
-```bash
-git push origin feat/your-feature-name
-# Create PR on GitHub
+Examples:
+```
+feat(agents): add scheduling support for CEO agent
+fix(api): handle rate limit exceeded gracefully
+docs: update CLI installation instructions
+refactor(shadow-mode): simplify session creation logic
 ```
 
----
+### Pull Request Process
 
-## Pull Request Process
+1. **Create a feature branch** from `main`
+2. **Write tests** for new functionality
+3. **Ensure all tests pass** locally
+4. **Run pre-commit hooks**: `pre-commit run --all-files`
+5. **Submit PR** with clear description and linked issue
+6. **Address review feedback** promptly
+7. **Squash and merge** after approval
 
 ### PR Requirements
 
-- [ ] Clear title and description
-- [ ] Linked to issue (if applicable)
-- [ ] Tests pass
-- [ ] Linting passes
-- [ ] Type checking passes
-- [ ] Documentation updated
+- [ ] All CI checks pass (tests, linting, security)
+- [ ] Code coverage maintained or improved
+- [ ] Documentation updated for user-facing changes
 - [ ] CHANGELOG.md entry added
-- [ ] No merge conflicts
+- [ ] No merge conflicts with `main`
+- [ ] At least 1 approval from code owners
 
-### PR Template
+## Code Style
 
-```markdown
-## Summary
-Brief description of changes
+### Python
 
-## Related Issue
-Fixes #123
+- **Formatter**: Ruff (configured in `pyproject.toml`)
+- **Type Checker**: mypy (strict mode)
+- **Import Sorting**: Ruff (isort compatible)
+- **Line Length**: 100 characters
+- **Target Version**: Python 3.11
 
-## Changes
-- [ ] Added feature X
-- [ ] Fixed bug Y
-- [ ] Updated docs Z
+```bash
+# Format code
+ruff format .
 
-## Testing
-- [ ] Unit tests added
-- [ ] Integration tests pass
-- [ ] Manual testing done
+# Lint code
+ruff check . --fix
 
-## Screenshots (if UI)
-[Add screenshots]
-
-## Checklist
-- [ ] Tests pass
-- [ ] Lint passes
-- [ ] Types pass
-- [ ] Docs updated
-- [ ] CHANGELOG updated
+# Type check
+mypy .
 ```
 
-### Review Process
+### TypeScript/JavaScript
 
-1. **Automated Checks**: CI runs (lint, typecheck, tests, security)
-2. **Code Review**: 1+ maintainer approval
-3. **Merge**: Squash and merge after approval
-4. **Cleanup**: Branch deleted after merge
+- **Formatter**: Prettier
+- **Linter**: ESLint
+- **Type Checker**: TypeScript (strict mode)
 
----
+```bash
+# Format code
+pnpm format
 
-## Coding Standards
+# Lint code
+pnpm lint
 
-### Python (Backend)
-
-Follow the [Engineering Constitution](ENGINEERING_CONSTITUTION.md):
-
-- **Formatter**: Ruff (100 char line)
-- **Linter**: Ruff (all rules + pydantic, fastapi, sqlalchemy)
-- **Types**: MyPy strict mode
-- **Imports**: Absolute, grouped (stdlib, third-party, local)
-
-```python
-# Good
-from uuid import UUID
-from fastapi import APIRouter
-from app.domain.entities.campaign import Campaign
-
-# Bad
-from app.domain.entities.campaign import *
-import app.domain.entities.campaign as c
+# Type check
+pnpm typecheck
 ```
 
-### TypeScript (Frontend)
+### Docker
 
-- **Formatter**: Prettier (single quotes, trailing commas)
-- **Linter**: ESLint (Airbnb + TypeScript)
-- **Strict Mode**: Enabled
-- **No `any`**: Use `unknown` if needed
-
-```typescript
-// Good
-interface Campaign {
-  id: string;
-  name: string;
-  budget: number;
-}
-
-// Bad
-interface Campaign {
-  id: any;
-  name: string;
-  budget: any;
-}
-```
-
-### Database
-
-- **Tables**: snake_case, plural
-- **Columns**: snake_case
-- **PKs**: UUID
-- **FKs**: Explicit, indexed
-- **Enums**: Native PostgreSQL enums
-- **JSONB**: For flexible data
-
----
+- Use multi-stage builds
+- Run as non-root user
+- Use distroless/base images where possible
+- Pin base image digests
+- Scan with hadolint
 
 ## Testing
 
-### Backend
+### Python Tests
 
 ```bash
-# All tests
-PYTHONPATH=. pytest tests/ -v
+# Run all tests
+pytest
 
-# Unit only
-PYTHONPATH=. pytest tests/unit/ -v
+# Run specific test file
+pytest tests/unit/test_agents.py
 
-# Integration
-PYTHONPATH=. pytest tests/integration/ -v
+# Run with coverage
+pytest --cov=apps/api --cov=services --cov-report=html
 
-# Coverage
-PYTHONPATH=. pytest --cov=app --cov-report=html
+# Run integration tests
+pytest tests/integration -v
 ```
 
-### Frontend
+### Test Categories
 
-```bash
-# All tests
-pnpm test --run
+| Marker | Description | Command |
+|--------|-------------|---------|
+| `unit` | Fast, isolated tests | `pytest -m unit` |
+| `integration` | Tests with external deps | `pytest -m integration` |
+| `e2e` | Full end-to-end tests | `pytest -m e2e` |
+| `slow` | Tests > 10 seconds | `pytest -m slow` |
 
-# Watch mode
-pnpm test
+### Test Standards
 
-# UI mode
-pnpm test:ui
-
-# Coverage
-pnpm test:coverage
-```
-
-### Test Patterns
-
-```python
-# Unit test example
-def test_campaign_creation():
-    campaign = Campaign.create(
-        organization_id=uuid4(),
-        name="Test Campaign",
-        created_by=uuid4(),
-    )
-    assert campaign.name == "Test Campaign"
-    assert campaign.status == CampaignStatus.DRAFT
-```
-
-```typescript
-// Frontend test example
-import { render, screen } from '@testing-library/react';
-import { CampaignCard } from '@/features/campaigns/components/campaign-card';
-
-describe('CampaignCard', () => {
-  it('renders campaign name', () => {
-    render(<CampaignCard campaign={{ id: '1', name: 'Test Campaign' }} />);
-    expect(screen.getByText('Test Campaign')).toBeInTheDocument();
-  });
-});
-```
-
----
+- **Unit tests**: Mock all external dependencies
+- **Integration tests**: Use testcontainers for DB/Redis
+- **Naming**: `test_<function>_<scenario>_<expected>`
+- **Assertions**: Use `assert` with clear messages
+- **Fixtures**: Shared fixtures in `conftest.py`
 
 ## Documentation
 
-### When to Update
+### Types
 
-- New API endpoints → API_REFERENCE.md
-- Architecture changes → ARCHITECTURE.md
-- New features → DEVELOPMENT.md
-- Config changes → DEPLOYMENT.md
-- Process changes → SESSION_BOOTSTRAP.md
+- **API Docs**: OpenAPI/Swagger (auto-generated from FastAPI)
+- **Architecture**: ADRs in `docs/adr/`
+- **User Guides**: `docs/user-guide/`
+- **Developer Docs**: `docs/developer/`
+- **CLI Help**: Built into `astra --help`
 
-### Style
+### Updating Docs
 
-- Clear, concise, examples
-- Code blocks for all examples
-- Links to related docs
-- Keep it current
-
----
+1. Update relevant `.md` files in `docs/`
+2. Update docstrings for public APIs
+3. Run `pnpm docs:build` to verify
+4. Include screenshots for UI changes
 
 ## Security
 
 ### Reporting Vulnerabilities
 
-**DO NOT** create public issues for security vulnerabilities.
-
-Email: security@astra-os.com
-
-Include:
-- Description
-- Steps to reproduce
-- Impact assessment
-- Suggested fix (if any)
-
-### Response Timeline
-
-- **Acknowledgement**: 24 hours
-- **Assessment**: 72 hours
-- **Fix Timeline**: Based on severity
-- **Disclosure**: Coordinated after fix
+See [SECURITY.md](SECURITY.md) for responsible disclosure process.
 
 ### Security Practices
 
-- Never commit secrets
-- Rotate keys quarterly
-- Use dependabot/renovate
-- Run `pip-audit` / `pnpm audit` weekly
+- Never commit secrets, API keys, or credentials
+- Use `.env.example` for configuration templates
+- Run `trufflehog` and `bandit` before committing
+- Keep dependencies updated (Dependabot/Renovate)
+- Use `sealed-secrets` for Kubernetes secrets
+
+### Pre-commit Security Checks
+
+```bash
+# Run security checks manually
+bandit -r apps/api apps/cli services
+trufflehog --fail --no-verification .
+```
+
+## Release Process
+
+1. Version bump in `pyproject.toml` and `package.json`
+2. Update `CHANGELOG.md`
+3. Create release PR
+4. Merge to `main` triggers CI/CD
+5. GitHub Actions builds and publishes artifacts
+6. Create GitHub Release with notes
 
 ---
 
-## Community
+**Questions?** Open a discussion or reach out to the maintainers.
 
-### Communication Channels
-
-| Channel | Purpose |
-|---------|---------|
-| **GitHub Discussions** | Questions, ideas, RFCs |
-| **GitHub Issues** | Bugs, features, tasks |
-| **Discord** | Real-time chat, help |
-| **Email** | security@astra-os.com, conduct@astra-os.com |
-
-### Getting Help
-
-1. Search existing issues/discussions
-2. Read docs (ARCHITECTURE.md, DEVELOPMENT.md)
-3. Ask in Discord #help channel
-4. Create GitHub Discussion
-
-### Recognition
-
-Contributors recognized in:
-- CHANGELOG.md
-- Release notes
-- GitHub Contributors graph
-- Annual contributors report
-
----
-
-## License
-
-By contributing, you agree your contributions are licensed under the project's license (MIT).
-
----
-
-*Thank you for contributing to ASTRA OS! 🚀*
+**Thank you for contributing!** 🚀

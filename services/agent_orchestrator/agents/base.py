@@ -15,8 +15,6 @@ from ..agent import (
     AgentContext,
     AgentResult,
     AgentState,
-    ToolCall,
-    ToolResult,
 )
 from ..router import (
     ModelRequest,
@@ -104,9 +102,9 @@ class ReActAgent(Agent):
                 if line.startswith("```") and not in_block:
                     in_block = True
                     continue
-                elif line.startswith("```") and in_block:
+                if line.startswith("```") and in_block:
                     break
-                elif in_block:
+                if in_block:
                     code_lines.append(line)
             text = "\n".join(code_lines)
 
@@ -148,7 +146,7 @@ class ReActAgent(Agent):
             system_prompt=self.system_prompt,
             temperature=self.config.temperature,
             max_tokens=self.config.max_tokens,
-            tools=tools if tools else None,
+            tools=tools or None,
         )
 
         router = get_model_router_facade()

@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, AsyncIterator
+from typing import Any
 from uuid import UUID, uuid4
 
 import httpx
@@ -118,22 +118,18 @@ class ModelProviderBase(ABC):
     @abstractmethod
     async def generate(self, request: ModelRequest) -> ModelResponse:
         """Generate a response from the model."""
-        pass
 
     @abstractmethod
     async def stream_generate(self, request: ModelRequest):
         """Generate a streaming response from the model."""
-        pass
 
     @abstractmethod
     async def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         """Generate embeddings for texts."""
-        pass
 
     @abstractmethod
     async def health_check(self) -> bool:
         """Check if the provider is healthy."""
-        pass
 
     def _get_client(self) -> httpx.AsyncClient:
         """Get or create HTTP client."""
@@ -168,7 +164,7 @@ class ModelProviderBase(ABC):
 
                 if response.is_success:
                     return response
-                elif response.status_code == 429:
+                if response.status_code == 429:
                     # Rate limited - wait and retry
                     wait_time = (2 ** attempt) + 0.1
                     logger.warning(
@@ -177,14 +173,13 @@ class ModelProviderBase(ABC):
                     )
                     await asyncio.sleep(wait_time)
                     continue
-                else:
-                    # Other error
-                    error_text = response.text
-                    raise httpx.HTTPStatusError(
-                        f"HTTP {response.status_code}: {error_text}",
-                        request=response.request,
-                        response=response,
-                    )
+                # Other error
+                error_text = response.text
+                raise httpx.HTTPStatusError(
+                    f"HTTP {response.status_code}: {error_text}",
+                    request=response.request,
+                    response=response,
+                )
             except (httpx.TimeoutException, httpx.ConnectError) as e:
                 last_error = e
                 if attempt < self.config.max_retries:
@@ -311,7 +306,7 @@ class NVIDIANIMProvider(ModelProviderBase):
                         break
                     try:
                         data = json.loads(data_str)
-                        if "choices" in data and data["choices"]:
+                        if data.get("choices"):
                             delta = data["choices"][0].get("delta", {})
                             if "content" in delta:
                                 yield StreamingChunk(
@@ -454,7 +449,7 @@ class OpenAIProvider(ModelProviderBase):
                         break
                     try:
                         data = json.loads(data_str)
-                        if "choices" in data and data["choices"]:
+                        if data.get("choices"):
                             delta = data["choices"][0].get("delta", {})
                             if "content" in delta:
                                 yield StreamingChunk(

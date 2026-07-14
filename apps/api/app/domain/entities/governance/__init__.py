@@ -8,18 +8,18 @@ from app.domain.entities.governance.approval import (
     RuleTrigger,
 )
 from app.domain.entities.governance.autonomy import (
+    AgentAction,
     AutonomyConfig,
     AutonomyLevel,
-    AgentAction,
 )
 
 __all__ = [
-    "ApprovalRule",
-    "ApprovalRequest",
-    "ApprovalDecision",
-    "ApprovalStatus",
-    "RuleTrigger",
-    "AutonomyLevel",
-    "AutonomyConfig",
     "AgentAction",
+    "ApprovalDecision",
+    "ApprovalRequest",
+    "ApprovalRule",
+    "ApprovalStatus",
+    "AutonomyConfig",
+    "AutonomyLevel",
+    "RuleTrigger",
 ]

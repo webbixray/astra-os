@@ -7,20 +7,19 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from app.domain.common import now
 from app.domain.entities.design_partner import (
     DesignPartner,
     DesignPartnerFeedback,
-    DesignPartnerRepository,
     DesignPartnerFeedbackRepository,
+    DesignPartnerRepository,
     DesignPartnerStatus,
     DesignPartnerTier,
     FeedbackPriority,
     FeedbackType,
     SupportTicket,
-    SupportTicketStatus,
 )
 
 

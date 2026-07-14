@@ -15,11 +15,20 @@ All tests are pure unit tests — no DB, no network required.
 """
 
 import asyncio
-import pytest
 from datetime import timedelta
-from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
+import pytest
+from app.application.use_cases.governance.approval_use_cases import (
+    CreateApprovalRuleUseCase,
+    DecideApprovalUseCase,
+    EvaluateApprovalRulesUseCase,
+)
+from app.application.use_cases.governance.autonomy_use_cases import (
+    CheckAgentActionUseCase,
+    GetExplainabilityReportUseCase,
+    RecordAgentActionUseCase,
+)
 from app.domain.common import now
 from app.domain.entities.governance.approval import (
     ApprovalDecision,
@@ -38,38 +47,19 @@ from app.domain.entities.governance.autonomy import (
 )
 from app.domain.exceptions.domain_exceptions import ValidationError
 from app.domain.services.governance.approval_service import (
-    ApprovalEvaluationResult,
     ApprovalEvaluationService,
-)
-from app.domain.services.governance.autonomy_enforcement import (
-    AutonomyEnforcementService,
-    EnforcementResult,
-)
-from app.domain.services.governance.explainability import (
-    ExplainabilityService,
-    ExplanationOutput,
 )
 from app.domain.services.governance.audit_enhancement import (
     AuditEnhancementService,
     AuditEntry,
 )
-
-from app.application.use_cases.governance.approval_use_cases import (
-    CreateApprovalRuleUseCase,
-    CreateApprovalRequestUseCase,
-    DecideApprovalUseCase,
-    EvaluateApprovalRulesUseCase,
-    ExpireStaleApprovalsUseCase,
-    ListPendingApprovalsUseCase,
+from app.domain.services.governance.autonomy_enforcement import (
+    AutonomyEnforcementService,
 )
-from app.application.use_cases.governance.autonomy_use_cases import (
-    CheckAgentActionUseCase,
-    GetAutonomyConfigUseCase,
-    GetExplainabilityReportUseCase,
-    RecordAgentActionUseCase,
-    UpdateAutonomyConfigUseCase,
+from app.domain.services.governance.explainability import (
+    ExplainabilityService,
+    ExplanationOutput,
 )
-
 
 # ── Helpers ────────────────────────────────────────────────────────────
 

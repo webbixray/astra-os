@@ -1,0 +1,44 @@
+# CODEOWNERS
+# These users/teams will be requested for review when changes are made to matching paths.
+
+# Global owners (required for all PRs)
+* @astra-os/core-team
+
+# Core infrastructure
+/docker/ @astra-os/platform-team
+/k8s/ @astra-os/platform-team
+/.github/workflows/ @astra-os/platform-team
+/docker-compose*.yml @astra-os/platform-team
+
+# API Layer
+/apps/api/ @astra-os/api-team @astra-os/core-team
+
+# Agent Orchestrator
+/services/agent_orchestrator/ @astra-os/agents-team @astra-os/core-team
+
+# Web Dashboard
+/apps/web/ @astra-os/frontend-team
+
+# CLI
+/apps/cli/ @astra-os/cli-team
+
+# SDKs
+/sdk/ @astra-os/sdk-team
+
+# Monitoring & Observability
+/docker/monitoring/ @astra-os/platform-team @astra-os/sre-team
+/docs/observability/ @astra-os/sre-team
+
+# Security
+SECURITY.md @astra-os/security-team
+/.github/dependabot.yml @astra-os/security-team
+/SECURITY.md @astra-os/security-team
+
+# Documentation
+/docs/ @astra-os/docs-team
+/README.md @astra-os/docs-team
+
+# Configuration
+/pyproject.toml @astra-os/core-team
+/package.json @astra-os/core-team
+/pnpm-workspace.yaml @astra-os/core-team

@@ -8,6 +8,14 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 import httpx
 
+# Circuit breaker integration
+from services.agent_orchestrator.resilience import (
+    CircuitBreaker,
+    CircuitBreakerConfig,
+    CircuitOpenError,
+    get_circuit_breaker_registry,
+)
+
 from app.application.ports.ai_provider import AIProvider
 from app.config import config
 
@@ -128,57 +136,8 @@ async def _stream_sse(
                     continue
 
 
-async def _stream_sse_anthropic(
-    client: httpx.AsyncClient,
-    url: str,
-    headers: dict[str, str],
-    json_data: dict[str, Any],
-) -> AsyncIterator[str]:
-    async with client.stream("POST", url, headers=headers, json=json_data) as response:
-        response.raise_for_status()
-        async for line in response.aiter_lines():
-            if line.startswith("data: "):
-                data = line[6:]
-                try:
-                    chunk = json.loads(data)
-                    if chunk.get("type") == "content_block_delta":
-                        delta = chunk.get("delta", {})
-                        text = delta.get("text", "")
-                        if text:
-                            yield text
-                except json.JSONDecodeError:
-                    continue
-
-
-async def _stream_sse_gemini(
-    client: httpx.AsyncClient,
-    url: str,
-    headers: dict[str, str],
-    json_data: dict[str, Any],
-) -> AsyncIterator[str]:
-    async with client.stream("POST", url, headers=headers, json=json_data) as response:
-        response.raise_for_status()
-        async for line in response.aiter_lines():
-            if line.startswith("data: "):
-                data = line[6:]
-                try:
-                    chunk = json.loads(data)
-                    candidates = chunk.get("candidates", [])
-                    if candidates:
-                        content = candidates[0].get("content", {})
-                        parts = content.get("parts", [])
-                        for part in parts:
-                            text = part.get("text", "")
-                            if text:
-                                yield text
-                except json.JSONDecodeError:
-                    continue
-
-
-class NvidiaNIMProvider(AIProvider):
+class NvidiaNIMProvider:
     def __init__(self) -> None:
-        self.api_key = ""
-        self.base_url = config.nvidia_nim_base_url
         self.default_model = "meta/llama-3.1-70b-instruct"
 
     async def stream_chat(
@@ -186,273 +145,267 @@ class NvidiaNIMProvider(AIProvider):
         messages: list[dict],
         model: str | None = None,
     ) -> AsyncIterator[str]:
-        if not self.base_url or not self.api_key:
+        if not config.nvidia_nim_base_url:
             return
-        model_name = model or self.default_model
-        async with httpx.AsyncClient(timeout=120.0) as client:
-            async for content in _stream_sse(
-                client,
-                f"{self.base_url}/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json",
-                },
-                json_data={
-                    "model": model_name,
-                    "messages": messages,
-                    "stream": True,
-                },
-            ):
-                yield content
+            yield
 
-    async def chat(
-        self,
-        messages: list[dict],
-        model: str | None = None,
-    ) -> str:
-        if not self.base_url or not self.api_key:
-            return ""
-        model_name = model or self.default_model
-        async with httpx.AsyncClient(timeout=120.0) as client:
-            response = await client.post(
-                f"{self.base_url}/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "model": model_name,
-                    "messages": messages,
-                    "stream": False,
-                },
-            )
-            response.raise_for_status()
-            data = response.json()
-            return data["choices"][0]["message"]["content"]
-
-
-class OpenAIProvider(AIProvider):
-    def __init__(self) -> None:
-        self.api_key = config.openai_api_key
-        self.default_model = "gpt-4o-mini"
-
-    async def stream_chat(
-        self,
-        messages: list[dict],
-        model: str | None = None,
-    ) -> AsyncIterator[str]:
-        if not self.api_key:
-            return
-        model_name = model or self.default_model
-        async with httpx.AsyncClient(timeout=120.0) as client:
-            async for content in _stream_sse(
-                client,
-                OPENAI_CHAT_URL,
-                headers={
-                    "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json",
-                },
-                json_data={
-                    "model": model_name,
-                    "messages": messages,
-                    "stream": True,
-                },
-            ):
-                yield content
-
-    async def chat(
-        self,
-        messages: list[dict],
-        model: str | None = None,
-    ) -> str:
-        if not self.api_key:
-            return ""
-        model_name = model or self.default_model
-        async with httpx.AsyncClient(timeout=120.0) as client:
-            response = await client.post(
-                OPENAI_CHAT_URL,
-                headers={
-                    "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "model": model_name,
-                    "messages": messages,
-                    "stream": False,
-                },
-            )
-            response.raise_for_status()
-            data = response.json()
-            return data["choices"][0]["message"]["content"]
-
-
-class AnthropicProvider(AIProvider):
-    def __init__(self) -> None:
-        self.api_key = config.anthropic_api_key
-        self.default_model = "claude-3-sonnet-20240229"
-
-    def _convert_messages(self, messages: list[dict]) -> tuple[str, list[dict]]:
-        system = ""
-        converted = []
-        for msg in messages:
-            if msg.get("role") == "system":
-                system = msg.get("content", "")
-            else:
-                converted.append(
-                    {
-                        "role": msg.get("role", "user"),
-                        "content": msg.get("content", ""),
-                    }
-                )
-        return system, converted
-
-    async def stream_chat(
-        self,
-        messages: list[dict],
-        model: str | None = None,
-    ) -> AsyncIterator[str]:
-        if not self.api_key:
-            return
-        model_name = model or self.default_model
-        system, converted_messages = self._convert_messages(messages)
-        payload: dict[str, Any] = {
-            "model": model_name,
-            "messages": converted_messages,
-            "max_tokens": 4096,
+        url = NVIDIA_NIM_CHAT_URL
+        headers = {
+            "Authorization": f"Bearer {config.nvidia_nim_api_key}",
+            "Content-Type": "application/json",
+        }
+        json_data = {
+            "model": model or self.default_model,
+            "messages": messages,
             "stream": True,
         }
-        if system:
-            payload["system"] = system
-        async with httpx.AsyncClient(timeout=120.0) as client:
-            async for content in _stream_sse_anthropic(
-                client,
-                ANTHROPIC_CHAT_URL,
-                headers={
-                    "x-api-key": self.api_key,
-                    "anthropic-version": "2023-06-01",
-                    "Content-Type": "application/json",
-                },
-                json_data=payload,
-            ):
-                yield content
+
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            async for chunk in _stream_sse(client, url, headers, json_data):
+                yield chunk
 
     async def chat(
         self,
         messages: list[dict],
         model: str | None = None,
     ) -> str:
-        if not self.api_key:
-            return ""
-        model_name = model or self.default_model
-        system, converted_messages = self._convert_messages(messages)
-        payload: dict[str, Any] = {
-            "model": model_name,
-            "messages": converted_messages,
-            "max_tokens": 4096,
+        if not config.nvidia_nim_base_url:
+            raise RuntimeError("NVIDIA NIM not configured")
+
+        url = NVIDIA_NIM_CHAT_URL
+        headers = {
+            "Authorization": f"Bearer {config.nvidia_nim_api_key}",
+            "Content-Type": "application/json",
+        }
+        json_data = {
+            "model": model or self.default_model,
+            "messages": messages,
             "stream": False,
         }
-        if system:
-            payload["system"] = system
-        async with httpx.AsyncClient(timeout=120.0) as client:
-            response = await client.post(
-                ANTHROPIC_CHAT_URL,
-                headers={
-                    "x-api-key": self.api_key,
-                    "anthropic-version": "2023-06-01",
-                    "Content-Type": "application/json",
-                },
-                json=payload,
-            )
+
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            response = await client.post(url, headers=headers, json=json_data)
             response.raise_for_status()
             data = response.json()
-            content_blocks = data.get("content", [])
-            return "".join(block.get("text", "") for block in content_blocks)
+            return data["choices"][0]["message"]["content"]
 
 
-class GeminiProvider(AIProvider):
+class OpenAIProvider:
     def __init__(self) -> None:
-        self.api_key = config.gemini_api_key
-        self.default_model = "gemini-1.5-pro"
-
-    def _convert_messages(self, messages: list[dict]) -> dict[str, Any]:
-        contents = []
-        system_instruction = None
-        for msg in messages:
-            role = msg.get("role", "user")
-            content = msg.get("content", "")
-            if role == "system":
-                system_instruction = {"parts": [{"text": content}]}
-            else:
-                gemini_role = "model" if role == "assistant" else "user"
-                contents.append(
-                    {
-                        "role": gemini_role,
-                        "parts": [{"text": content}],
-                    }
-                )
-        result: dict[str, Any] = {"contents": contents}
-        if system_instruction:
-            result["systemInstruction"] = system_instruction
-        return result
+        self.default_model = "gpt-4o"
 
     async def stream_chat(
         self,
         messages: list[dict],
         model: str | None = None,
     ) -> AsyncIterator[str]:
-        if not self.api_key:
+        if not config.openai_api_key:
             return
-        model_name = model or self.default_model
-        payload = self._convert_messages(messages)
-        payload["generationConfig"] = {"maxOutputTokens": 4096}
-        url = f"{GEMINI_CHAT_URL}/{model_name}:streamGenerateContent?alt=sse&key={self.api_key}"
-        async with httpx.AsyncClient(timeout=120.0) as client:
-            async for content in _stream_sse_gemini(
-                client,
-                url,
-                headers={"Content-Type": "application/json"},
-                json_data=payload,
-            ):
-                yield content
+            yield
+
+        url = OPENAI_CHAT_URL
+        headers = {
+            "Authorization": f"Bearer {config.openai_api_key}",
+            "Content-Type": "application/json",
+        }
+        json_data = {
+            "model": model or self.default_model,
+            "messages": messages,
+            "stream": True,
+        }
+
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            async for chunk in _stream_sse(client, url, headers, json_data):
+                yield chunk
 
     async def chat(
         self,
         messages: list[dict],
         model: str | None = None,
     ) -> str:
-        if not self.api_key:
-            return ""
-        model_name = model or self.default_model
-        payload = self._convert_messages(messages)
-        payload["generationConfig"] = {"maxOutputTokens": 4096}
-        url = f"{GEMINI_CHAT_URL}/{model_name}:generateContent?key={self.api_key}"
-        async with httpx.AsyncClient(timeout=120.0) as client:
-            response = await client.post(
-                url,
-                headers={"Content-Type": "application/json"},
-                json=payload,
-            )
+        if not config.openai_api_key:
+            raise RuntimeError("OpenAI not configured")
+
+        url = OPENAI_CHAT_URL
+        headers = {
+            "Authorization": f"Bearer {config.openai_api_key}",
+            "Content-Type": "application/json",
+        }
+        json_data = {
+            "model": model or self.default_model,
+            "messages": messages,
+            "stream": False,
+        }
+
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            response = await client.post(url, headers=headers, json=json_data)
             response.raise_for_status()
             data = response.json()
-            candidates = data.get("candidates", [])
-            if candidates:
-                content = candidates[0].get("content", {})
-                parts = content.get("parts", [])
-                return "".join(part.get("text", "") for part in parts)
-            return ""
+            return data["choices"][0]["message"]["content"]
+
+
+class AnthropicProvider:
+    def __init__(self) -> None:
+        self.default_model = "claude-3-sonnet-20240229"
+
+    async def stream_chat(
+        self,
+        messages: list[dict],
+        model: str | None = None,
+    ) -> AsyncIterator[str]:
+        if not config.anthropic_api_key:
+            return
+            yield
+
+        url = ANTHROPIC_CHAT_URL
+        headers = {
+            "x-api-key": config.anthropic_api_key,
+            "Content-Type": "application/json",
+            "anthropic-version": "2023-06-01",
+        }
+        json_data = {
+            "model": model or self.default_model,
+            "messages": messages,
+            "stream": True,
+            "max_tokens": 4096,
+        }
+
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            async for chunk in _stream_sse(client, url, headers, json_data):
+                yield chunk
+
+    async def chat(
+        self,
+        messages: list[dict],
+        model: str | None = None,
+    ) -> str:
+        if not config.anthropic_api_key:
+            raise RuntimeError("Anthropic not configured")
+
+        url = ANTHROPIC_CHAT_URL
+        headers = {
+            "x-api-key": config.anthropic_api_key,
+            "Content-Type": "application/json",
+            "anthropic-version": "2023-06-01",
+        }
+        json_data = {
+            "model": model or self.default_model,
+            "messages": messages,
+            "stream": False,
+            "max_tokens": 4096,
+        }
+
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            response = await client.post(url, headers=headers, json=json_data)
+            response.raise_for_status()
+            data = response.json()
+            return data["content"][0]["text"]
+
+
+class GeminiProvider:
+    def __init__(self) -> None:
+        self.default_model = "gemini-1.5-pro"
+
+    async def stream_chat(
+        self,
+        messages: list[dict],
+        model: str | None = None,
+    ) -> AsyncIterator[str]:
+        if not config.gemini_api_key:
+            return
+            yield
+
+        url = f"{GEMINI_CHAT_URL}/{model or self.default_model}:streamGenerateContent"
+        params = {"key": config.gemini_api_key}
+        headers = {"Content-Type": "application/json"}
+
+        # Convert messages to Gemini format
+        contents = []
+        for msg in messages:
+            role = "user" if msg["role"] == "user" else "model"
+            contents.append({"role": role, "parts": [{"text": msg["content"]}]})
+
+        json_data = {
+            "contents": contents,
+            "generationConfig": {"temperature": 0.7},
+        }
+
+        async with httpx.AsyncClient(timeout=60.0) as client, client.stream(
+            "POST", url, params=params, headers=headers, json=json_data
+        ) as response:
+            response.raise_for_status()
+            async for line in response.aiter_lines():
+                if line.startswith("data: "):
+                    data = line[6:]
+                    try:
+                        chunk = json.loads(data)
+                        candidates = chunk.get("candidates", [])
+                        if candidates:
+                            content = candidates[0].get("content", {})
+                            parts = content.get("parts", [])
+                            for part in parts:
+                                if "text" in part:
+                                    yield part["text"]
+                    except json.JSONDecodeError:
+                        continue
+
+    async def chat(
+        self,
+        messages: list[dict],
+        model: str | None = None,
+    ) -> str:
+        if not config.gemini_api_key:
+            raise RuntimeError("Gemini not configured")
+
+        url = f"{GEMINI_CHAT_URL}/{model or self.default_model}:generateContent"
+        params = {"key": config.gemini_api_key}
+        headers = {"Content-Type": "application/json"}
+
+        contents = []
+        for msg in messages:
+            role = "user" if msg["role"] == "user" else "model"
+            contents.append({"role": role, "parts": [{"text": msg["content"]}]})
+
+        json_data = {
+            "contents": contents,
+            "generationConfig": {"temperature": 0.7},
+        }
+
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            response = await client.post(url, params=params, headers=headers, json=json_data)
+            response.raise_for_status()
+            data = response.json()
+            return data["candidates"][0]["content"]["parts"][0]["text"]
 
 
 class AIRouter:
     def __init__(self) -> None:
         self.providers: list[AIProvider] = []
+        self._provider_names: list[str] = []
         if config.nvidia_nim_base_url:
             self.providers.append(NvidiaNIMProvider())
+            self._provider_names.append("nvidia_nim")
         if config.openai_api_key:
             self.providers.append(OpenAIProvider())
+            self._provider_names.append("openai")
         if config.anthropic_api_key:
             self.providers.append(AnthropicProvider())
+            self._provider_names.append("anthropic")
         if config.gemini_api_key:
             self.providers.append(GeminiProvider())
+            self._provider_names.append("gemini")
+
+        # Initialize circuit breakers for each provider
+        self._circuit_breakers: dict[str, CircuitBreaker] = {}
+        registry = get_circuit_breaker_registry()
+        for name in self._provider_names:
+            cb_config = CircuitBreakerConfig(
+                failure_threshold=5,
+                success_threshold=2,
+                timeout_seconds=30.0,
+                exclude_exceptions=(httpx.TimeoutException,),
+            )
+            self._circuit_breakers[name] = registry.get_or_create(name, cb_config)
 
     def _get_provider_name(self, provider: AIProvider) -> str:
         if isinstance(provider, NvidiaNIMProvider):
@@ -463,7 +416,33 @@ class AIRouter:
             return "anthropic"
         if isinstance(provider, GeminiProvider):
             return "gemini"
-        return type(provider).__name__.lower()
+        return "unknown"
+
+    async def _call_with_circuit_breaker(
+        self,
+        provider: AIProvider,
+        method: str,
+        *args,
+        **kwargs
+    ) -> Any:
+        """Execute a provider method with circuit breaker protection."""
+        provider_name = self._get_provider_name(provider)
+        circuit_breaker = self._circuit_breakers.get(provider_name)
+
+        if circuit_breaker is None:
+            # No circuit breaker, call directly
+            func = getattr(provider, method)
+            return await func(*args, **kwargs)
+
+        async def _call():
+            func = getattr(provider, method)
+            return await func(*args, **kwargs)
+
+        try:
+            return await circuit_breaker.call(_call)
+        except CircuitOpenError as e:
+            logger.warning("Circuit open for %s, skipping provider: %s", provider_name, e)
+            raise  # Re-raise to trigger fallback
 
     async def stream_chat(
         self,
@@ -475,7 +454,9 @@ class AIRouter:
             provider_name = self._get_provider_name(provider)
             try:
                 full_response = ""
-                async for chunk in provider.stream_chat(messages, model=model):
+                async for chunk in self._call_with_circuit_breaker(
+                    provider, "stream_chat", messages, model=model
+                ):
                     full_response += chunk
                     yield chunk
                 duration_ms = (time.monotonic() - start) * 1000
@@ -497,6 +478,9 @@ class AIRouter:
                     )
                 )
                 logger.warning("AI provider %s failed: %s", provider_name, e)
+                continue
+            except CircuitOpenError:
+                logger.warning("Circuit open for %s, skipping provider", provider_name)
                 continue
             except Exception as e:
                 duration_ms = (time.monotonic() - start) * 1000
@@ -520,7 +504,9 @@ class AIRouter:
             start = time.monotonic()
             provider_name = self._get_provider_name(provider)
             try:
-                result = await provider.chat(messages, model=model)
+                result = await self._call_with_circuit_breaker(
+                    provider, "chat", messages, model=model
+                )
             except httpx.HTTPStatusError as e:
                 duration_ms = (time.monotonic() - start) * 1000
                 UsageTracker.record(
@@ -532,6 +518,9 @@ class AIRouter:
                     )
                 )
                 logger.warning("AI provider %s failed: %s", provider_name, e)
+                continue
+            except CircuitOpenError:
+                logger.warning("Circuit open for %s, skipping provider", provider_name)
                 continue
             except Exception as e:
                 duration_ms = (time.monotonic() - start) * 1000

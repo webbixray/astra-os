@@ -1,27 +1,22 @@
 """Shared fixtures for agent orchestrator tests."""
 
-import asyncio
 import uuid
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
 from services.agent_orchestrator.agent import (
     AgentConfig,
     AgentContext,
     AgentRegistry,
     AgentType,
-    get_agent_registry,
 )
-from services.agent_orchestrator.events import EventBus, Event
+from services.agent_orchestrator.events import EventBus
 from services.agent_orchestrator.tools import (
     ExecutionSandbox,
     Tool,
     ToolDefinition,
     ToolParameter,
     ToolRegistry,
-    tool_registry,
 )
 
 

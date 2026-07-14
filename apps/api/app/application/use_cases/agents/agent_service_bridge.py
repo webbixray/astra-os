@@ -14,33 +14,25 @@ Both coexist during transition. New code should use AgentServiceBridge.
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import Any
 from uuid import UUID, uuid4
 
 from services.agent_orchestrator.agent import (
-    AgentConfig,
     AgentContext,
-    AgentRegistry,
-    AgentResult,
     AgentType,
     get_agent_registry,
 )
 from services.agent_orchestrator.agents.ceo import CEOAgent
 from services.agent_orchestrator.agents.director import DirectorAgent
-from services.agent_orchestrator.agents.specialist import SpecialistAgent
-from services.agent_orchestrator.comms import AgentAuditTrail, get_agent_audit_trail
+from services.agent_orchestrator.comms import get_agent_audit_trail
 from services.agent_orchestrator.events import Event, get_event_bus
-from services.agent_orchestrator.hierarchy import AgentHierarchy, AgentCoordinator, CommunicationProtocol, HandoffManager
-from services.agent_orchestrator.memory import MemoryManager
-from services.agent_orchestrator.router import (
-    ModelProvider,
-    ModelRequest,
-    ModelResponse,
-    get_model_router_facade,
+from services.agent_orchestrator.hierarchy import (
+    AgentCoordinator,
+    AgentHierarchy,
+    CommunicationProtocol,
+    HandoffManager,
 )
-
-if TYPE_CHECKING:
-    pass
+from services.agent_orchestrator.memory import MemoryManager
 
 logger = logging.getLogger(__name__)
 

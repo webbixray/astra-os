@@ -1,8 +1,9 @@
 """Tests for Social Intelligence — Comments, Auto-Reply, Templates, Analytics."""
 
-import pytest
 from datetime import datetime, timedelta
 from uuid import uuid4
+
+import pytest
 
 from app.domain.entities.social_intelligence import (
     AutoReply,
@@ -10,7 +11,6 @@ from app.domain.entities.social_intelligence import (
     CommentIntent,
     CommentSentiment,
     CommentType,
-    ModerationAction,
     ReplyStatus,
     ReplyTemplate,
     SocialComment,
@@ -19,12 +19,11 @@ from app.domain.entities.social_intelligence import (
 )
 from app.domain.services.social_intelligence import (
     AutoReplyGenerator,
-    CommentAnalyzer,
     CommentAnalyticsEngine,
+    CommentAnalyzer,
     ReplyTemplateManager,
     SocialInboxManager,
 )
-
 
 # --- CommentAnalyzer Tests ---
 

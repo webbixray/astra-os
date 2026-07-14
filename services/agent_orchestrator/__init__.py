@@ -13,6 +13,13 @@ from .agent import (
     ToolResult,
     get_agent_registry,
 )
+from .comms import (
+    AgentAuditTrail,
+    AgentTraceEntry,
+    RedisMessageBus,
+    get_agent_audit_trail,
+    get_redis_message_bus,
+)
 from .events import (
     Event,
     EventBus,
@@ -35,15 +42,6 @@ from .memory import (
     MemoryEntry,
     MemoryManager,
 )
-from .tools import (
-    ExecutionSandbox,
-    Tool,
-    ToolDefinition,
-    ToolParameter,
-    ToolRegistry,
-    default_sandbox,
-    tool_registry,
-)
 from .router import (
     ModelCapability,
     ModelConfig,
@@ -55,12 +53,14 @@ from .router import (
     StreamingChunk,
     get_model_router,
 )
-from .comms import (
-    AgentAuditTrail,
-    AgentTraceEntry,
-    RedisMessageBus,
-    get_agent_audit_trail,
-    get_redis_message_bus,
+from .tools import (
+    ExecutionSandbox,
+    Tool,
+    ToolDefinition,
+    ToolParameter,
+    ToolRegistry,
+    default_sandbox,
+    tool_registry,
 )
 
 # Concrete agent implementations (lazy to avoid circular imports)

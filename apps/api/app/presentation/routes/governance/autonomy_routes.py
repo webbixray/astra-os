@@ -21,8 +21,6 @@ from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.use_cases.governance.autonomy_use_cases import (
-    AgentActionRepository,
-    AutonomyConfigRepository,
     CheckAgentActionUseCase,
     GetAgentActionsUseCase,
     GetAutonomyConfigUseCase,
@@ -190,8 +188,9 @@ async def record_action(
     repo: AgentActionRepositoryImpl = Depends(get_action_repo),
 ):
     """Record an agent action for audit."""
-    from app.domain.entities.governance.autonomy import AutonomyLevel
     from uuid import UUID as _UUID
+
+    from app.domain.entities.governance.autonomy import AutonomyLevel
 
     uc = RecordAgentActionUseCase(repo)
     approval_id = _UUID(body.approval_request_id) if body.approval_request_id else None

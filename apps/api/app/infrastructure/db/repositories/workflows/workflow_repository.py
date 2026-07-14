@@ -4,18 +4,18 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.domain.entities.workflows.workflow import (
-    Workflow,
-    WorkflowEdge,
-    WorkflowNode,
-    WorkflowStatus,
-)
 from app.domain.entities.workflows.execution import (
     ExecutionStatus,
     ExecutionStep,
     WorkflowExecution,
 )
 from app.domain.entities.workflows.version import WorkflowVersion
+from app.domain.entities.workflows.workflow import (
+    Workflow,
+    WorkflowEdge,
+    WorkflowNode,
+    WorkflowStatus,
+)
 from app.infrastructure.db.models.workflows.workflow_model import (
     WorkflowExecutionModel,
     WorkflowModel,

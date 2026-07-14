@@ -21,7 +21,6 @@ from app.domain.exceptions.domain_exceptions import (
     EntityNotFoundError,
     ValidationError,
 )
-from app.domain.services.governance.approval_service import ApprovalEvaluationService
 from app.domain.services.governance.autonomy_enforcement import (
     AutonomyEnforcementService,
     EnforcementResult,
@@ -30,7 +29,6 @@ from app.domain.services.governance.explainability import (
     ExplainabilityService,
     ExplanationOutput,
 )
-
 
 # ── Repository Ports ──────────────────────────────────────────────────
 
@@ -190,6 +188,7 @@ class CheckAgentActionUseCase:
 
         Returns:
             EnforcementResult with allowed/required approval info.
+
         """
         config = await self._config_repo.find_by_organization(organization_id)
         if config is None:

@@ -4,11 +4,6 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
-# Import for sample campaigns
-from app.domain.entities.campaign import Campaign, CampaignStatus, CampaignObjective
-from app.application.use_cases.campaigns.campaign_use_cases import CreateCampaignUseCase
-from app.infrastructure.db.repositories.campaigns.campaign_repository import CampaignRepositoryImpl
-
 from app.application.use_cases.campaigns.ab_test_use_cases import (
     AddVariantUseCase,
     CreateABTestUseCase,
@@ -43,6 +38,9 @@ from app.application.use_cases.campaigns.template_use_cases import (
     GetTemplateUseCase,
     ListTemplatesUseCase,
 )
+
+# Import for sample campaigns
+from app.domain.entities.campaign import CampaignObjective
 from app.domain.exceptions.domain_exceptions import EntityNotFoundError, ValidationError
 from app.infrastructure.db.repositories.campaigns.ab_test_repository import ABTestRepository
 from app.infrastructure.db.repositories.campaigns.campaign_budget_repository import (
@@ -1177,18 +1175,15 @@ async def get_campaign_pacing(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     try:
-        from app.infrastructure.db.repositories.campaigns.campaign_repository import (
-            CampaignRepositoryImpl,
-        )
-        from app.infrastructure.db.repositories.campaigns.campaign_budget_repository import (
-            CampaignBudgetRepository,
-        )
         from app.domain.services.campaigns.budget_pacing import (
             BudgetPacingService,
             PacingStrategy,
         )
-        from app.domain.exceptions.domain_exceptions import (
-            EntityNotFoundError as ENF,
+        from app.infrastructure.db.repositories.campaigns.campaign_budget_repository import (
+            CampaignBudgetRepository,
+        )
+        from app.infrastructure.db.repositories.campaigns.campaign_repository import (
+            CampaignRepositoryImpl,
         )
 
         campaign_repo = CampaignRepositoryImpl(db)
@@ -1246,15 +1241,15 @@ async def get_pacing_schedule(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     try:
-        from app.infrastructure.db.repositories.campaigns.campaign_repository import (
-            CampaignRepositoryImpl,
+        from app.domain.services.campaigns.budget_pacing import (
+            BudgetPacingService,
+            PacingStrategy,
         )
         from app.infrastructure.db.repositories.campaigns.campaign_budget_repository import (
             CampaignBudgetRepository,
         )
-        from app.domain.services.campaigns.budget_pacing import (
-            BudgetPacingService,
-            PacingStrategy,
+        from app.infrastructure.db.repositories.campaigns.campaign_repository import (
+            CampaignRepositoryImpl,
         )
 
         campaign_repo = CampaignRepositoryImpl(db)

@@ -9,7 +9,7 @@ import logging
 from typing import Any
 from uuid import UUID, uuid4
 
-from ..agent import AgentConfig, AgentContext, AgentResult, AgentType
+from ..agent import AgentConfig, AgentType
 from .base import ReActAgent
 
 logger = logging.getLogger(__name__)

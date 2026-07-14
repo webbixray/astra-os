@@ -16,12 +16,11 @@ Per M3 exit criteria:
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from apps.api.app.domain.entities.governance.autonomy import (
-    AgentAction,
     AutonomyConfig,
     AutonomyLevel,
     get_action_risk_level,
@@ -148,6 +147,7 @@ class GovernanceMiddleware:
 
         Returns:
             GovernanceCheckResult with allow/block/requires_approval status.
+
         """
         action_name = self._tool_action_map.get(tool_name, "unknown.action")
         risk_level = get_action_risk_level(action_name)

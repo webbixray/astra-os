@@ -12,23 +12,15 @@ from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.entities.social_intelligence import (
-    AutoReply,
-    CommentAnalytics,
     CommentIntent,
     CommentSentiment,
     CommentType,
     ModerationAction,
     ReplyStatus,
     ReplyTemplate,
-    SocialComment,
-    SocialInbox,
     SocialPlatform,
 )
 from app.domain.services.social_intelligence import (
-    AutoReplyGenerator,
-    CommentAnalyzer,
-    SocialInboxManager,
-    comment_analytics_engine,
     reply_template_manager,
     social_inbox_manager,
 )
@@ -512,7 +504,6 @@ async def delete_reply_template(
     db: AsyncSession = Depends(get_db),
 ) -> None:
     """Delete a reply template."""
-    pass
 
 
 @router.post(

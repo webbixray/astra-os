@@ -4,18 +4,17 @@ Covers all pacing strategies, status detection, alert generation,
 daily schedule generation, and edge cases.
 """
 
-import pytest
-from datetime import date, timedelta
+from datetime import date
 from uuid import uuid4
 
-from app.domain.services.campaigns.budget_pacing import (
-    BudgetPacingService,
-    PacingStrategy,
-    PacingStatus,
-)
+import pytest
 from app.domain.entities.campaigns.campaign import Campaign
 from app.domain.entities.campaigns.campaign_budget import CampaignBudget
-
+from app.domain.services.campaigns.budget_pacing import (
+    BudgetPacingService,
+    PacingStatus,
+    PacingStrategy,
+)
 
 # ── Helpers ──────────────────────────────────────────────────────────
 

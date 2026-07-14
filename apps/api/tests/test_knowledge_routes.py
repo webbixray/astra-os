@@ -6,36 +6,30 @@ using mocked FastAPI dependencies.
 
 from __future__ import annotations
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
-from fastapi import FastAPI, Depends
+import pytest
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from app.domain.services.knowledge.rag_pipeline import (
-    IngestionResult,
-    RagPipeline,
-    RAGContext,
-    SearchResult,
+from app.domain.services.knowledge.cross_campaign_learning import (
+    CampaignPattern,
+    LearningInsight,
+    PatternType,
 )
 from app.domain.services.knowledge.predictive_optimization import (
     BudgetAllocation,
     CreativeFatigueResult,
-    AudienceExpansionSuggestion,
-    PredictiveOptimizer,
 )
-from app.domain.services.knowledge.cross_campaign_learning import (
-    CampaignPattern,
-    CrossCampaignLearner,
-    LearningInsight,
-    TransferRecommendation,
-    PatternType,
+from app.domain.services.knowledge.rag_pipeline import (
+    IngestionResult,
+    RAGContext,
+    SearchResult,
 )
-from app.presentation.routes.knowledge.rag_routes import router as rag_router
-from app.presentation.routes.knowledge.optimization_routes import router as opt_router
 from app.presentation.routes.knowledge.cross_campaign_routes import router as cc_router
-
+from app.presentation.routes.knowledge.optimization_routes import router as opt_router
+from app.presentation.routes.knowledge.rag_routes import router as rag_router
 
 # ---------------------------------------------------------------------------
 # Mock dependencies
@@ -73,9 +67,9 @@ def client():
     app.include_router(cc_router)
 
     # Override auth — patch at the function import location
-    import app.presentation.routes.knowledge.rag_routes as rag_mod
-    import app.presentation.routes.knowledge.optimization_routes as opt_mod
     import app.presentation.routes.knowledge.cross_campaign_routes as cc_mod
+    import app.presentation.routes.knowledge.optimization_routes as opt_mod
+    import app.presentation.routes.knowledge.rag_routes as rag_mod
 
     app.dependency_overrides[rag_mod.require_user_id] = lambda: _mock_user_id
     app.dependency_overrides[opt_mod.require_user_id] = lambda: _mock_user_id

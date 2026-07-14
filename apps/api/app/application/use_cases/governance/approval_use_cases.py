@@ -34,7 +34,6 @@ from app.domain.services.governance.approval_service import (
     ApprovalEvaluationService,
 )
 
-
 # ── Repository Port ────────────────────────────────────────────────────
 
 
@@ -72,7 +71,7 @@ class ApprovalRequestRepository(ABC):
     ) -> list[ApprovalRequest]: ...
 
     @abstractmethod
-    async def find_expired_stale(self, before: "datetime") -> list[ApprovalRequest]: ...
+    async def find_expired_stale(self, before: datetime) -> list[ApprovalRequest]: ...
 
 
 class ApprovalDecisionRepository(ABC):
@@ -119,6 +118,7 @@ class CreateApprovalRuleUseCase:
 
         Returns:
             The created ApprovalRule.
+
         """
         if not name.strip():
             raise ValidationError("Rule name cannot be empty")
@@ -202,6 +202,7 @@ class EvaluateApprovalRulesUseCase:
 
         Returns:
             EvaluationResult with triggered rules and approval status.
+
         """
         rules = await self._rule_repo.find_by_organization(
             organization_id, active_only=True
@@ -242,6 +243,7 @@ class CreateApprovalRequestUseCase:
 
         Returns:
             The created ApprovalRequest.
+
         """
         request = ApprovalRequest.create(
             organization_id=organization_id,
@@ -309,6 +311,7 @@ class DecideApprovalUseCase:
         Raises:
             EntityNotFoundError: If request not found.
             ValidationError: If decision is invalid.
+
         """
         request = await self._request_repo.find_by_id(request_id)
         if request is None:
@@ -405,6 +408,7 @@ class ListPendingApprovalsUseCase:
 
         Returns:
             List of pending ApprovalRequest objects.
+
         """
         if role:
             return await self._request_repo.find_pending_by_role(organization_id, role)
@@ -422,6 +426,7 @@ class ExpireStaleApprovalsUseCase:
 
         Returns:
             List of expired ApprovalRequest objects.
+
         """
         stale = await self._request_repo.find_expired_stale(now())
         expired: list[ApprovalRequest] = []

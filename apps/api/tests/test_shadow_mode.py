@@ -1,8 +1,9 @@
 """Tests for Shadow Mode — E6.2 Beta Launch."""
 
-import pytest
 from datetime import datetime, timedelta
 from uuid import uuid4
+
+import pytest
 
 from app.domain.entities.shadow_mode import (
     ComparisonResult,
@@ -15,11 +16,10 @@ from app.domain.entities.shadow_mode import (
     ShadowSession,
 )
 from app.domain.services.shadow_mode import (
-    ShadowDecisionService,
     LiftMeasurementService,
+    ShadowDecisionService,
     ShadowSessionService,
 )
-
 
 # --- Mock Repositories ---
 
@@ -172,19 +172,15 @@ def lift_repo():
 
 @pytest.fixture
 def session_service(session_repo, decision_repo, event_repo):
-    from app.domain.services.shadow_mode import ShadowSessionService
     return ShadowSessionService(session_repo, decision_repo, event_repo)
 
 @pytest.fixture
 def decision_service(session_repo, decision_repo, event_repo):
-    from app.domain.services.shadow_mode import ShadowDecisionService
     return ShadowDecisionService(session_repo, decision_repo, event_repo)
 
 @pytest.fixture
 def lift_service(decision_repo):
-    from app.domain.services.shadow_mode import LiftMeasurementService
     # We need a lift repo too
-    from app.domain.services.shadow_mode import LiftMeasurementRepository
     class MockLiftRepo:
         def __init__(self):
             self.measurements = {}
@@ -196,7 +192,6 @@ def lift_service(decision_repo):
         async def find_latest(self, session_id, metric_name):
             return None
     lift_repo = MockLiftRepo()
-    from app.domain.services.shadow_mode import ShadowSessionRepository
     session_repo_for_lift = MockSessionRepository()
     decision_repo_for_lift = MockDecisionRepository()
     return LiftMeasurementService(lift_repo, decision_repo, session_repo_for_lift)
@@ -452,7 +447,7 @@ class TestShadowSessionService:
         await session_service.start_session(session.id, user_id)
 
         # Add some decisions
-        from app.domain.entities.shadow_mode import ShadowDecision, DecisionType
+        from app.domain.entities.shadow_mode import DecisionType, ShadowDecision
         for i in range(10):
             decision = ShadowDecision(
                 organization_id=org_id,
@@ -683,8 +678,6 @@ class TestShadowModeEntitiesIntegration:
     @pytest.mark.asyncio
     async def test_full_shadow_cycle(self, session_repo, decision_repo, event_repo):
         """Test a complete shadow mode cycle."""
-        from app.domain.services.shadow_mode import ShadowSessionService, ShadowDecisionService
-
         org_id = uuid4()
         user_id = uuid4()
 

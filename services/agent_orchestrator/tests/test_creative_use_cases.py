@@ -4,9 +4,9 @@ All tests are pure unit tests with a mock repository — no DB required.
 """
 
 import asyncio
-import pytest
 from uuid import uuid4
 
+import pytest
 from app.application.use_cases.campaigns.creative_use_cases import (
     ApproveCreativeUseCase,
     AssociateCreativeToCampaignUseCase,
@@ -20,7 +20,6 @@ from app.application.use_cases.campaigns.creative_use_cases import (
 )
 from app.domain.entities.advertising.ad_creative import AdCreative, CreativeStatus, CreativeType
 from app.domain.exceptions.domain_exceptions import EntityNotFoundError, ValidationError
-
 
 # ── Helpers ──────────────────────────────────────────────────────────
 

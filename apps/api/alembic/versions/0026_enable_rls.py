@@ -8,13 +8,13 @@ Create Date: 2026-07-11
 from collections.abc import Sequence
 
 import sqlalchemy as sa
+
 from alembic import op
 
 revision: str = "0026"
 down_revision: str | None = "0025"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
-
 
 TENANT_SCOPED_TABLES = [
     "organizations",
@@ -79,39 +79,41 @@ def upgrade() -> None:
     # Create default policies for tenant-scoped tables
     for table in TENANT_SCOPED_TABLES:
         # Check if table has tenant_id or organization_id column
-        op.execute(f"""
+        # Use a safe approach with parameterized queries
+        safe_table = table.replace("-", "_").replace(";", "")  # Basic sanitization
+        op.execute(sa.text("""
             DO $$
             BEGIN
                 -- Check for tenant_id column
                 IF EXISTS (
                     SELECT 1 FROM information_schema.columns
-                    WHERE table_name = '{table}' AND column_name = 'tenant_id'
+                    WHERE table_name = :table_name AND column_name = 'tenant_id'
                 ) THEN
                     EXECUTE format(
                         'CREATE POLICY tenant_isolation ON %I USING (tenant_id = current_tenant_id())',
-                        '{table}'
+                        safe_table
                     );
                 -- Check for organization_id column
                 ELSIF EXISTS (
                     SELECT 1 FROM information_schema.columns
-                    WHERE table_name = '{table}' AND column_name = 'organization_id'
+                    WHERE table_name = :table_name AND column_name = 'organization_id'
                 ) THEN
                     EXECUTE format(
                         'CREATE POLICY tenant_isolation ON %I USING (organization_id = current_tenant_id())',
-                        '{table}'
+                        safe_table
                     );
                 -- Check for org_id column
                 ELSIF EXISTS (
                     SELECT 1 FROM information_schema.columns
-                    WHERE table_name = '{table}' AND column_name = 'org_id'
+                    WHERE table_name = :table_name AND column_name = 'org_id'
                 ) THEN
                     EXECUTE format(
                         'CREATE POLICY tenant_isolation ON %I USING (org_id = current_tenant_id())',
-                        '{table}'
+                        safe_table
                     );
                 END IF;
             END $$;
-        """)
+        """), {"table_name": safe_table})
 
     # Special handling for audit_logs (partitioned table)
     op.execute("ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY")

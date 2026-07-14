@@ -9,8 +9,8 @@ Endpoints:
 
 from __future__ import annotations
 
-from pydantic import BaseModel
 from fastapi import APIRouter
+from pydantic import BaseModel
 
 from app.domain.services.governance.audit_enhancement import (
     AuditEnhancementService,

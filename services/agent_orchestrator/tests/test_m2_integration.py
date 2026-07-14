@@ -8,25 +8,21 @@ Tests the complete M2 Campaign Execution flow:
 """
 
 import asyncio
-import pytest
 from datetime import date, timedelta
 from uuid import uuid4
 
-from app.domain.entities.campaigns.campaign import Campaign
-from app.domain.entities.campaigns.campaign_budget import CampaignBudget
 from app.domain.entities.advertising.ad_creative import (
-    AdCreative,
     CreativeStatus,
     CreativeType,
 )
+from app.domain.entities.campaigns.campaign import Campaign
+from app.domain.entities.campaigns.campaign_budget import CampaignBudget
+from app.domain.events.event_bus import DomainEventType, EventBus
 from app.domain.services.campaigns.budget_pacing import (
     BudgetPacingService,
-    PacingStrategy,
     PacingStatus,
+    PacingStrategy,
 )
-from app.domain.events.event_bus import DomainEvent, DomainEventType, EventBus
-from app.domain.exceptions.domain_exceptions import ValidationError
-
 
 # ── Mock Repository ──────────────────────────────────────────────────
 
@@ -84,18 +80,17 @@ class TestCampaignLifecycleIntegration:
     """End-to-end test: create → budget → pacing → launch → pause → resume → complete."""
 
     def test_full_lifecycle(self):
-        from app.application.use_cases.campaigns.campaign_use_cases import (
-            CreateCampaignUseCase,
-            GetCampaignUseCase,
-        )
         from app.application.use_cases.campaigns.budget_use_cases import (
             SetCampaignBudgetUseCase,
         )
+        from app.application.use_cases.campaigns.campaign_use_cases import (
+            CreateCampaignUseCase,
+        )
         from app.application.use_cases.campaigns.lifecycle_use_cases import (
+            CompleteCampaignUseCase,
             LaunchCampaignUseCase,
             PauseCampaignUseCase,
             ResumeCampaignUseCase,
-            CompleteCampaignUseCase,
         )
 
         async def run():
@@ -194,11 +189,11 @@ class TestCreativeLifecycleIntegration:
 
     def test_full_creative_lifecycle(self):
         from app.application.use_cases.campaigns.creative_use_cases import (
-            CreateCreativeUseCase,
-            SubmitCreativeForReviewUseCase,
             ApproveCreativeUseCase,
             AssociateCreativeToCampaignUseCase,
+            CreateCreativeUseCase,
             ListCreativesByCampaignUseCase,
+            SubmitCreativeForReviewUseCase,
             UpdateCreativeUseCase,
         )
 

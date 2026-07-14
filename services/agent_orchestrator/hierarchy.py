@@ -3,25 +3,21 @@
 import asyncio
 import logging
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 from uuid import UUID, uuid4
 
 from .agent import (
     Agent,
-    AgentConfig,
     AgentContext,
     AgentMessage,
     AgentRegistry,
     AgentResult,
-    AgentState,
     AgentType,
     get_agent_registry,
 )
 from .events import EventBus, get_event_bus
 from .memory import MemoryManager
-from .tools import tool_registry
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +88,7 @@ class CommunicationProtocol:
                     self._message_queues[agent_id].get(), timeout=timeout
                 )
             return await self._message_queues[agent_id].get()
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return None
 
     async def broadcast(self, message: AgentMessage, agent_ids: list[UUID]) -> int:
@@ -178,7 +174,7 @@ class HandoffManager:
                 timeout=request.timeout_seconds,
             )
             return response
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return HandoffResponse(
                 accepted=False,
                 reason="Handoff request timed out",
@@ -260,8 +256,8 @@ class HandoffManager:
             to_agent=from_agent,
             message_type="handoff_complete",
             payload={
-                "result": result.model_dump() if hasattr(result, 'model_dump') else str(result),
-                "success": result.success if hasattr(result, 'success') else True,
+                "result": result.model_dump() if hasattr(result, "model_dump") else str(result),
+                "success": result.success if hasattr(result, "success") else True,
             },
             correlation_id=uuid4(),
         )

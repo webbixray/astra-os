@@ -27,12 +27,8 @@ from app.application.use_cases.governance.approval_use_cases import (
     EvaluateApprovalRulesUseCase,
     ExpireStaleApprovalsUseCase,
     ListPendingApprovalsUseCase,
-    ApprovalRuleRepository,
-    ApprovalRequestRepository,
-    ApprovalDecisionRepository,
 )
 from app.domain.entities.governance.approval import (
-    ApprovalStatus,
     DecisionAction,
     RuleTrigger,
 )

@@ -11,18 +11,17 @@ This is a stateless domain service.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 from uuid import UUID
 
 from app.domain.entities.governance.approval import (
-    ApprovalRequest,
     ApprovalRule,
 )
 from app.domain.entities.governance.autonomy import (
+    AgentAction,
     AutonomyConfig,
     AutonomyLevel,
-    AgentAction,
     get_action_risk_level,
 )
 from app.domain.services.governance.approval_service import (
@@ -87,6 +86,7 @@ class AutonomyEnforcementService:
 
         Returns:
             EnforcementResult with allow/deny and reasoning.
+
         """
         agent_type = agent_type or action.agent_type
         risk_level = get_action_risk_level(action.action)

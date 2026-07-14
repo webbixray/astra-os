@@ -1,40 +1,127 @@
+# Dependabot configuration for automated dependency updates
+# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
 version: 2
 updates:
+  # Python dependencies
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 10
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
     labels:
       - "dependencies"
-      - "backend"
+      - "python"
     commit-message:
-      prefix: "deps"
-      prefix-development: "deps"
+      prefix: "chore(deps):"
       include: "scope"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "astra-os/api-team"
+      - "astra-os/agents-team"
+    assignees:
+      - "dependabot-bot"
+    allow:
+      - dependency-type: "direct"
+      - dependency-type: "indirect"
+    ignore:
+      - dependency-name: "astra-cli"
+        # Local package, not on PyPI
 
-  - package-ecosystem: "pnpm"
-    directory: "/apps/web"
+  # Python dependencies in apps/cli
+  - package-ecosystem: "pip"
+    directory: "/apps/cli"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 10
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
     labels:
       - "dependencies"
-      - "frontend"
+      - "python"
+      - "cli"
     commit-message:
-      prefix: "deps"
-      prefix-development: "deps"
+      prefix: "chore(deps):"
       include: "scope"
+    reviewers:
+      - "astra-os/cli-team"
+    open-pull-requests-limit: 5
 
+  # Python dependencies in services/agent_orchestrator
+  - package-ecosystem: "pip"
+    directory: "/services/agent_orchestrator"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    labels:
+      - "dependencies"
+      - "python"
+      - "agent-orchestrator"
+    commit-message:
+      prefix: "chore(deps):"
+      include: "scope"
+    reviewers:
+      - "astra-os/agents-team"
+    open-pull-requests-limit: 5
+
+  # JavaScript/TypeScript dependencies (pnpm workspace)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    labels:
+      - "dependencies"
+      - "javascript"
+      - "typescript"
+    commit-message:
+      prefix: "chore(deps):"
+      include: "scope"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "astra-os/web-team"
+    allow:
+      - dependency-type: "direct"
+      - dependency-type: "indirect"
+
+  # GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "monthly"
-    open-pull-requests-limit: 5
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
     labels:
       - "dependencies"
-      - "ci/cd"
+      - "github-actions"
     commit-message:
-      prefix: "deps"
-      prefix-development: "deps"
+      prefix: "chore(deps):"
       include: "scope"
+    reviewers:
+      - "astra-os/platform-team"
+    open-pull-requests-limit: 5
+
+  # Docker base images
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "chore(deps):"
+      include: "scope"
+    reviewers:
+      - "astra-os/platform-team"
+    open-pull-requests-limit: 5

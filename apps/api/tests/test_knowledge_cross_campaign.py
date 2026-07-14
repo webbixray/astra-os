@@ -6,9 +6,10 @@ Target: 12+ tests.
 
 from __future__ import annotations
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
+
+import pytest
 
 from app.domain.services.knowledge.cross_campaign_learning import (
     CampaignPattern,
@@ -17,7 +18,6 @@ from app.domain.services.knowledge.cross_campaign_learning import (
     PatternType,
     TransferRecommendation,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

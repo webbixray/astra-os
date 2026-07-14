@@ -13,7 +13,6 @@ from uuid import UUID, uuid4
 
 from app.domain.common import now
 
-
 # --- Enums ---
 
 class AlertSeverity(str, Enum):
@@ -86,17 +85,17 @@ class MetricDefinition:
     description: str = ""
     metric_type: MetricType = MetricType.GAUGE
     unit: str = ""  # e.g., "ms", "bytes", "count", "USD"
-    
+
     # Labels/dimensions
     label_names: list[str] = field(default_factory=list)  # e.g., ["endpoint", "method", "status"]
-    
+
     # Collection
     collection_interval_seconds: int = 60
     retention_days: int = 30
-    
+
     # Alerting
     alert_thresholds: dict[str, Any] = field(default_factory=dict)  # e.g., {"warning": 100, "critical": 500}
-    
+
     # Metadata
     tags: list[str] = field(default_factory=list)
     is_active: bool = True
@@ -130,11 +129,11 @@ class MetricSample:
     id: UUID = field(default_factory=uuid4)
     metric_id: UUID = field(default_factory=uuid4)
     organization_id: UUID = field(default_factory=uuid4)
-    
+
     value: float = 0.0
     labels: dict[str, str] = field(default_factory=dict)
     timestamp: datetime = field(default_factory=now)
-    
+
     # For histogram/summary
     bucket_counts: dict[str, int] = field(default_factory=dict)
     quantiles: dict[str, float] = field(default_factory=dict)
@@ -162,27 +161,27 @@ class AlertRule:
     description: str = ""
     source: AlertSource = AlertSource.APPLICATION
     severity: AlertSeverity = AlertSeverity.WARNING
-    
+
     # Condition
     metric_name: str = ""
     condition: str = ""  # e.g., "avg > 100", "count > 10"
     evaluation_window_seconds: int = 300  # 5 minutes
-    
+
     # Labels to match
     label_matchers: dict[str, str] = field(default_factory=dict)
-    
+
     # Notification
     notification_channels: list[str] = field(default_factory=list)  # email, slack, pagerduty, webhook
     notification_template: str = ""
-    
+
     # Behavior
     auto_resolve: bool = True
     resolve_timeout_seconds: int = 3600
     group_by: list[str] = field(default_factory=list)  # Group alerts by these labels
-    
+
     # Scheduling
     active_hours: dict[str, Any] | None = None  # e.g., {"start": "09:00", "end": "17:00", "days": [1,2,3,4,5]}
-    
+
     # Metadata
     tags: list[str] = field(default_factory=list)
     is_active: bool = True
@@ -220,30 +219,30 @@ class Alert:
     id: UUID = field(default_factory=uuid4)
     organization_id: UUID = field(default_factory=uuid4)
     alert_rule_id: UUID = field(default_factory=uuid4)
-    
+
     # Alert details
     status: AlertStatus = AlertStatus.FIRING
     severity: AlertSeverity = AlertSeverity.WARNING
     title: str = ""
     description: str = ""
-    
+
     # Context
     metric_name: str = ""
     metric_value: float = 0.0
     threshold_value: float = 0.0
     labels: dict[str, str] = field(default_factory=dict)
-    
+
     # Timeline
     started_at: datetime = field(default_factory=now)
     acknowledged_at: datetime | None = None
     acknowledged_by: UUID | None = None
     resolved_at: datetime | None = None
     resolved_by: UUID | None = None
-    
+
     # Deduplication
     fingerprint: str = ""  # For deduplication
     count: int = 1  # Number of times this alert has fired
-    
+
     # Metadata
     annotations: dict[str, str] = field(default_factory=dict)
     created_at: datetime = field(default_factory=now)
@@ -287,32 +286,32 @@ class CostRecord:
 
     id: UUID = field(default_factory=uuid4)
     organization_id: UUID = field(default_factory=uuid4)
-    
+
     # Cost details
     category: CostCategory = CostCategory.OTHER
     amount_usd: float = 0.0
     currency: str = "USD"
-    
+
     # Attribution
     resource_type: str = ""  # e.g., "compute", "api", "storage"
     resource_id: str = ""    # Specific resource identifier
     project_id: UUID | None = None
     campaign_id: UUID | None = None
-    
+
     # Details
     quantity: float = 0.0
     unit: str = ""  # e.g., "hours", "gb", "million_tokens", "requests"
     unit_cost_usd: float = 0.0
-    
+
     # Time
     period_start: datetime = field(default_factory=now)
     period_end: datetime = field(default_factory=now)
-    
+
     # Metadata
     provider: str = ""  # e.g., "aws", "gcp", "openai", "anthropic"
     invoice_id: str = ""
     tags: list[str] = field(default_factory=list)
-    
+
     created_at: datetime = field(default_factory=now)
     updated_at: datetime = field(default_factory=now)
 
@@ -347,31 +346,31 @@ class Budget:
     organization_id: UUID = field(default_factory=uuid4)
     name: str = ""
     description: str = ""
-    
+
     # Budget amount
     amount_usd: float = 0.0
     currency: str = "USD"
     period: str = "monthly"  # daily, weekly, monthly, quarterly, yearly
-    
+
     # Scope
     category: CostCategory | None = None  # None = all categories
     project_id: UUID | None = None
     campaign_id: UUID | None = None
-    
+
     # Thresholds
     warning_threshold_pct: float = 0.8  # Alert at 80%
     critical_threshold_pct: float = 0.95  # Alert at 95%
     hard_limit: bool = False  # If true, block spending at limit
-    
+
     # Behavior
     auto_renew: bool = True
     rollover_unused: bool = False
-    
+
     # Current state
     current_spend_usd: float = 0.0
     period_start: datetime = field(default_factory=now)
     period_end: datetime = field(default_factory=now)
-    
+
     # Metadata
     is_active: bool = True
     created_at: datetime = field(default_factory=now)
@@ -421,31 +420,31 @@ class SLADefinition:
     organization_id: UUID = field(default_factory=uuid4)
     name: str = ""
     description: str = ""
-    
+
     # SLA type and target
     sla_type: SLAType = SLAType.AVAILABILITY
     target_value: float = 99.9  # e.g., 99.9% availability
     target_unit: str = "%"  # %, ms, req/s, etc.
-    
+
     # Scope
     service_name: str = ""
     endpoint_pattern: str = ""  # Regex pattern for endpoints
-    
+
     # Measurement window
     measurement_window: str = "monthly"  # daily, weekly, monthly, quarterly
-    
+
     # Thresholds
     warning_threshold: float = 99.95  # Alert when approaching breach
     critical_threshold: float = 99.9  # SLA breach threshold
-    
+
     # Business hours
     business_hours_only: bool = False
     business_hours: dict[str, Any] | None = None
-    
+
     # Penalty/credit
     penalty_per_breach: float = 0.0
     credit_percentage: float = 0.0
-    
+
     # Metadata
     is_active: bool = True
     created_at: datetime = field(default_factory=now)
@@ -479,24 +478,24 @@ class SLAReport:
     id: UUID = field(default_factory=uuid4)
     organization_id: UUID = field(default_factory=uuid4)
     sla_definition_id: UUID = field(default_factory=uuid4)
-    
+
     # Period
     period_start: datetime = field(default_factory=now)
     period_end: datetime = field(default_factory=now)
-    
+
     # Measurements
     measured_value: float = 0.0
     target_value: float = 0.0
     unit: str = ""
-    
+
     # Compliance
     is_compliant: bool = True
     breach_count: int = 0
     total_downtime_seconds: float = 0.0
-    
+
     # Incidents
     incidents: list[dict[str, Any]] = field(default_factory=list)
-    
+
     # Metadata
     generated_at: datetime = field(default_factory=now)
     generated_by: UUID | None = None
@@ -527,17 +526,17 @@ class Dashboard:
     organization_id: UUID = field(default_factory=uuid4)
     name: str = ""
     description: str = ""
-    
+
     # Layout
     layout: dict[str, Any] = field(default_factory=dict)  # Grid layout config
-    
+
     # Sharing
     is_public: bool = False
     shared_with: list[UUID] = field(default_factory=list)  # User IDs
-    
+
     # Refresh
     auto_refresh_seconds: int = 300
-    
+
     # Metadata
     tags: list[str] = field(default_factory=list)
     is_default: bool = False
@@ -569,32 +568,32 @@ class DashboardWidget:
 
     id: UUID = field(default_factory=uuid4)
     dashboard_id: UUID = field(default_factory=uuid4)
-    
+
     # Widget config
     widget_type: DashboardWidgetType = DashboardWidgetType.LINE_CHART
     title: str = ""
     description: str = ""
-    
+
     # Data source
     metric_names: list[str] = field(default_factory=list)
     query: str = ""  # Query string for data
-    
+
     # Visualization
     visualization_config: dict[str, Any] = field(default_factory=dict)  # Colors, axes, etc.
-    
+
     # Layout
     position_x: int = 0
     position_y: int = 0
     width: int = 6
     height: int = 4
-    
+
     # Time range
     time_range_seconds: int = 3600  # Last hour by default
     refresh_interval_seconds: int = 60
-    
+
     # Filters
     filters: dict[str, Any] = field(default_factory=dict)
-    
+
     # Metadata
     created_at: datetime = field(default_factory=now)
     updated_at: datetime = field(default_factory=now)
@@ -629,23 +628,23 @@ class SystemHealthReport:
 
     organization_id: UUID
     timestamp: datetime = field(default_factory=now)
-    
+
     # Overall status
     overall_status: str = "healthy"  # healthy, degraded, critical
-    
+
     # Components
     components: dict[str, dict[str, Any]] = field(default_factory=dict)
-    
+
     # Key metrics
     key_metrics: dict[str, Any] = field(default_factory=dict)
-    
+
     # Active alerts
     active_alerts: int = 0
     critical_alerts: int = 0
-    
+
     # SLA compliance
     sla_compliance: dict[str, float] = field(default_factory=dict)
-    
+
     # Cost
     current_month_cost_usd: float = 0.0
     budget_utilization_pct: float = 0.0
@@ -672,7 +671,7 @@ class CostReport:
     organization_id: UUID
     period_start: datetime
     period_end: datetime
-    
+
     # Totals
     total_cost_usd: float = 0.0
     cost_by_category: dict[str, float] = field(default_factory=dict)
@@ -680,21 +679,21 @@ class CostReport:
     cost_by_project: dict[str, float] = field(default_factory=dict)
     cost_by_campaign: dict[str, float] = field(default_factory=dict)
     cost_by_provider: dict[str, float] = field(default_factory=dict)
-    
+
     # Trends
     daily_costs: list[dict[str, Any]] = field(default_factory=list)
     cost_trend_pct: float = 0.0  # % change vs previous period
-    
+
     # Budget
     total_budget_usd: float = 0.0
     budget_utilization_pct: float = 0.0
     budgets_over_warning: int = 0
     budgets_over_critical: int = 0
-    
+
     # Projections
     projected_month_end_cost_usd: float = 0.0
     projected_vs_budget_pct: float = 0.0
-    
+
     # Savings opportunities
     savings_opportunities: list[dict[str, Any]] = field(default_factory=list)
 

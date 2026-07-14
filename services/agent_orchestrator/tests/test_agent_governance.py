@@ -4,21 +4,19 @@ Tests the GovernanceMiddleware that intercepts agent tool calls and
 checks them against autonomy config before execution.
 """
 
-import pytest
 from uuid import uuid4
 
-from services.agent_orchestrator.governance import (
-    GovernanceMiddleware,
-    GovernanceCheckResult,
-    TOOL_TO_ACTION_MAP,
-    map_tool_to_action,
-    create_governance_middleware,
-)
 from apps.api.app.domain.entities.governance.autonomy import (
     AutonomyConfig,
     AutonomyLevel,
 )
-
+from services.agent_orchestrator.governance import (
+    TOOL_TO_ACTION_MAP,
+    GovernanceCheckResult,
+    GovernanceMiddleware,
+    create_governance_middleware,
+    map_tool_to_action,
+)
 
 ORG_ID = uuid4()
 

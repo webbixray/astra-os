@@ -28,8 +28,6 @@ sys.path.insert(0, ".")
 
 from services.agent_orchestrator.agent import (
     AgentContext,
-    AgentRegistry,
-    AgentType,
 )
 from services.agent_orchestrator.agents.ceo import CEOAgent
 from services.agent_orchestrator.router import (
@@ -195,7 +193,7 @@ async def run_load_test(
     """Run the load test with N concurrent agent executions."""
     print(f"\n🚀 Starting load test: {concurrent} concurrent agent executions")
     print(f"   Timeout: {timeout}s")
-    print(f"   Target: P95 < 5000ms\n")
+    print("   Target: P95 < 5000ms\n")
 
     report = LoadTestReport(total_requests=concurrent)
 

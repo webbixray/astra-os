@@ -1,9 +1,11 @@
 """Tests for Workflow Versioning — M5 Workflow Engine."""
 
-import pytest
 from datetime import datetime
 from uuid import uuid4
 
+import pytest
+
+from app.domain.entities.workflows.version import WorkflowVersion
 from app.domain.entities.workflows.workflow import (
     NodeType,
     Workflow,
@@ -11,11 +13,9 @@ from app.domain.entities.workflows.workflow import (
     WorkflowNode,
     WorkflowStatus,
 )
-from app.domain.entities.workflows.version import WorkflowVersion
 from app.domain.services.workflow_versioning import (
     WorkflowReplayService,
     WorkflowVersionService,
-    ExecutionReplayStep,
 )
 
 

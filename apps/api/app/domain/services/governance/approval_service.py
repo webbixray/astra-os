@@ -31,8 +31,7 @@ class ApprovalEvaluationResult:
         for role in rule.approver_roles:
             if role not in self.all_approver_roles:
                 self.all_approver_roles.append(role)
-        if rule.priority > self.highest_priority:
-            self.highest_priority = rule.priority
+        self.highest_priority = max(self.highest_priority, rule.priority)
 
 
 class ApprovalEvaluationService:
@@ -54,6 +53,7 @@ class ApprovalEvaluationService:
 
         Returns:
             ApprovalEvaluationResult with triggered rules and approval status.
+
         """
         result = ApprovalEvaluationResult()
 

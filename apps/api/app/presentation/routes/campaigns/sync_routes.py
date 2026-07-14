@@ -14,7 +14,6 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.domain.exceptions.domain_exceptions import EntityNotFoundError, ValidationError
 from app.presentation.dependencies import get_db
 from app.presentation.middleware.auth import require_user_id
 from app.presentation.middleware.rbac import require_org_role
@@ -58,15 +57,12 @@ async def sync_all_campaigns(
 ) -> dict:
     """Pull all campaigns from the specified platform and sync locally."""
     try:
-        from app.infrastructure.db.repositories.campaigns.campaign_repository import (
-            CampaignRepositoryImpl,
+        from app.application.use_cases.campaigns.sync_use_cases import (
+            SyncAllCampaignsUseCase,
         )
         from app.infrastructure.db.repositories.campaigns.sync_repository import (
             AdCampaignRepoImpl,
             AdInsightRepoImpl,
-        )
-        from app.application.use_cases.campaigns.sync_use_cases import (
-            SyncAllCampaignsUseCase,
         )
 
         # Resolve org
@@ -102,7 +98,7 @@ async def sync_all_campaigns(
                     "id": str(c.id),
                     "name": c.name,
                     "status": c.status,
-                    "sync_status": c.sync_status.value if hasattr(c.sync_status, 'value') else str(c.sync_status),
+                    "sync_status": c.sync_status.value if hasattr(c.sync_status, "value") else str(c.sync_status),
                 }
                 for c in synced
             ],
@@ -110,7 +106,7 @@ async def sync_all_campaigns(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Sync failed: {str(e)}",
+            detail=f"Sync failed: {e!s}",
         ) from e
 
 
@@ -127,15 +123,12 @@ async def sync_single_campaign(
 ) -> dict:
     """Pull a single campaign's data from the platform."""
     try:
-        from app.infrastructure.db.repositories.campaigns.campaign_repository import (
-            CampaignRepositoryImpl,
+        from app.application.use_cases.campaigns.sync_use_cases import (
+            SyncCampaignFromPlatformUseCase,
         )
         from app.infrastructure.db.repositories.campaigns.sync_repository import (
             AdCampaignRepoImpl,
             AdInsightRepoImpl,
-        )
-        from app.application.use_cases.campaigns.sync_use_cases import (
-            SyncCampaignFromPlatformUseCase,
         )
         from app.infrastructure.db.repositories.user_repository import UserRepositoryImpl
 
@@ -167,13 +160,13 @@ async def sync_single_campaign(
             "id": str(ad_campaign.id),
             "name": ad_campaign.name,
             "status": ad_campaign.status,
-            "sync_status": ad_campaign.sync_status.value if hasattr(ad_campaign.sync_status, 'value') else str(ad_campaign.sync_status),
+            "sync_status": ad_campaign.sync_status.value if hasattr(ad_campaign.sync_status, "value") else str(ad_campaign.sync_status),
             "platform": ad_campaign.platform,
         }
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Sync failed: {str(e)}",
+            detail=f"Sync failed: {e!s}",
         ) from e
 
 
@@ -189,11 +182,11 @@ async def refresh_insights(
 ) -> dict:
     """Pull latest insights from the platform for all active campaigns."""
     try:
-        from app.infrastructure.db.repositories.campaigns.sync_repository import (
-            AdInsightRepoImpl,
-        )
         from app.application.use_cases.campaigns.sync_use_cases import (
             RefreshInsightsUseCase,
+        )
+        from app.infrastructure.db.repositories.campaigns.sync_repository import (
+            AdInsightRepoImpl,
         )
         from app.infrastructure.db.repositories.user_repository import UserRepositoryImpl
 
@@ -237,5 +230,5 @@ async def refresh_insights(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Insights refresh failed: {str(e)}",
+            detail=f"Insights refresh failed: {e!s}",
         ) from e

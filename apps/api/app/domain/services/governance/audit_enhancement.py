@@ -187,6 +187,7 @@ class AuditEnhancementService:
 
         Returns:
             List of sanitized AuditExportEntry objects.
+
         """
         exported: list[AuditExportEntry] = []
 

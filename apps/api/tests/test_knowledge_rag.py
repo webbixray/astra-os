@@ -6,19 +6,17 @@ Target: 15+ tests for the RAG pipeline.
 
 from __future__ import annotations
 
-import asyncio
-import pytest
-import time
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
+
+import pytest
 
 from app.domain.services.knowledge.rag_pipeline import (
     IngestionResult,
-    RagPipeline,
     RAGContext,
+    RagPipeline,
     SearchResult,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

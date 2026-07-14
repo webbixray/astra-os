@@ -1,13 +1,11 @@
 """Tool Registry and execution sandbox for agent tools."""
 
 import asyncio
-import inspect
 import logging
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any
-from uuid import UUID
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +53,6 @@ class Tool(ABC):
     @abstractmethod
     async def execute(self, **params) -> Any:
         """Execute the tool with given parameters."""
-        pass
 
     def validate_params(self, params: dict[str, Any]) -> tuple[bool, str | None]:
         """Validate parameters against tool definition."""
@@ -234,7 +231,7 @@ class ToolRegistry:
                 "result": result,
                 "tool_name": tool_name,
             }
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return {
                 "success": False,
                 "error": f"Tool '{tool_name}' timed out after {tool.definition.timeout_seconds}s",
@@ -362,7 +359,7 @@ class ExecutionSandbox:
                 "success": True,
                 "result": local_vars,
             }
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return {"success": False, "error": f"Execution timed out after {self.timeout_seconds}s"}
         except Exception as e:
             return {"success": False, "error": str(e)}
@@ -402,7 +399,7 @@ class ExecutionSandbox:
                 "stderr": stderr.decode() if stderr else "",
                 "returncode": process.returncode,
             }
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return {"success": False, "error": "Command timed out"}
         except Exception as e:
             return {"success": False, "error": str(e)}

@@ -2,14 +2,10 @@
 
 import uuid
 
-import pytest
-
 from services.agent_orchestrator.agent import (
     AgentConfig,
     AgentContext,
     AgentRegistry,
-    AgentResult,
-    AgentState,
     AgentType,
 )
 from services.agent_orchestrator.agents.ceo import CEOAgent
