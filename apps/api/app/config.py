@@ -48,6 +48,10 @@ class AppConfig(BaseSettings):
     tenant_subdomain_enabled: bool = False
     root_domain: str = ""
 
+    # Content Schedule Worker Configuration
+    content_schedule_poll_interval: int = Field(default=60, ge=10, le=3600)
+    content_schedule_batch_size: int = Field(default=10, ge=1, le=100)
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     @field_validator("secret_key", mode="before")

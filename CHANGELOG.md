@@ -53,7 +53,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Scheduled content now actually publishes at the scheduled time (previously `find_scheduled_due()` existed but was never called)
 
-## [0.1.0] - 2025-07-14
+## [0.3.0] - 2025-07-14
+
+### Added
+- Content Recurring Schedules: Full CRUD for recurring content publishing schedules with cron expressions
+- ContentSchedule entity with cron validation, status management (active/paused/completed/error), run tracking
+- REST API endpoints: create, list, get, update, pause, resume, delete, preview next runs, manual trigger
+- Background ContentScheduleWorker that automatically processes due schedules and publishes content
+- Integration with existing publishing adapters (Website, Twitter, LinkedIn, Facebook, Instagram, Email)
+- Schedule state persistence with next_run_at, run_count, max_runs limits
+- Configuration: `content_schedule_poll_interval` (default 60s), `content_schedule_batch_size` (default 10)
+- Preview next run times for any schedule via API
+- Manual trigger endpoint for processing due schedules on-demand
+
+### Changed
+- Enhanced ContentPublishingScheduler to use configurable poll interval and batch size
+- ContentScheduleService now uses publishing repositories for actual content publishing
+- Reused WorkflowScheduler's CronExpression for consistent cron parsing/evaluation
 
 ### Added
 - Initial project structure with Clean Architecture + DDD

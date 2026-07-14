@@ -51,7 +51,7 @@ from app.presentation.routes.campaigns import campaign_routes
 from app.presentation.routes.campaigns.automation_routes import router as automation_router
 from app.presentation.routes.campaigns.creative_routes import router as creative_router
 from app.presentation.routes.campaigns.sync_routes import router as sync_router
-from app.presentation.routes.content import content_routes, gen_routes
+from app.presentation.routes.content import content_routes, gen_routes, schedule_routes
 from app.presentation.routes.content.publishing import publishing_routes
 from app.presentation.routes.dashboards.dashboard_routes import router as dashboard_router
 from app.presentation.routes.email import email_routes
@@ -103,12 +103,32 @@ async def lifespan(app: FastAPI):
         except Exception:
             logger.warning("Notification Redis listener startup failed", exc_info=True)
 
+    # Start content schedule worker
+    from app.application.workers.content_schedule_worker import (
+        ContentScheduleWorker,
+        content_schedule_worker as _worker_var,
+    )
+
+    content_schedule_worker = ContentScheduleWorker(app.state.db)
+    await content_schedule_worker.start()
+
     logger.info("ASTRA OS API ready")
 
     try:
         yield
     finally:
         logger.info("Shutting down ASTRA OS API...")
+        # Stop content schedule worker
+        try:
+            from app.application.workers.content_schedule_worker import (
+                content_schedule_worker,
+            )
+
+            if content_schedule_worker:
+                await content_schedule_worker.stop()
+        except Exception:
+            logger.debug("Failed to stop content schedule worker", exc_info=True)
+
         try:
             from app.application.use_cases.notifications.notification_hub_service import (
                 NotificationHubService,
@@ -268,6 +288,7 @@ def create_app() -> FastAPI:
     app.include_router(team_router, prefix="/api/v1", tags=["teams"])
     app.include_router(gen_routes.router, prefix="/api/v1", tags=["ai-content"])
     app.include_router(publishing_routes.router, prefix="/api/v1", tags=["publishing"])
+    app.include_router(schedule_routes.router, prefix="/api/v1", tags=["content-schedules"])
     app.include_router(email_routes.router, prefix="/api/v1", tags=["email"])
     app.include_router(report_routes.router, prefix="/api/v1", tags=["reports"])
     app.include_router(notification_hub_router, prefix="/api/v1", tags=["notifications"])
