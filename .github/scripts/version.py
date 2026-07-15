@@ -151,8 +151,19 @@ class VersionManager:
         
         # Run tests to verify
         print("\n🧪 Running quick validation...")
-        result = subprocess.run([sys.executable, "-m", "pytest", "apps/api/tests/", "-x", "-q", "--tb=line"], 
-                              capture_output=True, text=True, timeout=60)
+        # Install deps first if needed
+        subprocess.run([
+            sys.executable, "-m", "pip", "install", "-e", "apps/api[dev]", "-q"
+        ], capture_output=True, text=True, timeout=120, cwd=self.repo_root)
+        
+        # Also install agent_orchestrator
+        subprocess.run([
+            sys.executable, "-m", "pip", "install", "-e", "services/agent_orchestrator", "-q"
+        ], capture_output=True, text=True, timeout=60, cwd=self.repo_root)
+        
+        result = subprocess.run([
+            sys.executable, "-m", "pytest", "apps/api/tests/", "-x", "-q", "--tb=line"
+        ], capture_output=True, text=True, timeout=120, cwd=self.repo_root)
         if result.returncode != 0:
             print("❌ Tests failed! Rolling back...")
             self.update_version_files(current)

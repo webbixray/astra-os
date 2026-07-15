@@ -1,7 +1,7 @@
 {
   "name": "astra-os",
   "private": true,
-  "version": "0.0.1",
+  "version": "0.3.1",
   "description": "ASTRA OS — AI-Native Marketing & Business Growth Operating System",
   "scripts": {
     "dev": "turbo dev",

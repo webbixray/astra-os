@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "astra-api"
-version = "0.3.0"
+version = "0.3.1"
 description = "ASTRA OS — API Backend"
 requires-python = ">=3.12"
 dependencies = [
