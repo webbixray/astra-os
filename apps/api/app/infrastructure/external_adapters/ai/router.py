@@ -170,7 +170,7 @@ class NvidiaNIMProvider:
         model: str | None = None,
     ) -> str:
         if not config.nvidia_nim_base_url:
-            raise RuntimeError("NVIDIA NIM not configured")
+            return ""
 
         url = NVIDIA_NIM_CHAT_URL
         headers = {
@@ -224,7 +224,7 @@ class OpenAIProvider:
         model: str | None = None,
     ) -> str:
         if not config.openai_api_key:
-            raise RuntimeError("OpenAI not configured")
+            return ""
 
         url = OPENAI_CHAT_URL
         headers = {
@@ -419,30 +419,36 @@ class AIRouter:
         return "unknown"
 
     async def _call_with_circuit_breaker(
-        self,
-        provider: AIProvider,
-        method: str,
-        *args,
-        **kwargs
-    ) -> Any:
-        """Execute a provider method with circuit breaker protection."""
-        provider_name = self._get_provider_name(provider)
-        circuit_breaker = self._circuit_breakers.get(provider_name)
+            self,
+            provider: AIProvider,
+            method: str,
+            *args,
+            **kwargs
+        ) -> Any:
+            """Execute a provider method with circuit breaker protection."""
+            provider_name = self._get_provider_name(provider)
+            circuit_breaker = self._circuit_breakers.get(provider_name)
 
-        if circuit_breaker is None:
-            # No circuit breaker, call directly
-            func = getattr(provider, method)
-            return await func(*args, **kwargs)
+            # stream_chat returns an async generator, circuit breaker not compatible
+            # Skip circuit breaker for streaming methods
+            if method == "stream_chat":
+                func = getattr(provider, method)
+                return func(*args, **kwargs)
 
-        async def _call():
-            func = getattr(provider, method)
-            return await func(*args, **kwargs)
+            if circuit_breaker is None:
+                # No circuit breaker, call directly
+                func = getattr(provider, method)
+                return await func(*args, **kwargs)
 
-        try:
-            return await circuit_breaker.call(_call)
-        except CircuitOpenError as e:
-            logger.warning("Circuit open for %s, skipping provider: %s", provider_name, e)
-            raise  # Re-raise to trigger fallback
+            async def _call():
+                func = getattr(provider, method)
+                return await func(*args, **kwargs)
+
+            try:
+                return await circuit_breaker.call(_call)
+            except CircuitOpenError as e:
+                logger.warning("Circuit open for %s, skipping provider: %s", provider_name, e)
+                raise  # Re-raise to trigger fallback
 
     async def stream_chat(
         self,
@@ -454,9 +460,9 @@ class AIRouter:
             provider_name = self._get_provider_name(provider)
             try:
                 full_response = ""
-                async for chunk in self._call_with_circuit_breaker(
-                    provider, "stream_chat", messages, model=model
-                ):
+                # For streaming, bypass circuit breaker and call provider directly
+                stream_result = provider.stream_chat(messages, model=model)
+                async for chunk in stream_result:
                     full_response += chunk
                     yield chunk
                 duration_ms = (time.monotonic() - start) * 1000

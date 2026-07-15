@@ -112,7 +112,7 @@ class TestGoogleAdsAdapter:
 
         with patch.object(GoogleAdsAdapter, "get_client", new=AsyncMock()) as mock_get_client:
             mock_client = AsyncMock()
-            mock_client.post = AsyncMock(return_value=mock_response)
+            mock_client.request = AsyncMock(return_value=mock_response)
             mock_get_client.return_value = mock_client
 
             adapter = GoogleAdsAdapter(credentials={"access_token": "tok", "developer_token": "dev", "customer_id": "123"})
@@ -132,7 +132,7 @@ class TestGoogleAdsAdapter:
 
         with patch.object(GoogleAdsAdapter, "get_client", new=AsyncMock()) as mock_get_client:
             mock_client = AsyncMock()
-            mock_client.post = AsyncMock(return_value=mock_response)
+            mock_client.request = AsyncMock(return_value=mock_response)
             mock_get_client.return_value = mock_client
 
             adapter = GoogleAdsAdapter(credentials={"access_token": "tok", "developer_token": "dev"})
@@ -161,11 +161,12 @@ class TestGoogleAdsAdapter:
     @pytest.mark.asyncio
     async def test_create_campaign_real_mode(self):
         mock_response = MagicMock()
+        mock_response.status_code = 200
         mock_response.json = MagicMock(return_value={"id": "real-123"})
 
         with patch.object(GoogleAdsAdapter, "get_client", new=AsyncMock()) as mock_get_client:
             mock_client = AsyncMock()
-            mock_client.post = AsyncMock(return_value=mock_response)
+            mock_client.request = AsyncMock(return_value=mock_response)
             mock_get_client.return_value = mock_client
 
             adapter = GoogleAdsAdapter(credentials={"access_token": "tok", "developer_token": "dev", "customer_id": "c-1"})
@@ -197,7 +198,7 @@ class TestMetaAdsAdapter:
 
         with patch.object(MetaAdsAdapter, "get_client", new=AsyncMock()) as mock_get_client:
             mock_client = AsyncMock()
-            mock_client.get = AsyncMock(return_value=mock_response)
+            mock_client.request = AsyncMock(return_value=mock_response)
             mock_get_client.return_value = mock_client
 
             adapter = MetaAdsAdapter(credentials={"access_token": "tok"})
@@ -216,7 +217,7 @@ class TestMetaAdsAdapter:
 
         with patch.object(MetaAdsAdapter, "get_client", new=AsyncMock()) as mock_get_client:
             mock_client = AsyncMock()
-            mock_client.get = AsyncMock(return_value=mock_response)
+            mock_client.request = AsyncMock(return_value=mock_response)
             mock_get_client.return_value = mock_client
 
             adapter = MetaAdsAdapter(credentials={"access_token": "tok"})
@@ -254,7 +255,7 @@ class TestLinkedInAdsAdapter:
 
         with patch.object(LinkedInAdsAdapter, "get_client", new=AsyncMock()) as mock_get_client:
             mock_client = AsyncMock()
-            mock_client.get = AsyncMock(return_value=mock_response)
+            mock_client.request = AsyncMock(return_value=mock_response)
             mock_get_client.return_value = mock_client
 
             adapter = LinkedInAdsAdapter(credentials={"access_token": "tok"})
@@ -271,7 +272,7 @@ class TestLinkedInAdsAdapter:
 
         with patch.object(LinkedInAdsAdapter, "get_client", new=AsyncMock()) as mock_get_client:
             mock_client = AsyncMock()
-            mock_client.get = AsyncMock(return_value=mock_response)
+            mock_client.request = AsyncMock(return_value=mock_response)
             mock_get_client.return_value = mock_client
 
             adapter = LinkedInAdsAdapter(credentials={"access_token": "tok"})
@@ -297,7 +298,7 @@ class TestTikTokAdsAdapter:
 
         with patch.object(TikTokAdsAdapter, "get_client", new=AsyncMock()) as mock_get_client:
             mock_client = AsyncMock()
-            mock_client.post = AsyncMock(return_value=mock_response)
+            mock_client.request = AsyncMock(return_value=mock_response)
             mock_get_client.return_value = mock_client
 
             adapter = TikTokAdsAdapter(credentials={"access_token": "tok", "advertiser_id": "adv-1"})
@@ -314,7 +315,7 @@ class TestTikTokAdsAdapter:
 
         with patch.object(TikTokAdsAdapter, "get_client", new=AsyncMock()) as mock_get_client:
             mock_client = AsyncMock()
-            mock_client.post = AsyncMock(return_value=mock_response)
+            mock_client.request = AsyncMock(return_value=mock_response)
             mock_get_client.return_value = mock_client
 
             adapter = TikTokAdsAdapter(credentials={"access_token": "tok"})

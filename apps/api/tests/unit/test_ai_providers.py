@@ -45,68 +45,77 @@ class TestNvidiaNIMProvider:
         mock_client = AsyncMock()
         mock_client.__aenter__.return_value.post = AsyncMock(return_value=mock_response)
 
-        with patch("httpx.AsyncClient", return_value=mock_client):
-            provider = NvidiaNIMProvider()
-            provider.base_url = "https://nvidia.example.com"
-            result = await provider.chat([{"role": "user", "content": "Hi"}])
+        with patch("app.infrastructure.external_adapters.ai.router.config") as mock_config:
+            mock_config.nvidia_nim_base_url = "https://nvidia.example.com"
+            mock_config.nvidia_nim_api_key = "test-key"
+            
+            with patch("httpx.AsyncClient", return_value=mock_client):
+                provider = NvidiaNIMProvider()
+                result = await provider.chat([{"role": "user", "content": "Hi"}])
 
         assert result == "Hello from NVIDIA"
 
     @pytest.mark.asyncio
     async def test_stream_chat_yields_content(self):
         provider = NvidiaNIMProvider()
-        provider.base_url = "https://nvidia.example.com"
 
-        lines = [
-            'data: {"choices": [{"delta": {"content": "Hello"}}]}',
-            'data: {"choices": [{"delta": {"content": " world"}}]}',
-            "data: [DONE]",
-        ]
+        with patch("app.infrastructure.external_adapters.ai.router.config") as mock_config:
+            mock_config.nvidia_nim_base_url = "https://nvidia.example.com"
+            mock_config.nvidia_nim_api_key = "test-key"
+            
+            lines = [
+                'data: {"choices": [{"delta": {"content": "Hello"}}]}',
+                'data: {"choices": [{"delta": {"content": " world"}}]}',
+                "data: [DONE]",
+            ]
 
-        mock_response = MagicMock()
-        mock_response.aiter_lines.return_value.__aiter__.return_value = iter(lines)
+            mock_response = MagicMock()
+            mock_response.aiter_lines.return_value.__aiter__.return_value = iter(lines)
 
-        mock_stream_ctx = MagicMock()
-        mock_stream_ctx.__aenter__.return_value = mock_response
+            mock_stream_ctx = MagicMock()
+            mock_stream_ctx.__aenter__.return_value = mock_response
 
-        mock_client = MagicMock()
-        mock_client.stream.return_value = mock_stream_ctx
-        mock_client_ctx = MagicMock()
-        mock_client_ctx.__aenter__.return_value = mock_client
+            mock_client = MagicMock()
+            mock_client.stream.return_value = mock_stream_ctx
+            mock_client_ctx = MagicMock()
+            mock_client_ctx.__aenter__.return_value = mock_client
 
-        with patch("httpx.AsyncClient", return_value=mock_client_ctx):
-            chunks = []
-            async for chunk in provider.stream_chat([{"role": "user", "content": "Hi"}]):
-                chunks.append(chunk)
+            with patch("httpx.AsyncClient", return_value=mock_client_ctx):
+                chunks = []
+                async for chunk in provider.stream_chat([{"role": "user", "content": "Hi"}]):
+                    chunks.append(chunk)
 
         assert chunks == ["Hello", " world"]
 
     @pytest.mark.asyncio
     async def test_stream_chat_skips_json_errors(self):
         provider = NvidiaNIMProvider()
-        provider.base_url = "https://nvidia.example.com"
 
-        lines = [
-            "data: invalid json",
-            'data: {"choices": [{"delta": {"content": "OK"}}]}',
-            "data: [DONE]",
-        ]
+        with patch("app.infrastructure.external_adapters.ai.router.config") as mock_config:
+            mock_config.nvidia_nim_base_url = "https://nvidia.example.com"
+            mock_config.nvidia_nim_api_key = "test-key"
 
-        mock_response = MagicMock()
-        mock_response.aiter_lines.return_value.__aiter__.return_value = iter(lines)
+            lines = [
+                "data: invalid json",
+                'data: {"choices": [{"delta": {"content": "OK"}}]}',
+                "data: [DONE]",
+            ]
 
-        mock_stream_ctx = MagicMock()
-        mock_stream_ctx.__aenter__.return_value = mock_response
+            mock_response = MagicMock()
+            mock_response.aiter_lines.return_value.__aiter__.return_value = iter(lines)
 
-        mock_client = MagicMock()
-        mock_client.stream.return_value = mock_stream_ctx
-        mock_client_ctx = MagicMock()
-        mock_client_ctx.__aenter__.return_value = mock_client
+            mock_stream_ctx = MagicMock()
+            mock_stream_ctx.__aenter__.return_value = mock_response
 
-        with patch("httpx.AsyncClient", return_value=mock_client_ctx):
-            chunks = []
-            async for chunk in provider.stream_chat([{"role": "user", "content": "Hi"}]):
-                chunks.append(chunk)
+            mock_client = MagicMock()
+            mock_client.stream.return_value = mock_stream_ctx
+            mock_client_ctx = MagicMock()
+            mock_client_ctx.__aenter__.return_value = mock_client
+
+            with patch("httpx.AsyncClient", return_value=mock_client_ctx):
+                chunks = []
+                async for chunk in provider.stream_chat([{"role": "user", "content": "Hi"}]):
+                    chunks.append(chunk)
 
         assert chunks == ["OK"]
 
@@ -114,15 +123,19 @@ class TestNvidiaNIMProvider:
 class TestOpenAIProvider:
     @pytest.mark.asyncio
     async def test_chat_no_api_key_returns_empty(self):
+        import app.config as cfg
+        cfg.config.openai_api_key = ""
+        
         provider = OpenAIProvider()
-        provider.api_key = ""
         result = await provider.chat([{"role": "user", "content": "Hi"}])
         assert result == ""
 
     @pytest.mark.asyncio
     async def test_stream_chat_no_api_key_returns_nothing(self):
+        import app.config as cfg
+        cfg.config.openai_api_key = ""
+        
         provider = OpenAIProvider()
-        provider.api_key = ""
         chunks = []
         async for chunk in provider.stream_chat([{"role": "user", "content": "Hi"}]):
             chunks.append(chunk)
@@ -139,10 +152,12 @@ class TestOpenAIProvider:
         mock_client = AsyncMock()
         mock_client.__aenter__.return_value.post = AsyncMock(return_value=mock_response)
 
-        with patch("httpx.AsyncClient", return_value=mock_client):
-            provider = OpenAIProvider()
-            provider.api_key = "sk-xxx"
-            result = await provider.chat([{"role": "user", "content": "Hi"}])
+        with patch("app.infrastructure.external_adapters.ai.router.config") as mock_config:
+            mock_config.openai_api_key = "sk-test"
+            
+            with patch("httpx.AsyncClient", return_value=mock_client):
+                provider = OpenAIProvider()
+                result = await provider.chat([{"role": "user", "content": "Hi"}])
 
         assert result == "Hello from OpenAI"
 
@@ -168,10 +183,13 @@ class TestOpenAIProvider:
         mock_client_ctx = MagicMock()
         mock_client_ctx.__aenter__.return_value = mock_client
 
-        with patch("httpx.AsyncClient", return_value=mock_client_ctx):
-            chunks = []
-            async for chunk in provider.stream_chat([{"role": "user", "content": "Hi"}]):
-                chunks.append(chunk)
+        with patch("app.infrastructure.external_adapters.ai.router.config") as mock_config:
+            mock_config.openai_api_key = "sk-test"
+            
+            with patch("httpx.AsyncClient", return_value=mock_client_ctx):
+                chunks = []
+                async for chunk in provider.stream_chat([{"role": "user", "content": "Hi"}]):
+                    chunks.append(chunk)
 
         assert chunks == ["Hello", " world"]
 
@@ -258,6 +276,7 @@ class TestAIRouter:
         cfg.config.nvidia_nim_base_url = "https://nvidia.example.com"
         cfg.config.openai_api_key = "sk-xxx"
 
+        # Create proper async generator functions that return async iterators
         async def nvidia_stream(messages, model=None):
             raise RuntimeError("NVIDIA down")
             yield  # pragma: no cover
@@ -266,6 +285,8 @@ class TestAIRouter:
             yield "OpenAI chunk"
 
         router = AIRouter()
+        # Replace the stream_chat method on the providers directly
+        # The stream_chat methods should return async iterators when called
         router.providers[0].stream_chat = nvidia_stream
         router.providers[1].stream_chat = openai_stream
 
