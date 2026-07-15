@@ -1,137 +1,121 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - 'v*'
-
-env:
-  REGISTRY: ghcr.io
-  IMAGE_PREFIX: ${{ github.repository }}
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        description: 'Version bump type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      prerelease:
+        description: 'Prerelease identifier (alpha, beta, rc)'
+        required: false
+        type: string
+      dry_run:
+        description: 'Dry run (no commit/tag)'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
-  validate:
+  release:
+    name: Create Release
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Validate tag format
-        run: |
-          TAG="${GITHUB_REF#refs/tags/v}"
-          if ! [[ "$TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Invalid tag format. Expected: vX.Y.Z"
-            exit 1
-          fi
-          echo "Version: $TAG"
-
-  test:
-    needs: validate
-    uses: ./.github/workflows/ci.yml
-
-  build-and-push:
-    needs: test
-    runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: write
-      packages: write
+      issues: write
+      pull-requests: write
+      id-token: write
 
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Extract version from tag
-        id: version
-        run: |
-          VERSION="${GITHUB_REF#refs/tags/v}"
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Building version: $VERSION"
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push API
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: apps/api/Dockerfile
-          push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/api:latest
-            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/api:${{ steps.version.outputs.version }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build and push Web
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: apps/web/Dockerfile
-          push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/web:latest
-            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/web:${{ steps.version.outputs.version }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  create-release:
-    needs: build-and-push
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
-    steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Generate changelog
-        id: changelog
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
         run: |
-          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-          if [ -n "$PREV_TAG" ]; then
-            CHANGES=$(git log ${PREV_TAG}..HEAD --pretty=format:"- %s" --no-merges)
-          else
-            CHANGES=$(git log --pretty=format:"- %s" --no-merges -20)
-          fi
-          echo "changes<<EOF" >> $GITHUB_OUTPUT
-          echo "$CHANGES" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          pip install --upgrade pip
+          pip install ruff pytest pytest-asyncio
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Run Tests
+        run: |
+          cd apps/api
+          pip install -e ".[dev]"
+          pip install -e ../../services/agent_orchestrator
+          pytest -x -q --tb=line
+
+      - name: Run Linting
+        run: |
+          ruff check . --quiet
+
+      - name: Determine Version Bump
+        id: version
+        run: |
+          python .github/scripts/version.py release ${{ github.event.inputs.bump_type }} \
+            --prerelease ${{ github.event.inputs.prerelease }} \
+            --dry-run ${{ github.event.inputs.dry_run }} | tee version_output.txt
+
+      - name: Extract New Version
+        if: ${{ github.event.inputs.dry_run == 'false' }}
+        id: extract_version
+        run: |
+          NEW_VERSION=$(tail -1 version_output.txt | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?')
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Commit and Tag
+        if: ${{ github.event.inputs.dry_run == 'false' }}
+        run: |
+          git add -A
+          git commit -m "chore: release v${{ steps.extract_version.outputs.new_version }}"
+          git tag -a "v${{ steps.extract_version.outputs.new_version }}" -m "Release v${{ steps.extract_version.outputs.new_version }}"
+          git push origin main --tags
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        if: ${{ github.event.inputs.dry_run == 'false' }}
+        uses: softprops/action-gh-release@v2
         with:
+          tag_name: v${{ steps.extract_version.outputs.new_version }}
           generate_release_notes: true
-          body: |
-            ## Changes
+          draft: false
+          prerelease: ${{ github.event.inputs.prerelease != '' }}
 
-            ${{ steps.changelog.outputs.changes }}
+      - name: Dry Run Summary
+        if: ${{ github.event.inputs.dry_run == 'true' }}
+        run: |
+          echo "🧪 DRY RUN - No changes committed"
+          echo "Would create version: $(tail -1 version_output.txt | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?')"
 
-            ## Docker Images
-
-            ```bash
-            # API
-            docker pull ghcr.io/${{ github.repository }}/api:${{ github.ref_name }}
-
-            # Web
-            docker pull ghcr.io/${{ github.repository }}/web:${{ github.ref_name }}
-            ```
-
-            ## Quick Start
-
-            ```bash
-            git clone https://github.com/webbixray/astra-os.git
-            cd astra-os
-            git checkout ${{ github.ref_name }}
-            ./scripts/setup.sh
-            make dev
-            ```
-          files: |
-            docker-compose.yml
-            docker-compose.prod.yml
-            Makefile
+  # Notify on completion
+  notify:
+    name: Notify
+    needs: release
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Send notification
+        run: |
+          STATUS="${{ needs.release.result }}"
+          VERSION="${{ needs.release.outputs.new_version }}"
+          if [ "$STATUS" = "success" ]; then
+            echo "✅ Release v$VERSION completed successfully!"
+          else
+            echo "❌ Release failed. Check workflow logs."
+          fi

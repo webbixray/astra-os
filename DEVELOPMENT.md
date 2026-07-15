@@ -1,434 +1,360 @@
-# Astra OS - Development Guide
-
-Welcome to Astra OS! This guide will help you set up and start developing.
+# Development Guide - Astra OS
 
 ## Quick Start
 
-### Option 1: Automated Setup (Recommended)
-
 ```bash
-# Clone the repository
+# Clone and setup
 git clone https://github.com/webbixray/astra-os.git
 cd astra-os
 
-# Run the setup script
-chmod +x scripts/setup.sh
-./scripts/setup.sh
-
-# Start development
-make dev
-```
-
-### Option 2: Manual Setup
-
-```bash
-# 1. Clone and install dependencies
-git clone https://github.com/webbixray/astra-os.git
-cd astra-os
+# Install dependencies
 pnpm install
+cd apps/api && pip install -e ".[dev]" && pip install -e ../../services/agent_orchestrator
 
-# 2. Set up environment
-cp docker/dev/.env .env
-# Edit .env with your API keys
+# Start development environment
+docker-compose up -d
 
-# 3. Start infrastructure
-docker compose up -d postgres redis temporal
+# Run migrations
+cd apps/api && alembic upgrade head
 
-# 4. Install Python dependencies
-cd apps/api
-pip install -e ".[dev]"
-
-# 5. Run migrations
-alembic upgrade head
-
-# 6. Seed database (optional)
-python -m scripts.seed_db
-
-# 7. Start development servers
-cd ../..
-pnpm dev
+# Start servers
+pnpm dev  # Starts API (8000) + Web (3000)
 ```
 
-### Option 3: Docker-First Development
+## Version Management
 
+### Current Version
 ```bash
-# Start everything with Docker
-docker compose up -d
-
-# View logs
-docker compose logs -f
-
-# Stop services
-docker compose down
+python .github/scripts/version.py current
 ```
 
-## Prerequisites
-
-- **Node.js** >= 20.0.0
-- **pnpm** >= 9.0.0
-- **Python** >= 3.12
-- **Docker** (recommended)
-- **PostgreSQL** 16 (or use Docker)
-- **Redis** 7 (or use Docker)
-
-## Project Structure
-
-```
-astraos/
-├── apps/
-│   ├── api/              # Python/FastAPI backend
-│   └── web/              # Next.js frontend
-├── packages/
-│   ├── shared/           # Shared TypeScript types
-│   ├── ui/               # Shared UI components
-│   ├── config-eslint/    # ESLint configs
-│   ├── config-typescript/# TypeScript configs
-│   └── config-tailwind/  # Tailwind configs
-├── docker/               # Docker configurations
-├── k8s/                  # Kubernetes manifests
-├── scripts/              # Development scripts
-└── docs/                 # Documentation
-```
-
-## Development Commands
-
-### Using Make
-
+### Create Release (CI/CD)
 ```bash
-make help              # Show all available commands
-make dev               # Start all services
-make test              # Run all tests
-make lint              # Lint code
-make format            # Format code
-make db-migrate msg="add feature"  # Create migration
-make docker-up         # Start Docker services
+# Manual trigger via GitHub Actions UI:
+# Actions → Release → Run workflow
+# Select: patch / minor / major
+# Optional: prerelease (alpha, beta, rc)
+
+# Or locally:
+python .github/scripts/version.py release patch --dry-run
+python .github/scripts/version.py release minor
+python .github/scripts/version.py release major --prerelease beta
 ```
 
-### Using pnpm
-
+### Auto-Release Script
 ```bash
-pnpm dev               # Start all dev servers
-pnpm build             # Build all packages
-pnpm test              # Run all tests
-pnpm lint              # Lint all code
-pnpm typecheck         # Type check all code
-pnpm format            # Format all code
+# Automated release with tests and linting
+BUMP_TYPE=patch DRY_RUN=false .github/scripts/auto-release.sh
 ```
 
-### API Development
+## Branching Strategy
 
+```
+main ─────────────────────────────────────────────────────►
+  │                            │                           │
+  ├── develop ─────────────────┤                           │
+  │          │                 │                           │
+  │          ├── feature/xyz   │                           │
+  │          │                 │                           │
+  │          └── hotfix/abc    │                           │
+  │                            │                           │
+  ├── release/v1.2.0 ──────────┤                           │
+  │          │                 │                           │
+  │          └── bugfix/def    │                           │
+  │                            │                           │
+  └── release/v1.3.0-rc.1 ─────► (prerelease)               │
+```
+
+### Branch Types:
+- `main` - Production ready, tagged releases only
+- `develop` - Integration branch, CI builds, staging deploy
+- `feature/*` - New features from `develop`
+- `hotfix/*` - Critical fixes from `main`
+- `release/v*` - Release preparation, version bumps
+- `bugfix/*` - Fixes during release prep
+
+## Commit Convention
+
+Follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+### Types:
+- `feat` - New feature
+- `fix` - Bug fix
+- `docs` - Documentation
+- `style` - Formatting
+- `refactor` - Code restructuring
+- `perf` - Performance
+- `test` - Tests
+- `chore` - Maintenance
+- `build` - Build system
+- `ci` - CI/CD
+- `revert` - Revert commit
+
+### Examples:
+```
+feat(api): add campaign scheduling endpoint
+
+Add POST /api/v1/campaigns/schedule with cron support
+
+Closes #123
+```
+
+```
+fix(agent): prevent infinite loop in ReAct loop
+
+Agent was re-calling same tool without progress check.
+Added iteration tracking and max iteration limit.
+
+Fixes #456
+```
+
+## Testing Standards
+
+### Test Structure
+```
+apps/api/tests/
+├── unit/           # Fast, isolated tests
+├── integration/    # DB, external services
+├── e2e/            # Full workflow tests
+└── fixtures/       # Shared test data
+```
+
+### Test Requirements
+- **Unit**: >90% coverage, <100ms each
+- **Integration**: Real DB/Redis, <5s each
+- **E2E**: Full workflow, <30s each
+
+### Run Tests
 ```bash
-cd apps/api
+# All tests
+pytest
 
-# Start API server
-uvicorn app.main:app --reload
+# With coverage
+pytest --cov=app --cov-report=html
 
-# Run tests
-python -m pytest -v
+# Specific type
+pytest tests/unit/ -v
+pytest tests/integration/ -v
 
-# Run tests with coverage
-python -m pytest --cov=app --cov-report=html
-
-# Create migration
-alembic revision --autogenerate -m "description"
-
-# Apply migrations
-alembic upgrade head
-
-# Seed database
-python -m scripts.seed_db
+# Parallel
+pytest -n auto
 ```
 
-### Frontend Development
+## Code Quality
 
+### Linting & Formatting
 ```bash
-cd apps/web
+# Check
+ruff check .
+ruff format --check .
 
-# Start dev server
-npm run dev
-
-# Build for production
-npm run build
-
-# Run tests
-npx vitest run
-
-# Run E2E tests
-npx playwright test
-
-# Lint
-next lint
-```
-
-## Environment Variables
-
-Copy `docker/dev/.env.example` to `.env` and configure:
-
-### Required
-
-```env
-SECRET_KEY=your-secret-key-min-32-chars
-DATABASE_URL=postgresql+asyncpg://astra:astra_dev@localhost:5432/astra
-REDIS_URL=redis://localhost:6379/0
-```
-
-### AI Providers (at least one recommended)
-
-```env
-OPENAI_API_KEY=sk-...
-ANTHROPIC_API_KEY=sk-ant-...
-GEMINI_API_KEY=AI...
-NVIDIA_NIM_BASE_URL=https://integrate.api.nvidia.com/v1
-```
-
-### Ad Platforms (optional)
-
-```env
-GOOGLE_ADS_CLIENT_ID=...
-META_ACCESS_TOKEN=...
-LINKEDIN_ACCESS_TOKEN=...
-TIKTOK_ACCESS_TOKEN=...
-```
-
-## Database
-
-### Migrations
-
-```bash
-# Create a new migration
-cd apps/api
-alembic revision --autogenerate -m "add user preferences"
-
-# Apply all pending migrations
-alembic upgrade head
-
-# Rollback last migration
-alembic downgrade -1
-
-# Check current version
-alembic current
-```
-
-### Seeding
-
-```bash
-# Seed with sample data
-cd apps/api
-python -m scripts.seed_db
-```
-
-## Testing
-
-### Unit Tests
-
-```bash
-# Run all tests
-make test
-
-# Run API tests only
-make test-api
-
-# Run Web tests only
-make test-web
-
-# Run with coverage
-make test-cov
-```
-
-### E2E Tests
-
-```bash
-# Install Playwright browsers
-cd apps/web
-npx playwright install
-
-# Run E2E tests
-npx playwright test
-
-# Run specific test
-npx playwright test login.spec.ts
-
-# Open Playwright UI
-npx playwright ui
-```
-
-## Docker
-
-### Development
-
-```bash
-# Start all services
-docker compose up -d
-
-# View logs
-docker compose logs -f api
-
-# Stop services
-docker compose down
-
-# Rebuild after changes
-docker compose up -d --build
-```
-
-### Production
-
-```bash
-# Build production images
-docker compose -f docker-compose.prod.yml build
-
-# Start production stack
-docker compose -f docker-compose.prod.yml up -d
-```
-
-## Kubernetes
-
-### Deployment
-
-```bash
-# Deploy to cluster
-kubectl apply -k k8s/
-
-# Check status
-kubectl get pods -n astra
-
-# View logs
-kubectl logs -f deployment/astra-api -n astra
-
-# Scale API
-kubectl scale deployment/astra-api --replicas=5 -n astra
-
-# Delete deployment
-kubectl delete -k k8s/
-```
-
-## Code Style
-
-### Python
-
-- **Formatter**: Ruff
-- **Linter**: Ruff
-- **Type Checker**: mypy
-- **Max Line Length**: 100
-
-```bash
-# Format
-cd apps/api
+# Fix
+ruff check . --fix
 ruff format .
 
-# Lint
-ruff check .
-
-# Type check
-mypy . --ignore-missing-imports
+# Type checking
+mypy apps/api/app --strict
 ```
 
-### TypeScript
-
-- **Formatter**: Prettier
-- **Linter**: ESLint
-- **Type Checker**: TypeScript
-
+### Pre-commit Hooks
 ```bash
-# Format
-pnpm format
+# Install
+pre-commit install
 
-# Lint
-pnpm lint
-
-# Type check
-pnpm typecheck
+# Run manually
+pre-commit run --all-files
 ```
 
-## IDE Setup
+### CI Pipeline Stages
+1. **Lint & Type Check** - Ruff, MyPy, pre-commit
+2. **Security Scan** - Bandit, TruffleHog, Semgrep, pip-audit
+3. **Container Security** - Trivy (FS, config, image)
+4. **Tests** - Unit, Integration, E2E with coverage
+5. **Build** - Multi-arch Docker images (amd64/arm64)
+6. **Deploy** - Staging (develop), Production (tags)
 
-### VS Code
+## Database Migrations
 
-Install recommended extensions:
-- Python
-- Prettier
-- ESLint
-- Tailwind CSS IntelliSense
+### Create Migration
+```bash
+cd apps/api
+alembic revision --autogenerate -m "description"
+```
 
-### Cursor / Windsurf
+### Apply Migrations
+```bash
+# Dev
+alembic upgrade head
 
-The project includes `.cursorrules` for AI-assisted development.
+# Prod (via entrypoint)
+docker exec astra-api alembic upgrade head
+```
+
+### Migration Best Practices
+- Always review autogenerated migrations
+- Use `--sql` to preview SQL
+- Separate schema and data migrations
+- Test rollback: `alembic downgrade -1`
+
+## Docker Development
+
+### Build Images
+```bash
+# Dev
+docker-compose build
+
+# Production
+docker-compose -f docker/prod/docker-compose.yml build
+
+# Multi-arch
+docker buildx build --platform linux/amd64,linux/arm64 .
+```
+
+### Debug Container
+```bash
+# API shell
+docker exec -it astra-api sh
+
+# View logs
+docker-compose logs -f api
+docker-compose logs -f --tail=100 web
+```
+
+## Monitoring & Debugging
+
+### Health Checks
+```bash
+# API
+curl http://localhost:8000/api/v1/health/live
+curl http://localhost:8000/api/v1/health/ready
+
+# Database
+docker exec astra-postgres pg_isready -U astra
+
+# Redis
+docker exec astra-redis redis-cli ping
+```
+
+### Logs
+```bash
+# Structured JSON logs
+docker-compose logs api | jq '.'
+
+# Filter by level
+docker-compose logs api | jq 'select(.level=="ERROR")'
+```
+
+### Metrics
+```bash
+# Prometheus
+curl http://localhost:9090/metrics
+
+# Grafana dashboards at :3000
+```
+
+## Security
+
+### Secrets Management
+- **Never** commit secrets to git
+- Use `.env` files (gitignored)
+- Production: Use Vault/AWS Secrets Manager
+- CI: GitHub Secrets
+
+### Vulnerability Scanning
+```bash
+# Local scan
+trivy fs .
+trivy image astra-api:latest
+
+# Dependency audit
+pip-audit
+pnpm audit
+```
+
+### Security Headers (nginx)
+```nginx
+add_header Strict-Transport-Security "max-age=31536000" always;
+add_header X-Content-Type-Options nosniff always;
+add_header X-Frame-Options DENY always;
+add_header Content-Security-Policy "default-src 'self'; ...";
+```
+
+## Deployment
+
+### Staging (auto on develop)
+```bash
+git push origin develop
+# GitHub Actions → Deploy Staging
+```
+
+### Production (manual on release)
+```bash
+# Create release
+gh release create v1.2.3 --generate-notes
+
+# Or manually trigger
+# Actions → Release → Run workflow
+```
+
+### Rollback
+```bash
+# Kubernetes
+kubectl rollout undo deployment/astra-api -n astra-production
+
+# Docker Compose
+docker-compose -f docker/prod/docker-compose.yml up -d --force-recreate \
+  --build astra-api:previous-tag
+```
+
+## Performance
+
+### Load Testing
+```bash
+# k6 script
+k6 run tests/load/k6-load-test.js \
+  --vus 100 --duration 5m \
+  --env BASE_URL=https://api.astra-os.io
+```
+
+### Profiling
+```bash
+# Python profiling
+py-spy top --pid $(pgrep -f uvicorn)
+
+# Memory
+mprof run python -m app.main
+mprof plot
+```
 
 ## Troubleshooting
 
-### Port already in use
+### Common Issues
 
+| Issue | Solution |
+|-------|----------|
+| DB connection failed | Check `DATABASE_URL`, pg_isready |
+| Redis connection failed | Check `REDIS_URL`, redis-cli ping |
+| Migration failed | `alembic downgrade -1`, fix, `upgrade head` |
+| Tests flaky | Check for async/await issues, proper mocking |
+| Docker build slow | Use BuildKit, layer caching |
+
+### Debug Commands
 ```bash
-# Find process using port
-lsof -i :8000
+# Enter API container
+docker exec -it astra-api python -c "import app; print(app)"
 
-# Kill process
-kill -9 <PID>
-```
+# Check alembic history
+alembic history --verbose
 
-### Database connection refused
-
-```bash
-# Check if PostgreSQL is running
-docker compose ps postgres
-
-# Restart PostgreSQL
-docker compose restart postgres
-```
-
-### Migration conflicts
-
-```bash
-# Check for multiple heads
-alembic heads
-
-# Merge heads
-alembic merge heads
-
-# Apply merged migration
+# Reset dev DB
+docker-compose down -v && docker-compose up -d postgres redis
 alembic upgrade head
 ```
-
-### Clear all data
-
-```bash
-# Reset database
-docker compose down -v
-docker compose up -d postgres
-cd apps/api
-alembic upgrade head
-python -m scripts.seed_db
-```
-
-## Contributing
-
-1. Create a feature branch: `git checkout -b feature/my-feature`
-2. Make your changes
-3. Run tests: `make test`
-4. Run linter: `make lint`
-5. Commit changes: `git commit -m "feat: add my feature"`
-6. Push to branch: `git push origin feature/my-feature`
-7. Create a Pull Request
-
-## Architecture
-
-See `docs/phase-1/` for detailed architecture documentation:
-
-- ADR-001: Monorepo Architecture
-- ADR-002: Clean Architecture
-- ADR-003: Agent Orchestration
-- ADR-004: Workflow Engine
-- ADR-005: Database Design
-- ADR-006: Model Router
-- ADR-007: Next.js Frontend
-- ADR-008: Authentication
-- ADR-009: Event-Driven Architecture
-
-## Support
-
-- **Issues**: GitHub Issues
-- **Discussions**: GitHub Discussions
-- **Docs**: `docs/` directory
-
-## License
-
-Proprietary - See LICENSE file
