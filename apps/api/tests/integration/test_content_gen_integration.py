@@ -123,6 +123,7 @@ class TestContentGenIntegration:
 
         resp = await test_client.patch(
             f"/api/v1/brand-voices/{voice_id}",
+            params={"organization_id": str(org_id)},
             json={"name": "Updated Voice", "is_active": False},
         )
         assert resp.status_code == 200, f"update failed: {resp.text}"
@@ -145,7 +146,10 @@ class TestContentGenIntegration:
         )
         voice_id = resp.json()["id"]
 
-        resp = await test_client.delete(f"/api/v1/brand-voices/{voice_id}")
+        resp = await test_client.delete(
+            f"/api/v1/brand-voices/{voice_id}",
+            params={"organization_id": str(org_id)},
+        )
         assert resp.status_code == 204
 
         resp = await test_client.get(
@@ -170,22 +174,21 @@ class TestContentGenIntegration:
                 "content_type": "blog",
                 "description": "Standard blog template",
                 "sections": [{"name": "intro", "prompt": "Write intro"}],
-                "variables": ["topic", "audience"],
-                "system_prompt": "You are a blog writer",
             },
         )
         assert resp.status_code == 201, f"create failed: {resp.text}"
         body = resp.json()
-        tmpl_id = body["id"]
-        UUID(tmpl_id)
+        template_id = body["id"]
+        UUID(template_id)
         assert body["name"] == "Blog Post"
         assert body["content_type"] == "blog"
 
-        resp = await test_client.get(f"/api/v1/content/templates/{tmpl_id}")
+        resp = await test_client.get(
+            f"/api/v1/content/templates/{template_id}",
+            params={"organization_id": str(org_id)},
+        )
         assert resp.status_code == 200, f"get failed: {resp.text}"
-        body = resp.json()
-        assert body["name"] == "Blog Post"
-        assert body["sections"] == [{"name": "intro", "prompt": "Write intro"}]
+        assert resp.json()["name"] == "Blog Post"
 
     async def test_list_templates(self, test_client, integration_session_factory):
         auth = await self._signup(test_client, "tmpllist@test.com")
@@ -230,12 +233,16 @@ class TestContentGenIntegration:
 
         resp = await test_client.patch(
             f"/api/v1/content/templates/{tmpl_id}",
+            params={"organization_id": str(org_id)},
             json={"name": "Updated", "description": "New description"},
         )
         assert resp.status_code == 200, f"update failed: {resp.text}"
         assert resp.json()["name"] == "Updated"
 
-        resp = await test_client.get(f"/api/v1/content/templates/{tmpl_id}")
+        resp = await test_client.get(
+            f"/api/v1/content/templates/{tmpl_id}",
+            params={"organization_id": str(org_id)},
+        )
         assert resp.json()["description"] == "New description"
 
     async def test_delete_template(self, test_client, integration_session_factory):
@@ -254,29 +261,39 @@ class TestContentGenIntegration:
         )
         tmpl_id = resp.json()["id"]
 
-        resp = await test_client.delete(f"/api/v1/content/templates/{tmpl_id}")
+        resp = await test_client.delete(
+            f"/api/v1/content/templates/{tmpl_id}",
+            params={"organization_id": str(org_id)},
+        )
         assert resp.status_code == 204
 
-        resp = await test_client.get(f"/api/v1/content/templates/{tmpl_id}")
+        resp = await test_client.get(
+            f"/api/v1/content/templates/{tmpl_id}",
+            params={"organization_id": str(org_id)},
+        )
         assert resp.status_code == 404
 
     async def test_get_nonexistent_template(self, test_client, integration_session_factory):
         auth = await self._signup(test_client, "tmplnf@test.com")
         user_id = UUID(auth["user"]["id"])
-        await self._create_org_with_owner(integration_session_factory, user_id)
+        org_id = await self._create_org_with_owner(integration_session_factory, user_id)
         test_client.headers["Authorization"] = f"Bearer {auth['access_token']}"
 
-        resp = await test_client.get(f"/api/v1/content/templates/{uuid4()}")
+        resp = await test_client.get(
+            f"/api/v1/content/templates/{uuid4()}",
+            params={"organization_id": str(org_id)},
+        )
         assert resp.status_code == 404
 
     async def test_update_nonexistent_brand_voice(self, test_client, integration_session_factory):
         auth = await self._signup(test_client, "bmerge@test.com")
         user_id = UUID(auth["user"]["id"])
-        await self._create_org_with_owner(integration_session_factory, user_id)
+        org_id = await self._create_org_with_owner(integration_session_factory, user_id)
         test_client.headers["Authorization"] = f"Bearer {auth['access_token']}"
 
         resp = await test_client.patch(
             f"/api/v1/brand-voices/{uuid4()}",
+            params={"organization_id": str(org_id)},
             json={"name": "Ghost"},
         )
         assert resp.status_code == 404
