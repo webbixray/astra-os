@@ -179,7 +179,7 @@ class TestReActLoop:
         agent = _make_ceo_agent()
         # Patch the router on the agent
         with patch(
-            "services.agent_orchestrator.agents.base.get_model_router_facade",
+            "astra_agent_orchestrator.agents.base.get_model_router_facade",
             return_value=_make_mock_router(),
         ):
             context = AgentContext(
@@ -252,7 +252,7 @@ class TestReActLoop:
         agent._tool_registry.register(_SearchTool())
 
         with patch(
-            "services.agent_orchestrator.agents.base.get_model_router_facade",
+            "astra_agent_orchestrator.agents.base.get_model_router_facade",
             return_value=facade,
         ):
             context = AgentContext(
@@ -270,7 +270,7 @@ class TestReActLoop:
     async def test_specialist_single_iteration(self):
         """Specialist receives a task and completes in one iteration."""
         with patch(
-            "services.agent_orchestrator.agents.base.get_model_router_facade",
+            "astra_agent_orchestrator.agents.base.get_model_router_facade",
             return_value=_make_mock_router(
                 '{"thought":"Simple task","action":null,"action_input":null,"final_answer":"Content created"}'
             ),
@@ -338,7 +338,7 @@ class TestReActLoop:
         agent._tool_registry.register(_SearchTool())
 
         with patch(
-            "services.agent_orchestrator.agents.base.get_model_router_facade",
+            "astra_agent_orchestrator.agents.base.get_model_router_facade",
             return_value=facade,
         ):
             context = AgentContext(
@@ -744,7 +744,7 @@ class TestCoordinatorExecution:
             a._router = facade
 
         with patch(
-            "services.agent_orchestrator.agents.base.get_model_router_facade",
+            "astra_agent_orchestrator.agents.base.get_model_router_facade",
             return_value=facade,
         ):
             context = AgentContext(
@@ -794,7 +794,7 @@ class TestCoordinatorExecution:
             a._router = facade
 
         with patch(
-            "services.agent_orchestrator.agents.base.get_model_router_facade",
+            "astra_agent_orchestrator.agents.base.get_model_router_facade",
             return_value=facade,
         ):
             context = AgentContext(

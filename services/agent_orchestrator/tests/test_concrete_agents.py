@@ -8,14 +8,16 @@ from services.agent import (
     AgentRegistry,
     AgentType,
 )
-from services.agents import CEOAgent
-from services.agents.director import (
-    DIRECTOR_CONFIGS,
+from services.agents import (
+    CEOAgent,
     DirectorAgent,
-)
-from services.agents.specialist import (
-    SPECIALIST_CONFIGS,
     SpecialistAgent,
+)
+from astra_agent_orchestrator.agents.director import (
+    DIRECTOR_CONFIGS,
+)
+from astra_agent_orchestrator.agents.specialist import (
+    SPECIALIST_CONFIGS,
 )
 
 
