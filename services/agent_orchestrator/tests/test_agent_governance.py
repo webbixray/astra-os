@@ -286,20 +286,21 @@ class TestGovernanceMiddleware:
         )
 
         middleware.check_tool_call("generate_content", {})
+        # launch_campaign with amount=1000 exceeds default spend limit of 100
         middleware.check_tool_call("launch_campaign", {"amount": 1000})
 
         log = middleware.get_action_log()
         assert len(log) == 2
 
-        # First call - allowed
+        # First call - allowed (low risk, under spend limit)
         assert log[0]["action_name"] == "content.generate"
         assert log[0]["outcome"] == "allowed"
         assert log[0]["reason_category"] == "semi_auto_low_risk"
 
-        # Second call - blocked
+        # Second call - requires approval (over spend limit)
         assert log[1]["action_name"] == "campaign.launch"
-        assert log[1]["outcome"] == "blocked"
-        assert log[1]["reason_category"] == "semi_auto_high_risk"
+        assert log[1]["outcome"] == "approval_needed"
+        assert log[1]["reason_category"] == "spend_limit"
 
         # Check agent context included
         assert log[0]["agent_type"] == "CONTENT_SPECIALIST"

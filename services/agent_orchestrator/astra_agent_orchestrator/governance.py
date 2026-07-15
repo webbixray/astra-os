@@ -188,7 +188,11 @@ class GovernanceMiddleware:
                 self._log_action(action_name, "approval_needed", "spend_limit")
                 return result
 
-            if risk_level >= 2:
+            # Under spend limit - now check risk level for non-financial actions
+            # Financial actions (risk >= 2) that are under spend limit should still be allowed
+            # at SEMI_AUTO since spend limit is the primary financial control
+            if risk_level >= 2 and spend_amount == 0:
+                # High-risk non-financial action (e.g., campaign.launch with no spend)
                 result.blocked = True
                 result.requires_approval = True
                 result.reason = (
@@ -198,8 +202,9 @@ class GovernanceMiddleware:
                 self._log_action(action_name, "blocked", "semi_auto_high_risk")
                 return result
 
+            # Financial action under spend limit or low-risk action
             result.allowed = True
-            result.reason = f"SEMI_AUTO: '{tool_name}' low-risk auto-executed"
+            result.reason = f"SEMI_AUTO: '{tool_name}' auto-executed"
             self._log_action(action_name, "allowed", "semi_auto_low_risk")
             return result
 
