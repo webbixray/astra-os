@@ -40,7 +40,7 @@ from app.application.use_cases.campaigns.template_use_cases import (
 )
 
 # Import for sample campaigns
-from app.domain.entities.campaign import CampaignObjective
+from app.domain.entities.advertising.ad_campaign import CampaignObjective
 from app.domain.exceptions.domain_exceptions import EntityNotFoundError, ValidationError
 from app.infrastructure.db.repositories.campaigns.ab_test_repository import ABTestRepository
 from app.infrastructure.db.repositories.campaigns.campaign_budget_repository import (

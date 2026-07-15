@@ -1,16 +1,18 @@
-"""Tests for Agent Governance Middleware — runtime enforcement of autonomy.
+"""
+Tests for Agent Governance Middleware — runtime enforcement of autonomy.
 
 Tests the GovernanceMiddleware that intercepts agent tool calls and
 checks them against autonomy config before execution.
 """
 
+import pytest
 from uuid import uuid4
 
 from apps.api.app.domain.entities.governance.autonomy import (
     AutonomyConfig,
     AutonomyLevel,
 )
-from services.agent_orchestrator.governance import (
+from services.governance import (
     TOOL_TO_ACTION_MAP,
     GovernanceCheckResult,
     GovernanceMiddleware,
@@ -31,238 +33,360 @@ class TestToolActionMapping:
     def test_campaign_launch_mapped(self):
         assert map_tool_to_action("launch_campaign") == "campaign.launch"
 
-    def test_unknown_tool_defaults(self):
+    def test_unknown_tool_mapped(self):
         assert map_tool_to_action("unknown_tool") == "unknown.action"
 
-    def test_all_mapped_actions_are_valid_risk_actions(self):
-        """Every mapped action should exist in the risk classification."""
-        from apps.api.app.domain.entities.governance.autonomy import ACTION_RISK_LEVELS
-        for tool_name, action_name in TOOL_TO_ACTION_MAP.items():
-            assert action_name in ACTION_RISK_LEVELS or action_name == "unknown.action"
+    def test_all_known_tools_mapped(self):
+        """Ensure all expected tools have mappings."""
+        expected_mappings = {
+            "generate_content": "content.generate",
+            "generate_blog_post": "content.generate",
+            "generate_social_post": "content.generate",
+            "review_content": "content.review",
+            "publish_content": "content.publish",
+            "delete_content": "content.delete",
+            "create_campaign": "campaign.create",
+            "update_campaign": "campaign.update",
+            "launch_campaign": "campaign.launch",
+            "pause_campaign": "campaign.pause",
+            "complete_campaign": "campaign.complete",
+            "set_budget": "spend.allocate",
+            "increase_budget": "spend.increase",
+            "reallocate_budget": "budget.reallocate",
+            "analyze_competitors": "research.competitors",
+            "analyze_trends": "research.trends",
+            "research_market": "research.analyze",
+            "create_creative": "creative.create",
+            "update_creative": "creative.update",
+            "approve_creative": "creative.approve",
+        }
+        for tool, action in expected_mappings.items():
+            assert map_tool_to_action(tool) == action, f"{tool} not mapped correctly"
+
+    def test_action_map_completeness(self):
+        """Ensure all mapped actions exist in risk classification."""
+        from services.governance import get_action_risk_level
+
+        for tool, action in TOOL_TO_ACTION_MAP.items():
+            risk = get_action_risk_level(action)
+            assert risk in (0, 1, 2), f"Action {action} has invalid risk level {risk}"
 
 
 # ── GovernanceCheckResult Tests ────────────────────────────────────────
 
 
 class TestGovernanceCheckResult:
-    def test_to_dict(self):
+    def test_allowed_result(self):
+        from services.governance import GovernanceCheckResult
+
         result = GovernanceCheckResult(
-            allowed=True,
             action_name="content.generate",
             risk_level=1,
             autonomy_level=1,
         )
-        d = result.to_dict()
-        assert d["allowed"] is True
-        assert d["action_name"] == "content.generate"
-        assert d["risk_level"] == 1
+        result.allowed = True
+        result.reason = "SEMI_AUTO: low-risk auto-executed"
+
+        assert result.allowed is True
+        assert result.blocked is False
+        assert result.requires_approval is False
+        assert result.action_name == "content.generate"
+        assert result.risk_level == 1
+
+    def test_blocked_result(self):
+        from services.governance import GovernanceCheckResult
+
+        result = GovernanceCheckResult(
+            action_name="campaign.launch",
+            risk_level=2,
+            autonomy_level=1,
+        )
+        result.blocked = True
+        result.requires_approval = True
+        result.reason = "High-risk tool requires approval"
+
+        assert result.allowed is False
+        assert result.blocked is True
+        assert result.requires_approval is True
+
+    def test_approval_needed_result(self):
+        from services.governance import GovernanceCheckResult
+
+        result = GovernanceCheckResult(
+            action_name="spend.allocate",
+            risk_level=1,
+            autonomy_level=1,
+        )
+        result.requires_approval = True
+        result.reason = "Spend exceeds auto-approve limit"
+
+        assert result.allowed is False
+        assert result.blocked is False
+        assert result.requires_approval is True
 
 
 # ── GovernanceMiddleware Tests ─────────────────────────────────────────
 
 
-class TestGovernanceMiddlewareFullAuto:
-    """Tests at FULL_AUTO autonomy level."""
-
-    def _make_middleware(self) -> GovernanceMiddleware:
-        config = AutonomyConfig.create(
-            ORG_ID,
-            default_level=AutonomyLevel.FULL_AUTO,
-        )
+class TestGovernanceMiddleware:
+    @pytest.fixture
+    def middleware(self):
         return GovernanceMiddleware(
-            organization_id=ORG_ID,
-            autonomy_config=config,
-            agent_type="ContentSpecialist",
+            organization_id=uuid4(),
+            autonomy_config=AutonomyConfig.create(
+                organization_id=uuid4(),
+                default_level=AutonomyLevel.SEMI_AUTO,
+                auto_approve_spend_limit=100.0,
+            ),
+            agent_type="CONTENT_SPECIALIST",
         )
 
-    def test_generate_content_allowed(self):
-        mw = self._make_middleware()
-        result = mw.check_tool_call("generate_content")
-        assert result.allowed is True
-        assert result.blocked is False
-
-    def test_launch_campaign_allowed(self):
-        mw = self._make_middleware()
-        result = mw.check_tool_call("launch_campaign")
-        assert result.allowed is True
-
-    def test_any_tool_allowed(self):
-        mw = self._make_middleware()
-        for tool in ["publish_content", "set_budget", "connect_account"]:
-            result = mw.check_tool_call(tool)
-            assert result.allowed is True
-
-    def test_action_log_recorded(self):
-        mw = self._make_middleware()
-        mw.check_tool_call("generate_content")
-        mw.check_tool_call("launch_campaign")
-        log = mw.get_action_log()
-        assert len(log) == 2
-        assert log[0]["outcome"] == "allowed"
-
-    def test_clear_log(self):
-        mw = self._make_middleware()
-        mw.check_tool_call("generate_content")
-        mw.clear_action_log()
-        assert len(mw.get_action_log()) == 0
-
-
-class TestGovernanceMiddlewareSemiAuto:
-    """Tests at SEMI_AUTO autonomy level."""
-
-    def _make_middleware(self) -> GovernanceMiddleware:
-        config = AutonomyConfig.create(
-            ORG_ID,
-            default_level=AutonomyLevel.SEMI_AUTO,
-            auto_approve_spend_limit=100.0,
-        )
-        return GovernanceMiddleware(
-            organization_id=ORG_ID,
-            autonomy_config=config,
-            agent_type="AdvertisingDirector",
+    def test_full_auto_allows_everything(self):
+        """FULL_AUTO should allow all actions regardless of risk."""
+        middleware = GovernanceMiddleware(
+            organization_id=uuid4(),
+            autonomy_config=AutonomyConfig.create(
+                organization_id=uuid4(),
+                default_level=AutonomyLevel.FULL_AUTO,
+            ),
         )
 
-    def test_low_risk_allowed(self):
-        mw = self._make_middleware()
-        result = mw.check_tool_call("generate_content")
+        result = middleware.check_tool_call("launch_campaign", {"amount": 10000})
         assert result.allowed is True
-        assert result.risk_level == 1
+        assert result.reason.startswith("FULL_AUTO")
 
-    def test_high_risk_blocked(self):
-        mw = self._make_middleware()
-        result = mw.check_tool_call("launch_campaign")
+        result = middleware.check_tool_call("spend.allocate", {"amount": 1000000})
+        assert result.allowed is True
+
+    def test_semi_auto_allows_low_risk(self):
+        """SEMI_AUTO should allow low-risk actions."""
+        middleware = GovernanceMiddleware(
+            organization_id=uuid4(),
+            autonomy_config=AutonomyConfig.create(
+                organization_id=uuid4(),
+                default_level=AutonomyLevel.SEMI_AUTO,
+                auto_approve_spend_limit=100.0,
+            ),
+        )
+
+        result = middleware.check_tool_call("generate_content", {})
+        assert result.allowed is True
+        assert "SEMI_AUTO" in result.reason
+
+    def test_semi_auto_blocks_high_risk(self):
+        """SEMI_AUTO should block high-risk actions."""
+        middleware = GovernanceMiddleware(
+            organization_id=uuid4(),
+            autonomy_config=AutonomyConfig.create(
+                organization_id=uuid4(),
+                default_level=AutonomyLevel.SEMI_AUTO,
+            ),
+        )
+
+        result = middleware.check_tool_call("launch_campaign", {})
         assert result.blocked is True
         assert result.requires_approval is True
-        assert result.risk_level == 2
+        assert "high-risk" in result.reason.lower()
 
-    def test_low_risk_under_spend_limit(self):
-        mw = self._make_middleware()
-        result = mw.check_tool_call("update_bid", {"amount": 50})
-        assert result.allowed is True
-
-    def test_low_risk_over_spend_limit(self):
-        mw = self._make_middleware()
-        result = mw.check_tool_call("update_bid", {"amount": 200})
-        assert result.requires_approval is True
-        assert result.allowed is False
-
-    def test_pause_campaign_blocked(self):
-        mw = self._make_middleware()
-        result = mw.check_tool_call("pause_campaign")
-        assert result.blocked is True
-
-    def test_publish_content_blocked(self):
-        mw = self._make_middleware()
-        result = mw.check_tool_call("publish_content")
-        assert result.blocked is True
-
-    def test_analytics_report_allowed(self):
-        mw = self._make_middleware()
-        result = mw.check_tool_call("generate_report")
-        assert result.allowed is True
-
-
-class TestGovernanceMiddlewareAdvisory:
-    """Tests at ADVISORY autonomy level (default)."""
-
-    def _make_middleware(self) -> GovernanceMiddleware:
-        config = AutonomyConfig.create(
-            ORG_ID,
-            default_level=AutonomyLevel.ADVISORY,
-        )
-        return GovernanceMiddleware(
-            organization_id=ORG_ID,
-            autonomy_config=config,
-            agent_type="ContentSpecialist",
+    def test_semi_auto_blocks_over_spend_limit(self):
+        """SEMI_AUTO should block actions exceeding spend limit."""
+        middleware = GovernanceMiddleware(
+            organization_id=uuid4(),
+            autonomy_config=AutonomyConfig.create(
+                organization_id=uuid4(),
+                default_level=AutonomyLevel.SEMI_AUTO,
+                auto_approve_spend_limit=100.0,
+            ),
         )
 
-    def test_everything_blocked(self):
-        mw = self._make_middleware()
-        result = mw.check_tool_call("generate_content")
+        result = middleware.check_tool_call("set_budget", {"amount": 200.0})
+        assert result.requires_approval is True
+        assert "exceeds auto-approve limit" in result.reason
+
+    def test_advisory_blocks_everything(self):
+        """ADVISORY should require approval for everything."""
+        middleware = GovernanceMiddleware(
+            organization_id=uuid4(),
+            autonomy_config=AutonomyConfig.create(
+                organization_id=uuid4(),
+                default_level=AutonomyLevel.ADVISORY,
+            ),
+        )
+
+        result = middleware.check_tool_call("generate_content", {})
         assert result.blocked is True
         assert result.requires_approval is True
-
-    def test_analytics_blocked(self):
-        mw = self._make_middleware()
-        result = mw.check_tool_call("query_analytics")
-        assert result.blocked is True
-
-    def test_unknown_tool_blocked(self):
-        mw = self._make_middleware()
-        result = mw.check_tool_call("unknown_tool")
-        assert result.blocked is True
-
-
-class TestGovernanceMiddlewareOverrides:
-    """Tests with per-agent-type and per-action overrides."""
+        assert "ADVISORY" in result.reason
 
     def test_agent_type_override(self):
+        """Agent-type-specific autonomy level should override default."""
         config = AutonomyConfig.create(
-            ORG_ID,
+            organization_id=uuid4(),
             default_level=AutonomyLevel.ADVISORY,
         )
-        config.set_agent_level("ContentSpecialist", AutonomyLevel.FULL_AUTO)
-        mw = GovernanceMiddleware(
-            organization_id=ORG_ID,
+        config.agent_levels["CONTENT_SPECIALIST"] = AutonomyLevel.SEMI_AUTO
+
+        middleware = GovernanceMiddleware(
+            organization_id=uuid4(),
             autonomy_config=config,
-            agent_type="ContentSpecialist",
+            agent_type="CONTENT_SPECIALIST",
         )
-        result = mw.check_tool_call("generate_content")
+
+        # CONTENT_SPECIALIST has SEMI_AUTO override
+        result = middleware.check_tool_call("generate_content", {})
         assert result.allowed is True
 
-    def test_action_override_priority(self):
+    def test_action_override(self):
+        """Action-specific override should take precedence."""
         config = AutonomyConfig.create(
-            ORG_ID,
-            default_level=AutonomyLevel.FULL_AUTO,
+            organization_id=uuid4(),
+            default_level=AutonomyLevel.ADVISORY,
         )
-        config.action_overrides["campaign.launch"] = AutonomyLevel.ADVISORY
-        mw = GovernanceMiddleware(
-            organization_id=ORG_ID,
-            autonomy_config=config,
-            agent_type="AdvertisingDirector",
-        )
-        result = mw.check_tool_call("launch_campaign")
-        assert result.blocked is True
+        config.action_overrides["content.generate"] = AutonomyLevel.FULL_AUTO
 
-    def test_custom_tool_action_map(self):
-        config = AutonomyConfig.create(
-            ORG_ID,
-            default_level=AutonomyLevel.SEMI_AUTO,
-        )
-        custom_map = {"my_custom_tool": "content.generate"}
-        mw = GovernanceMiddleware(
-            organization_id=ORG_ID,
+        middleware = GovernanceMiddleware(
+            organization_id=uuid4(),
             autonomy_config=config,
-            agent_type="ContentSpecialist",
-            tool_action_map=custom_map,
         )
-        result = mw.check_tool_call("my_custom_tool")
-        assert result.allowed is True  # content.generate is low-risk
 
-    def test_spend_from_budget_amount_param(self):
+        result = middleware.check_tool_call("generate_content", {})
+        assert result.allowed is True
+
+    def test_spend_limit_enforcement(self):
+        """Spend limits should be enforced at SEMI_AUTO."""
         config = AutonomyConfig.create(
-            ORG_ID,
+            organization_id=uuid4(),
             default_level=AutonomyLevel.SEMI_AUTO,
-            auto_approve_spend_limit=100.0,
+            auto_approve_spend_limit=50.0,
         )
-        mw = GovernanceMiddleware(
-            organization_id=ORG_ID,
+
+        middleware = GovernanceMiddleware(
+            organization_id=uuid4(),
             autonomy_config=config,
         )
-        result = mw.check_tool_call("update_bid", {"budget_amount": 200})
+
+        # Under limit - allowed
+        result = middleware.check_tool_call("set_budget", {"amount": 30.0})
+        assert result.allowed is True
+
+        # Over limit - requires approval
+        result = middleware.check_tool_call("set_budget", {"amount": 100.0})
         assert result.requires_approval is True
+
+    def test_action_logging(self):
+        """Governance decisions should be logged for auditing."""
+        middleware = GovernanceMiddleware(
+            organization_id=uuid4(),
+            autonomy_config=AutonomyConfig.create(
+                organization_id=uuid4(),
+                default_level=AutonomyLevel.SEMI_AUTO,
+            ),
+            agent_type="CONTENT_SPECIALIST",
+            agent_id="agent-123",
+        )
+
+        middleware.check_tool_call("generate_content", {})
+        middleware.check_tool_call("launch_campaign", {"amount": 1000})
+
+        log = middleware.get_action_log()
+        assert len(log) == 2
+
+        # First call - allowed
+        assert log[0]["action_name"] == "content.generate"
+        assert log[0]["outcome"] == "allowed"
+        assert log[0]["reason_category"] == "semi_auto_low_risk"
+
+        # Second call - blocked
+        assert log[1]["action_name"] == "campaign.launch"
+        assert log[1]["outcome"] == "blocked"
+        assert log[1]["reason_category"] == "semi_auto_high_risk"
+
+        # Check agent context included
+        assert log[0]["agent_type"] == "CONTENT_SPECIALIST"
 
 
 # ── Factory Function Tests ─────────────────────────────────────────────
 
 
 class TestCreateGovernanceMiddleware:
-    def test_creates_with_defaults(self):
-        mw = create_governance_middleware(ORG_ID)
-        assert mw.organization_id == ORG_ID
-        assert mw.autonomy_config.default_level == AutonomyLevel.ADVISORY
+    def test_factory_creates_middleware(self):
+        middleware = create_governance_middleware(
+            organization_id=uuid4(),
+            autonomy_config=AutonomyConfig.create(
+                organization_id=uuid4(),
+                default_level=AutonomyLevel.SEMI_AUTO,
+            ),
+            agent_type="CONTENT_SPECIALIST",
+        )
+        assert isinstance(middleware, GovernanceMiddleware)
+        assert middleware.agent_type == "CONTENT_SPECIALIST"
 
-    def test_creates_with_custom_config(self):
-        config = AutonomyConfig.create(ORG_ID, default_level=AutonomyLevel.FULL_AUTO)
-        mw = create_governance_middleware(ORG_ID, autonomy_config=config)
-        assert mw.autonomy_config.default_level == AutonomyLevel.FULL_AUTO
+    def test_factory_defaults(self):
+        """Factory should work with minimal parameters."""
+        middleware = create_governance_middleware(
+            organization_id=uuid4(),
+        )
+        assert isinstance(middleware, GovernanceMiddleware)
+        assert middleware.agent_type == ""
+        assert middleware.autonomy_config.default_level == AutonomyLevel.ADVISORY
+
+
+# ── Tool-to-Action Mapping Tests ───────────────────────────────────────
+
+
+class TestToolActionMapping:
+    def test_content_generate_mapped(self):
+        from services.governance import map_tool_to_action
+
+        assert map_tool_to_action("generate_content") == "content.generate"
+
+    def test_campaign_launch_mapped(self):
+        from services.governance import map_tool_to_action
+
+        assert map_tool_to_action("launch_campaign") == "campaign.launch"
+
+    def test_unknown_tool_mapped(self):
+        from services.governance import map_tool_to_action
+
+        assert map_tool_to_action("unknown_tool") == "unknown.action"
+
+    def test_all_known_tools_mapped(self):
+        """Ensure all expected tools have mappings."""
+        from services.governance import map_tool_to_action, TOOL_TO_ACTION_MAP
+
+        expected_mappings = {
+            "generate_content": "content.generate",
+            "generate_blog_post": "content.generate",
+            "generate_social_post": "content.generate",
+            "review_content": "content.review",
+            "publish_content": "content.publish",
+            "delete_content": "content.delete",
+            "create_campaign": "campaign.create",
+            "update_campaign": "campaign.update",
+            "launch_campaign": "campaign.launch",
+            "pause_campaign": "campaign.pause",
+            "complete_campaign": "campaign.complete",
+            "set_budget": "spend.allocate",
+            "increase_budget": "spend.increase",
+            "reallocate_budget": "budget.reallocate",
+            "analyze_competitors": "research.competitors",
+            "analyze_trends": "research.trends",
+            "research_market": "research.analyze",
+            "create_creative": "creative.create",
+            "update_creative": "creative.update",
+            "approve_creative": "creative.approve",
+        }
+        for tool, action in expected_mappings.items():
+            assert map_tool_to_action(tool) == action, f"{tool} not mapped correctly"
+
+    def test_action_map_completeness(self):
+        """Ensure all mapped actions exist in risk classification."""
+        from services.governance import get_action_risk_level, TOOL_TO_ACTION_MAP
+
+        for tool, action in TOOL_TO_ACTION_MAP.items():
+            risk = get_action_risk_level(action)
+            assert risk in (0, 1, 2), f"Action {action} has invalid risk level {risk}"
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

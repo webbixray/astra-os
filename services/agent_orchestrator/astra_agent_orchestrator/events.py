@@ -11,6 +11,8 @@ from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID, uuid4
 
+import asyncpg
+
 logger = logging.getLogger(__name__)
 
 

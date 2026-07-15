@@ -4,16 +4,16 @@ import json
 import uuid
 
 import pytest
-from services.agent_orchestrator.agent import (
+from services.agent import (
     AgentRegistry,
     AgentType,
 )
-from services.agent_orchestrator.agents.ceo import CEOAgent
-from services.agent_orchestrator.agents.director import (
+from services.agents import CEOAgent
+from services.agents.director import (
     DIRECTOR_CONFIGS,
     DirectorAgent,
 )
-from services.agent_orchestrator.agents.specialist import (
+from services.agents.specialist import (
     SPECIALIST_CONFIGS,
     SpecialistAgent,
 )

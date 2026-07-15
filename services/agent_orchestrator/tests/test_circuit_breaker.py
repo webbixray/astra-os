@@ -4,7 +4,7 @@ import asyncio
 from unittest.mock import AsyncMock
 
 import pytest
-from services.agent_orchestrator.resilience import (
+from services.resilience import (
     CircuitBreaker,
     CircuitBreakerConfig,
     CircuitOpenError,

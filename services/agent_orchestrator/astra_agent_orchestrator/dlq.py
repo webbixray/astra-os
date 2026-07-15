@@ -1,5 +1,6 @@
 """Dead Letter Queue for failed async tasks using Redis Streams."""
 
+import asyncio
 import json
 import time
 from dataclasses import asdict, dataclass

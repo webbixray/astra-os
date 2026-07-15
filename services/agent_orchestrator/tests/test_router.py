@@ -2,7 +2,7 @@
 
 
 import pytest
-from services.agent_orchestrator.router import (
+from services.router import (
     ModelCapability,
     ModelConfig,
     ModelProvider,

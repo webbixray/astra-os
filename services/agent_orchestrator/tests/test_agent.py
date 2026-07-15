@@ -2,15 +2,15 @@
 
 import uuid
 
-from services.agent_orchestrator.agent import (
+from services.agent import (
     AgentConfig,
     AgentContext,
     AgentRegistry,
     AgentType,
 )
-from services.agent_orchestrator.agents.ceo import CEOAgent
-from services.agent_orchestrator.agents.director import DirectorAgent
-from services.agent_orchestrator.agents.specialist import SpecialistAgent
+from services.agents import CEOAgent
+from services.agents import DirectorAgent
+from services.agents import SpecialistAgent
 
 
 class TestAgentConfig:

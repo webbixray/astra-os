@@ -1,10 +1,12 @@
 """Tests for Dead Letter Queue."""
 
 import json
+import time
+from dataclasses import asdict
 from unittest.mock import AsyncMock
 
 import pytest
-from services.agent_orchestrator.dlq import (
+from services.dlq import (
     DeadLetter,
     DeadLetterQueue,
     DLQConsumer,
@@ -139,6 +141,7 @@ class TestDLQConsumer:
     @pytest.fixture
     def consumer(self, mock_redis, handler):
         dlq = DeadLetterQueue(mock_redis)
+        dlq.add = AsyncMock()  # Mock the add method
         return DLQConsumer(
             redis_client=mock_redis,
             stream="test:stream",

@@ -4,7 +4,7 @@ import asyncio
 import uuid
 
 import pytest
-from services.agent_orchestrator.events import Event, EventBus
+from services.events import Event, EventBus
 
 
 class TestEvent:

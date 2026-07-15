@@ -1,7 +1,7 @@
 """Tests for Workflow Versioning — M5 Workflow Engine."""
 
 from datetime import datetime
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 

@@ -1,7 +1,7 @@
 """Tests for Design Partner Service — E6.1 Beta Launch."""
 
 from datetime import UTC, datetime, timedelta
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -22,16 +22,16 @@ from app.domain.entities.design_partner import (
 
 class MockDesignPartnerRepo(DesignPartnerRepository):
     def __init__(self):
-        self.partners: dict[uuid4, DesignPartner] = {}
+        self.partners: dict[UUID, DesignPartner] = {}
 
     async def save(self, partner: DesignPartner) -> DesignPartner:
         self.partners[partner.id] = partner
         return partner
 
-    async def find_by_id(self, partner_id: uuid4) -> DesignPartner | None:
+    async def find_by_id(self, partner_id: UUID) -> DesignPartner | None:
         return self.partners.get(partner_id)
 
-    async def find_by_organization(self, org_id: uuid4) -> DesignPartner | None:
+    async def find_by_organization(self, org_id: UUID) -> DesignPartner | None:
         for p in self.partners.values():
             if p.organization_id == org_id:
                 return p
@@ -104,18 +104,18 @@ class MockFeedbackRepo(DesignPartnerFeedbackRepository):
 
 class MockTicketRepo:
     def __init__(self):
-        self.tickets: dict[uuid4, SupportTicket] = {}
+        self.tickets: dict[UUID, SupportTicket] = {}
 
     async def save(self, ticket: SupportTicket) -> SupportTicket:
         self.tickets[ticket.id] = ticket
         return ticket
 
-    async def find_by_id(self, ticket_id: uuid4) -> SupportTicket | None:
+    async def find_by_id(self, ticket_id: UUID) -> SupportTicket | None:
         return self.tickets.get(ticket_id)
 
     async def find_by_partner(
         self,
-        partner_id: uuid4,
+        partner_id: UUID,
         status: SupportTicketStatus | None = None,
         limit: int = 50,
     ) -> list[SupportTicket]:
@@ -127,7 +127,7 @@ class MockTicketRepo:
     async def list_all(
         self,
         status: SupportTicketStatus | None = None,
-        csm_id: uuid4 | None = None,
+        csm_id: UUID | None = None,
         limit: int = 50,
     ) -> list[SupportTicket]:
         results = list(self.tickets.values())

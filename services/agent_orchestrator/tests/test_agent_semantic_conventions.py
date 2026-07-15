@@ -1,10 +1,9 @@
 """Tests for OpenTelemetry semantic conventions on agent spans."""
 
 from unittest.mock import AsyncMock, MagicMock, patch
-from uuid import uuid4
 
 import pytest
-from services.agent_orchestrator.agent import (
+from services.agent import (
     Agent,
     AgentConfig,
     AgentContext,

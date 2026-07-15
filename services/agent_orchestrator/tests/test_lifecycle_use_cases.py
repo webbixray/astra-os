@@ -4,7 +4,7 @@ All tests are pure unit tests with a mock repository — no DB required.
 """
 
 from datetime import date
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from app.application.use_cases.campaigns.lifecycle_use_cases import (
@@ -14,7 +14,7 @@ from app.application.use_cases.campaigns.lifecycle_use_cases import (
     PauseCampaignUseCase,
     ResumeCampaignUseCase,
 )
-from app.domain.entities.campaigns.campaign import Campaign
+from apps.api.app.domain.entities.campaigns.campaign import Campaign
 from app.domain.exceptions.domain_exceptions import ValidationError
 
 # ── Helpers ──────────────────────────────────────────────────────────

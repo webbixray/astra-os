@@ -4,14 +4,14 @@ import uuid
 from typing import Any
 
 import pytest
-from services.agent_orchestrator.agent import (
+from services.agent import (
     AgentConfig,
     AgentContext,
     AgentRegistry,
     AgentType,
 )
-from services.agent_orchestrator.events import EventBus
-from services.agent_orchestrator.tools import (
+from services.events import EventBus
+from services.tools import (
     ExecutionSandbox,
     Tool,
     ToolDefinition,

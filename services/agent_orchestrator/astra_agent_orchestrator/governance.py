@@ -4,7 +4,7 @@ This middleware intercepts agent tool calls and checks them against the
 organization's autonomy configuration and approval rules before execution.
 
 Usage:
-    from services.agent_orchestrator.governance import GovernanceMiddleware
+    from astra_agent_orchestrator.governance import GovernanceMiddleware
 
     middleware = GovernanceMiddleware(organization_id=org_id)
     # Inject into agent or use standalone
@@ -178,6 +178,16 @@ class GovernanceMiddleware:
 
         # SEMI_AUTO: allow low-risk, block high-risk
         if level == AutonomyLevel.SEMI_AUTO:
+            # Check spend limit FIRST (regardless of risk level)
+            if spend_amount > self.autonomy_config.auto_approve_spend_limit:
+                result.requires_approval = True
+                result.reason = (
+                    f"Spend ${spend_amount:.2f} exceeds auto-approve limit "
+                    f"${self.autonomy_config.auto_approve_spend_limit:.2f}"
+                )
+                self._log_action(action_name, "approval_needed", "spend_limit")
+                return result
+
             if risk_level >= 2:
                 result.blocked = True
                 result.requires_approval = True
@@ -186,16 +196,6 @@ class GovernanceMiddleware:
                     f"risk={risk_level}) requires approval at SEMI_AUTO"
                 )
                 self._log_action(action_name, "blocked", "semi_auto_high_risk")
-                return result
-
-            # Check spend limit
-            if spend_amount > self.autonomy_config.auto_approve_spend_limit:
-                result.requires_approval = True
-                result.reason = (
-                    f"Spend ${spend_amount:.2f} exceeds auto-approve limit "
-                    f"${self.autonomy_config.auto_approve_spend_limit:.2f}"
-                )
-                self._log_action(action_name, "approval_needed", "spend_limit")
                 return result
 
             result.allowed = True

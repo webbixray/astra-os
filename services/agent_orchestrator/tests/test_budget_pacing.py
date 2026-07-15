@@ -5,12 +5,12 @@ daily schedule generation, and edge cases.
 """
 
 from datetime import date
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
-from app.domain.entities.campaigns.campaign import Campaign
-from app.domain.entities.campaigns.campaign_budget import CampaignBudget
-from app.domain.services.campaigns.budget_pacing import (
+from apps.api.app.domain.entities.campaigns.campaign import Campaign
+from apps.api.app.domain.entities.campaigns.campaign_budget import CampaignBudget
+from apps.api.app.domain.services.campaigns.budget_pacing import (
     BudgetPacingService,
     PacingStatus,
     PacingStrategy,
@@ -36,7 +36,7 @@ def _make_campaign(
 def _make_budget(
     total: float,
     spent: float = 0.0,
-    campaign_id: uuid4 | None = None,
+    campaign_id: UUID | None = None,
 ) -> CampaignBudget:
     bid = campaign_id or uuid4()
     b = CampaignBudget.create(

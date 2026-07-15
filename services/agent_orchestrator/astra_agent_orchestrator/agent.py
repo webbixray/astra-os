@@ -1,4 +1,4 @@
-"""Agent Registry and Base Agent Class."""
+from __future__ import annotations
 
 import logging
 import time
@@ -6,32 +6,20 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
-from typing import Any
+from typing import Any, TYPE_CHECKING
 from uuid import UUID, uuid4
 
 # OpenTelemetry tracing
 from opentelemetry import trace
 from opentelemetry.trace import SpanKind
 from pydantic import BaseModel, Field
+# Lazy imports to avoid circular dependencies
+if TYPE_CHECKING:
+    from .governance import GovernanceMiddleware
+    from .metrics import AgentMetricsContext
+    from .telemetry import get_tracer
 
-
-# Trace correlation utility
-def get_trace_context() -> dict[str, str]:
-    """Get current trace context for log correlation."""
-    span = trace.get_current_span()
-    span_context = span.get_span_context()
-    if span_context and span_context.trace_id != 0:
-        return {
-            "trace_id": format(span_context.trace_id, "032x"),
-            "span_id": format(span_context.span_id, "016x"),
-        }
-    return {}
-
-from .governance import (
-    GovernanceMiddleware,
-)
-from .metrics import AgentMetricsContext, record_agent_run, record_delegation, record_tool_call
-from .telemetry import get_tracer
+# Runtime imports for default parameter values
 from .tools import (
     ExecutionSandbox,
     Tool,
@@ -42,10 +30,16 @@ from .tools import (
 
 logger = logging.getLogger(__name__)
 
-# Tracer instance for this module
-TRACER = get_tracer()
+# Tracer instance for this module - lazy initialization
+_TRACER = None
 
-# RAG pipeline type — imported lazily to avoid circular deps
+def get_tracer_instance():
+    global _TRACER
+    if _TRACER is None:
+        from .telemetry import get_tracer
+        _TRACER = get_tracer()
+    return _TRACER
+
 # RAG pipeline type — imported lazily to avoid circular deps
 class _RAGPipelineStub:
     """Lazy proxy for RagPipeline to avoid import at module level."""

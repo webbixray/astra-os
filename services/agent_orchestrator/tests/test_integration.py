@@ -14,34 +14,34 @@ import uuid
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from services.agent_orchestrator.agent import (
+from services.agent import (
     AgentContext,
     AgentMessage,
     AgentRegistry,
     AgentResult,
     AgentType,
 )
-from services.agent_orchestrator.agents.ceo import CEOAgent
-from services.agent_orchestrator.agents.director import DirectorAgent
-from services.agent_orchestrator.agents.specialist import SpecialistAgent
-from services.agent_orchestrator.comms import (
+from services.agents import CEOAgent
+from services.agents import DirectorAgent
+from services.agents import SpecialistAgent
+from services.comms import (
     AgentAuditTrail,
     AgentTraceEntry,
 )
-from services.agent_orchestrator.events import Event, EventBus
-from services.agent_orchestrator.hierarchy import (
+from services.events import Event, EventBus
+from services.hierarchy import (
     AgentCoordinator,
     AgentHierarchy,
     CommunicationProtocol,
     HandoffManager,
 )
-from services.agent_orchestrator.memory import MemoryManager
-from services.agent_orchestrator.router import (
+from services.memory import MemoryManager
+from services.router import (
     ModelProvider,
     ModelResponse,
     ModelRouterFacade,
 )
-from services.agent_orchestrator.tools import (
+from services.tools import (
     Tool,
     ToolDefinition,
     ToolParameter,

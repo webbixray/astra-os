@@ -13,10 +13,10 @@ import time
 import asyncpg
 import redis.asyncio as redis
 from pydantic_settings import BaseSettings
-from services.agent_orchestrator.dlq import create_dlq_consumer
-from services.agent_orchestrator.memory import MemoryManager
-from services.agent_orchestrator.supervisor import Supervisor, SupervisorConfig
-from services.agent_orchestrator.tools import default_sandbox, tool_registry
+from astra_agent_orchestrator.dlq import create_dlq_consumer
+from astra_agent_orchestrator.memory import MemoryManager
+from astra_agent_orchestrator.supervisor import Supervisor, SupervisorConfig
+from astra_agent_orchestrator.tools import default_sandbox, tool_registry
 
 logger = logging.getLogger(__name__)
 
@@ -98,7 +98,7 @@ class AgentOrchestrator:
 
     async def _register_default_tools(self) -> None:
         """Register built-in tools."""
-        from services.agent_orchestrator.tools import (
+        from astra_agent_orchestrator.tools import (
             Tool,
             ToolDefinition,
             ToolParameter,
@@ -312,11 +312,11 @@ async def main() -> None:
     # Initialize OpenTelemetry tracing
     otlp_endpoint = os.getenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT")
     if otlp_endpoint:
-        from services.agent_orchestrator.telemetry import init_tracing
+        from astra_agent_orchestrator.telemetry import init_tracing
         init_tracing("astra-agent-orchestrator", otlp_endpoint)
         logger.info("OpenTelemetry tracing initialized with endpoint: %s", otlp_endpoint)
     else:
-        from services.agent_orchestrator.telemetry import get_tracer
+        from astra_agent_orchestrator.telemetry import get_tracer
         get_tracer()  # Initialize noop tracer
         logger.info("OpenTelemetry tracing initialized (noop - no OTLP endpoint)")
 
@@ -348,7 +348,7 @@ async def main() -> None:
         sys.exit(1)
     finally:
         # Shutdown OpenTelemetry
-        from services.agent_orchestrator.telemetry import shutdown_tracing
+        from astra_agent_orchestrator.telemetry import shutdown_tracing
         shutdown_tracing()
         logger.info("OpenTelemetry tracing shutdown complete")
 

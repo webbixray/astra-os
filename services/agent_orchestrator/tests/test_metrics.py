@@ -2,7 +2,7 @@
 
 
 import pytest
-from services.agent_orchestrator.metrics import (
+from services.metrics import (
     AGENT_ACTIVE,
     AGENT_COST,
     AGENT_DURATION,

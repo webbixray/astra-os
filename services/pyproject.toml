@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "astra-services"
+version = "0.1.0"
+description = "ASTRA OS Services Package - compatibility layer"
+requires-python = ">=3.12"
+dependencies = [
+    "astra-agent-orchestrator>=0.1.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["services", "services.*"]
+
+[tool.setuptools.package-data]
+"services" = ["*.py"]

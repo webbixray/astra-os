@@ -4,7 +4,7 @@ import asyncio
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from services.agent_orchestrator.supervisor import (
+from services.supervisor import (
     Supervisor,
     SupervisorConfig,
 )

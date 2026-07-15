@@ -3,13 +3,13 @@
 import uuid
 
 import pytest
-from services.agent_orchestrator.agent import (
+from services.agent import (
     AgentMessage,
     AgentRegistry,
     AgentType,
 )
-from services.agent_orchestrator.events import EventBus
-from services.agent_orchestrator.hierarchy import (
+from services.events import EventBus
+from services.hierarchy import (
     AgentHierarchy,
     CommunicationProtocol,
     HandoffManager,
@@ -112,7 +112,7 @@ class TestCommunicationProtocol:
 
     @pytest.mark.asyncio
     async def test_send_and_receive(self, communication: CommunicationProtocol) -> None:
-        from services.agent_orchestrator.agent import AgentMessage
+        from services.agent import AgentMessage
 
         sender = uuid.uuid4()
         receiver = uuid.uuid4()
@@ -137,7 +137,7 @@ class TestCommunicationProtocol:
 
     @pytest.mark.asyncio
     async def test_broadcast(self, communication: CommunicationProtocol) -> None:
-        from services.agent_orchestrator.agent import AgentMessage
+        from services.agent import AgentMessage
 
         sender = uuid.uuid4()
         receivers = [uuid.uuid4() for _ in range(3)]

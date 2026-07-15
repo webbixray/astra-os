@@ -4,9 +4,9 @@ All tests are pure unit tests with a mock repository — no DB required.
 """
 
 import asyncio
-from uuid import uuid4
 
 import pytest
+from uuid import UUID, uuid4
 from app.application.use_cases.campaigns.creative_use_cases import (
     ApproveCreativeUseCase,
     AssociateCreativeToCampaignUseCase,
@@ -49,7 +49,7 @@ class MockCreativeRepo:
 
 
 def _make_creative(
-    org_id: uuid4 | None = None,
+    org_id: UUID | None = None,
     status: CreativeStatus = CreativeStatus.DRAFT,
     name: str = "Test Creative",
 ) -> AdCreative:

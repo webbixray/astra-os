@@ -84,5 +84,4 @@ def shutdown_tracing() -> None:
 
 
 # Convenience: get tracer lazily
-# TRACER will be initialized on first access
-TRACER = get_tracer()
+# TRACER will be initialized on first access via get_tracer()
