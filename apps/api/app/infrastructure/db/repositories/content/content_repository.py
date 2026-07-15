@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import select
@@ -49,3 +50,16 @@ class ContentRepositoryImpl(ContentRepository):
         if model is not None:
             await self.session.delete(model)
             await self.session.flush()
+
+    async def find_by_organization_and_date_range(
+        self, org_id: UUID, start_date: datetime, end_date: datetime
+    ) -> list[Content]:
+        query = select(ContentModel).where(
+            ContentModel.organization_id == org_id,
+            ContentModel.created_at >= start_date,
+            ContentModel.created_at <= end_date,
+        )
+        query = query.order_by(ContentModel.created_at.desc())
+        result = await self.session.execute(query)
+        models = result.scalars().all()
+        return [m.to_domain() for m in models]

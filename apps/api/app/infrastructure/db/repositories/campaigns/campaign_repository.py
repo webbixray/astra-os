@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import select
@@ -42,3 +43,16 @@ class CampaignRepositoryImpl(CampaignRepository):
         if model is not None:
             await self.session.delete(model)
             await self.session.flush()
+
+    async def find_by_organization_and_date_range(
+        self, org_id: UUID, start_date: datetime, end_date: datetime
+    ) -> list[Campaign]:
+        query = select(CampaignModel).where(
+            CampaignModel.organization_id == org_id,
+            CampaignModel.created_at >= start_date,
+            CampaignModel.created_at <= end_date,
+        )
+        query = query.order_by(CampaignModel.created_at.desc())
+        result = await self.session.execute(query)
+        models = result.scalars().all()
+        return [m.to_domain() for m in models]
