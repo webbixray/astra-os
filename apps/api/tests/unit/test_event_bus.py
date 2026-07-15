@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import deque
 from unittest.mock import AsyncMock
 
 import pytest
@@ -67,7 +68,7 @@ class TestEventBusSingleton:
         EventBus.subscribe(DomainEventType.CAMPAIGN_CREATED, handler)
         EventBus.reset()
         assert DomainEventType.CAMPAIGN_CREATED not in EventBus._subscribers
-        assert EventBus._history == []
+        assert len(EventBus._history) == 0
 
 
 class TestEventBusSubscribe:
@@ -185,7 +186,7 @@ class TestEventBusHistory:
         assert EventBus.get_history() == []
 
     async def test_history_max_size(self) -> None:
-        EventBus._max_history = 5
+        EventBus._history = deque(maxlen=5)
         for i in range(10):
             await EventBus.publish(
                 DomainEvent.create(DomainEventType.CAMPAIGN_CREATED, str(i), "campaign"),
