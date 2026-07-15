@@ -79,7 +79,7 @@ class Supervisor:
         
         Returns:
             Result from the successful run, or None on clean exit.
-
+        
         """
         if not self._supervise:
             return await self._run_once(coro_factory)
@@ -93,9 +93,6 @@ class Supervisor:
                 return await self._handle_system_exit(e)
             except KeyboardInterrupt:
                 return await self._handle_keyboard_interrupt()
-            except BaseException:
-                # Don't catch SystemExit, KeyboardInterrupt again
-                raise
             except Exception as e:
                 await self._handle_exception(e)
 

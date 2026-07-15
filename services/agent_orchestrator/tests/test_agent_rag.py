@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
+from uuid import uuid4
 
 import pytest
 from app.domain.services.knowledge.rag_pipeline import (

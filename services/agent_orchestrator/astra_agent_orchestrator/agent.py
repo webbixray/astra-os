@@ -16,7 +16,7 @@ from pydantic import BaseModel, Field
 # Lazy imports to avoid circular dependencies
 if TYPE_CHECKING:
     from .governance import GovernanceMiddleware
-    from .metrics import AgentMetricsContext
+    from .metrics import AgentMetricsContext, record_agent_run, record_tool_call, record_delegation
     from .telemetry import get_tracer
 
 # Runtime imports for default parameter values
@@ -27,6 +27,7 @@ from .tools import (
     default_sandbox,
     tool_registry,
 )
+from .metrics import AgentMetricsContext, record_agent_run, record_tool_call, record_delegation
 
 logger = logging.getLogger(__name__)
 
@@ -266,15 +267,16 @@ class Agent(ABC):
         # Use metrics context manager to track active agents
         with AgentMetricsContext(self.agent_type.value) as metrics_ctx:
             # Start OpenTelemetry span for agent run with semantic conventions
-            with TRACER.start_as_current_span(
+            with get_tracer_instance().start_as_current_span(
                 f"agent.{self.agent_type.value}.run",
                 kind=SpanKind.INTERNAL,
                 attributes={
                     "service.name": "astra-agent-orchestrator",
-                    "agent.id": str(self.agent_id),
-                    "agent.type": self.agent_type.value,
-                    "agent.autonomy_level": self.config.autonomy_level,
-                    "agent.tenant_id": str(self.tenant_id) if self.tenant_id else "",
+                    "agent.astra.id": str(self.agent_id),
+                    "agent.astra.type": self.agent_type.value,
+                    "agent.astra.autonomy_level": self.config.autonomy_level,
+                    "agent.astra.tenant_id": str(self.tenant_id) if self.tenant_id else "",
+                    "agent.astra.session_id": str(context.session_id) if context.session_id else "",
                 }
             ) as span:
                 try:
@@ -395,7 +397,7 @@ class Agent(ABC):
         self._tool_calls.append(call)
 
         # OpenTelemetry span for tool call with semantic conventions
-        with TRACER.start_as_current_span(
+        with get_tracer_instance().start_as_current_span(
             f"agent.{self.agent_type.value}.call_tool",
             kind=SpanKind.CLIENT,
             attributes={
@@ -486,7 +488,7 @@ class Agent(ABC):
         sub_context = context.child_context(subagent.agent_id) if context else context
 
         # OpenTelemetry span for delegation with semantic conventions
-        with TRACER.start_as_current_span(
+        with get_tracer_instance().start_as_current_span(
             f"agent.{self.agent_type.value}.delegate",
             kind=SpanKind.INTERNAL,
             attributes={

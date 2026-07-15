@@ -112,6 +112,10 @@ for _submod, _target in [
     ('governance', 'governance'),
     ('telemetry', 'telemetry'),
     ('tests', 'tests'),
+    ('base', 'agents.base'),
+    ('dlq', 'dlq'),
+    ('metrics', 'metrics'),
+    ('supervisor', 'supervisor'),
 ]:
     sys.modules[f'services.{_submod}'] = _LazySubModule(f'services.{_submod}', _target)
 

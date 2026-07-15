@@ -4,10 +4,12 @@ from astra_agent_orchestrator.agents import (
     CEOAgent,
     DirectorAgent,
     SpecialistAgent,
+    ReActAgent,
 )
 
 __all__ = [
     "CEOAgent",
     "DirectorAgent",
     "SpecialistAgent",
+    "ReActAgent",
 ]
