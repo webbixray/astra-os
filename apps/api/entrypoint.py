@@ -133,12 +133,34 @@ def main():
         os.execvp(cmd[0], cmd)
     else:
         # Default: start the server
-        logger.info("Starting uvicorn server...")
-        os.execvpe(
-            "python",
-            ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"],
-            os.environ
-        )
+        environment = os.getenv('ENVIRONMENT', 'development')
+        if environment == 'production':
+            logger.info("Starting gunicorn server (production)...")
+            os.execvpe(
+                "gunicorn",
+                [
+                    "gunicorn",
+                    "app.main:app",
+                    "--worker-class", "uvicorn.workers.UvicornWorker",
+                    "--bind", "0.0.0.0:8000",
+                    "--workers", "4",
+                    "--max-requests", "10000",
+                    "--max-requests-jitter", "1000",
+                    "--timeout", "60",
+                    "--keep-alive", "5",
+                    "--log-level", "info",
+                    "--access-logfile", "-",
+                    "--error-logfile", "-"
+                ],
+                os.environ
+            )
+        else:
+            logger.info("Starting uvicorn server (development)...")
+            os.execvpe(
+                "python",
+                ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"],
+                os.environ
+            )
 
 
 if __name__ == "__main__":

@@ -27,7 +27,7 @@ WORKDIR /app
 COPY pyproject.toml uv.lock* ./
 
 # Install production dependencies only
-RUN uv pip install --no-cache-dir -r pyproject.toml
+RUN uv pip install --no-cache-dir .
 
 # ============================================================
 # Stage 2: Runtime - Distroless for minimal attack surface
@@ -42,7 +42,6 @@ ENV PATH="/opt/venv/bin:$PATH"
 WORKDIR /app
 
 # Copy application code (as nonroot user)
-COPY --from=builder --chown=nonroot:nonroot /app /app
 COPY --chown=nonroot:nonroot alembic.ini alembic/ ./
 COPY --chown=nonroot:nonroot app/ ./app/
 COPY --chown=nonroot:nonroot entrypoint.py ./
@@ -65,4 +64,7 @@ LABEL org.opencontainers.image.title="Astra API" \
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.source="https://github.com/astra-os/astra-os" \
       org.opencontainers.image.documentation="https://docs.astra-os.io" \
-      org.opencontainers.image.base.name="astra.build-dateastra.os.versionastra.vcs-ref
+      org.opencontainers.image.base.name="gcr.io/distroless/python3-debian12:nonroot" \
+      org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.revision="${VCS_REF}"

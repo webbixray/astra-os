@@ -1,127 +1,155 @@
-# Dependabot configuration for automated dependency updates
-# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+# GitHub Dependabot Configuration
+# Create at: .github/dependabot.yml
 
 version: 2
 updates:
-  # Python dependencies
+  # Python dependencies (API)
   - package-ecosystem: "pip"
-    directory: "/"
+    directory: "/apps/api"
     schedule:
       interval: "weekly"
       day: "monday"
-      time: "09:00"
+      time: "06:00"
       timezone: "UTC"
     labels:
       - "dependencies"
       - "python"
     commit-message:
-      prefix: "chore(deps):"
-      include: "scope"
+      prefix: "[deps/python]"
+    pull-request-branch-name:
+      separator: "-"
     open-pull-requests-limit: 10
     reviewers:
-      - "astra-os/api-team"
-      - "astra-os/agents-team"
+      - "team/platform"
     assignees:
-      - "dependabot-bot"
-    allow:
-      - dependency-type: "direct"
-      - dependency-type: "indirect"
+      - "platform-team"
+    # Group updates for minor/patch
+    groups:
+      dev-dependencies:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    # Ignore major updates for core dependencies
     ignore:
-      - dependency-name: "astra-cli"
-        # Local package, not on PyPI
+      - dependency-name: "fastapi"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "sqlalchemy"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "pydantic"
+        update-types: ["version-update:semver-major"]
 
-  # Python dependencies in apps/cli
-  - package-ecosystem: "pip"
-    directory: "/apps/cli"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "UTC"
-    labels:
-      - "dependencies"
-      - "python"
-      - "cli"
-    commit-message:
-      prefix: "chore(deps):"
-      include: "scope"
-    reviewers:
-      - "astra-os/cli-team"
-    open-pull-requests-limit: 5
-
-  # Python dependencies in services/agent_orchestrator
+  # Python dependencies (Agent Orchestrator)
   - package-ecosystem: "pip"
     directory: "/services/agent_orchestrator"
     schedule:
       interval: "weekly"
       day: "monday"
-      time: "09:00"
+      time: "06:30"
       timezone: "UTC"
     labels:
       - "dependencies"
       - "python"
-      - "agent-orchestrator"
     commit-message:
-      prefix: "chore(deps):"
-      include: "scope"
-    reviewers:
-      - "astra-os/agents-team"
-    open-pull-requests-limit: 5
+      prefix: "[deps/python-services]"
 
-  # JavaScript/TypeScript dependencies (pnpm workspace)
+  # Node.js dependencies (Web)
+  - package-ecosystem: "npm"
+    directory: "/apps/web"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "07:00"
+      timezone: "UTC"
+    labels:
+      - "dependencies"
+      - "nodejs"
+    commit-message:
+      prefix: "[deps/web]"
+    pull-request-branch-name:
+      separator: "-"
+    open-pull-requests-limit: 10
+    groups:
+      dev-dependencies:
+        patterns:
+          - "@types/*"
+          - "eslint*"
+          - "prettier*"
+          - "vitest*"
+          - "@testing-library/*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Node.js dependencies (Root workspace)
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
-      time: "09:00"
+      time: "07:30"
       timezone: "UTC"
     labels:
       - "dependencies"
-      - "javascript"
-      - "typescript"
+      - "nodejs"
     commit-message:
-      prefix: "chore(deps):"
-      include: "scope"
-    open-pull-requests-limit: 10
-    reviewers:
-      - "astra-os/web-team"
-    allow:
-      - dependency-type: "direct"
-      - dependency-type: "indirect"
+      prefix: "[deps/root]"
+
+  # Docker base images
+  - package-ecosystem: "docker"
+    directory: "/apps/api"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "06:00"
+      timezone: "UTC"
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "[deps/docker/api]"
+
+  - package-ecosystem: "docker"
+    directory: "/apps/web"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "06:30"
+      timezone: "UTC"
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "[deps/docker/web]"
+
+  - package-ecosystem: "docker"
+    directory: "/services/agent_orchestrator"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "07:00"
+      timezone: "UTC"
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "[deps/docker/worker]"
 
   # GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
-      day: "monday"
-      time: "09:00"
+      day: "wednesday"
+      time: "06:00"
       timezone: "UTC"
     labels:
       - "dependencies"
       - "github-actions"
     commit-message:
-      prefix: "chore(deps):"
-      include: "scope"
-    reviewers:
-      - "astra-os/platform-team"
-    open-pull-requests-limit: 5
+      prefix: "[deps/gha]"
 
-  # Docker base images
-  - package-ecosystem: "docker"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "UTC"
-    labels:
-      - "dependencies"
-      - "docker"
-    commit-message:
-      prefix: "chore(deps):"
-      include: "scope"
-    reviewers:
-      - "astra-os/platform-team"
-    open-pull-requests-limit: 5
+# Additional security-focused settings
+# Enable vulnerability alerts for all ecosystems
+# This is configured in GitHub repository settings > Security > Dependabot alerts

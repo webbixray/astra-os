@@ -1,21 +1,157 @@
+# ============================================================
+# Docker Ignore - Comprehensive exclusions for production builds
+# ============================================================
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
 __pycache__
 *.pyc
 *.pyo
+*.pyd
 .pytest_cache
-.git
-.gitignore
-.env
-.venv
-venv
-node_modules
+.mypy_cache
+.ruff_cache
+.coverage
+coverage
+htmlcov
 *.egg-info
 dist
 build
+.venv
+venv
+.env
+.env.*
+pip-wheel-metadata
+
+# Node.js
+node_modules
+.npm
+.yarn
+.pnp
+.pnp.js
 .next
 .turbo
+dist
+build
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-store
+
+# IDE/Editor
 .vscode
 .idea
-*.log
+*.swp
+*.swo
+*~
 .DS_Store
+Thumbs.db
+
+# Testing
+.nyc_output
 coverage
-htmlcov
+.nyc_output
+test-results
+playwright-report
+
+# Documentation
+docs
+*.md
+!Dockerfile*
+!README.md
+!CHANGELOG.md
+!LICENSE
+
+# CI/CD
+.github
+.gitlab
+.circleci
+.travis.yml
+appveyor.yml
+
+# Kubernetes
+k8s
+helm
+*.kubeconfig
+
+# Terraform
+terraform
+*.tfstate
+*.tfstate.*
+.tfplan
+.terraform
+
+# Secrets and credentials
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.pfx
+*.jks
+secrets
+*.secret
+
+# OS
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Logs
+logs
+*.log
+
+# Temporary files
+tmp
+temp
+*.tmp
+*.temp
+.cache
+
+# Package managers
+.pnpm-store
+.yarn-cache
+*lock.yaml
+!pnpm-lock.yaml
+
+# Linting/formatting
+.eslintrc*
+.prettierrc*
+.stylelintrc*
+.markdownlintrc*
+.yamllint*
+.hadolint*
+
+# EditorConfig
+.editorconfig
+
+# Docker
+docker-compose.override.yml
+docker-compose.prod.yml
+docker-compose.staging.yml
+.dockerignore
+Dockerfile.dev
+Dockerfile.worker
+
+# Development scripts
+scripts/*.sh
+scripts/*.py
+!scripts/seed_db.py
+!scripts/check-migrations.sh
+!scripts/db-backup.sh
+!scripts/db-restore.sh
+
+# Monitoring (local)
+.monitoring
+.prometheus
+.grafana
+
+# Local overrides
+.local
+.override

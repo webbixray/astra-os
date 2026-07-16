@@ -47,7 +47,7 @@ services:
     environment:
       ENVIRONMENT: production
       DATABASE_URL: postgresql+asyncpg://astra:${POSTGRES_PASSWORD:?}@postgres:5432/astra
-      REDIS_URL: redis://redis:6379/0
+      REDIS_URL: redis://:${REDIS_PASSWORD:?must be set}@redis:6379/0
       TEMPORAL_HOST: temporal:7233
       SECRET_KEY: ${SECRET_KEY:?must be set}
       CORS_ORIGINS: https://${DOMAIN:?must be set}
@@ -73,6 +73,15 @@ services:
         limits:
           memory: 1G
           cpus: "2.0"
+    # Production hardening
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/cache
+    user: "65532:65532"
+    entrypoint: ["python", "entrypoint.py"]
 
   web:
     build:
@@ -88,7 +97,7 @@ services:
     expose:
       - "3000"
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000"]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/health"]
       interval: 15s
       timeout: 5s
       start_period: 10s
@@ -103,6 +112,15 @@ services:
         limits:
           memory: 512M
           cpus: "1.0"
+    # Production hardening
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/cache
+      - /app/.next/cache
+    user: "1001:1001"
 
   nginx:
     image: nginx:1.27-alpine

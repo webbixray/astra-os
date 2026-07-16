@@ -1,0 +1,122 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":semanticCommitTypeAll(chore)",
+    ":enableVulnerabilityAlertsWithLabel(security)",
+    ":prConcurrentLimit10",
+    ":prHourlyLimit4",
+    ":rebaseStalePrs",
+    ":timezone(UTC)"
+  ],
+  "labels": ["dependencies", "renovate"],
+  "packageRules": [
+    {
+      "matchPackageNames": ["fastapi", "sqlalchemy", "pydantic", "uvicorn", "gunicorn"],
+      "groupName": "python-core-framework",
+      "allowedVersions": "<3.0.0"
+    },
+    {
+      "matchPackageNames": ["redis", "asyncpg", "alembic", "httpx"],
+      "groupName": "python-database-http",
+      "updateTypes": ["minor", "patch"]
+    },
+    {
+      "matchPackageNames": ["pytest*", "ruff", "mypy", "bandit", "pre-commit"],
+      "groupName": "python-dev-tools",
+      "updateTypes": ["minor", "patch"],
+      "schedule": ["after 10pm on monday"]
+    },
+    {
+      "matchPackageNames": ["next", "react", "react-dom", "@tanstack/react-query"],
+      "groupName": "nextjs-core",
+      "allowedVersions": "<16.0.0"
+    },
+    {
+      "matchPackageNames": ["@radix-ui/*", "lucide-react", "tailwindcss", "@tailwindcss/postcss"],
+      "groupName": "ui-dependencies",
+      "updateTypes": ["minor", "patch"]
+    },
+    {
+      "matchPackageNames": ["typescript", "@types/*", "eslint*", "prettier*"],
+      "groupName": "typescript-tooling",
+      "updateTypes": ["minor", "patch"]
+    },
+    {
+      "matchPackageNames": ["docker", "gcr.io/distroless/*", "node", "python"],
+      "groupName": "base-images",
+      "schedule": ["after 10pm on tuesday"],
+      "updateTypes": ["minor", "patch"]
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "github-actions",
+      "schedule": ["after 10pm on wednesday"]
+    },
+    {
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["postgres", "redis", "nginx", "temporalio/*"],
+      "groupName": "infrastructure-images",
+      "schedule": ["after 10pm on thursday"]
+    }
+  ],
+  "pip": {
+    "enabled": true,
+    "managerFilePatterns": ["/**/pyproject.toml", "/**/requirements*.txt"]
+  },
+  "npm": {
+    "enabled": true,
+    "managerFilePatterns": ["**/package.json", "**/pnpm-lock.yaml"]
+  },
+  "docker": {
+    "enabled": true,
+    "managerFilePatterns": ["**/Dockerfile*", "**/docker-compose*.yml"]
+  },
+  "github-actions": {
+    "enabled": true,
+    "managerFilePatterns": [".github/workflows/**/*.yml", ".github/workflows/**/*.yaml"]
+  },
+  "regexManagers": [
+    {
+      "fileMatch": ["**/Dockerfile*"],
+      "matchStrings": [
+        "FROM (?<depName>.*):(?<currentValue>.*)"
+      ],
+      "datasourceTemplate": "docker"
+    }
+  ],
+  "prCreation": "immediate",
+  "prHourlyLimit": 4,
+  "prConcurrentLimit": 10,
+  "schedule": ["after 6am on monday", "after 6am on wednesday", "after 6am on friday"],
+  "timezone": "UTC",
+  "automerge": false,
+  "automergeType": "pr",
+  "requireStatusChecks": "all",
+  "ignoreDeps": [
+    "python@3.13",
+    "node@21"
+  ],
+  "separateMajorMinor": true,
+  "major": {
+    "prCreation": "deferred",
+    "automerge": false
+  },
+  "minor": {
+    "automerge": false
+  },
+  "patch": {
+    "automerge": false
+  },
+  "commitMessagePrefix": "chore(deps)",
+  "commitMessageAction": "upgrade",
+  "commitMessageTopic": "{{depName}}",
+  "commitMessageExtra": "to {{newVersion}}",
+  "prTitle": "chore(deps): upgrade {{depName}} to {{newVersion}}",
+  "prBody": "This PR upgrades {{depName}} from {{currentVersion}} to {{newVersion}}.\n\n---\n\n### Checklist\n- [ ] All tests pass\n- [ ] No breaking changes in release notes\n- [ ] Dependabot/renovate config reviewed\n\n### Release Notes\n{{#if releaseNotesUrl}}[Release Notes]({{releaseNotesUrl}}){{/if}}",
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": ["security", "vulnerability"],
+    "automerge": false
+  }
+}

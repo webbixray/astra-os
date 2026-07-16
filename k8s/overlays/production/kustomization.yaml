@@ -4,7 +4,15 @@ kind: Kustomization
 namespace: astra
 
 resources:
-  - ../../base
+  - ../../namespace.yaml
+  - ../../postgres-statefulset.yaml
+  - ../../redis-deployment.yaml
+  - ../../api-deployment.yaml
+  - ../../web-deployment.yaml
+  - ../../temporal-deployment.yaml
+  - ../../worker-deployment.yaml
+  - ../../ingress.yaml
+  - ../../hpa.yaml
 
 commonLabels:
   environment: production
