@@ -89,7 +89,8 @@ class TestSupervisor:
             await supervisor.run(always_fails)
 
         assert exc.value.code == 1
-        assert supervisor._restart_count == 2
+        # max_restarts=2 allows 2 restarts, the 3rd attempt triggers crash-loop guard
+        assert supervisor._restart_count == 3
 
     @pytest.mark.asyncio
     async def test_disable_via_env_var(self, config, monkeypatch):

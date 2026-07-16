@@ -139,9 +139,11 @@ class Email:
     _PATTERN = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
 
     def __post_init__(self) -> None:
-        if not self._PATTERN.match(self.value):
+        # Strip whitespace first, then validate
+        stripped = self.value.strip()
+        if not self._PATTERN.match(stripped):
             raise ValueError(f"Invalid email address: {self.value}")
-        object.__setattr__(self, "value", self.value.lower().strip())
+        object.__setattr__(self, "value", stripped.lower())
 
     @property
     def local(self) -> str:

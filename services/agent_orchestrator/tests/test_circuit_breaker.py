@@ -292,7 +292,7 @@ class TestFactoryFunctions:
     def test_create_circuit_breaker_with_exclude_exceptions(self):
         """create_circuit_breaker should support exclude_exceptions."""
         cb = create_circuit_breaker(
-            "custom",
+            "custom_exclude",
             exclude_exceptions=(ValueError, KeyError),
         )
 

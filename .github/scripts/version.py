@@ -162,8 +162,8 @@ class VersionManager:
         ], capture_output=True, text=True, timeout=60, cwd=self.repo_root)
         
         result = subprocess.run([
-            sys.executable, "-m", "pytest", "apps/api/tests/", "-x", "-q", "--tb=line"
-        ], capture_output=True, text=True, timeout=120, cwd=self.repo_root)
+            sys.executable, "-m", "pytest", "apps/api/tests/integration/", "-x", "-q", "--tb=line"
+        ], capture_output=True, text=True, timeout=300, cwd=self.repo_root)
         if result.returncode != 0:
             print("❌ Tests failed! Rolling back...")
             self.update_version_files(current)

@@ -20,11 +20,13 @@ from dataclasses import dataclass
 from typing import Any
 from uuid import UUID
 
-from apps.api.app.domain.entities.governance.autonomy import (
+from app.domain.entities.governance.autonomy import (
     AutonomyConfig,
     AutonomyLevel,
     get_action_risk_level,
 )
+
+# Import logic already works since apps.api is installed in editable mode as `app`
 
 logger = logging.getLogger(__name__)
 
