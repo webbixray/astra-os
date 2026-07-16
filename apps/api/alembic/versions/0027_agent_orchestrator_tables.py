@@ -8,7 +8,8 @@ Create Date: 2026-07-12
 from collections.abc import Sequence
 
 import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import JSONB, UUID, VECTOR
+from pgvector.sqlalchemy import Vector
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 
 from alembic import op
 
@@ -37,10 +38,10 @@ def upgrade() -> None:
         sa.Column("key", sa.String(500), nullable=False),
         sa.Column("value", JSONB, nullable=False, server_default="{}"),
         sa.Column(
-            "embedding",
-            VECTOR(1536),
-            nullable=True,
-        ),
+                    "embedding",
+                    Vector(1536),
+                    nullable=True,
+                ),
         sa.Column(
             "importance",
             sa.Float,

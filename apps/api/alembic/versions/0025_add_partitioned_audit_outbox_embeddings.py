@@ -9,6 +9,7 @@ from collections.abc import Sequence
 from datetime import date
 
 import sqlalchemy as sa
+from pgvector.sqlalchemy import Vector
 from sqlalchemy.dialects.postgresql import UUID
 
 from alembic import op
@@ -113,7 +114,7 @@ def upgrade() -> None:
             sa.Column("source_type", sa.String(50), nullable=False),
             sa.Column("source_id", UUID(as_uuid=True), nullable=False),
             sa.Column("content", sa.Text, nullable=False),
-            sa.Column("embedding", sa.dialects.postgresql.VECTOR(1536), nullable=True),
+            sa.Column("embedding", Vector(1536), nullable=True),
             sa.Column("metadata", sa.dialects.postgresql.JSONB, nullable=False, server_default="{}"),
             sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         )
