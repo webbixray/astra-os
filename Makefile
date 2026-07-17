@@ -119,6 +119,55 @@ docker-down: ## Stop all Docker services
 docker-build: ## Build Docker images
 	@docker compose build
 
+# ============================================
+# Production Docker
+# ============================================
+
+docker-build-prod: ## Build production Docker images
+	@docker compose -f docker-compose.prod.yml build
+
+docker-up-prod: ## Start production services (requires .env.prod)
+	@docker compose -f docker-compose.prod.yml up -d
+
+docker-down-prod: ## Stop production services
+	@docker compose -f docker-compose.prod.yml down
+
+docker-logs-prod: ## View production logs
+	@docker compose -f docker-compose.prod.yml logs -f
+
+docker-ps-prod: ## Show production containers
+	@docker compose -f docker-compose.prod.yml ps
+
+docker-test-prod: ## Test production Docker build (build + smoke test)
+	@echo "Building production images..."
+	@docker compose -f docker-compose.prod.yml build
+	@echo "Starting services for smoke test..."
+	@docker compose -f docker-compose.prod.yml up -d postgres redis
+	@echo "Waiting for infrastructure..."
+	@sleep 10
+	@docker compose -f docker-compose.prod.yml up -d api
+	@echo "Waiting for API health check..."
+	@for i in $$(seq 1 30); do \
+		if docker compose -f docker-compose.prod.yml exec -T api curl -sf http://localhost:8000/api/v1/health/live >/dev/null 2>&1; then \
+			echo "API is healthy!"; \
+			break; \
+		fi; \
+		echo "Waiting for API... ($$i/30)"; \
+		sleep 2; \
+	done
+	@docker compose -f docker-compose.prod.yml up -d web
+	@echo "Waiting for Web health check..."
+	@for i in $$(seq 1 20); do \
+		if docker compose -f docker-compose.prod.yml exec -T web wget --spider -q http://localhost:3000/api/health >/dev/null 2>&1; then \
+			echo "Web is healthy!"; \
+			break; \
+		fi; \
+		echo "Waiting for Web... ($$i/20)"; \
+		sleep 2; \
+	done
+	@echo "=== Smoke test passed! ==="
+	@docker compose -f docker-compose.prod.yml down
+
 docker-logs: ## View Docker logs
 	@docker compose logs -f
 
