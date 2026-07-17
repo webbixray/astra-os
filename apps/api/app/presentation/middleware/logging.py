@@ -11,7 +11,7 @@ logger = logging.getLogger("astra.api")
 
 class LoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        request_id = str(uuid.uuid4())[:8]
+        request_id = str(uuid.uuid4())
         request.state.request_id = request_id
         start = time.time()
         response = await call_next(request)
@@ -23,6 +23,9 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             "status": response.status_code,
             "duration_ms": round(duration_ms, 2),
         }
-        logger.info(json.dumps(log_data))
+        if response.status_code >= 500:
+            logger.error(json.dumps(log_data))
+        else:
+            logger.info(json.dumps(log_data))
         response.headers["X-Request-ID"] = request_id
         return response

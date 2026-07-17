@@ -1,7 +1,7 @@
 /* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
-/* eslint-disable */
+ 
 export type app__presentation__routes__campaigns__campaign_routes__CreateCampaignRequest = {
     name: string;
     description?: (string | null);

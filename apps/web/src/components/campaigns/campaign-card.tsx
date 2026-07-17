@@ -4,10 +4,9 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Progress } from '@/components/ui/progress';
+import { Progress } from '@/components/progress';
 import { StatusBadge } from '@/components/status-indicator';
 import { EmptyCampaignState } from '@/components/empty-state';
 import { cn } from '@/lib/utils';
@@ -35,11 +34,9 @@ interface CampaignCardProps {
   className?: string;
 }
 
-export function CampaignCard({ campaign, onEdit, onDelete, onDuplicate, className }: CampaignCardProps) {
+export function CampaignCard({ campaign, onEdit, className }: CampaignCardProps) {
   const roi = campaign.spent > 0 ? ((campaign.revenue - campaign.spent) / campaign.spent) * 100 : 0;
   const ctr = campaign.impressions > 0 ? (campaign.clicks / campaign.impressions) * 100 : 0;
-  const conversionRate = campaign.clicks > 0 ? (campaign.conversions / campaign.clicks) * 100 : 0;
-
   return (
     <Card className={cn('transition-shadow hover:shadow-md', className)}>
       <CardHeader className="pb-3">
@@ -52,7 +49,7 @@ export function CampaignCard({ campaign, onEdit, onDelete, onDuplicate, classNam
               <span>{new Date(campaign.startDate).toLocaleDateString()}</span>
             </CardDescription>
           </div>
-          <StatusBadge status={campaign.status} />
+          <StatusBadge status={campaign.status as 'active' | 'inactive' | 'pending' | 'error' | 'success' | 'warning' | 'info'} />
         </div>
       </CardHeader>
       <CardContent className="space-y-4">

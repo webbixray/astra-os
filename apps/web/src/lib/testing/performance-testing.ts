@@ -46,11 +46,11 @@ export class PerformanceTester {
     const result: PerformanceTestResult = {
       name,
       average: timings.reduce((a, b) => a + b, 0) / timings.length,
-      median: timings[Math.floor(timings.length / 2)],
-      p95: timings[Math.floor(timings.length * 0.95)],
-      p99: timings[Math.floor(timings.length * 0.99)],
-      min: timings[0],
-      max: timings[timings.length - 1],
+      median: timings[Math.floor(timings.length / 2)]!,
+      p95: timings[Math.floor(timings.length * 0.95)]!,
+      p99: timings[Math.floor(timings.length * 0.99)]!,
+      min: timings[0]!,
+      max: timings[timings.length - 1]!,
       iterations: this.config.iterations,
       operationsPerSecond: 1000 / (timings.reduce((a, b) => a + b, 0) / timings.length),
     };

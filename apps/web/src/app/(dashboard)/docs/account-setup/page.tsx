@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Check, CheckCircle, ChevronRight, Code, Terminal, Shield, Zap, AlertCircle, Sparkles } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Check, CheckCircle, ChevronRight, Sparkles, Users, Zap } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
@@ -63,16 +62,6 @@ const TEAM_INVITE_STEPS = [
 
 export default function AccountSetupPage() {
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
-
-  const toggleStep = (step: number) => {
-    const newSet = new Set(completedSteps);
-    if (newSet.has(step)) {
-      newSet.delete(step);
-    } else {
-      newSet.add(step);
-    }
-    setCompletedSteps(newSet);
-  };
 
   const progress = (completedSteps.size / SETUP_STEPS.length) * 100;
 
@@ -162,7 +151,7 @@ export default function AccountSetupPage() {
                         Completed
                       </span>
                     )}
-                  </h3>
+                    </div>
                   <p className="text-muted-foreground mb-4">{step.description}</p>
                   <Link
                     href={step.href}

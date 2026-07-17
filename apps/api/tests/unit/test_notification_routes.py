@@ -124,9 +124,16 @@ class TestNotificationHubRoutes:
         mock_service.mark_read = AsyncMock()
         app.dependency_overrides[get_service] = lambda: mock_service
 
+        org_id = uuid4()
+        mock_service.notif_repo = MagicMock()
+        mock_notification = MagicMock()
+        mock_notification.organization_id = org_id
+        mock_service.notif_repo.find_by_id = AsyncMock(return_value=mock_notification)
+
         csrf_headers = _setup_csrf(test_client)
         response = await test_client.patch(
             f"{self.endpoint_prefix}/notifications/{uuid4()}/read",
+            params={"organization_id": str(org_id)},
             headers=csrf_headers,
         )
 
@@ -195,9 +202,16 @@ class TestNotificationHubRoutes:
         mock_service.archive_notification = AsyncMock()
         app.dependency_overrides[get_service] = lambda: mock_service
 
+        org_id = uuid4()
+        mock_service.notif_repo = MagicMock()
+        mock_notification = MagicMock()
+        mock_notification.organization_id = org_id
+        mock_service.notif_repo.find_by_id = AsyncMock(return_value=mock_notification)
+
         csrf_headers = _setup_csrf(test_client)
         response = await test_client.patch(
             f"{self.endpoint_prefix}/notifications/{uuid4()}/archive",
+            params={"organization_id": str(org_id)},
             headers=csrf_headers,
         )
 

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Beaker, Plus, Play, Trophy, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
+import { LegacySelect as Select } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 
 interface ABTest {
@@ -60,7 +60,7 @@ export function ABTestSection({
   startABTest,
   determineWinner,
 }: ABTestSectionProps) {
-  const [newTestId, setNewTestId] = useState<string | null>(null);
+  const [_newTestId, setNewTestId] = useState<string | null>(null);
 
   return (
     <section className="rounded-lg border bg-card">

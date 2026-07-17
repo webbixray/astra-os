@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Loader2, Plus, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
+import { LegacySelect as Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import {
   useAutomationRules, useCreateAutomationRule, useToggleAutomationRule,

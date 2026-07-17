@@ -1,6 +1,7 @@
 import json
 import logging
 import logging.config
+import os
 import sys
 from datetime import UTC, datetime
 
@@ -52,7 +53,7 @@ CONFIG: dict = {
 
 def configure_logging(*, json_format: bool | None = None) -> None:
     if json_format is None:
-        json_format = "--json-logs" in sys.argv or "JSON_LOGS" in __import__("os").environ
+        json_format = "--json-logs" in sys.argv or "JSON_LOGS" in os.environ
 
     handler_name = "console_json" if json_format else "console_simple"
     config = {

@@ -15,7 +15,7 @@ class EmailEventModel(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     campaign_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
     event_type: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
-    recipient_email: Mapped[str] = mapped_column(String(255), nullable=False)
+    recipient_email: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     event_metadata: Mapped[dict] = mapped_column("metadata", JSONB, default=dict, nullable=False)
     occurred_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False

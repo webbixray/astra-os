@@ -2,9 +2,8 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select } from '@/components/ui/select';
+import { LegacySelect as Select } from '@/components/ui/select';
 import { useToast } from '@/components/ui/toast';
 import { config, type AstraConfig } from '@/lib/config';
 

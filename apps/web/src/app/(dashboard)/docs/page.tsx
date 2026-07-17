@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ChevronRight, Zap, Code, Shield, ExternalLink, Terminal, AlertCircle, CheckCircle, Zap as ZapIcon, Database, Globe, Users, Search, ChevronRight as ChevronRightIcon, ChevronLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Zap, Code, Shield, ExternalLink, Terminal, Users, ChevronRight as ChevronRightIcon, BookOpen } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
@@ -150,6 +149,7 @@ const CATEGORIES = [
 export default function DocsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const filteredSections = DOC_SECTIONS.filter((section) => {
     const matchesSearch = section.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -159,17 +159,18 @@ export default function DocsPage() {
   });
 
   const groupedSections = filteredSections.reduce((acc, section) => {
-    if (!acc[section.category]) {
-      acc[section.category] = [];
+    const key = section.category;
+    if (!acc[key]) {
+      acc[key] = [];
     }
-    acc[section.category].push(section);
+    acc[key].push(section);
     return acc;
   }, {} as Record<string, DocSection[]>);
 
   return (
     <div className="flex h-screen bg-background">
       {/* Sidebar */}
-      <aside className="fixed left-0 top-0 z-40 h-screen w-72 bg-card border-r transition-all duration-300 lg:relative lg:translate-x-0">
+      <aside className={cn("fixed left-0 top-0 z-40 h-screen w-72 bg-card border-r transition-all duration-300 lg:relative lg:translate-x-0", !sidebarOpen && "-translate-x-full lg:translate-x-0")}>
         <div className="flex h-full flex-col">
           <div className="flex h-16 items-center justify-between border-b px-4">
             <Link href="/docs" className="flex items-center gap-2">
@@ -181,11 +182,10 @@ export default function DocsPage() {
           <div className="flex-1 overflow-y-auto p-4">
             <div className="mb-4">
               <Input
-                placeholder="Search docs..."
+                placeholder="Search documentation..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full"
-                placeholder="Search documentation..."
               />
             </div>
 
@@ -207,8 +207,7 @@ export default function DocsPage() {
             </div>
 
             <div className="space-y-1">
-              {Object.entries(groupedSections).map(([category, sections]) => (
-                sections.length > 0 && (
+              {Object.entries(groupedSections).filter(([, sections]) => sections.length > 0).map(([category, sections]) => (
                   <div key={category} className="space-y-1">
                     <h3 className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       {CATEGORIES.find(c => c.id === category)?.label}
@@ -268,8 +267,7 @@ export default function DocsPage() {
           </div>
 
           <div className="space-y-8">
-            {Object.entries(groupedSections).map(([category, sections]) => (
-              sections.length > 0 && (
+            {Object.entries(groupedSections).filter(([, sections]) => sections.length > 0).map(([category, sections]) => (
                 <div key={category}>
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl font-semibold capitalize">{CATEGORIES.find(c => c.id === category)?.label}</h2>
@@ -344,7 +342,6 @@ export default function DocsPage() {
               </div>
             </div>
           </div>
-        </div>
       </main>
     </div>
   );

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Users, UserPlus, Trash2, Shield, Mail, X, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
+import { LegacySelect as Select } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import {
   useMembers,

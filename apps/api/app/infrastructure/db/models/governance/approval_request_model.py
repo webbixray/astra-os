@@ -29,7 +29,7 @@ class ApprovalRequestModel(Base):
     triggered_by_user_id: Mapped[str] = mapped_column(UUID(as_uuid=False), nullable=True)
 
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending", index=True)
-    assigned_to: Mapped[str] = mapped_column(UUID(as_uuid=False), nullable=True)
+    assigned_to: Mapped[str] = mapped_column(UUID(as_uuid=False), nullable=True, index=True)
     assigned_role: Mapped[str] = mapped_column(String(50), nullable=True, default="")
 
     timeout_at: Mapped[str] = mapped_column(String(30), nullable=True)

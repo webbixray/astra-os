@@ -19,7 +19,7 @@ from app.domain.entities.design_partner import (
     SupportTicketStatus,
 )
 from app.domain.services.design_partner_service import DesignPartnerService
-from app.infrastructure.db.session import get_db
+from app.presentation.dependencies import get_db
 from app.presentation.middleware.auth import require_user_id
 
 router = APIRouter(prefix="/design-partners", tags=["design-partners"])

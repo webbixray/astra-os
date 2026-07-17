@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { z } from 'zod';
-import { useFormValidation } from './validation';
+import { useFormValidation, getFieldError } from './validation';
 
 const testSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -10,66 +10,82 @@ const testSchema = z.object({
 });
 
 describe('useFormValidation', () => {
-  it('returns valid for correct data', () => {
-    const { result } = renderHook(() => useFormValidation(testSchema));
-    act(() => {
-      const valid = result.current.validate({ name: 'Alice', email: 'alice@test.com', age: 25 });
-      expect(valid).toBe(true);
-    });
-    expect(result.current.errors).toEqual({});
+  it('returns formData with initial values', () => {
+    const { result } = renderHook(() => useFormValidation(testSchema, {
+      name: 'Alice',
+      email: 'alice@test.com',
+      age: 25,
+    }));
+    expect(result.current.formData.name).toBe('Alice');
+    expect(result.current.formData.email).toBe('alice@test.com');
+    expect(result.current.formData.age).toBe(25);
+    expect(result.current.errors).toEqual([]);
   });
 
-  it('returns invalid and sets errors for wrong data', () => {
-    const { result } = renderHook(() => useFormValidation(testSchema));
+  it('sets errors on invalid data when handleSubmit is called', () => {
+    const { result } = renderHook(() => useFormValidation(testSchema, {
+      name: '',
+      email: 'not-an-email',
+      age: 15,
+    }));
+
+    const onSubmit = vi.fn();
     act(() => {
-      const valid = result.current.validate({ name: '', email: 'not-an-email', age: 15 });
-      expect(valid).toBe(false);
+      result.current.handleSubmit(onSubmit)({
+        preventDefault: vi.fn(),
+      } as unknown as React.FormEvent);
     });
-    expect(result.current.errors.name).toBe('Name is required');
-    expect(result.current.errors.email).toBe('Invalid email');
-    expect(result.current.errors.age).toBe('Must be 18 or older');
+
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(getFieldError(result.current.errors, 'name')).toBe('Name is required');
+    expect(getFieldError(result.current.errors, 'email')).toBe('Invalid email');
+    expect(getFieldError(result.current.errors, 'age')).toBe('Must be 18 or older');
   });
 
-  it('clears errors on subsequent valid validation', () => {
-    const { result } = renderHook(() => useFormValidation(testSchema));
-    act(() => {
-      result.current.validate({ name: '', email: '', age: 0 });
-    });
-    expect(result.current.errors.name).toBeDefined();
+  it('calls onSubmit with valid data', () => {
+    const { result } = renderHook(() => useFormValidation(testSchema, {
+      name: 'Bob',
+      email: 'bob@test.com',
+      age: 30,
+    }));
 
+    const onSubmit = vi.fn();
     act(() => {
-      const valid = result.current.validate({ name: 'Bob', email: 'bob@test.com', age: 30 });
-      expect(valid).toBe(true);
+      result.current.handleSubmit(onSubmit)({
+        preventDefault: vi.fn(),
+      } as unknown as React.FormEvent);
     });
-    expect(result.current.errors).toEqual({});
+
+    expect(onSubmit).toHaveBeenCalledWith({
+      name: 'Bob',
+      email: 'bob@test.com',
+      age: 30,
+    });
   });
 
-  it('clears all errors with clearErrors', () => {
-    const { result } = renderHook(() => useFormValidation(testSchema));
+  it('clears field error when handleChange is called for that field', () => {
+    const { result } = renderHook(() => useFormValidation(testSchema, {
+      name: '',
+      email: 'bad',
+      age: 0,
+    }));
+
+    const onSubmit = vi.fn();
     act(() => {
-      result.current.validate({ name: '', email: '', age: 0 });
+      result.current.handleSubmit(onSubmit)({
+        preventDefault: vi.fn(),
+      } as unknown as React.FormEvent);
     });
-    expect(Object.keys(result.current.errors).length).toBeGreaterThan(0);
+
+    expect(getFieldError(result.current.errors, 'name')).toBe('Name is required');
+    expect(getFieldError(result.current.errors, 'email')).toBeDefined();
 
     act(() => {
-      result.current.clearErrors();
+      result.current.handleChange('name', 'Alice');
     });
-    expect(result.current.errors).toEqual({});
-  });
 
-  it('clears a single field error with clearFieldError', () => {
-    const { result } = renderHook(() => useFormValidation(testSchema));
-    act(() => {
-      result.current.validate({ name: '', email: 'bad', age: 0 });
-    });
-    expect(result.current.errors.name).toBeDefined();
-    expect(result.current.errors.email).toBeDefined();
-
-    act(() => {
-      result.current.clearFieldError('name');
-    });
-    expect(result.current.errors.name).toBeUndefined();
-    expect(result.current.errors.email).toBeDefined();
+    expect(getFieldError(result.current.errors, 'name')).toBeUndefined();
+    expect(getFieldError(result.current.errors, 'email')).toBeDefined();
   });
 
   it('handles deeply nested paths', () => {
@@ -80,22 +96,18 @@ describe('useFormValidation', () => {
         }),
       }),
     });
-    const { result } = renderHook(() => useFormValidation(nestedSchema));
+    const { result } = renderHook(() => useFormValidation(nestedSchema, {
+      user: { address: { city: '' } },
+    }));
+
+    const onSubmit = vi.fn();
     act(() => {
-      const valid = result.current.validate({ user: { address: { city: '' } } });
-      expect(valid).toBe(false);
+      result.current.handleSubmit(onSubmit)({
+        preventDefault: vi.fn(),
+      } as unknown as React.FormEvent);
     });
-    expect(result.current.errors['user.address.city']).toBe('City is required');
-  });
 
-  it('stays referentially stable across renders', () => {
-    const { result, rerender } = renderHook(() => useFormValidation(testSchema));
-    const { validate, clearErrors, clearFieldError } = result.current;
-
-    rerender();
-
-    expect(result.current.validate).toBe(validate);
-    expect(result.current.clearErrors).toBe(clearErrors);
-    expect(result.current.clearFieldError).toBe(clearFieldError);
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(getFieldError(result.current.errors, 'user.address.city')).toBe('City is required');
   });
 });

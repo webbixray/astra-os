@@ -201,7 +201,7 @@ class CrossCampaignLearner:
 
             target = target_nodes[0]
             target_name = target.get("name", "Unknown")
-            target_props = target.get("properties", {})
+            target.get("properties", {})
 
             # Find related campaigns
             related = await self._ks.search(

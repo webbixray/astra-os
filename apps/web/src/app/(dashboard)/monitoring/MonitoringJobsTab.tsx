@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Loader2, Plus, RotateCcw, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
+import { LegacySelect as Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useJobs, useCreateJob, useRetryJob, useJobSummary } from '@/features/monitoring/api/useMonitoring';
 import { JOB_STATUS_COLORS } from '@/lib/constants';
@@ -79,7 +79,7 @@ export function MonitoringJobsTab({
             <Button size="sm" disabled={createJob.isPending || !newJob.job_type}
               onClick={async () => {
                 let payload = {};
-                try { payload = JSON.parse(newJob.payload || '{}'); } catch { }
+                try { payload = JSON.parse(newJob.payload || '{}'); } catch { /* noop */ }
                 await createJob.mutateAsync({ job_type: newJob.job_type, payload });
                 setShowCreateJob(false);
                 setNewJob({ job_type: '', payload: '' });

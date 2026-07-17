@@ -65,7 +65,7 @@ export class ApiTestClient {
     return this.request('DELETE', url, options);
   }
 
-  private async request(method: string, url: string, options?: RequestInit): Promise<Response> {
+  async request(method: string, url: string, options?: RequestInit): Promise<Response> {
     const startTime = Date.now();
     const fullUrl = `${this.config.baseUrl}${url}`;
 

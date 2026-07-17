@@ -75,7 +75,6 @@ export function useAIStream() {
         // localStorage corrupted, use fallback
       }
     }
-    const token = typeof window !== 'undefined' ? localStorage.getItem('astra_access_token') : null;
     const prevMessages = messagesRef.current
       .filter((m) => m.id !== 'welcome' && m.id !== assistantId)
       .slice(-10)
@@ -86,8 +85,8 @@ export function useAIStream() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
+        credentials: 'include',
         body: JSON.stringify({
           organization_id: orgId,
           message: content,

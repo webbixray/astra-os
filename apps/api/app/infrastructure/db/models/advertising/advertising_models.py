@@ -21,7 +21,7 @@ class AdAccountModel(Base):
     )
     platform = Column(String(50), nullable=False)
     account_name = Column(String(255), nullable=False)
-    platform_account_id = Column(String(255), nullable=False)
+    platform_account_id = Column(String(255), nullable=False, index=True)
     status = Column(String(50), default="disconnected")
     currency = Column(String(10), default="USD")
     timezone = Column(String(50), default="America/New_York")
@@ -76,7 +76,7 @@ class AdCreativeModel(Base):
         index=True,
     )
     ad_campaign_id = Column(
-        UUID(as_uuid=True), ForeignKey("ad_campaigns.id", ondelete="SET NULL"), nullable=True
+        UUID(as_uuid=True), ForeignKey("ad_campaigns.id", ondelete="SET NULL"), nullable=True, index=True
     )
     name = Column(String(255), nullable=False)
     type = Column(String(50), default="image")
@@ -158,7 +158,7 @@ class AdInsightModel(Base):
         index=True,
     )
     ad_account_id = Column(
-        UUID(as_uuid=True), ForeignKey("ad_accounts.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True), ForeignKey("ad_accounts.id", ondelete="CASCADE"), nullable=False, index=True
     )
     ad_campaign_id = Column(
         UUID(as_uuid=True), ForeignKey("ad_campaigns.id", ondelete="CASCADE"), nullable=True

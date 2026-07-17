@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 vi.mock('@/lib/org', () => ({
@@ -67,14 +67,14 @@ describe('AnalyticsPage', () => {
     render(<AnalyticsPage />);
     await user.click(screen.getByText('Campaigns'));
     expect(screen.getByText('Summer Sale')).toBeInTheDocument();
-    expect(screen.getByText('233%')).toBeInTheDocument();
+    expect(screen.getByText('+233%')).toBeInTheDocument();
   });
 
   it('switches to platform ads tab', async () => {
     const user = userEvent.setup();
     render(<AnalyticsPage />);
     await user.click(screen.getByText('Platform Ads'));
-    expect(screen.getByText('2.50%')).toBeInTheDocument();
+    expect(screen.getByText('CTR: 2.50%')).toBeInTheDocument();
     expect(screen.getByText('google')).toBeInTheDocument();
   });
 

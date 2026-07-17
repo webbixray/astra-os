@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { UseQueryResult, UseMutationResult } from '@tanstack/react-query';
+import { UseMutationResult } from '@tanstack/react-query';
 
 interface BudgetData {
   currency: string;
@@ -25,7 +25,7 @@ interface BudgetSectionProps {
   onThresholdChange: (v: string) => void;
   spendAmount: string;
   onSpendAmountChange: (v: string) => void;
-  setBudget: UseMutationResult<unknown, Error, { total_budget: number; alert_threshold: number }>;
+  setBudget: UseMutationResult<unknown, Error, { total_budget: number; currency?: string; alert_threshold?: number }>;
   recordSpend: UseMutationResult<unknown, Error, number>;
 }
 

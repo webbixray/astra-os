@@ -68,7 +68,7 @@ describe('WorkflowTemplatesPage', () => {
   it('shows category filter buttons', () => {
     render(<WorkflowTemplatesPage />);
     ['all', 'campaign', 'content', 'optimization', 'compliance'].forEach((c) => {
-      expect(screen.getByText(c)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: c })).toBeInTheDocument();
     });
   });
 

@@ -191,11 +191,11 @@ class TestWorkflowVersionService:
         await repo.save(sample_workflow)
         user_id = uuid4()
 
-        v1 = await service.create_version(sample_workflow, user_id, "v1")
+        await service.create_version(sample_workflow, user_id, "v1")
         # Modify workflow
         sample_workflow.add_node(WorkflowNode.create("a1", NodeType.ACTION, "New Action"))
         await repo.save(sample_workflow)
-        v2 = await service.create_version(sample_workflow, user_id, "v2")
+        await service.create_version(sample_workflow, user_id, "v2")
 
         # Restore v1
         restored = await service.restore_version(
@@ -212,10 +212,10 @@ class TestWorkflowVersionService:
         await repo.save(sample_workflow)
         user_id = uuid4()
 
-        v1 = await service.create_version(sample_workflow, user_id, "v1")
+        await service.create_version(sample_workflow, user_id, "v1")
         sample_workflow.add_node(WorkflowNode.create("a1", NodeType.ACTION, "Action 1"))
         await repo.save(sample_workflow)
-        v2 = await service.create_version(sample_workflow, user_id, "v2")
+        await service.create_version(sample_workflow, user_id, "v2")
 
         comparison = await service.compare_versions(sample_workflow.id, 1, 2)
 

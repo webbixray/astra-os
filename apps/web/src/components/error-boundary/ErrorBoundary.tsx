@@ -45,7 +45,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     }
   }
 
-  private handleRetry = () => {
+  protected handleRetry = () => {
     this.setState({ hasError: false, error: null, errorInfo: null });
   };
 
@@ -204,7 +204,8 @@ export function initErrorReporter() {
       // In production, send to Sentry, LogRocket, etc.
     },
     captureMessage: (message: string, level: 'info' | 'warning' | 'error' = 'error') => {
-      console[level](`[Error Reporter] ${message}`);
+      const logFn = level === 'info' ? console.info : level === 'warning' ? console.warn : console.error;
+      logFn(`[Error Reporter] ${message}`);
     },
   };
 }

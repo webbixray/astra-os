@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -36,8 +35,7 @@ interface QuickActionsMenuProps {
 }
 
 export function QuickActionsMenu({ open, onOpenChange, actions = defaultActions }: QuickActionsMenuProps) {
-  const router = useRouter();
-  const [search, setSearch] = useState('');
+  const [_search, _setSearch] = useState('');
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -57,7 +55,7 @@ export function QuickActionsMenu({ open, onOpenChange, actions = defaultActions 
   const groupedActions = actions.reduce(
     (acc, action) => {
       if (!acc[action.group]) acc[action.group] = [];
-      acc[action.group].push(action);
+      acc[action.group]!.push(action);
       return acc;
     },
     {} as Record<string, QuickAction[]>,

@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { ArrowLeft, Clock, History, Play, Settings, Workflow } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useWorkflow, useUpdateWorkflow, useExecuteWorkflow } from '@/features/workflows/api/useWorkflows';

@@ -1,204 +1,55 @@
-# Pre-commit hooks for Astra OS
-# Install: pip install pre-commit && pre-commit install
+---
+default_language_version:
+  python: python3.12
+  node: 20
 
 repos:
-  # Python code quality - use local hooks to avoid GitHub auth
-  - repo: local
+  # ---- Python ----
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.5.0
     hooks:
       - id: ruff
-        name: ruff
-        entry: ruff
-        language: system
-        types: [python]
-        args: [check, --fix, --exit-non-zero-on-fix]
-        exclude: apps/api/alembic/
-        pass_filenames: false
+        args: [--fix, --exit-non-zero-on-fix]
       - id: ruff-format
-        name: ruff-format
-        entry: ruff
-        language: system
-        types: [python]
-        args: [format]
-        exclude: apps/api/alembic/
-        pass_filenames: false
 
-  - repo: local
-    hooks:
-      - id: mypy
-        name: mypy
-        entry: mypy
-        language: system
-        types: [python]
-        args: [--strict]
-        pass_filenames: false
-
-  # Security
-  - repo: local
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.9
     hooks:
       - id: bandit
-        name: bandit
-        entry: bandit
-        language: system
-        types: [python]
-        args: [-r, --skip, B101,B601]
-        pass_filenames: false
+        args: [-c, pyproject.toml]
+        additional_dependencies: ["bandit[toml]"]
 
-      - id: trufflehog
-        name: trufflehog
-        entry: trufflehog
-        language: system
-        types: [text]
-        args: [git, file://., --only-verified]
-        pass_filenames: false
+  # ---- JavaScript / TypeScript ----
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v9.5.0
+    hooks:
+      - id: eslint
+        files: \.(ts|tsx)$
+        types: [file]
+        additional_dependencies:
+          - eslint@9.5.0
+          - typescript-eslint@8.0.1
+          - eslint-config-next@15.0.0
+          - eslint-plugin-react@7.35.0
+          - eslint-plugin-react-hooks@5.1.0-rc.0
+          - eslint-config-prettier@9.1.0
+          - '@eslint/eslintrc@3.1.0'
 
-      - id: pip-audit
-        name: pip-audit
-        entry: pip-audit
-        language: system
-        types: [python]
-        args: [--desc]
-        pass_filenames: false
-
-  # General
-  - repo: local
+  # ---- General ----
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
     hooks:
       - id: trailing-whitespace
-        name: trailing-whitespace
-        entry: trailing-whitespace-fixer
-        language: system
-        types: [text]
-        pass_filenames: false
       - id: end-of-file-fixer
-        name: end-of-file-fixer
-        entry: end-of-file-fixer
-        language: system
-        types: [text]
-        pass_filenames: false
       - id: check-yaml
-        name: check-yaml
-        entry: check-yaml
-        language: system
-        types: [yaml]
-        pass_filenames: false
-      - id: check-toml
-        name: check-toml
-        entry: check-toml
-        language: system
-        types: [toml]
-        pass_filenames: false
       - id: check-json
-        name: check-json
-        entry: check-json
-        language: system
-        types: [json]
-        pass_filenames: false
-      - id: check-merge-conflict
-        name: check-merge-conflict
-        entry: check-merge-conflict
-        language: system
-        types: [text]
-        pass_filenames: false
       - id: check-added-large-files
-        name: check-added-large-files
-        entry: check-added-large-files
-        language: system
-        types: [text]
-        args: [--maxkb=500]
-        pass_filenames: false
+        args: ['--maxkb=500']
+      - id: check-merge-conflict
+      - id: detect-private-key
 
-  # Commit message linting - use local to avoid GitHub
-  - repo: local
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v3.27.0
     hooks:
-      - id: commitlint
-        name: commitlint
-        entry: commitlint
-        language: system
+      - id: commitizen
         stages: [commit-msg]
-        pass_filenames: false
-
-  # Dockerfile linting
-  - repo: local
-    hooks:
-      - id: hadolint
-        name: hadolint
-        entry: hadolint
-        language: system
-        types: [dockerfile]
-        args: [--ignore, DL3008, --ignore, DL3009]
-        pass_filenames: false
-
-  # Markdown linting
-  - repo: local
-    hooks:
-      - id: markdownlint
-        name: markdownlint
-        entry: markdownlint
-        language: system
-        types: [markdown]
-        args: [--config, .markdownlint.json]
-        pass_filenames: false
-
-  # YAML linting
-  - repo: local
-    hooks:
-      - id: yamllint
-        name: yamllint
-        entry: yamllint
-        language: system
-        types: [yaml]
-        args: [-c, .yamllint.yaml]
-        pass_filenames: false
-
-  # Kubernetes manifests
-  - repo: local
-    hooks:
-      - id: kubelint
-        name: kubelint
-        entry: kubelint
-        language: system
-        types: [yaml]
-        args: [--strict]
-        exclude: k8s/
-        pass_filenames: false
-
-  # Terraform
-  - repo: local
-    hooks:
-      - id: terraform_fmt
-        name: terraform_fmt
-        entry: terraform
-        language: system
-        args: [fmt]
-        types: [terraform]
-        pass_filenames: false
-      - id: terraform_validate
-        name: terraform_validate
-        entry: terraform
-        language: system
-        args: [validate]
-        types: [terraform]
-        pass_filenames: false
-      - id: tflint
-        name: tflint
-        entry: tflint
-        language: system
-        types: [terraform]
-        pass_filenames: false
-      - id: checkov
-        name: checkov
-        entry: checkov
-        language: system
-        args: [--quiet]
-        types: [terraform]
-        pass_filenames: false
-
-  # Shell script linting
-  - repo: local
-    hooks:
-      - id: shellcheck
-        name: shellcheck
-        entry: shellcheck
-        language: system
-        types: [shell]
-        args: [-S, warning]
-        pass_filenames: false

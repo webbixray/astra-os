@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Select } from '@/components/ui/select';
+import { LegacySelect as Select } from '@/components/ui/select';
 import { api } from '@/lib/api';
 
 type ExportFormat = 'csv' | 'json' | 'xlsx';
@@ -59,9 +59,7 @@ export function DataExportImport() {
       const response = await fetch(
         `/api/v1/export/${exportType}?format=${exportFormat}`,
         {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('astra_access_token')}`,
-          },
+          credentials: 'include',
         }
       );
 

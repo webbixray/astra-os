@@ -12,6 +12,11 @@ export interface PerformanceEntry {
   duration: number;
 }
 
+interface LayoutShift extends PerformanceEntry {
+  hadRecentInput: boolean;
+  value: number;
+}
+
 class PerformanceMonitor {
   private metrics: PerformanceMetric[] = [];
   private marks: Map<string, number> = new Map();
@@ -149,8 +154,8 @@ class PerformanceMonitor {
     try {
       const observer = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
-          if (!(entry as LayoutShift).hadRecentInput) {
-            clsValue += (entry as LayoutShift).value;
+          if (!(entry as unknown as LayoutShift).hadRecentInput) {
+            clsValue += (entry as unknown as LayoutShift).value;
             this.record({
               name: 'cls',
               value: clsValue,
@@ -210,7 +215,7 @@ export function measureRender<T>(name: string, fn: () => T): T {
   }
 }
 
-export function measureEffect(name: string, fn: () => void | (() => void)): void | (() => void) {
+export function measureEffect(name: string, fn: () => undefined | (() => void)): undefined | (() => void) {
   const timer = performanceMonitor.timer(`effect:${name}`);
   const cleanup = fn();
   timer.stop();

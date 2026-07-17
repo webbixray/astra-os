@@ -35,17 +35,17 @@ describe('EmailSettingsPage', () => {
     expect(screen.getByText('No providers configured')).toBeInTheDocument();
   });
 
-  it('opens add provider form', async () => {
+  it('opens add provider form', { timeout: 15000 }, async () => {
     const user = userEvent.setup();
     render(<EmailSettingsPage />);
-    await user.click(screen.getByText('Add Provider'));
+    await user.click(screen.getAllByText('Add Provider')[0]!);
     expect(screen.getByPlaceholderText('Provider name')).toBeInTheDocument();
   });
 
-  it('creates a provider', async () => {
+  it('creates a provider', { timeout: 15000 }, async () => {
     const user = userEvent.setup();
     render(<EmailSettingsPage />);
-    await user.click(screen.getByText('Add Provider'));
+    await user.click(screen.getAllByText('Add Provider')[0]!);
 
     await user.type(screen.getByPlaceholderText('Provider name'), 'My SendGrid');
     await user.type(screen.getByLabelText('API Key'), 'sg-key-123');

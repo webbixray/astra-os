@@ -1,7 +1,7 @@
 /* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
-/* eslint-disable */
+ 
 export type BulkStatusRequest = {
     organization_id: string;
     campaign_ids: Array<string>;

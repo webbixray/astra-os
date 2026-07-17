@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
-"""
-Entrypoint script for Astra API container.
+"""Entrypoint script for Astra API container.
 Handles database migrations, health checks, and graceful startup.
 """
+import logging
 import os
+import subprocess
 import sys
 import time
-import subprocess
-import logging
-from typing import Optional
 
 logging.basicConfig(
     level=logging.INFO,
@@ -17,7 +15,7 @@ logging.basicConfig(
 logger = logging.getLogger("entrypoint")
 
 
-def run_command(cmd: list, env: Optional[dict] = None, check: bool = True) -> subprocess.CompletedProcess:
+def run_command(cmd: list, env: dict | None = None, check: bool = True) -> subprocess.CompletedProcess:
     """Run a command and return the result."""
     logger.info(f"Running: {' '.join(cmd)}")
     result = subprocess.run(cmd, env=env or os.environ, capture_output=True, text=True)
@@ -82,7 +80,7 @@ def run_migrations() -> bool:
     """Run database migrations."""
     logger.info("Running database migrations...")
     try:
-        result = run_command(["alembic", "upgrade", "head"])
+        run_command(["alembic", "upgrade", "head"])
         logger.info("Migrations completed successfully")
         return True
     except Exception as e:
@@ -133,8 +131,8 @@ def main():
         os.execvp(cmd[0], cmd)
     else:
         # Default: start the server
-        environment = os.getenv('ENVIRONMENT', 'development')
-        if environment == 'production':
+        environment = os.getenv("ENVIRONMENT", "development")
+        if environment == "production":
             logger.info("Starting gunicorn server (production)...")
             os.execvpe(
                 "gunicorn",

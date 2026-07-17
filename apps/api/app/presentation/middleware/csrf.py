@@ -74,7 +74,7 @@ class CSRFMiddleware(BaseHTTPMiddleware):
                 response.set_cookie(
                     key=self.cookie_name,
                     value=csrf_token,
-                    httponly=True,
+                    httponly=False,
                     samesite="lax",
                     secure=config.is_production,
                     max_age=7200,
@@ -107,7 +107,7 @@ class CSRFMiddleware(BaseHTTPMiddleware):
                 content={"success": False, "code": "csrf_error", "message": "CSRF token invalid"},
             )
 
-        if csrf_cookie != csrf_header:
+        if not hmac.compare_digest(csrf_cookie, csrf_header):
             logger.warning("CSRF validation failed: cookie/header mismatch (path=%s)", path)
             return JSONResponse(
                 status_code=403,

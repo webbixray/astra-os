@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api/client';
+import { api } from '@/lib/api';
 import type { ApprovalRule, ApprovalRequest } from '../types';
 
 /** List pending approval requests for an organization. */
@@ -13,13 +13,11 @@ export function usePendingApprovals(
   return useQuery<{ items: ApprovalRequest[]; total: number }>({
     queryKey: ['pending-approvals', organizationId, role],
     queryFn: async () => {
-      const params: Record<string, string> = { organization_id: organizationId };
-      if (role) params.role = role;
-      const { data } = await apiClient.get(
-        '/api/v1/governance/approval/requests/pending',
-        { params },
+      const params = new URLSearchParams({ organization_id: organizationId });
+      if (role) params.set('role', role);
+      return api.get<{ items: ApprovalRequest[]; total: number }>(
+        `/api/v1/governance/approval/requests/pending?${params.toString()}`,
       );
-      return data;
     },
     enabled: enabled && !!organizationId,
     refetchInterval: 30_000, // Refresh every 30s for real-time queue
@@ -34,11 +32,9 @@ export function useApprovalRules(
   return useQuery<{ items: ApprovalRule[]; total: number }>({
     queryKey: ['approval-rules', organizationId],
     queryFn: async () => {
-      const { data } = await apiClient.get(
-        '/api/v1/governance/approval/rules',
-        { params: { organization_id: organizationId } },
+      return api.get<{ items: ApprovalRule[]; total: number }>(
+        `/api/v1/governance/approval/rules?organization_id=${organizationId}`,
       );
-      return data;
     },
     enabled: enabled && !!organizationId,
   });
@@ -58,11 +54,10 @@ export function useDecideApproval() {
       action: 'approve' | 'reject';
       reason?: string;
     }) => {
-      const { data } = await apiClient.post(
+      return api.post<unknown>(
         `/api/v1/governance/approval/requests/${requestId}/decide`,
         { action, reason: reason || '' },
       );
-      return data;
     },
     onSuccess: () => {
       // Invalidate pending approvals to refresh the queue
@@ -75,11 +70,10 @@ export function useDecideApproval() {
 export function useEvaluateRules(organizationId: string) {
   return useMutation({
     mutationFn: async (context: Record<string, unknown>) => {
-      const { data } = await apiClient.post(
+      return api.post<unknown>(
         '/api/v1/governance/approval/evaluate',
         { organization_id: organizationId, context },
       );
-      return data;
     },
   });
 }

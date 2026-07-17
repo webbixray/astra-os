@@ -41,7 +41,7 @@ describe('CampaignsPage', () => {
     it('shows loading state', () => {
       mockUseCampaigns.mockReturnValue({ data: null, isLoading: true, isError: false });
       render(<CampaignsPage />);
-      expect(screen.getByText('Campaigns')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Campaigns' })).toBeInTheDocument();
     });
 
     it('shows error state', () => {
@@ -77,7 +77,7 @@ describe('CampaignsPage', () => {
       mockUseTemplates.mockReturnValue({ data: [], isError: false });
       render(<CampaignsPage />);
       await user.click(screen.getByText('Templates'));
-      expect(screen.getByText('No templates yet')).toBeInTheDocument();
+      expect(await screen.findByText('No templates yet')).toBeInTheDocument();
     });
 
     it('shows template error state', async () => {
@@ -104,7 +104,7 @@ describe('CampaignsPage', () => {
       mockUseTemplates.mockReturnValue({ data: [], isError: false });
       render(<CampaignsPage />);
       await user.click(screen.getByText('Templates'));
-      await user.click(screen.getByText('New Template'));
+      await user.click(screen.getByText('Create Template'));
       expect(screen.getByPlaceholderText('Template name')).toBeInTheDocument();
       expect(screen.getByText('Save Template')).toBeInTheDocument();
     });

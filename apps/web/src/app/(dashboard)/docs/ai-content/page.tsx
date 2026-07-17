@@ -1,9 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
-import { ChevronRight, Zap, Code, Shield, ExternalLink, Terminal, AlertCircle, CheckCircle, Zap as ZapIcon, Database, Globe, Users, ArrowRight, Code as CodeIcon, Sparkles, Brain, Settings, FileText, BarChart, Search, BookOpen } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ChevronRight, Zap, Code, ExternalLink, Users, Mail, FileText, Search, BookOpen } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
 interface DocSection {
@@ -15,7 +15,7 @@ interface DocSection {
   category: 'getting-started' | 'guides' | 'api' | 'advanced';
 }
 
-const AI_CONTENT_SECTIONS = [
+const AI_CONTENT_SECTIONS: DocSection[] = [
   {
     id: 'overview',
     title: 'AI Content Overview',
@@ -28,7 +28,7 @@ const AI_CONTENT_SECTIONS = [
     id: 'brand-voice',
     title: 'Brand Voice Setup',
     description: 'Configure your brand voice for consistent AI-generated content',
-    icon: <ZapIcon className="h-5 w-5" />,
+    icon: <Zap className="h-5 w-5" />,
     href: '/docs/ai-content/brand-voice',
     category: 'guides',
   },
@@ -84,7 +84,7 @@ const AI_CONTENT_SECTIONS = [
     id: 'landing-pages',
     title: 'Landing Page Copy',
     description: 'Generate high-converting landing page copy',
-    icon: <CodeIcon className="h-5 w-5" />,
+    icon: <Code className="h-5 w-5" />,
     href: '/docs/ai-content/landing-pages',
     category: 'guides',
   },
@@ -113,7 +113,7 @@ export default function AiContentPage() {
     if (!acc[section.category]) {
       acc[section.category] = [];
     }
-    acc[section.category].push(section);
+    acc[section.category]!.push(section);
     return acc;
   }, {} as Record<string, DocSection[]>);
 
@@ -132,11 +132,10 @@ export default function AiContentPage() {
           <div className="flex-1 overflow-y-auto p-4">
             <div className="mb-4">
               <Input
-                placeholder="Search docs..."
+                placeholder="Search documentation..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full"
-                placeholder="Search documentation..."
               />
             </div>
 
@@ -158,8 +157,7 @@ export default function AiContentPage() {
             </div>
 
             <div className="space-y-1">
-              {Object.entries(groupedSections).map(([category, sections]) => (
-                sections.length > 0 && (
+              {Object.entries(groupedSections).filter(([, sections]) => sections.length > 0).map(([category, sections]) => (
                   <div key={category} className="space-y-1">
                     <h3 className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       {CATEGORIES.find(c => c.id === category)?.label}
@@ -216,13 +214,12 @@ export default function AiContentPage() {
           </div>
 
           <div className="space-y-8">
-            {Object.entries(groupedSections).map(([category, sections]) => (
-              sections.length > 0 && (
+            {Object.entries(groupedSections).filter(([, sections]) => sections.length > 0).map(([category, sections]) => (
                 <div key={category}>
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl font-semibold capitalize">{CATEGORIES.find(c => c.id === category)?.label}</h2>
                     <span className="text-sm text-muted-foreground">{sections.length} articles</span>
-                  </h2>
+                  </div>
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {sections.map((section) => (
                       <Link
@@ -292,7 +289,6 @@ export default function AiContentPage() {
               </div>
             </div>
           </div>
-        </div>
       </main>
     </div>
   );

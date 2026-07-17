@@ -30,6 +30,24 @@ EXCLUDED_PATHS = {
     "/api/v1/openapi.json",
 }
 
+# Fields to redact from request/response bodies in audit logs
+_SENSITIVE_FIELDS = frozenset({
+    "password", "token", "access_token", "refresh_token", "secret",
+    "authorization", "api_key", "apikey", "credit_card", "ssn", "cvv",
+})
+
+
+def _redact_sensitive(data):
+    """Recursively redact sensitive fields from dicts/lists."""
+    if isinstance(data, dict):
+        return {
+            k: "[REDACTED]" if k.lower() in _SENSITIVE_FIELDS else _redact_sensitive(v)
+            for k, v in data.items()
+        }
+    if isinstance(data, list):
+        return [_redact_sensitive(item) for item in data]
+    return data
+
 
 class AuditMiddleware(BaseHTTPMiddleware):
     """Log mutating requests to audit trail."""
@@ -125,9 +143,9 @@ class AuditMiddleware(BaseHTTPMiddleware):
                     "method": request.method,
                     "path": request.url.path,
                     "query_params": dict(request.query_params),
-                    "request_body": request_body,
+                    "request_body": _redact_sensitive(request_body),
                     "response_status": response_status,
-                    "response_body": response_body,
+                    "response_body": _redact_sensitive(response_body),
                     "duration_ms": duration_ms,
                     "ip_address": request.client.host if request.client else None,
                     "user_agent": request.headers.get("user-agent"),

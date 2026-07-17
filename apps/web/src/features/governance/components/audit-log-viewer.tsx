@@ -9,9 +9,6 @@ import {
 import {
   AUTONOMY_LEVEL_LABELS,
   AUTONOMY_LEVEL_COLORS,
-  STATUS_COLORS,
-  type AgentAction,
-  type ActionExplanation,
 } from '../types';
 
 interface AuditLogViewerProps {

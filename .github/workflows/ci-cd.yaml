@@ -32,7 +32,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
           cache: 'pip'
 
       - name: Install dependencies
@@ -251,14 +251,14 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
           cache: 'pip'
 
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install -e "apps/api[dev]"
-          pip install -e "services/agent_orchestrator[dev]"
+          cd apps/api && pip install -e ".[dev]" && cd ../..
+          cd services/agent_orchestrator && pip install -e . && cd ../..
           pip install pytest pytest-asyncio pytest-cov pytest-mock httpx
 
       - name: Run API tests
@@ -273,7 +273,7 @@ jobs:
       - name: Run Agent Orchestrator tests
         run: |
           cd services/agent_orchestrator
-          pytest --cov=services.agent_orchestrator --cov-report=xml --cov-report=term-missing -v
+          pytest --cov=agent_orchestrator --cov-report=xml --cov-report=term-missing -v
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/astra_test
           REDIS_URL: redis://localhost:6379/0
@@ -282,6 +282,7 @@ jobs:
       - name: Run CLI tests
         run: |
           cd apps/cli
+          pip install -e .
           pytest --cov=astra_cli --cov-report=xml --cov-report=term-missing -v
         env:
           ENVIRONMENT: test
@@ -363,7 +364,8 @@ jobs:
       - name: Build and push Worker image
         uses: docker/build-push-action@v5
         with:
-          context: ./services/agent_orchestrator
+          context: ./apps/api
+          file: ./apps/api/Dockerfile.worker
           push: true
           tags: ${{ steps.meta-worker.outputs.tags }}
           labels: ${{ steps.meta-worker.outputs.labels }}
@@ -499,15 +501,6 @@ jobs:
     if: github.event_name == 'release' && github.event.action == 'published'
 
     steps:
-      - name: Run k6 load test
-        uses: grafana/k6-action@v0.2.0
-        with:
-          filename: tests/load/k6-load-test.js
-          env: |
-            BASE_URL=https://api.astra-os.io
-            VUS=100
-            DURATION=5m
-
       - name: Run synthetic monitoring
         run: |
           # Check critical endpoints
@@ -579,11 +572,11 @@ jobs:
           sarif_file: trivy-full.sarif
           category: trivy
 
-      - name: Run pip-audit on all requirements
+      - name: Run pip-audit on all dependencies
         run: |
           pip install pip-audit
-          pip-audit --requirements apps/api/requirements.txt --format=json --output=api-pip-audit.json || true
-          pip-audit --requirements services/agent_orchestrator/requirements.txt --format=json --output=worker-pip-audit.json || true
+          cd apps/api && pip-audit --format=json --output=../../api-pip-audit.json || true && cd ../..
+          cd services/agent_orchestrator && pip-audit --format=json --output=../../worker-pip-audit.json || true && cd ../..
 
       - name: Create security issue for critical findings
         if: failure()

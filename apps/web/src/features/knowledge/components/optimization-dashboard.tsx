@@ -7,7 +7,6 @@ import {
   useAudienceExpansion,
 } from '../api/useKnowledge';
 import {
-  URGENCY_COLORS,
   type BudgetAllocation,
   type CreativeFatigueResult,
   type AudienceExpansionSuggestion,

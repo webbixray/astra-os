@@ -43,7 +43,7 @@ export function DataTable<T extends { id?: string | number }>({
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   const [currentPage, setCurrentPage] = useState(0);
-  const [filters, setFilters] = useState<Record<string, string>>({});
+  const [filters, _setFilters] = useState<Record<string, string>>({});
 
   const filteredData = useMemo(() => {
     let result = [...data];
@@ -192,7 +192,7 @@ export function DataTable<T extends { id?: string | number }>({
                       key={column.id}
                       className={cn('px-4 py-3 text-sm', column.className)}
                     >
-                      {getCellValue(row, column)}
+                      {getCellValue(row, column) as React.ReactNode}
                     </td>
                   ))}
                 </tr>

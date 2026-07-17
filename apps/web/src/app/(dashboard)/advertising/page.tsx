@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Plus, RefreshCw, Unlink, Globe, Image, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
+import { LegacySelect as Select } from '@/components/ui/select';
 import { useAdAccounts, useConnectAccount, useSyncAccount, useDisconnectAccount } from '@/features/advertising/api/useAdvertising';
 import { useOrg } from '@/lib/org';
 import Link from 'next/link';

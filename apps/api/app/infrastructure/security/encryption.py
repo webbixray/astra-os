@@ -14,15 +14,17 @@ This is a stdlib-only implementation (no ``cryptography`` package required).
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import hmac
+import logging
 import os
 import struct
 
 _PREFIX = "ENC$v1$"
 _NONCE_LEN = 16
 _BLOCK_SIZE = 32  # SHA-256 output
-logger = __import__("logging").getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def _derive_keys(secret_key: str) -> tuple[bytes, bytes]:
@@ -59,8 +61,6 @@ def encrypt_field(plaintext: str, secret_key: str) -> str:
     tag = hmac.new(mac_key, nonce + ciphertext, hashlib.sha256).digest()
 
     payload = nonce + ciphertext + tag
-    import base64
-
     token = base64.urlsafe_b64encode(payload).decode("ascii")
     return f"{_PREFIX}{token}"
 
@@ -77,8 +77,6 @@ def decrypt_field(ciphertext: str, secret_key: str) -> str:
         return ciphertext
 
     enc_key, mac_key = _derive_keys(secret_key)
-    import base64
-
     try:
         payload = base64.urlsafe_b64decode(ciphertext[len(_PREFIX) :])
     except Exception:

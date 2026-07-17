@@ -1,1 +1,1 @@
-export { ErrorBoundary, PageErrorBoundary, WidgetErrorBoundary, AsyncErrorBoundary } from './error-boundary';
+export { ErrorBoundary, PageErrorBoundary, WidgetErrorBoundary, AsyncErrorBoundary } from './ErrorBoundary';

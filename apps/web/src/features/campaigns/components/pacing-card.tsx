@@ -60,7 +60,7 @@ interface PacingCardProps {
 }
 
 export function PacingCard({ data }: PacingCardProps) {
-  const config = STATUS_CONFIG[data.status] || STATUS_CONFIG.on_track;
+  const config = STATUS_CONFIG[data.status] ?? STATUS_CONFIG['on_track']!;
   const progressValue = Math.min(data.percent_budget_spent, 100);
 
   return (

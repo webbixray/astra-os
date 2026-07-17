@@ -230,7 +230,7 @@ async def update_report_schedule(
         schedule.config = request.config
     if request.is_active is not None:
         schedule.is_active = request.is_active
-    schedule.updated_at = __import__("datetime").now()
+    schedule.updated_at = datetime.now(UTC)
     saved = await repo.save(schedule)
     return {"id": str(saved.id), "is_active": saved.is_active}
 

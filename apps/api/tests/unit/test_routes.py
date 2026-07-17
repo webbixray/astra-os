@@ -44,6 +44,9 @@ def _mock_user(**kwargs) -> MagicMock:
     return user
 
 
+_MOCK_USER_ID = uuid4()
+
+
 @pytest.fixture
 def app() -> FastAPI:
     a = create_app()
@@ -61,7 +64,7 @@ def app() -> FastAPI:
     mock_session_factory = MagicMock(return_value=mock_session)
     a.state.db = mock_session_factory
 
-    a.dependency_overrides[require_user_id] = uuid4
+    a.dependency_overrides[require_user_id] = lambda: _MOCK_USER_ID
 
     yield a
     a.dependency_overrides.clear()
@@ -213,40 +216,38 @@ class TestUserRoutes:
 
     @pytest.mark.asyncio
     async def test_get_user_by_id(self, app: FastAPI, test_client: AsyncClient):
-        user_id = uuid4()
         mock_use_case = MagicMock()
         mock_use_case.execute = AsyncMock(
             return_value=_mock_user(
-                id=user_id, email="test@test.com", name="Test User"
+                id=_MOCK_USER_ID, email="test@test.com", name="Test User"
             )
         )
         app.dependency_overrides[get_get_user_use_case] = lambda: mock_use_case
 
-        response = await test_client.get(f"/api/v1/users/{user_id}")
+        response = await test_client.get(f"/api/v1/users/{_MOCK_USER_ID}")
 
         assert response.status_code == 200
         data = response.json()
-        assert data["data"]["id"] == str(user_id)
+        assert data["data"]["id"] == str(_MOCK_USER_ID)
 
     @pytest.mark.asyncio
     async def test_get_user_not_found(self, app: FastAPI, test_client: AsyncClient):
         mock_use_case = MagicMock()
         mock_use_case.execute = AsyncMock(
-            side_effect=EntityNotFoundError("User", str(uuid4()))
+            side_effect=EntityNotFoundError("User", str(_MOCK_USER_ID))
         )
         app.dependency_overrides[get_get_user_use_case] = lambda: mock_use_case
 
-        response = await test_client.get(f"/api/v1/users/{uuid4()}")
+        response = await test_client.get(f"/api/v1/users/{_MOCK_USER_ID}")
 
         assert response.status_code == 404
 
     @pytest.mark.asyncio
     async def test_update_user(self, app: FastAPI, test_client: AsyncClient):
-        user_id = uuid4()
         mock_use_case = MagicMock()
         mock_use_case.execute = AsyncMock(
             return_value=_mock_user(
-                id=user_id, email="test@test.com", name="Updated Name"
+                id=_MOCK_USER_ID, email="test@test.com", name="Updated Name"
             )
         )
         app.dependency_overrides[
@@ -255,7 +256,7 @@ class TestUserRoutes:
 
         csrf = await self._setup(test_client)
         response = await test_client.patch(
-            f"/api/v1/users/{user_id}", json={"name": "Updated Name"},
+            f"/api/v1/users/{_MOCK_USER_ID}", json={"name": "Updated Name"},
             headers=csrf,
         )
 

@@ -440,7 +440,9 @@ async def get_realtime_metrics(
 
     overview = await service.get_overview(organization_id)
 
-    from app.infrastructure.db.repositories.campaigns.campaign_repository import CampaignRepositoryImpl
+    from app.infrastructure.db.repositories.campaigns.campaign_repository import (
+        CampaignRepositoryImpl,
+    )
     campaign_repo = CampaignRepositoryImpl(db)
     campaigns = await campaign_repo.find_by_organization(organization_id)
 

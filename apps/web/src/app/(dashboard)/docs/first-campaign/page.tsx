@@ -1,9 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
-import { ChevronRight, Check, Zap, Users, Shield, Code, Terminal, AlertCircle, CheckCircle, Zap as ZapIcon, Database, Globe, ArrowRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ChevronRight, Check, Zap, Users, Code, AlertCircle, CheckCircle, Zap as ZapIcon, Database, Globe } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 interface Step {
@@ -122,16 +122,6 @@ const CREATIVE_BEST_PRACTICES = [
 export default function FirstCampaignPage() {
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
 
-  const toggleStep = (step: number) => {
-    const newSet = new Set(completedSteps);
-    if (newSet.has(step)) {
-      newSet.delete(step);
-    } else {
-      newSet.add(step);
-    }
-    setCompletedSteps(newSet);
-  };
-
   const progress = (completedSteps.size / FIRST_CAMPAIGN_STEPS.length) * 100;
 
   return (
@@ -245,7 +235,7 @@ export default function FirstCampaignPage() {
                         Completed
                       </span>
                     )}
-                  </h3>
+                  </div>
                   <p className="text-muted-foreground mb-4">{step.description}</p>
                   <Link
                     href={step.href}
@@ -297,7 +287,7 @@ export default function FirstCampaignPage() {
                       {type.objective === 'Engagement' && 'Likes, Comments, Shares, Saves'}
                       {type.objective === 'Traffic' && 'Clicks, CTR, CPC, Landing Page Views'}
                       {type.objective === 'App Installs' && 'Installs, CPI, Cost per Install'}
-                    }
+                    </td>
                     <td className="py-3 px-3 text-muted-foreground">
                       {type.objective === 'Brand Awareness' && 'Learn More'}
                       {type.objective === 'Lead Generation' && 'Sign Up / Download'}
@@ -305,7 +295,7 @@ export default function FirstCampaignPage() {
                       {type.objective === 'Engagement' && 'Like / Comment / Share'}
                       {type.objective === 'Traffic' && 'Visit Website / Read More'}
                       {type.objective === 'App Installs' && 'Install Now'}
-                    }
+                    </td>
                   </tr>
                 ))}
               </tbody>

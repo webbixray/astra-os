@@ -193,7 +193,7 @@ def lift_service(decision_repo):
             return None
     lift_repo = MockLiftRepo()
     session_repo_for_lift = MockSessionRepository()
-    decision_repo_for_lift = MockDecisionRepository()
+    MockDecisionRepository()
     return LiftMeasurementService(lift_repo, decision_repo, session_repo_for_lift)
 
 # --- Entity Tests ---
@@ -618,7 +618,7 @@ class TestLiftMeasurementService:
     @pytest.mark.asyncio
     async def test_calculate_lift(self, lift_service):
         session_id = uuid4()
-        org_id = uuid4()
+        uuid4()
 
         measurement = await lift_service.calculate_lift(
             session_id=session_id,
@@ -678,7 +678,7 @@ class TestShadowModeEntitiesIntegration:
     @pytest.mark.asyncio
     async def test_full_shadow_cycle(self, session_repo, decision_repo, event_repo):
         """Test a complete shadow mode cycle."""
-        org_id = uuid4()
+        uuid4()
         user_id = uuid4()
 
         session_service = ShadowSessionService(session_repo, decision_repo, event_repo)

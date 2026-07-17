@@ -5,7 +5,7 @@ import { useAnnouncements, useCreateAnnouncement, useDismissAnnouncement, useDel
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select } from '@/components/ui/select';
+import { LegacySelect as Select } from '@/components/ui/select';
 import { Loader2, Megaphone, Plus } from 'lucide-react';
 
 const SEVERITIES = ['info', 'warning', 'error'];

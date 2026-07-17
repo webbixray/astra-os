@@ -24,18 +24,15 @@ export function useNotificationStream(orgId: string | undefined) {
   const connect = useCallback(() => {
     if (!orgId || !mountedRef.current) return;
 
-    const { accessToken } = getStoredTokens();
-    if (!accessToken) return;
-
     controllerRef.current?.abort();
     const controller = new AbortController();
     controllerRef.current = controller;
 
     fetch(`${API_BASE_URL}/notifications/stream?organization_id=${orgId}`, {
       headers: {
-        Authorization: `Bearer ${accessToken}`,
         Accept: 'text/event-stream',
       },
+      credentials: 'include',
       signal: controller.signal,
     })
       .then(async (response) => {
@@ -107,11 +104,4 @@ export function useNotificationStream(orgId: string | undefined) {
       clearTimeout(delay);
     };
   }, [connect]);
-}
-
-function getStoredTokens(): { accessToken: string | null } {
-  if (typeof window === 'undefined') return { accessToken: null };
-  return {
-    accessToken: localStorage.getItem('astra_access_token'),
-  };
 }

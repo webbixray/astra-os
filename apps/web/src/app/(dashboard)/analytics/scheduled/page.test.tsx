@@ -41,7 +41,6 @@ describe('ScheduledReportsPage', () => {
     await user.type(screen.getByPlaceholderText('Report Name'), 'Weekly Overview');
     await user.type(screen.getByPlaceholderText(/Recipients/), 'team@test.com');
     await user.click(screen.getByText('Create'));
-    await user.click(screen.getByText('Create'));
 
     await waitFor(() => {
       expect(mockCreateSchedule).toHaveBeenCalledWith({

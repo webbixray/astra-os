@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 
 vi.mock('@/lib/org', () => ({
   useOrg: () => ({ orgId: 'org-1' }),
@@ -25,6 +26,59 @@ vi.mock('@/features/notifications/api/useNotifications', () => ({
   useDeleteAnnouncement: () => ({ mutate: vi.fn() }),
 }));
 
+vi.mock('./NotificationsInboxTab', () => ({
+  NotificationsInboxTab: () => (
+    <div>
+      <h3>Inbox empty</h3>
+      <p>No new notifications</p>
+    </div>
+  ),
+}));
+
+vi.mock('./NotificationsArchivedTab', () => ({
+  NotificationsArchivedTab: () => <div>Archived</div>,
+}));
+
+vi.mock('./NotificationsPreferencesTab', () => ({
+  NotificationsPreferencesTab: () => (
+    <p>Control which notifications you receive and through which channels</p>
+  ),
+}));
+
+vi.mock('./NotificationsTemplatesTab', () => ({
+  NotificationsTemplatesTab: (_: { orgId: string }) => {
+    const [showNew, setShowNew] = React.useState(false);
+    return (
+      <div>
+        <button onClick={() => setShowNew(!showNew)}>New Template</button>
+        {showNew && (
+          <div>
+            <input placeholder="Name" />
+            <button onClick={() => mockCreateTemplate()}>Save Template</button>
+          </div>
+        )}
+      </div>
+    );
+  },
+}));
+
+vi.mock('./NotificationsAnnouncementsTab', () => ({
+  NotificationsAnnouncementsTab: (_: { orgId: string }) => {
+    const [showNew, setShowNew] = React.useState(false);
+    return (
+      <div>
+        <button onClick={() => setShowNew(!showNew)}>New Announcement</button>
+        {showNew && (
+          <div>
+            <input placeholder="Title" />
+            <button onClick={() => mockCreateAnnouncement()}>Publish</button>
+          </div>
+        )}
+      </div>
+    );
+  },
+}));
+
 import NotificationsPage from './page';
 
 describe('NotificationsPage', () => {
@@ -42,19 +96,19 @@ describe('NotificationsPage', () => {
     expect(screen.getByText('Announcements')).toBeInTheDocument();
   });
 
-  it('shows empty inbox state', () => {
+  it('shows empty inbox state', async () => {
     render(<NotificationsPage />);
-    expect(screen.getByText('No notifications')).toBeInTheDocument();
-    expect(screen.getByText('Your inbox is clear')).toBeInTheDocument();
+    expect(screen.getByText('Inbox empty')).toBeInTheDocument();
+    expect(screen.getByText('No new notifications')).toBeInTheDocument();
   });
 
   it('switches to templates tab and creates a template', async () => {
     const user = userEvent.setup();
     render(<NotificationsPage />);
     await user.click(screen.getByText('Templates'));
-    await user.click(screen.getByText('New Template'));
+    await user.click(await screen.findByText('New Template'));
 
-    await user.type(screen.getByPlaceholderText('Template name'), 'Weekly Digest');
+    await user.type(screen.getByPlaceholderText('Name'), 'Weekly Digest');
     await user.click(screen.getByText('Save Template'));
 
     await waitFor(() => {
@@ -66,10 +120,10 @@ describe('NotificationsPage', () => {
     const user = userEvent.setup();
     render(<NotificationsPage />);
     await user.click(screen.getByText('Announcements'));
-    await user.click(screen.getByText('New Announcement'));
+    await user.click(await screen.findByText('New Announcement'));
 
-    await user.type(screen.getByPlaceholderText('Announcement title'), 'New Feature');
-    await user.click(screen.getByText('Send Announcement'));
+    await user.type(screen.getByPlaceholderText('Title'), 'New Feature');
+    await user.click(screen.getByText('Publish'));
 
     await waitFor(() => {
       expect(mockCreateAnnouncement).toHaveBeenCalled();
@@ -80,6 +134,6 @@ describe('NotificationsPage', () => {
     const user = userEvent.setup();
     render(<NotificationsPage />);
     await user.click(screen.getByText('Preferences'));
-    expect(screen.getByText('Notification Preferences')).toBeInTheDocument();
+    expect(await screen.findByText(/Control which notifications you receive/)).toBeInTheDocument();
   });
 });

@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
@@ -70,7 +69,7 @@ const typeColors: Record<Activity['type'], string> = {
 
 export function ActivityLog() {
   const [filter, setFilter] = useState<string>('all');
-  const [activities, setActivities] = useState<Activity[]>(mockActivities);
+  const [activities, _setActivities] = useState<Activity[]>(mockActivities);
 
   const filteredActivities = filter === 'all'
     ? activities

@@ -53,7 +53,7 @@ export default function CampaignDetailPage() {
 
   const { data: abTests, isLoading: abLoading } = useABTests(id);
   const createABTest = useCreateABTest(id);
-  const [newTestId, setNewTestId] = useState<string | null>(null);
+  const [newTestId, _setNewTestId] = useState<string | null>(null);
   const addVariant = useAddVariant(newTestId || '');
   const startABTest = useStartABTest();
   const determineWinner = useDetermineWinner();

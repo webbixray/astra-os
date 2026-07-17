@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Download } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
+import { LegacySelect as Select } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { getReportExportUrl } from '@/features/reports/api/useReports';
 

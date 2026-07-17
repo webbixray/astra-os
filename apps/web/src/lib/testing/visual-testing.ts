@@ -31,7 +31,7 @@ export class VisualTester {
   }
 
   async captureScreenshot(
-    name: string,
+    _name: string,
     component: React.ReactElement,
   ): Promise<string> {
     const { container } = render(component);
@@ -139,10 +139,10 @@ export async function visualTest(
 export async function testVisualRegression(
   name: string,
   component: React.ReactElement,
-  baseline: string,
-  threshold: number = 0.1,
+  _baseline: string,
+  _threshold: number = 0.1,
 ): Promise<{ passed: boolean; similarity: number }> {
-  const tester = new VisualTester({ threshold });
+  const tester = new VisualTester({ threshold: _threshold });
   const result = await tester.testComponent(name, component);
   
   return {
@@ -151,12 +151,12 @@ export async function testVisualRegression(
   };
 }
 
-export function compareColors(color1: string, color2: string, threshold: number = 0.1): boolean {
+export function compareColors(color1: string, color2: string, _threshold: number = 0.1): boolean {
   // Simplified color comparison
   return color1 === color2;
 }
 
-export function analyzeScreenshot(screenshot: string): {
+export function analyzeScreenshot(_screenshot: string): {
   width: number;
   height: number;
   colorPalette: string[];

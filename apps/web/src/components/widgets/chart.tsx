@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 
 interface ChartWidgetProps {
   type: string;
-  _data?: unknown;
+  data?: unknown;
 }
 
 export const ChartWidget = memo(function ChartWidget({ type }: ChartWidgetProps) {

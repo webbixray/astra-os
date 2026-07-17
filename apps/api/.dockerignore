@@ -63,7 +63,7 @@ scripts/*.py
 !scripts/seed_db.py
 !scripts/check-migrations.sh
 !scripts/db-backup.sh
-!scripts/db-restore.sh
+!scripts/db-manage.sh
 
 # Alembic (keep versions but not pyc)
 alembic/versions/*.pyc

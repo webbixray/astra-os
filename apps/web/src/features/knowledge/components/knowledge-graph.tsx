@@ -11,7 +11,6 @@ import {
   PRIORITY_COLORS,
   type CampaignPattern,
   type TransferRecommendation,
-  type LearningInsight,
 } from '../types';
 
 interface KnowledgeGraphProps {

@@ -24,7 +24,7 @@ from app.domain.services.social_intelligence import (
     reply_template_manager,
     social_inbox_manager,
 )
-from app.infrastructure.db.session import get_db
+from app.presentation.dependencies import get_db
 from app.presentation.middleware.auth import require_user_id
 from app.presentation.middleware.rbac import require_org_role
 

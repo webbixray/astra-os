@@ -11,7 +11,7 @@ import {
   useWorkflowTemplates,
   useInstantiateTemplate,
 } from '@/features/workflows/api/useTemplates';
-import { TEMPLATE_CATEGORY_COLORS, NODE_COLORS } from '@/features/workflows/types';
+import { TEMPLATE_CATEGORY_COLORS } from '@/features/workflows/types';
 import type { WorkflowTemplateSummary } from '@/features/workflows/types';
 import { SkeletonCard } from '@/components/ui/skeleton';
 import { ErrorBoundary } from '@/components/ui/error-boundary';

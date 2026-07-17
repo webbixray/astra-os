@@ -10,7 +10,6 @@ vi.mock('@tanstack/react-query', () => ({
 
 beforeEach(() => {
   vi.useFakeTimers();
-  localStorage.setItem('astra_access_token', 'test-token');
 });
 
 afterEach(() => {
@@ -37,14 +36,6 @@ describe('useNotificationStream', () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  it('does not connect when no access token', () => {
-    localStorage.removeItem('astra_access_token');
-    const fetchSpy = vi.spyOn(globalThis, 'fetch');
-    renderHook(() => useNotificationStream('org-1'));
-    act(() => { vi.advanceTimersByTime(200); });
-    expect(fetchSpy).not.toHaveBeenCalled();
-  });
-
   it('connects to SSE endpoint with correct headers', () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(null, { status: 200 }),
@@ -56,15 +47,15 @@ describe('useNotificationStream', () => {
       expect.stringContaining('/notifications/stream?organization_id=org-1'),
       expect.objectContaining({
         headers: expect.objectContaining({
-          Authorization: 'Bearer test-token',
           Accept: 'text/event-stream',
         }),
+        credentials: 'include',
       }),
     );
   });
 
   it('invalidates queries on SSE data event', async () => {
-    const reader = createMockReader([
+    createMockReader([
       { done: false, value: new TextEncoder().encode('data: {"type":"new_notification"}\n\n') },
       { done: true },
     ]);
@@ -95,26 +86,31 @@ describe('useNotificationStream', () => {
 
   it('cleans up on unmount', () => {
     const abortSpy = vi.fn();
+    const OriginalAbortController = globalThis.AbortController;
     vi.spyOn(globalThis, 'AbortController').mockImplementation(() => ({
       abort: abortSpy,
-      signal: new AbortController().signal,
+      signal: new OriginalAbortController().signal,
     } as unknown as AbortController));
 
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(null, { status: 200 }),
+    );
+
     const { unmount } = renderHook(() => useNotificationStream('org-1'));
+    act(() => { vi.advanceTimersByTime(200); });
     unmount();
 
     expect(abortSpy).toHaveBeenCalled();
   });
 
-  it('retries on connection failure with backoff', () => {
+  it('retries on connection failure with backoff', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('Network error'));
 
     renderHook(() => useNotificationStream('org-1'));
-    act(() => { vi.advanceTimersByTime(200); });
+    await act(async () => { vi.advanceTimersByTime(200); });
 
-    // First retry after RECONNECT_BASE_MS (2000)
     expect(fetchSpy).toHaveBeenCalledTimes(1);
-    act(() => { vi.advanceTimersByTime(2000); });
+    await act(async () => { vi.advanceTimersByTime(3000); });
     expect(fetchSpy).toHaveBeenCalledTimes(2);
   });
 });

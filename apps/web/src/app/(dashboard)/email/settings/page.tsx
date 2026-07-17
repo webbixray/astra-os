@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Plus, Loader2, Server, Trash2, CheckCircle2, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
+import { LegacySelect as Select } from '@/components/ui/select';
 import {
   useEmailProviders,
   useCreateEmailProvider,

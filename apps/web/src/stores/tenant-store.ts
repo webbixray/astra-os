@@ -62,15 +62,15 @@ export const useTenantStore = create<TenantState>()(
           // Dynamic import to avoid circular dependencies
           const { OrganizationsService } = await import('@/lib/api/generated');
 
-          const response = await OrganizationsService.getOrganizations();
+          const response = await OrganizationsService.listMyOrganizationsApiV1OrganizationsMyGet();
 
-          if (response.data && response.data.data) {
-            set({ availableTenants: response.data.data, isLoading: false });
+          if (response.data) {
+            set({ availableTenants: response.data, isLoading: false });
 
             // If no current tenant but we have tenants, set the first one
             const { currentTenant } = get();
-            if (!currentTenant && response.data.data.length > 0) {
-              get().switchTenant(response.data.data[0].id);
+            if (!currentTenant && response.data.length > 0) {
+              get().switchTenant(response.data[0]!.id);
             }
           }
         } catch (error) {

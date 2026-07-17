@@ -119,14 +119,14 @@ export function SystemStatus({ services, className }: SystemStatusProps) {
       {services.map((service) => (
         <div key={service.name} className="flex items-center justify-between rounded-lg border p-3">
           <div className="flex items-center gap-3">
-            <StatusIndicator status={statusMap[service.status]} size="sm" />
+            <StatusIndicator status={statusMap[service.status] ?? 'info'} size="sm" />
             <span className="text-sm font-medium">{service.name}</span>
           </div>
           <div className="flex items-center gap-2">
             {service.latency !== undefined && (
               <span className="text-xs text-gray-500">{service.latency}ms</span>
             )}
-            <StatusBadge status={statusMap[service.status]} label={service.status} />
+            <StatusBadge status={statusMap[service.status] ?? 'info'} label={service.status} />
           </div>
         </div>
       ))}

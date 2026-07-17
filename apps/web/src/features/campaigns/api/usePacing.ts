@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api/client';
+import { api } from '@/lib/api';
 
 interface PacingData {
   campaign_id: string;
@@ -40,11 +40,9 @@ export function useCampaignPacing(
   return useQuery<PacingData>({
     queryKey: ['campaign-pacing', campaignId, strategy],
     queryFn: async () => {
-      const { data } = await apiClient.get(
-        `/api/v1/campaigns/${campaignId}/pacing`,
-        { params: { strategy } },
+      return api.get<PacingData>(
+        `/api/v1/campaigns/${campaignId}/pacing?strategy=${strategy}`,
       );
-      return data;
     },
     enabled: enabled && !!campaignId,
     refetchInterval: 60_000, // Refresh every minute
@@ -59,11 +57,9 @@ export function usePacingSchedule(
   return useQuery<PacingSchedule>({
     queryKey: ['pacing-schedule', campaignId, strategy],
     queryFn: async () => {
-      const { data } = await apiClient.get(
-        `/api/v1/campaigns/${campaignId}/pacing/schedule`,
-        { params: { strategy } },
+      return api.get<PacingSchedule>(
+        `/api/v1/campaigns/${campaignId}/pacing/schedule?strategy=${strategy}`,
       );
-      return data;
     },
     enabled: enabled && !!campaignId,
   });

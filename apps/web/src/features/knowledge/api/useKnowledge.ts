@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api/client';
+import { api } from '@/lib/api';
 import type {
   SearchResult,
   RAGContextResponse,
@@ -33,7 +33,7 @@ export function useRAGSearch(organizationId: string) {
       limit?: number;
       minScore?: number;
     }) => {
-      const { data } = await apiClient.post<{ results: SearchResult[]; total: number }>(
+      return api.post<{ results: SearchResult[]; total: number }>(
         '/api/v1/knowledge/rag/search',
         {
           organization_id: organizationId,
@@ -43,7 +43,6 @@ export function useRAGSearch(organizationId: string) {
           min_score: minScore || 0.3,
         },
       );
-      return data;
     },
   });
 }
@@ -66,7 +65,7 @@ export function useRAGContext(organizationId: string) {
       includeBrandGuidelines?: boolean;
       includeMemories?: boolean;
     }) => {
-      const { data } = await apiClient.post<RAGContextResponse>(
+      return api.post<RAGContextResponse>(
         '/api/v1/knowledge/rag/context',
         {
           organization_id: organizationId,
@@ -78,7 +77,6 @@ export function useRAGContext(organizationId: string) {
           include_memories: includeMemories ?? true,
         },
       );
-      return data;
     },
   });
 }
@@ -97,7 +95,7 @@ export function useIngestBrandGuidelines() {
       guidelinesText: string;
       name?: string;
     }) => {
-      const { data } = await apiClient.post<IngestionResponse>(
+      return api.post<IngestionResponse>(
         '/api/v1/knowledge/rag/ingest/brand-guidelines',
         {
           organization_id: organizationId,
@@ -105,7 +103,6 @@ export function useIngestBrandGuidelines() {
           name: name || 'Brand Guidelines',
         },
       );
-      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['knowledge'] });
@@ -136,7 +133,7 @@ export function useBudgetOptimization(organizationId: string) {
       }>;
       totalBudget?: number;
     }) => {
-      const { data } = await apiClient.post<{
+      return api.post<{
         allocations: BudgetAllocation[];
         total_campaigns: number;
       }>('/api/v1/knowledge/optimization/budget', {
@@ -144,7 +141,6 @@ export function useBudgetOptimization(organizationId: string) {
         campaigns,
         total_budget: totalBudget || null,
       });
-      return data;
     },
   });
 }
@@ -163,7 +159,7 @@ export function useCreativeFatigue(organizationId: string) {
         peak_ctr: number;
       }>;
     }) => {
-      const { data } = await apiClient.post<{
+      return api.post<{
         results: CreativeFatigueResult[];
         total_creatives: number;
         fatigued_count: number;
@@ -171,7 +167,6 @@ export function useCreativeFatigue(organizationId: string) {
         organization_id: organizationId,
         creatives,
       });
-      return data;
     },
   });
 }
@@ -186,7 +181,7 @@ export function useAudienceExpansion(organizationId: string) {
       sourceAudience: string;
       limit?: number;
     }) => {
-      const { data } = await apiClient.post<{
+      return api.post<{
         suggestions: AudienceExpansionSuggestion[];
         source_audience: string;
         total_suggestions: number;
@@ -195,7 +190,6 @@ export function useAudienceExpansion(organizationId: string) {
         source_audience: sourceAudience,
         limit: limit || 5,
       });
-      return data;
     },
   });
 }
@@ -217,14 +211,13 @@ export function useOptimizationSuggestions(organizationId: string) {
         spend: number;
       }>;
     }) => {
-      const { data } = await apiClient.post<{
+      return api.post<{
         suggestions: OptimizationSuggestion[];
         total: number;
       }>('/api/v1/knowledge/optimization/suggestions', {
         organization_id: organizationId,
         campaigns,
       });
-      return data;
     },
   });
 }
@@ -245,7 +238,7 @@ export function useMinePatterns(organizationId: string) {
       patternTypes?: string[];
       limit?: number;
     }) => {
-      const { data } = await apiClient.post<{
+      return api.post<{
         patterns: CampaignPattern[];
         total: number;
       }>('/api/v1/knowledge/patterns/mine', {
@@ -254,7 +247,6 @@ export function useMinePatterns(organizationId: string) {
         pattern_types: patternTypes || null,
         limit: limit || 10,
       });
-      return data;
     },
   });
 }
@@ -269,7 +261,7 @@ export function useTransferSuggestions(organizationId: string) {
       targetCampaignId: string;
       limit?: number;
     }) => {
-      const { data } = await apiClient.post<{
+      return api.post<{
         recommendations: TransferRecommendation[];
         target_campaign_id: string;
         total: number;
@@ -278,7 +270,6 @@ export function useTransferSuggestions(organizationId: string) {
         target_campaign_id: targetCampaignId,
         limit: limit || 5,
       });
-      return data;
     },
   });
 }
@@ -288,14 +279,13 @@ export function useLearningInsights(organizationId: string, enabled: boolean = t
   return useQuery<{ insights: LearningInsight[]; total: number }>({
     queryKey: ['learning-insights', organizationId],
     queryFn: async () => {
-      const { data } = await apiClient.post<{
+      return api.post<{
         insights: LearningInsight[];
         total: number;
       }>('/api/v1/knowledge/patterns/insights', {
         organization_id: organizationId,
         limit: 10,
       });
-      return data;
     },
     enabled: enabled && !!organizationId,
   });

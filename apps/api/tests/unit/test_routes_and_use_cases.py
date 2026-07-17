@@ -22,6 +22,7 @@ from app.presentation.dependencies import (
 )
 from app.presentation.middleware.auth import require_user_id
 from app.presentation.middleware.rbac import require_org_role
+from app.presentation.routes.auth import get_auth_service
 
 
 def make_mock_user(user_id=None, email="test@test.com", name="Test User", password_hash="hash"):
@@ -130,7 +131,7 @@ class TestAuthSignupSignin:
 
         async def _override():
             return mock_service
-        app.dependency_overrides[__import__("app.presentation.routes.auth", fromlist=["get_auth_service"]).get_auth_service] = _override
+        app.dependency_overrides[get_auth_service] = _override
 
         csrf = _setup_csrf(client)
         response = await client.post("/api/v1/auth/signup", json={
@@ -152,7 +153,7 @@ class TestAuthSignupSignin:
 
         async def _override():
             return mock_service
-        app.dependency_overrides[__import__("app.presentation.routes.auth", fromlist=["get_auth_service"]).get_auth_service] = _override
+        app.dependency_overrides[get_auth_service] = _override
 
         csrf = _setup_csrf(client)
         response = await client.post("/api/v1/auth/signup", json={
@@ -182,7 +183,7 @@ class TestAuthSignupSignin:
 
         async def _override():
             return mock_service
-        app.dependency_overrides[__import__("app.presentation.routes.auth", fromlist=["get_auth_service"]).get_auth_service] = _override
+        app.dependency_overrides[get_auth_service] = _override
 
         csrf = _setup_csrf(client)
         response = await client.post("/api/v1/auth/signin", json={
@@ -201,7 +202,7 @@ class TestAuthSignupSignin:
 
         async def _override():
             return mock_service
-        app.dependency_overrides[__import__("app.presentation.routes.auth", fromlist=["get_auth_service"]).get_auth_service] = _override
+        app.dependency_overrides[get_auth_service] = _override
 
         csrf = _setup_csrf(client)
         response = await client.post("/api/v1/auth/signin", json={
@@ -223,7 +224,7 @@ class TestAuthSignupSignin:
 
         async def _override_service():
             return mock_service
-        app.dependency_overrides[__import__("app.presentation.routes.auth", fromlist=["get_auth_service"]).get_auth_service] = _override_service
+        app.dependency_overrides[get_auth_service] = _override_service
 
         response = await client.get("/api/v1/auth/me")
         assert response.status_code == 200
@@ -234,7 +235,7 @@ class TestAuthSignupSignin:
 
 class TestUserRoutes:
     @pytest.mark.asyncio
-    async def test_create_user(self, client: AsyncClient, app: FastAPI):
+    async def test_create_user(self, client: AsyncClient, app: FastAPI, mock_user_id, override_auth, override_db):
         user = make_mock_user(email="new@test.com", name="New User")
         mock_uc = AsyncMock()
         mock_uc.execute = AsyncMock(return_value=user)
@@ -434,7 +435,7 @@ class TestOrganizationRoutes:
             return mock_uc
         app.dependency_overrides[get_list_orgs_use_case] = _override
 
-        response = await client.get("/api/v1/organizations")
+        response = await client.get("/api/v1/organizations/my")
         assert response.status_code == 200
         data = response.json()
         assert len(data["data"]) == 1

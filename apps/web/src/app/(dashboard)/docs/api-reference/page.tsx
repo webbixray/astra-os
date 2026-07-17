@@ -2,11 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ChevronRight, Zap, Code, Shield, ExternalLink, Terminal, AlertCircle, CheckCircle, Zap as ZapIcon, Database, Globe, Users } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface CodeExample {
   language: string;
@@ -222,8 +219,12 @@ const SHADOW_MODE_EXAMPLES: CodeExample[] = [
   },
 ];
 
+const MAIN_TABS = ['endpoints', 'auth', 'examples', 'webhooks'] as const;
+const EXAMPLE_TABS = ['auth', 'campaigns', 'shadow'] as const;
+
 export default function ApiReferencePage() {
-  const [activeTab, setActiveTab] = useState('endpoints');
+  const [activeTab, setActiveTab] = useState<string>('endpoints');
+  const [activeExampleTab, setActiveExampleTab] = useState<string>('auth');
 
   return (
     <div className="max-w-6xl mx-auto p-8">
@@ -239,151 +240,191 @@ export default function ApiReferencePage() {
         </p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="endpoints">Endpoints</TabsTrigger>
-          <TabsTrigger value="auth">Authentication</TabsTrigger>
-          <TabsTrigger value="examples">Code Examples</TabsTrigger>
-          <TabsTrigger value="webhooks">Webhooks</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="endpoints" className="mt-6 space-y-8">
-          {API_ENDPOINTS.map((group) => (
-            <div key={group.category}>
-              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                {group.category}
-              </h2>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-muted">
-                      <th className="text-left py-2 px-3 font-medium">Method</th>
-                      <th className="text-left py-2 px-3 font-medium">Endpoint</th>
-                      <th className="text-left py-2 px-3 font-medium">Description</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {group.endpoints.map((ep) => (
-                      <tr key={ep.path} className="border-b border-muted/50">
-                        <td className="py-3 px-3">
-                          <code className={cn(
-                            'px-2 py-1 rounded text-xs font-mono',
-                            ep.method === 'GET' && 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-                            ep.method === 'POST' && 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-                            ep.method === 'PATCH' && 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-                            ep.method === 'DELETE' && 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                          )}>
-                            {ep.method}
-                          </code>
-                        </td>
-                        <td className="py-3 px-3 font-mono text-sm">
-                          <code>/api/v1{ep.path}</code>
-                        </td>
-                        <td className="py-3 px-3 text-muted-foreground">{ep.description}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+      <div className="w-full">
+        <div className="grid w-full grid-cols-4">
+          {MAIN_TABS.map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={cn(
+                'px-4 py-2 text-sm font-medium rounded-t-lg transition-colors',
+                activeTab === tab
+                  ? 'bg-background text-foreground border border-b-0 border-muted'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              {tab === 'endpoints' && 'Endpoints'}
+              {tab === 'auth' && 'Authentication'}
+              {tab === 'examples' && 'Code Examples'}
+              {tab === 'webhooks' && 'Webhooks'}
+            </button>
           ))}
-        </TabsContent>
+        </div>
 
-        <TabsContent value="auth" className="mt-6 space-y-6">
-          <h2 className="text-xl font-semibold">Authentication</h2>
-          <p className="text-muted-foreground mb-6">
-            Astra OS uses JWT-based authentication with short-lived access tokens (15 min) and long-lived refresh tokens (7 days).
-            Include the access token in the Authorization header for all authenticated requests.
-          </p>
-          <div className="space-y-4">
-            <h3 className="font-semibold">Request Format</h3>
-            <pre className="bg-muted p-4 rounded-lg overflow-x-auto"><code>Authorization: Bearer {access_token}</code></pre>
-            <h3 className="font-semibold">Token Expiry</h3>
-            <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-              <li>Access Token: 15 minutes</li>
-              <li>Refresh Token: 7 days</li>
-              <li>Tokens rotate on refresh</li>
-            </ul>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="examples" className="mt-6 space-y-8">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="auth">Authentication</TabsTrigger>
-              <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
-              <TabsTrigger value="shadow">Shadow Mode</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="auth" className="mt-4 space-y-6">
-              {AUTH_EXAMPLES.map((ex, i) => (
-                <div key={i} className="space-y-2">
-                  <p className="text-sm font-medium">{ex.description}</p>
-                  <pre className="bg-muted p-4 rounded-lg overflow-x-auto"><code className="language-{ex.language}">{ex.code}</code></pre>
+        {activeTab === 'endpoints' && (
+          <div className="mt-6 space-y-8">
+            {API_ENDPOINTS.map((group) => (
+              <div key={group.category}>
+                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                  {group.category}
+                </h2>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-muted">
+                        <th className="text-left py-2 px-3 font-medium">Method</th>
+                        <th className="text-left py-2 px-3 font-medium">Endpoint</th>
+                        <th className="text-left py-2 px-3 font-medium">Description</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {group.endpoints.map((ep) => (
+                        <tr key={ep.path} className="border-b border-muted/50">
+                          <td className="py-3 px-3">
+                            <code className={cn(
+                              'px-2 py-1 rounded text-xs font-mono',
+                              ep.method === 'GET' && 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+                              ep.method === 'POST' && 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+                              ep.method === 'PATCH' && 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
+                              ep.method === 'DELETE' && 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                            )}>
+                              {ep.method}
+                            </code>
+                          </td>
+                          <td className="py-3 px-3 font-mono text-sm">
+                            <code>/api/v1{ep.path}</code>
+                          </td>
+                          <td className="py-3 px-3 text-muted-foreground">{ep.description}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-              ))}
-            </TabsContent>
-
-            <TabsContent value="campaigns" className="mt-4 space-y-6">
-              {CAMPAIGN_EXAMPLES.map((ex, i) => (
-                <div key={i} className="space-y-2">
-                  <p className="text-sm font-medium">{ex.description}</p>
-                  <pre className="bg-muted p-4 rounded-lg overflow-x-auto"><code className="language-{ex.language}">{ex.code}</code></pre>
-                </div>
-              ))}
-            </TabsContent>
-
-            <TabsContent value="shadow" className="mt-4 space-y-6">
-              {SHADOW_MODE_EXAMPLES.map((ex, i) => (
-                <div key={i} className="space-y-2">
-                  <p className="text-sm font-medium">{ex.description}</p>
-                  <pre className="bg-muted p-4 rounded-lg overflow-x-auto"><code className="language-{ex.language}">{ex.code}</code></pre>
-                </div>
-              ))}
-            </TabsContent>
-          </Tabs>
-        </TabsContent>
-
-        <TabsContent value="webhooks" className="mt-6 space-y-6">
-          <h2 className="text-xl font-semibold">Webhook Events</h2>
-          <p className="text-muted-foreground mb-6">
-            Configure webhooks in Organization Settings to receive real-time events.
-          </p>
-          <div className="space-y-2">
-            {[
-              'campaign.created',
-              'campaign.updated',
-              'campaign.launched',
-              'campaign.paused',
-              'workflow.created',
-              'workflow.executed',
-              'workflow.completed',
-              'agent.task_completed',
-              'agent.task_failed',
-              'shadow.decision_made',
-              'shadow.decision_compared',
-              'alert.fired',
-              'alert.resolved',
-              'budget.warning',
-              'budget.critical',
-            ].map((event) => (
-              <div key={event} className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-                <code className="text-sm font-mono text-primary">{event}</code>
-                <span className="text-sm text-muted-foreground">Triggered when {event.replace('.', ' ').replace('_', ' ')}</span>
               </div>
             ))}
           </div>
-          <div className="mt-6 p-4 bg-muted rounded-lg">
-            <h3 className="font-semibold mb-2">Webhook Security</h3>
-            <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-              <li>Verify webhook signatures using the X-Signature header</li>
-              <li>Respond with 2xx within 10 seconds</li>
-              <li>Retry with exponential backoff on failure</li>
-              <li>Idempotency keys provided in X-Idempotency-Key header</li>
-            </ul>
+        )}
+
+        {activeTab === 'auth' && (
+          <div className="mt-6 space-y-6">
+            <h2 className="text-xl font-semibold">Authentication</h2>
+            <p className="text-muted-foreground mb-6">
+              Astra OS uses JWT-based authentication with short-lived access tokens (15 min) and long-lived refresh tokens (7 days).
+              Include the access token in the Authorization header for all authenticated requests.
+            </p>
+            <div className="space-y-4">
+              <h3 className="font-semibold">Request Format</h3>
+              <pre className="bg-muted p-4 rounded-lg overflow-x-auto"><code>Authorization: Bearer {"YOUR_ACCESS_TOKEN"}</code></pre>
+              <h3 className="font-semibold">Token Expiry</h3>
+              <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                <li>Access Token: 15 minutes</li>
+                <li>Refresh Token: 7 days</li>
+                <li>Tokens rotate on refresh</li>
+              </ul>
+            </div>
           </div>
-        </TabsContent>
-      </Tabs>
+        )}
+
+        {activeTab === 'examples' && (
+          <div className="mt-6 space-y-8">
+            <div className="w-full">
+              <div className="grid w-full grid-cols-3">
+                {EXAMPLE_TABS.map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveExampleTab(tab)}
+                    className={cn(
+                      'px-4 py-2 text-sm font-medium rounded-t-lg transition-colors',
+                      activeExampleTab === tab
+                        ? 'bg-background text-foreground border border-b-0 border-muted'
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    {tab === 'auth' && 'Authentication'}
+                    {tab === 'campaigns' && 'Campaigns'}
+                    {tab === 'shadow' && 'Shadow Mode'}
+                  </button>
+                ))}
+              </div>
+
+              {activeExampleTab === 'auth' && (
+                <div className="mt-4 space-y-6">
+                  {AUTH_EXAMPLES.map((ex, i) => (
+                    <div key={i} className="space-y-2">
+                      <p className="text-sm font-medium">{ex.description}</p>
+                      <pre className="bg-muted p-4 rounded-lg overflow-x-auto"><code className="language-{ex.language}">{ex.code}</code></pre>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {activeExampleTab === 'campaigns' && (
+                <div className="mt-4 space-y-6">
+                  {CAMPAIGN_EXAMPLES.map((ex, i) => (
+                    <div key={i} className="space-y-2">
+                      <p className="text-sm font-medium">{ex.description}</p>
+                      <pre className="bg-muted p-4 rounded-lg overflow-x-auto"><code className="language-{ex.language}">{ex.code}</code></pre>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {activeExampleTab === 'shadow' && (
+                <div className="mt-4 space-y-6">
+                  {SHADOW_MODE_EXAMPLES.map((ex, i) => (
+                    <div key={i} className="space-y-2">
+                      <p className="text-sm font-medium">{ex.description}</p>
+                      <pre className="bg-muted p-4 rounded-lg overflow-x-auto"><code className="language-{ex.language}">{ex.code}</code></pre>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'webhooks' && (
+          <div className="mt-6 space-y-6">
+            <h2 className="text-xl font-semibold">Webhook Events</h2>
+            <p className="text-muted-foreground mb-6">
+              Configure webhooks in Organization Settings to receive real-time events.
+            </p>
+            <div className="space-y-2">
+              {[
+                'campaign.created',
+                'campaign.updated',
+                'campaign.launched',
+                'campaign.paused',
+                'workflow.created',
+                'workflow.executed',
+                'workflow.completed',
+                'agent.task_completed',
+                'agent.task_failed',
+                'shadow.decision_made',
+                'shadow.decision_compared',
+                'alert.fired',
+                'alert.resolved',
+                'budget.warning',
+                'budget.critical',
+              ].map((event) => (
+                <div key={event} className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                  <code className="text-sm font-mono text-primary">{event}</code>
+                  <span className="text-sm text-muted-foreground">Triggered when {event.replace('.', ' ').replace('_', ' ')}</span>
+                </div>
+              ))}
+            </div>
+            <div className="mt-6 p-4 bg-muted rounded-lg">
+              <h3 className="font-semibold mb-2">Webhook Security</h3>
+              <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+                <li>Verify webhook signatures using the X-Signature header</li>
+                <li>Respond with 2xx within 10 seconds</li>
+                <li>Retry with exponential backoff on failure</li>
+                <li>Idempotency keys provided in X-Idempotency-Key header</li>
+              </ul>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -34,7 +34,7 @@ interface ContentCardProps {
   className?: string;
 }
 
-export function ContentCard({ content, onEdit, onDelete, className }: ContentCardProps) {
+export function ContentCard({ content, onEdit, className }: ContentCardProps) {
   const typeIcons: Record<Content['type'], string> = {
     blog: '📝',
     social: '📱',
@@ -58,7 +58,7 @@ export function ContentCard({ content, onEdit, onDelete, className }: ContentCar
               <span>{content.readTime} min read</span>
             </CardDescription>
           </div>
-          <StatusBadge status={content.status} />
+          <StatusBadge status={content.status as 'active' | 'inactive' | 'pending' | 'error' | 'success' | 'warning' | 'info'} />
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -237,7 +237,7 @@ export function ContentCalendar({ content, className }: ContentCalendarProps) {
                   {item.type} · {item.author}
                 </div>
               </div>
-              <StatusBadge status={item.status} />
+              <StatusBadge status={item.status as 'active' | 'inactive' | 'pending' | 'error' | 'success' | 'warning' | 'info'} />
             </div>
           ))}
         </div>

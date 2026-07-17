@@ -126,7 +126,7 @@ class BudgetPacingService:
         pace_ratio = pct_spent / pct_time if pct_time > 0 else 0.0
 
         # Even daily target
-        even_daily = total_budget / total_days if total_days > 0 else total_budget
+        total_budget / total_days if total_days > 0 else total_budget
 
         # Strategy-specific daily target
         daily_target = self._compute_daily_target(

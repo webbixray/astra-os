@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
@@ -85,12 +85,6 @@ export function useConfirmDialog(options: UseConfirmDialogOptions) {
       setOpen(false);
       setResolveConfirm(null);
     }
-  }, [resolveConfirm]);
-
-  const handleCancel = useCallback(() => {
-    resolveConfirm?.(false);
-    setOpen(false);
-    setResolveConfirm(null);
   }, [resolveConfirm]);
 
   const ConfirmDialogComponent = useCallback(

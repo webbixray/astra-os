@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen } from '@testing-library/react';
 
 const mockPush = vi.fn();
 const mockMutateAsync = vi.fn();
@@ -13,11 +12,16 @@ vi.mock('@/lib/org', () => ({
   useOrg: () => ({ orgId: 'org-1' }),
 }));
 
-vi.mock('@/features/dashboards/api/useDashboards', () => ({
+vi.mock('@/features/analytics/api/useDashboards', () => ({
   useDashboards: () => ({ data: [{ id: 'db-1', name: 'Main Dashboard' }], isLoading: false }),
+  useDashboardDetail: () => ({ data: null }),
   useCreateDashboard: () => ({ mutateAsync: mockMutateAsync, isPending: false }),
-  useUpdateDashboard: () => ({ mutateAsync: vi.fn() }),
-  useDeleteDashboard: () => ({ mutate: vi.fn() }),
+  useDeleteDashboard: () => ({ mutate: vi.fn(), isPending: false }),
+  useAddWidget: () => ({ mutate: vi.fn() }),
+  useDeleteWidget: () => ({ mutate: vi.fn() }),
+  useDashboardData: () => ({ data: null }),
+  useAnomalies: () => ({ data: [] }),
+  usePredictions: () => ({ data: [] }),
 }));
 
 import DashboardPage from './page';

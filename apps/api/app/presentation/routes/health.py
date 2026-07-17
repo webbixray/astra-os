@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 import time
 
@@ -12,6 +13,8 @@ from app.presentation.dependencies import get_db
 from app.presentation.schemas.common import HealthResponse
 
 router = APIRouter()
+
+logger = logging.getLogger(__name__)
 
 
 @router.get("/health", summary="Check application health")
@@ -30,7 +33,8 @@ async def health_check(
         details["database_ms"] = f"{(time.monotonic() - t0) * 1000:.1f}"
     except Exception as e:
         checks["database"] = False
-        details["database"] = str(e)
+        details["database"] = "unavailable"
+        logger.warning("Health check database failure: %s", type(e).__name__)
 
     redis_cache = getattr(request.app.state, "redis", None)
     if redis_cache and redis_cache.client:
@@ -41,7 +45,8 @@ async def health_check(
             details["redis_ms"] = f"{(time.monotonic() - t0) * 1000:.1f}"
         except Exception as e:
             checks["redis"] = False
-            details["redis"] = str(e)
+            details["redis"] = "unavailable"
+            logger.warning("Health check redis failure: %s", type(e).__name__)
     elif config.redis_url:
         checks["redis"] = False
         details["redis"] = "not_connected"
@@ -64,7 +69,8 @@ async def health_check(
             details["temporal"] = "not_configured"
         except Exception as e:
             checks["temporal"] = False
-            details["temporal"] = str(e)
+            details["temporal"] = "unavailable"
+            logger.warning("Health check temporal failure: %s", type(e).__name__)
     else:
         checks["temporal"] = True
         details["temporal"] = "not_configured"

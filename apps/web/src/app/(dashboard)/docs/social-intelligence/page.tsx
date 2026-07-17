@@ -2,19 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ChevronRight, Zap, Code, Shield, ExternalLink, Terminal, AlertCircle, CheckCircle, Zap as ZapIcon, Database, Globe, Users, Search, ChevronRight as ChevronRightIcon, ChevronLeft, ExternalLink, Zap as ZapIcon2, Code as CodeIcon, Sparkles, Brain, Settings, FileText, BarChart, Search, BookOpen, MessageSquare, Heart, Share2, Reply, Filter } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { BarChart, BookOpen, ChevronRight, Code, ExternalLink, Heart, MessageSquare, Reply, Shield, Zap } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-
-interface DocSection {
-  id: string;
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  href: string;
-  category: 'getting-started' | 'guides' | 'api' | 'advanced';
-}
 
 const SOCIAL_SECTIONS = [
   {
@@ -90,7 +80,7 @@ export default function SocialIntelligencePage() {
     if (!acc[section.category]) {
       acc[section.category] = [];
     }
-    acc[section.category].push(section);
+    acc[section.category]!.push(section);
     return acc;
   }, {} as Record<string, typeof SOCIAL_SECTIONS>);
 
@@ -109,11 +99,10 @@ export default function SocialIntelligencePage() {
           <div className="flex-1 overflow-y-auto p-4">
             <div className="mb-4">
               <Input
-                placeholder="Search docs..."
+                placeholder="Search documentation..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full"
-                placeholder="Search documentation..."
               />
             </div>
 
@@ -135,8 +124,7 @@ export default function SocialIntelligencePage() {
             </div>
 
             <div className="space-y-1">
-              {Object.entries(groupedSections).map(([category, sections]) => (
-                sections.length > 0 && (
+              {Object.entries(groupedSections).filter(([, sections]) => sections.length > 0).map(([category, sections]) => (
                   <div key={category} className="space-y-1">
                     <h3 className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       {CATEGORIES.find(c => c.id === category)?.label}
@@ -193,8 +181,7 @@ export default function SocialIntelligencePage() {
           </div>
 
           <div className="space-y-8">
-            {Object.entries(groupedSections).map(([category, sections]) => (
-              sections.length > 0 && (
+            {Object.entries(groupedSections).filter(([, sections]) => sections.length > 0).map(([category, sections]) => (
                 <div key={category}>
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl font-semibold capitalize">{CATEGORIES.find(c => c.id === category)?.label}</h2>
@@ -228,7 +215,7 @@ export default function SocialIntelligencePage() {
                           <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                         </div>
                       </Link>
-                    )}
+                    ))}
                   </div>
                 </div>
               ))}
@@ -269,7 +256,6 @@ export default function SocialIntelligencePage() {
               </div>
             </div>
           </div>
-        </div>
       </main>
     </div>
   );

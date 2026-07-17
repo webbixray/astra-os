@@ -131,6 +131,9 @@ describe('NewCampaignPage', () => {
   });
 
   it('shows Creating... when submitting', async () => {
+    let resolveMutate: (value: unknown) => void;
+    mockMutateAsync.mockReturnValueOnce(new Promise((resolve) => { resolveMutate = resolve; }));
+
     const user = userEvent.setup();
     render(<NewCampaignPage />);
 
@@ -139,5 +142,6 @@ describe('NewCampaignPage', () => {
     await user.click(screen.getByRole('button', { name: 'Create Campaign' }));
 
     expect(await screen.findByText('Creating...')).toBeInTheDocument();
+    resolveMutate!({ id: 'camp-1' });
   });
 });

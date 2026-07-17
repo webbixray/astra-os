@@ -42,6 +42,7 @@ from app.infrastructure.db.repositories.governance.approval_repository import (
     ApprovalRuleRepositoryImpl,
 )
 from app.presentation.dependencies import get_db
+from app.presentation.middleware.auth import require_user_id
 
 router = APIRouter(prefix="/governance/approval", tags=["governance", "approval"])
 
@@ -103,6 +104,7 @@ async def get_decision_repo(db: AsyncSession = Depends(get_db)) -> ApprovalDecis
 @router.post("/rules", status_code=status.HTTP_201_CREATED)
 async def create_rule(
     body: CreateRuleRequest,
+    user_id: UUID = Depends(require_user_id),
     repo: ApprovalRuleRepositoryImpl = Depends(get_rule_repo),
 ):
     """Create a new approval rule."""
@@ -133,6 +135,7 @@ async def create_rule(
 async def list_rules(
     organization_id: UUID = Query(...),
     active_only: bool = Query(True),
+    user_id: UUID = Depends(require_user_id),
     repo: ApprovalRuleRepositoryImpl = Depends(get_rule_repo),
 ):
     """List approval rules for an organization."""
@@ -156,6 +159,7 @@ async def list_rules(
 @router.get("/rules/{rule_id}")
 async def get_rule(
     rule_id: UUID,
+    user_id: UUID = Depends(require_user_id),
     repo: ApprovalRuleRepositoryImpl = Depends(get_rule_repo),
 ):
     """Get a specific approval rule."""
@@ -178,6 +182,7 @@ async def get_rule(
 @router.delete("/rules/{rule_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_rule(
     rule_id: UUID,
+    user_id: UUID = Depends(require_user_id),
     repo: ApprovalRuleRepositoryImpl = Depends(get_rule_repo),
 ):
     """Delete an approval rule."""
@@ -190,6 +195,7 @@ async def delete_rule(
 @router.post("/evaluate")
 async def evaluate_rules(
     body: EvaluateRequest,
+    user_id: UUID = Depends(require_user_id),
     repo: ApprovalRuleRepositoryImpl = Depends(get_rule_repo),
 ):
     """Evaluate approval rules against an action context."""
@@ -209,6 +215,7 @@ async def evaluate_rules(
 @router.post("/requests", status_code=status.HTTP_201_CREATED)
 async def create_request(
     body: CreateApprovalRequestPayload,
+    user_id: UUID = Depends(require_user_id),
     rule_repo: ApprovalRuleRepositoryImpl = Depends(get_rule_repo),
     request_repo: ApprovalRequestRepositoryImpl = Depends(get_request_repo),
 ):
@@ -244,6 +251,7 @@ async def create_request(
 async def list_pending_requests(
     organization_id: UUID = Query(...),
     role: str | None = Query(None),
+    user_id: UUID = Depends(require_user_id),
     repo: ApprovalRequestRepositoryImpl = Depends(get_request_repo),
 ):
     """List pending approval requests."""
@@ -270,6 +278,7 @@ async def list_pending_requests(
 async def decide_request(
     request_id: UUID,
     body: DecideRequest,
+    user_id: UUID = Depends(require_user_id),
     request_repo: ApprovalRequestRepositoryImpl = Depends(get_request_repo),
     decision_repo: ApprovalDecisionRepositoryImpl = Depends(get_decision_repo),
 ):
@@ -278,7 +287,7 @@ async def decide_request(
         uc = DecideApprovalUseCase(request_repo, decision_repo)
         decision = await uc.execute(
             request_id=request_id,
-            decided_by=UUID("00000000-0000-0000-0000-000000000001"),  # TODO: from auth
+            decided_by=user_id,
             action=body.action,
             reason=body.reason,
             conditions=body.conditions,
@@ -297,6 +306,7 @@ async def decide_request(
 
 @router.post("/expire")
 async def expire_stale_requests(
+    user_id: UUID = Depends(require_user_id),
     repo: ApprovalRequestRepositoryImpl = Depends(get_request_repo),
 ):
     """Expire all stale approval requests."""

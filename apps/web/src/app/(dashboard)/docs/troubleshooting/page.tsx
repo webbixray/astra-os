@@ -2,21 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ChevronRight, Zap, Code, Shield, ExternalLink, Terminal, AlertCircle, CheckCircle, Zap as ZapIcon, Database, Globe, Users, Search, ChevronRight as ChevronRightIcon, ChevronLeft, ExternalLink, Zap as ZapIcon2, Code as CodeIcon, Sparkles, Brain, Settings, FileText, BarChart, Search, BookOpen, MessageSquare, Heart, Share2, Reply, Filter, Eye, EyeOff, TrendingUp, Target, ArrowUpRight, Users as UsersIcon, Zap as ZapIcon3, Brain, Sparkles, Zap as ZapIcon4, LayoutDashboard, Clock, FlaskConical, Play, Image, Mail, Zap as ZapIcon5, AlertTriangle, WifiOff, RefreshCw, XCircle, HelpCircle, Loader2, Key, Lock, Unlock, Wifi, Server, Database, Cpu, HardDrive, Monitor, Smartphone, Tablet, Printer, Scanner, Camera, Mic, Speaker, Headphones, Video, Music, Film, Gamepad2, Controller, Joystick, Keyboard, Mouse, Touchpad, Trackpad, Stylus, Pen, Pencil, Brush, Eraser, Ruler, Compass, Protractor, Square, Circle, Triangle, Hexagon, Octagon, Pentagon, Star, Heart, Diamond, Club, Spade, Clover, Leaf, Tree, Flower, Sun, Moon, Cloud, CloudRain, CloudSnow, CloudLightning, CloudDrizzle, CloudFog, CloudHail, CloudSun, CloudMoon, CloudRainWind, CloudSnowWind, CloudLightningWind, CloudDrizzleWind, CloudFogWind, CloudHailWind, CloudSunWind, CloudMoonWind, CloudRainWindSun, CloudSnowWindSun, CloudLightningWindSun, CloudDrizzleWindSun, CloudFogWindSun, CloudHailWindSun, CloudSunWindMoon, CloudMoonWindSun, CloudRainWindMoon, CloudSnowWindMoon, CloudLightningWindMoon, CloudDrizzleWindMoon, CloudFogWindMoon, CloudHailWindMoon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AlertTriangle, BookOpen, ChevronRight, Code, CreditCard, ExternalLink, Gauge, Link2, Lock, RefreshCw, WifiOff, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
-import { BookOpen } from 'lucide-react';
-
-interface DocSection {
-  id: string;
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  href: string;
-  category: 'getting-started' | 'guides' | 'api' | 'advanced';
-}
 
 const TROUBLESHOOTING_SECTIONS = [
   {
@@ -108,7 +96,7 @@ export default function TroubleshootingPage() {
     if (!acc[section.category]) {
       acc[section.category] = [];
     }
-    acc[section.category].push(section);
+    acc[section.category]!.push(section);
     return acc;
   }, {} as Record<string, typeof TROUBLESHOOTING_SECTIONS>);
 
@@ -131,7 +119,6 @@ export default function TroubleshootingPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full"
-                placeholder="Search documentation..."
               />
             </div>
 
@@ -153,8 +140,7 @@ export default function TroubleshootingPage() {
             </div>
 
             <div className="space-y-1">
-              {Object.entries(groupedSections).map(([category, sections]) => (
-                sections.length > 0 && (
+              {Object.entries(groupedSections).filter(([, sections]) => sections.length > 0).map(([category, sections]) => (
                   <div key={category} className="space-y-1">
                     <h3 className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       {CATEGORIES.find(c => c.id === category)?.label}
@@ -211,8 +197,7 @@ export default function TroubleshootingPage() {
           </div>
 
           <div className="space-y-8">
-            {Object.entries(groupedSections).map(([category, sections]) => (
-              sections.length > 0 && (
+            {Object.entries(groupedSections).filter(([, sections]) => sections.length > 0).map(([category, sections]) => (
                 <div key={category}>
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl font-semibold capitalize">{CATEGORIES.find(c => c.id === category)?.label}</h2>
@@ -246,7 +231,7 @@ export default function TroubleshootingPage() {
                           <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                         </div>
                       </Link>
-                    )}
+                    ))}
                   </div>
                 </div>
               ))}
@@ -287,7 +272,6 @@ export default function TroubleshootingPage() {
               </div>
             </div>
           </div>
-        </div>
       </main>
     </div>
   );

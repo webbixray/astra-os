@@ -1,7 +1,7 @@
 'use client';
 
 import { List } from 'lucide-react';
-import { Select } from '@/components/ui/select';
+import { LegacySelect as Select } from '@/components/ui/select';
 import { useAuditLogs, useAuditSummary } from '@/features/monitoring/api/useMonitoring';
 
 interface MonitoringAuditTabProps {

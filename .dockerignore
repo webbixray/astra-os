@@ -145,7 +145,7 @@ scripts/*.py
 !scripts/seed_db.py
 !scripts/check-migrations.sh
 !scripts/db-backup.sh
-!scripts/db-restore.sh
+!scripts/db-manage.sh
 
 # Monitoring (local)
 .monitoring

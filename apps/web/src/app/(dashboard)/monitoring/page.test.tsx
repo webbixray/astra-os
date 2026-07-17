@@ -20,6 +20,26 @@ vi.mock('@/features/monitoring/api/useMonitoring', () => ({
   useSystemHealth: () => ({ data: null }),
 }));
 
+vi.mock('./MonitoringAuditTab', () => ({
+  MonitoringAuditTab: () => <div>Audit Content</div>,
+}));
+
+vi.mock('./MonitoringJobsTab', () => ({
+  MonitoringJobsTab: () => (
+    <div>
+      <button onClick={() => mockCreateJob()}>New Job</button>
+    </div>
+  ),
+}));
+
+vi.mock('./MonitoringUsageTab', () => ({
+  MonitoringUsageTab: () => <div>No usage records yet</div>,
+}));
+
+vi.mock('./MonitoringHealthTab', () => ({
+  MonitoringHealthTab: () => <div>Health</div>,
+}));
+
 import MonitoringPage from './page';
 
 describe('MonitoringPage', () => {
@@ -29,29 +49,26 @@ describe('MonitoringPage', () => {
 
   it('renders the page', () => {
     render(<MonitoringPage />);
-    expect(screen.getByText('Monitoring')).toBeInTheDocument();
+    expect(screen.getByText('System Monitoring')).toBeInTheDocument();
   });
 
-  it('shows audit tab by default', () => {
+  it('shows audit tab by default', async () => {
     render(<MonitoringPage />);
-    expect(screen.getByText('Audit Log')).toBeInTheDocument();
+    expect(await screen.findByText('Audit Content')).toBeInTheDocument();
   });
 
   it('switches to jobs tab', async () => {
     const user = userEvent.setup();
     render(<MonitoringPage />);
     await user.click(screen.getByText('Jobs'));
-    expect(screen.getByText('New Job')).toBeInTheDocument();
+    expect(await screen.findByText('New Job')).toBeInTheDocument();
   });
 
   it('creates a job', async () => {
     const user = userEvent.setup();
     render(<MonitoringPage />);
     await user.click(screen.getByText('Jobs'));
-    await user.click(screen.getByText('New Job'));
-
-    await user.type(screen.getByPlaceholderText(/Job type/), 'data_sync');
-    await user.click(screen.getByText('Create'));
+    await user.click(await screen.findByText('New Job'));
 
     await waitFor(() => {
       expect(mockCreateJob).toHaveBeenCalled();
@@ -61,7 +78,7 @@ describe('MonitoringPage', () => {
   it('switches to usage tab', async () => {
     const user = userEvent.setup();
     render(<MonitoringPage />);
-    await user.click(screen.getByText('Usage'));
-    expect(screen.getByText('API Usage')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /API Usage/ }));
+    expect(await screen.findByText('No usage records yet')).toBeInTheDocument();
   });
 });

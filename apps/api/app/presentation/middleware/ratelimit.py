@@ -80,7 +80,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         else:
             count = self._get_count_local(client_key)
 
-        remaining = max(0, limit - count)
+        remaining = max(0, limit - count - 1)
         reset_at = self._get_reset_time()
 
         if count >= limit:
@@ -132,9 +132,15 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     async def _increment_redis(self, client_key: str) -> None:
         now = int(time.time())
         window_key = f"ratelimit:{client_key}:{now // 60}"
-        count = await self.redis_cache.client.incr(window_key)
-        if count == 1:
-            await self.redis_cache.client.expire(window_key, 60)
+        # Atomic incr+expire via Lua to prevent race between processes
+        lua_script = """
+        local count = redis.call('incr', KEYS[1])
+        if count == 1 then
+            redis.call('expire', KEYS[1], 61)
+        end
+        return count
+        """
+        await self.redis_cache.client.eval(lua_script, 1, window_key)
 
     def _get_count_local(self, client_key: str) -> int:
         now = time.time()

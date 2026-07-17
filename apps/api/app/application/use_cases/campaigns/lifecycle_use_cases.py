@@ -11,7 +11,7 @@ from uuid import UUID
 
 from app.domain.common import now
 from app.domain.events.event_bus import DomainEvent, DomainEventType, EventBus
-from app.domain.exceptions.domain_exceptions import ValidationError
+from app.domain.exceptions.domain_exceptions import EntityNotFoundError, ValidationError
 
 if TYPE_CHECKING:
     from app.domain.entities.campaigns.campaign import Campaign

@@ -151,7 +151,7 @@ class TestURL:
             URL("https://")
 
     def test_unsupported_scheme(self):
-        with pytest.raises(ValueError, match="Unsupported URL scheme"):
+        with pytest.raises(ValueError, match="Invalid URL"):
             URL("javascript:alert(1)")
 
 

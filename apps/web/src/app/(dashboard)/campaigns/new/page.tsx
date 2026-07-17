@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
+import { LegacySelect as Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useCreateCampaign } from '@/features/campaigns/api/useCampaigns';
@@ -25,8 +25,6 @@ const campaignSchema = z.object({
   objective: z.string().optional().default(''),
   channels: z.array(z.string()).min(1, 'Select at least one channel'),
 });
-
-type FormData = z.infer<typeof campaignSchema>;
 
 interface FieldErrors {
   [key: string]: string | undefined;

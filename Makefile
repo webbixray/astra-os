@@ -11,7 +11,7 @@ help: ## Show this help message
 # ============================================
 
 bootstrap: ## Full setup from clean clone (installs deps, starts infra, migrates, seeds)
-	@bash setup.sh
+	@make setup
 
 setup: ## Initial project setup (install deps, create .env, start services)
 	@echo "Setting up Astra OS..."
@@ -101,7 +101,7 @@ db-downgrade: ## Rollback last migration
 	@cd apps/api && alembic downgrade -1
 
 db-seed: ## Seed database with sample data
-	@cd apps/api && python -m scripts.seed_db
+	@echo "No seed script found. Create apps/api/scripts/seed_db.py to use this target."
 
 db-reset: ## Reset database (drop and recreate)
 	@cd apps/api && alembic downgrade base && alembic upgrade head

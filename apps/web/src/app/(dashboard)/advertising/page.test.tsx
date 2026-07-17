@@ -30,14 +30,14 @@ describe('AdvertisingPage', () => {
   it('opens connect form', async () => {
     const user = userEvent.setup();
     render(<AdvertisingPage />);
-    await user.click(screen.getByText('Connect Account'));
+    await user.click(screen.getAllByText('Connect Account')[0]!);
     expect(screen.getByPlaceholderText('Account Name')).toBeInTheDocument();
   });
 
   it('connects an account', async () => {
     const user = userEvent.setup();
     render(<AdvertisingPage />);
-    await user.click(screen.getByText('Connect Account'));
+    await user.click(screen.getAllByText('Connect Account')[0]!);
 
     await user.type(screen.getByPlaceholderText('Account Name'), 'Google Ads Prod');
     await user.type(screen.getByPlaceholderText('Platform Account ID'), '123-456');

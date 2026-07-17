@@ -25,7 +25,7 @@ class CampaignModel(Base):
     end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     channels: Mapped[list[str]] = mapped_column(ARRAY(String), default=list, nullable=False)
     objective: Mapped[str | None] = mapped_column(String(100), nullable=True)
-    created_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    created_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
     ai_generated: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     campaign_metadata: Mapped[dict] = mapped_column("metadata", JSONB, default=dict, nullable=False)
     created_at: Mapped[datetime] = mapped_column(

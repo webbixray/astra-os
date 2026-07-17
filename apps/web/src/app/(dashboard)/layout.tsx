@@ -1,3 +1,5 @@
+'use client';
+
 import dynamic from 'next/dynamic';
 import { AppShell } from '@/components/app-shell';
 import { ErrorBoundary } from '@/components/ui/error-boundary';

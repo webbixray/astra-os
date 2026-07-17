@@ -160,3 +160,34 @@ export function getFieldError(errors: ValidationError[], field: string): string 
 export function hasFieldError(errors: ValidationError[], field: string): boolean {
   return errors.some((e) => e.field === field);
 }
+
+import { useState } from 'react';
+
+export function useFormValidation<T extends Record<string, unknown>>(
+  schema: { parse: (data: T) => T; safeParse: (data: T) => { success: boolean; error?: { issues: Array<{ path: (string | number)[]; message: string }> } } },
+  initialValues: T,
+) {
+  const [formData, setFormData] = useState<T>(initialValues);
+  const [errors, setErrors] = useState<ValidationError[]>([]);
+
+  const handleChange = (field: keyof T, value: unknown) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    setErrors((prev) => prev.filter((e) => e.field !== String(field)));
+  };
+
+  const handleSubmit = (onSubmit: (data: T) => void) => (e?: React.FormEvent) => {
+    e?.preventDefault();
+    const result = schema.safeParse(formData);
+    if (result.success) {
+      onSubmit(formData);
+    } else {
+      const validationErrors: ValidationError[] = (result.error?.issues || []).map((issue) => ({
+        field: issue.path.join('.'),
+        message: issue.message,
+      }));
+      setErrors(validationErrors);
+    }
+  };
+
+  return { formData, errors, handleChange, handleSubmit };
+}

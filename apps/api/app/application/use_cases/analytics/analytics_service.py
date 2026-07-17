@@ -1,19 +1,15 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from decimal import Decimal
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 if TYPE_CHECKING:
-    from app.infrastructure.db.repositories.campaigns.campaign_repository import CampaignRepositoryImpl
+    from app.infrastructure.db.repositories.campaigns.campaign_repository import (
+        CampaignRepositoryImpl,
+    )
     from app.infrastructure.db.repositories.content.content_repository import ContentRepositoryImpl
 
-from app.domain.entities.campaigns.campaign import Campaign
-from app.domain.entities.content.content import Content
 
 
 class AnalyticsService:
@@ -124,7 +120,6 @@ class AnalyticsService:
 
     async def get_campaign_funnel(self, campaign_id: UUID) -> dict:
         """Get funnel metrics for a specific campaign."""
-        from app.infrastructure.db.repositories.campaigns.campaign_repository import CampaignRepositoryImpl
         # Get campaign details
         campaign = await self.campaign_repo.find_by_id(campaign_id)
         if not campaign:

@@ -30,7 +30,7 @@ export function SettingsUsageTab({ usage }: SettingsUsageTabProps) {
                   {metric.replace(/_/g, ' ')}
                 </span>
                 <span className="text-sm text-muted-foreground">
-                  {typeof value === 'number' ? value.toLocaleString() : value}
+                  {typeof value === 'number' ? value.toLocaleString() : String(value ?? '')}
                   {!isUnlimited && ` / ${(limit as number).toLocaleString()}`}
                 </span>
               </div>

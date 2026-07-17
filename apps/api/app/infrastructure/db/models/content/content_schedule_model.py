@@ -38,7 +38,7 @@ class ContentScheduleModel(Base):
         String(20), default=ScheduleStatus.ACTIVE.value, nullable=False, index=True
     )
     next_run_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
+        DateTime(timezone=True), nullable=True, index=True
     )
     last_run_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True

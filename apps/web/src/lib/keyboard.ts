@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 
 type ShortcutHandler = (e: KeyboardEvent) => void;
 

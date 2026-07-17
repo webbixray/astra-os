@@ -7,8 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Select } from '@/components/ui/select';
-import { useFormValidation } from '@/lib/validation';
+import { LegacySelect as Select } from '@/components/ui/select';
+import { useFormValidation, getFieldError } from '@/lib/validation';
 import { useCreateContent } from '@/features/content/api/useContent';
 import { useOrg } from '@/lib/org';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
@@ -26,8 +26,6 @@ const contentSchema = z.object({
   body: z.string().max(50000, 'Content is too long').optional().default(''),
 });
 
-type ContentFormData = z.infer<typeof contentSchema>;
-
 export default function NewContentPage() {
   const router = useRouter();
   const { orgId } = useOrg();
@@ -38,7 +36,7 @@ export default function NewContentPage() {
     body: '',
   });
 
-  const onSubmit = useCallback(async (data: ContentFormData) => {
+  const onSubmit = useCallback(async (data: { title: string; content_type: string; body: string }) => {
     await createContent.mutateAsync({
       organization_id: orgId,
       title: data.title,
@@ -66,9 +64,9 @@ export default function NewContentPage() {
             value={formData.title}
             onChange={(e) => handleChange('title', e.target.value)}
             placeholder="10 Ways AI Transforms Marketing"
-            error={errors.title}
+            error={getFieldError(errors, 'title')}
           />
-          {errors.title && <p className="text-xs text-destructive">{errors.title}</p>}
+          {getFieldError(errors, 'title') && <p className="text-xs text-destructive">{getFieldError(errors, 'title')}</p>}
         </div>
 
         <div className="space-y-2">

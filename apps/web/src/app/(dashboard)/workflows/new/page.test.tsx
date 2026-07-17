@@ -83,13 +83,16 @@ describe('NewWorkflowPage', () => {
     expect(mockBack).toHaveBeenCalled();
   });
 
-  it('shows Creating... when submitting', async () => {
+  it('submits and navigates on valid data', async () => {
     const user = userEvent.setup();
     render(<NewWorkflowPage />);
 
     await user.type(screen.getByLabelText('Workflow Name'), 'Workflow');
     await user.click(screen.getByRole('button', { name: 'Create Workflow' }));
 
-    expect(await screen.findByText('Creating...')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(mockMutateAsync).toHaveBeenCalled();
+      expect(mockPush).toHaveBeenCalledWith('/workflows/wf-1');
+    });
   });
 });

@@ -14,6 +14,7 @@ from app.domain.entities.design_partner import (
     DesignPartnerFeedback,
     DesignPartnerStatus,
     DesignPartnerTier,
+    FeedbackPriority,
     FeedbackStatus,
     FeedbackType,
 )

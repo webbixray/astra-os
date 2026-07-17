@@ -4,8 +4,6 @@ import { useState } from 'react';
 import { usePendingApprovals, useDecideApproval } from '../api/useApprovals';
 import {
   STATUS_COLORS,
-  AUTONOMY_LEVEL_LABELS,
-  type ApprovalRequest,
 } from '../types';
 
 interface ApprovalQueueProps {

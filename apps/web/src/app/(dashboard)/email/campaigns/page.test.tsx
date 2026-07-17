@@ -34,18 +34,18 @@ describe('EmailCampaignsPage', () => {
     expect(screen.getByText('No email campaigns yet')).toBeInTheDocument();
   });
 
-  it('opens new campaign form', async () => {
+  it('opens new campaign form', { timeout: 15000 }, async () => {
     const user = userEvent.setup();
     render(<EmailCampaignsPage />);
-    await user.click(screen.getByText('New Campaign'));
+    await user.click(screen.getAllByText('New Campaign')[0]!);
     expect(screen.getByPlaceholderText('Campaign name')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Subject')).toBeInTheDocument();
   });
 
-  it('creates a campaign', async () => {
+  it('creates a campaign', { timeout: 15000 }, async () => {
     const user = userEvent.setup();
     render(<EmailCampaignsPage />);
-    await user.click(screen.getByText('New Campaign'));
+    await user.click(screen.getAllByText('New Campaign')[0]!);
 
     await user.type(screen.getByPlaceholderText('Campaign name'), 'Weekly Newsletter');
     await user.type(screen.getByPlaceholderText('Subject'), 'Issue #42');

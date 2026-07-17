@@ -86,7 +86,7 @@ describe('WorkflowDetailPage', () => {
   it('shows Builder and Executions tabs', () => {
     render(<WorkflowDetailPage />);
     expect(screen.getByText('Builder')).toBeInTheDocument();
-    expect(screen.getByText('Executions')).toBeInTheDocument();
+    expect(screen.getByText(/Executions/)).toBeInTheDocument();
   });
 
   it('shows node count in canvas by default', () => {
@@ -104,8 +104,8 @@ describe('WorkflowDetailPage', () => {
   it('switches to executions tab', async () => {
     const user = userEvent.setup();
     render(<WorkflowDetailPage />);
-    await user.click(screen.getByText('Executions'));
+    await user.click(screen.getByText(/Executions/));
     expect(screen.getByText('exec-1')).toBeInTheDocument();
-    expect(screen.getByText('completed')).toBeInTheDocument();
+    expect(screen.getAllByText('completed').length).toBeGreaterThan(0);
   });
 });

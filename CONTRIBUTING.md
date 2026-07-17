@@ -21,9 +21,9 @@ This project adheres to the [Contributor Covenant Code of Conduct](CODE_OF_CONDU
 
 ### Prerequisites
 
-- Python 3.11+
+- Python 3.12+
 - Node.js 20+ (for web dashboard)
-- pnpm 8+ (for monorepo management)
+- pnpm 9+ (for monorepo management)
 - Docker & Docker Compose
 - PostgreSQL 15+ (for local development)
 - Redis 7+ (for local development)
@@ -42,7 +42,7 @@ pip install -e ".[dev]"
 pnpm install
 
 # Start local infrastructure
-docker compose -f docker-compose.local.yml up -d
+docker compose -f docker/dev/docker-compose.yml up -d
 
 # Run database migrations
 alembic upgrade head

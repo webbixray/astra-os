@@ -1,5 +1,5 @@
 import { expect } from '@playwright/test';
-import { test, mockApi, MOCK_USER, MOCK_TOKENS } from './fixtures';
+import { test, MOCK_USER, MOCK_TOKENS } from './fixtures';
 
 test.describe('Login', () => {
   test('renders login form', async ({ page }) => {

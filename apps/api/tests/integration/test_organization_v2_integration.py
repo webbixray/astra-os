@@ -114,7 +114,7 @@ class TestOrganizationV2Integration:
         test_client.headers["Authorization"] = f"Bearer {auth['access_token']}"
 
         second = await self._signup(test_client, "invitee@test.com")
-        second_id = UUID(second["user"]["id"])
+        UUID(second["user"]["id"])
 
         resp = await test_client.post(
             f"/api/v1/organizations/{org_id}/invitations",

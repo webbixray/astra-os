@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Astra OS - Database Backup Script
-# Creates compressed backups with automatic rotation
+# Astra OS - Database Management Script
+# Commands: backup (default), restore, list
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKUP_DIR="${BACKUP_DIR:-$SCRIPT_DIR/../backups}"

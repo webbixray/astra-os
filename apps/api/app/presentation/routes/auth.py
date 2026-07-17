@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from fastapi import APIRouter, Depends, Response
-from pydantic import BaseModel, EmailStr
+from fastapi import APIRouter, Depends, Request, Response
+from pydantic import BaseModel, EmailStr, Field
 
 if TYPE_CHECKING:
     from uuid import UUID
@@ -24,18 +24,18 @@ router = APIRouter()
 
 
 class SignUpRequest(BaseModel):
-    email: EmailStr
-    password: str
-    name: str
+    email: EmailStr = Field(max_length=320)
+    password: str = Field(min_length=1, max_length=128)
+    name: str = Field(min_length=1, max_length=100)
 
 
 class SignInRequest(BaseModel):
-    email: EmailStr
-    password: str
+    email: EmailStr = Field(max_length=320)
+    password: str = Field(min_length=1, max_length=128)
 
 
 class RefreshRequest(BaseModel):
-    refresh_token: str
+    refresh_token: str | None = None
 
 
 class AuthResponse(BaseModel):
@@ -45,8 +45,13 @@ class AuthResponse(BaseModel):
     user: UserResponse
 
 
-def get_auth_service(repo: UserRepositoryImpl = Depends(get_user_repo)) -> AuthService:
-    return AuthService(repo)
+def get_auth_service(
+    request: Request,
+    repo: UserRepositoryImpl = Depends(get_user_repo),
+) -> AuthService:
+    redis_cache = getattr(request.app.state, "redis", None)
+    redis_client = getattr(redis_cache, "client", None)
+    return AuthService(repo, redis_client=redis_client)
 
 
 def _set_auth_cookies(response: Response, access_token: str, refresh_token: str) -> None:
@@ -73,7 +78,7 @@ def _set_auth_cookies(response: Response, access_token: str, refresh_token: str)
 
 def _clear_auth_cookies(response: Response) -> None:
     response.delete_cookie("astra_access_token", path="/")
-    response.delete_cookie("astra_refresh_token", path="/api/v1/auth")
+    response.delete_cookie("astra_refresh_token", path="/")
 
 
 @router.post(
@@ -120,11 +125,16 @@ async def sign_in(
 
 @router.post("/refresh", response_model=AuthResponse, summary="Refresh access token")
 async def refresh_token(
-    request: RefreshRequest,
+    request: Request,
+    body: RefreshRequest,
     response: Response,
     service: AuthService = Depends(get_auth_service),
 ) -> AuthResponse:
-    result = await service.refresh_access_token(request.refresh_token)
+    refresh_token = body.refresh_token or request.cookies.get("astra_refresh_token", "")
+    if not refresh_token:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=401, detail="No refresh token provided")
+    result = await service.refresh_access_token(refresh_token)
     _set_auth_cookies(response, result["access_token"], result["refresh_token"])
     return AuthResponse(
         access_token=result["access_token"],
@@ -135,11 +145,14 @@ async def refresh_token(
 
 @router.post("/logout", response_model=MessageResponse, summary="Log out user")
 async def logout(
-    request: RefreshRequest,
+    request: Request,
+    body: RefreshRequest,
     response: Response,
     service: AuthService = Depends(get_auth_service),
 ) -> MessageResponse:
-    await service.logout(request.refresh_token)
+    refresh_token = body.refresh_token or request.cookies.get("astra_refresh_token", "")
+    if refresh_token:
+        await service.logout(refresh_token)
     _clear_auth_cookies(response)
     return MessageResponse(message="Logged out successfully")
 

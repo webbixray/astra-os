@@ -1,0 +1,43 @@
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: astra-critical
+  labels:
+    app.kubernetes.io/part-of: astra
+value: 1000000
+globalDefault: false
+description: "Critical system components (API, web) - always scheduled"
+preemptionPolicy: PreemptLowerPriority
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: astra-high
+  labels:
+    app.kubernetes.io/part-of: astra
+value: 500000
+globalDefault: false
+description: "High priority workloads (workers, Temporal)"
+preemptionPolicy: PreemptLowerPriority
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: astra-default
+  labels:
+    app.kubernetes.io/part-of: astra
+value: 100000
+globalDefault: true
+description: "Default priority for general workloads"
+preemptionPolicy: Never
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: astra-low
+  labels:
+    app.kubernetes.io/part-of: astra
+value: 10000
+globalDefault: false
+description: "Low priority for batch jobs and development workloads"
+preemptionPolicy: Never

@@ -37,7 +37,7 @@ export function randomArray<T>(length: number, generator: (index: number) => T):
 }
 
 export function randomItem<T>(array: T[]): T {
-  return array[Math.floor(Math.random() * array.length)];
+  return array[Math.floor(Math.random() * array.length)]!;
 }
 
 export function generateUser(overrides: Partial<{
@@ -113,7 +113,7 @@ export function generateAnalyticsData() {
     conversions: randomInt(100, 1000),
     conversionRate: randomFloat(1, 5),
     revenue: randomInt(10000, 100000),
-    topPages: randomArray(5, (i) => ({
+    topPages: randomArray(5, (_i) => ({
       path: `/page-${randomString(5)}`,
       views: randomInt(1000, 10000),
       percentage: randomFloat(5, 25),

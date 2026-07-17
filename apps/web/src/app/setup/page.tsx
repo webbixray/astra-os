@@ -7,20 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { api } from '@/lib/api';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Check } from 'lucide-react';
 
 type SetupStep = 'welcome' | 'account' | 'organization' | 'sample-campaigns' | 'ai-provider' | 'complete';
-
-interface SetupData {
-  name: string;
-  email: string;
-  password: string;
-  organizationName: string;
-  openaiApiKey: string;
-  anthropicApiKey: string;
-}
 
 const STEP_LABELS = {
   welcome: 'Welcome',
@@ -68,7 +58,7 @@ export default function SetupPage() {
     openaiApiKey: '',
     anthropicApiKey: '',
   });
-  const [createdOrgId, setCreatedOrgId] = useState<string | null>(null);
+  const [_createdOrgId, _setCreatedOrgId] = useState<string | null>(null);
   const [sampleCampaignsCreated, setSampleCampaignsCreated] = useState<{ id: string; name: string; objective: string; budget: number }[]>([]);
 
   const updateData = (partial: Partial<typeof data>) => {
@@ -78,14 +68,14 @@ export default function SetupPage() {
   const nextStep = () => {
     const currentIndex = STEP_ORDER.indexOf(step);
     if (currentIndex < STEP_ORDER.length - 1) {
-      setStep(STEP_ORDER[currentIndex + 1]);
+      setStep(STEP_ORDER[currentIndex + 1]!);
     }
   };
 
   const prevStep = () => {
     const currentIndex = STEP_ORDER.indexOf(step);
     if (currentIndex > 0) {
-      setStep(STEP_ORDER[currentIndex - 1]);
+      setStep(STEP_ORDER[currentIndex - 1]!);
     }
   };
 
@@ -100,7 +90,7 @@ export default function SetupPage() {
         email: data.email,
         password: data.password,
         organization_name: data.organizationName || `${data.name}'s Organization`,
-      });
+      }) as { organization_id: string };
       localStorage.setItem('astra_setup_org_id', response.organization_id);
       nextStep();
     } catch (err) {
@@ -136,7 +126,7 @@ export default function SetupPage() {
       const response = await api.post('/campaigns/sample', {
         organization_id: orgId,
         count: sampleCount,
-      });
+      }) as { campaigns: { id: string; name: string; objective: string; budget: number }[] };
 
       setSampleCampaignsCreated(response.campaigns);
       localStorage.removeItem('astra_setup_org_id');
@@ -367,7 +357,7 @@ export default function SetupPage() {
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="campaign-count">Number of Sample Campaigns</Label>
-                    <Select value={sampleCount} onValueChange={(v) => setSampleCount(Number(v))}>
+                    <Select value={String(sampleCount)} onValueChange={(v) => setSampleCount(Number(v))}>
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select count" />
                       </SelectTrigger>

@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.domain.entities.observability import (
     AlertRule,
     AlertSeverity,
+    AlertSource,
     AlertStatus,
     Budget,
     BudgetCategory,
@@ -80,10 +81,6 @@ class AlertRuleRequest(BaseModel):
     group_by: list[str] = Field(default_factory=list)
     active_hours: dict[str, Any] | None = None
     tags: list[str] = Field(default_factory=list)
-
-
-class AlertAcknowledgeRequest(BaseModel):
-    alert_id: str
 
 
 class CostRecordRequest(BaseModel):
@@ -214,7 +211,7 @@ def get_metrics_service(db: AsyncSession = Depends(get_db)) -> MetricsService:
 
 
 def get_alerting_service(db: AsyncSession = Depends(get_db)) -> AlertingService:
-    from app.infrastructure.db.repositories.alerting_repository import AlertRepositoryImpl
+    from app.infrastructure.db.repositories.alerting_repository import AlertRepositoryImpl, AlertRuleRepositoryImpl
     rule_repo = AlertRuleRepositoryImpl(db)
     alert_repo = AlertRepositoryImpl(db)
     metrics_service = get_metrics_service(db)
@@ -562,8 +559,6 @@ async def create_budget(
     org_id: UUID = Depends(_require_org_admin),
     service: CostTrackingService = Depends(get_cost_service),
 ) -> dict:
-    from app.infrastructure.db.repositories.cost_repository import BudgetRepositoryImpl
-    budget_repo = BudgetRepositoryImpl(__import__("sqlalchemy").orm.session.Session())
     budget = Budget(
         organization_id=organization_id,
         name=request.name,
@@ -580,7 +575,8 @@ async def create_budget(
         auto_renew=request.auto_renew,
         rollover_unused=request.rollover_unused,
     )
-    return budget.to_dict()
+    saved = await service.budget_repo.save(budget)
+    return saved.to_dict()
 
 
 @router.get(
@@ -593,7 +589,8 @@ async def list_budgets(
     org_id: UUID = Depends(_require_org_access),
     service: CostTrackingService = Depends(get_cost_service),
 ) -> list[dict]:
-    return []
+    budgets = await service.budget_repo.find_by_organization(organization_id, active_only=active_only)
+    return [b.to_dict() for b in budgets]
 
 
 # --- SLA Routes ---

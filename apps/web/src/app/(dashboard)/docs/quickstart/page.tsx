@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Check, ChevronRight, Code, Terminal, AlertCircle, CheckCircle, Zap } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Check, ChevronRight, AlertCircle, CheckCircle, Zap } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
@@ -12,6 +11,7 @@ interface Step {
   title: string;
   description: string;
   action: string;
+  href: string;
   completed?: boolean;
 }
 
@@ -176,7 +176,7 @@ export default function QuickstartPage() {
                         Completed
                       </span>
                     )}
-                  </h3>
+                  </div>
                   <p className="text-muted-foreground mb-4">{step.description}</p>
                   <Link
                     href={step.href}

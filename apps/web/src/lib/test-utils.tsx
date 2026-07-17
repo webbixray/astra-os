@@ -10,7 +10,7 @@ function createTestQueryClient() {
     defaultOptions: {
       queries: {
         retry: false,
-        cacheTime: 0,
+        gcTime: 0,
       },
       mutations: {
         retry: false,
@@ -33,7 +33,7 @@ function AllProviders({ children, queryClient }: { children: React.ReactNode; qu
   );
 }
 
-export function customRender(ui: React.ReactElement, options: CustomRenderOptions = {}) {
+export function customRender(ui: React.ReactElement, options: CustomRenderOptions = {}): ReturnType<typeof render> & { queryClient: QueryClient } {
   const { queryClient = createTestQueryClient(), ...renderOptions } = options;
 
   function Wrapper({ children }: { children: React.ReactNode }) {
@@ -117,10 +117,10 @@ export function mockLocalStorage() {
     store[key as string] = value;
   });
   vi.spyOn(Storage.prototype, 'removeItem').mockImplementation((key) => {
-    delete store[key as string];
+    store[key as string] = undefined as unknown as string;
   });
   vi.spyOn(Storage.prototype, 'clear').mockImplementation(() => {
-    Object.keys(store).forEach((key) => delete store[key]);
+    Object.keys(store).forEach((key) => { store[key] = undefined as unknown as string; });
   });
 
   return store;

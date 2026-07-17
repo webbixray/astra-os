@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen } from '@testing-library/react';
 
 vi.mock('@/lib/org', () => ({
   useOrg: () => ({ orgId: 'org-1' }),
@@ -20,7 +19,7 @@ describe('CalendarPage', () => {
 
   it('renders the page', () => {
     render(<CalendarPage />);
-    expect(screen.getByText('Content Calendar')).toBeInTheDocument();
+    expect(screen.getByText('Calendar')).toBeInTheDocument();
   });
 
   it('renders calendar navigation', () => {

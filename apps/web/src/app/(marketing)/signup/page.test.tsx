@@ -36,11 +36,11 @@ describe('SignupPage', () => {
 
     await user.type(screen.getByLabelText('Name'), 'Alice');
     await user.type(screen.getByLabelText('Email'), 'alice@example.com');
-    await user.type(screen.getByLabelText('Password'), 'secure123');
+    await user.type(screen.getByLabelText('Password'), 'Secure123!');
     await user.click(screen.getByRole('button', { name: 'Create Account' }));
 
     await waitFor(() => {
-      expect(mockSignup).toHaveBeenCalledWith('alice@example.com', 'secure123', 'Alice');
+      expect(mockSignup).toHaveBeenCalledWith('alice@example.com', 'Secure123!', 'Alice');
     });
     expect(mockPush).toHaveBeenCalledWith('/dashboard');
   });
@@ -52,7 +52,7 @@ describe('SignupPage', () => {
 
     await user.type(screen.getByLabelText('Name'), 'Bob');
     await user.type(screen.getByLabelText('Email'), 'bob@example.com');
-    await user.type(screen.getByLabelText('Password'), 'pwd');
+    await user.type(screen.getByLabelText('Password'), 'Secure123!');
     await user.click(screen.getByRole('button', { name: 'Create Account' }));
 
     expect(await screen.findByText('Signup failed. Please try again.')).toBeInTheDocument();
@@ -65,7 +65,7 @@ describe('SignupPage', () => {
 
     await user.type(screen.getByLabelText('Name'), 'Carol');
     await user.type(screen.getByLabelText('Email'), 'c@d.com');
-    await user.type(screen.getByLabelText('Password'), 'pwd');
+    await user.type(screen.getByLabelText('Password'), 'Secure123!');
     await user.click(screen.getByRole('button', { name: 'Create Account' }));
 
     expect(await screen.findByText('Creating account...')).toBeInTheDocument();

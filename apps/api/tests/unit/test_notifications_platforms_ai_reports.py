@@ -37,7 +37,7 @@ class TestNotification:
         n = Notification.create(
             organization_id=uuid4(),
             user_id=uuid4(),
-            type="general",
+            type="campaign_milestone",
             title="Test",
         )
         n.mark_read()
@@ -48,7 +48,7 @@ class TestNotification:
         n = Notification.create(
             organization_id=uuid4(),
             user_id=uuid4(),
-            type="general",
+            type="campaign_milestone",
             title="Test",
         )
         n.mark_read()
@@ -61,7 +61,7 @@ class TestNotification:
         n = Notification.create(
             organization_id=uuid4(),
             user_id=uuid4(),
-            type="general",
+            type="campaign_milestone",
             title="Test",
         )
         n.archive()

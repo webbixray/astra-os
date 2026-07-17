@@ -25,26 +25,19 @@ pnpm dev  # Starts API (8000) + Web (3000)
 
 ### Current Version
 ```bash
-python .github/scripts/version.py current
+# Version is managed in pyproject.toml and package.json
+grep '"version"' apps/api/pyproject.toml
+grep '"version"' package.json
 ```
 
-### Create Release (CI/CD)
+### Create Release
 ```bash
-# Manual trigger via GitHub Actions UI:
-# Actions → Release → Run workflow
-# Select: patch / minor / major
-# Optional: prerelease (alpha, beta, rc)
+# Tag and push
+git tag v1.0.2
+git push origin v1.0.2
 
-# Or locally:
-python .github/scripts/version.py release patch --dry-run
-python .github/scripts/version.py release minor
-python .github/scripts/version.py release major --prerelease beta
-```
-
-### Auto-Release Script
-```bash
-# Automated release with tests and linting
-BUMP_TYPE=patch DRY_RUN=false .github/scripts/auto-release.sh
+# Or via GitHub UI:
+# Code → Releases → Create new release
 ```
 
 ## Branching Strategy
@@ -318,11 +311,13 @@ docker-compose -f docker/prod/docker-compose.yml up -d --force-recreate \
 
 ### Load Testing
 ```bash
-# k6 script
+# k6 (install: https://k6.io/docs/get-started/installation/)
 k6 run tests/load/k6-load-test.js \
   --vus 100 --duration 5m \
   --env BASE_URL=https://api.astra-os.io
 ```
+
+> Note: `tests/load/k6-load-test.js` is not yet created. See k6 docs for examples.
 
 ### Profiling
 ```bash

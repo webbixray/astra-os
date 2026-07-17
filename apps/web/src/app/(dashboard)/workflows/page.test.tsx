@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 vi.mock('@/lib/org', () => ({
@@ -48,14 +48,15 @@ describe('WorkflowsPage', () => {
   it('shows status filter buttons', () => {
     render(<WorkflowsPage />);
     ['all', 'draft', 'active', 'paused', 'completed', 'archived'].forEach(s => {
-      expect(screen.getByText(s.replace('_', ' '))).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: s.replace('_', ' ') })).toBeInTheDocument();
     });
   });
 
   it('filters by status on click', async () => {
     const user = userEvent.setup();
     render(<WorkflowsPage />);
-    await user.click(screen.getByText('draft'));
-    expect(screen.getByText('draft').closest('button')).toHaveClass('bg-primary');
+    const draftBtn = screen.getByRole('button', { name: 'draft' });
+    await user.click(draftBtn);
+    expect(draftBtn).toHaveClass('bg-primary');
   });
 });

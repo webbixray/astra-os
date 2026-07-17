@@ -12,7 +12,6 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SkeletonLine } from '@/components/ui/skeleton';
-import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { usePublishingQueue, useRetryPublish, useCancelPublish } from '@/features/content/api/useContentPublishing';
 import { cn } from '@/lib/utils';
 import { useOrg } from '@/lib/org';

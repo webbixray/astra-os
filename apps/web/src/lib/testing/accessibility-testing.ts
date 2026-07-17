@@ -95,7 +95,7 @@ export class AccessibilityTester {
       const ariaLabel = input.getAttribute('aria-label');
       const ariaLabelledby = input.getAttribute('aria-labelledby');
 
-      if (!label && !ariaLabel && !ariaLabelledby && input.type !== 'hidden') {
+      if (!label && !ariaLabel && !ariaLabelledby && input.getAttribute('type') !== 'hidden') {
         this.addIssue({
           element: input.outerHTML.slice(0, 100),
           rule: 'form-label',
@@ -113,7 +113,7 @@ export class AccessibilityTester {
     let previousLevel = 0;
 
     headings.forEach((heading) => {
-      const level = parseInt(heading.tagName[1]);
+      const level = parseInt(heading.tagName.charAt(1));
       if (level > previousLevel + 1 && previousLevel !== 0) {
         this.addIssue({
           element: heading.outerHTML.slice(0, 100),
@@ -152,7 +152,7 @@ export class AccessibilityTester {
     });
   }
 
-  private calculateContrast(color1: string, color2: string): number {
+  private calculateContrast(_color1: string, _color2: string): number {
     // Simplified contrast calculation
     return 4.5; // Placeholder
   }

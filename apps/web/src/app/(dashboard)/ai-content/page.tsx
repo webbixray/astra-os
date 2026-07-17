@@ -89,7 +89,7 @@ export default function AIContentPage() {
   const handleGenerate = async () => {
     const parsed = instructionsSchema.safeParse(instructions);
     if (!parsed.success) {
-      setInstructionsError(parsed.error.issues[0].message);
+      setInstructionsError(parsed.error!.issues[0]!.message);
       return;
     }
     setInstructionsError('');
@@ -119,7 +119,7 @@ export default function AIContentPage() {
   const handleRewrite = async () => {
     const parsed = instructionsSchema.safeParse(instructions);
     if (!parsed.success) {
-      setInstructionsError(parsed.error.issues[0].message);
+      setInstructionsError(parsed.error!.issues[0]!.message);
       return;
     }
     setInstructionsError('');

@@ -48,7 +48,7 @@ class TestNvidiaNIMProvider:
         with patch("app.infrastructure.external_adapters.ai.router.config") as mock_config:
             mock_config.nvidia_nim_base_url = "https://nvidia.example.com"
             mock_config.nvidia_nim_api_key = "test-key"
-            
+
             with patch("httpx.AsyncClient", return_value=mock_client):
                 provider = NvidiaNIMProvider()
                 result = await provider.chat([{"role": "user", "content": "Hi"}])
@@ -62,7 +62,7 @@ class TestNvidiaNIMProvider:
         with patch("app.infrastructure.external_adapters.ai.router.config") as mock_config:
             mock_config.nvidia_nim_base_url = "https://nvidia.example.com"
             mock_config.nvidia_nim_api_key = "test-key"
-            
+
             lines = [
                 'data: {"choices": [{"delta": {"content": "Hello"}}]}',
                 'data: {"choices": [{"delta": {"content": " world"}}]}',
@@ -125,7 +125,7 @@ class TestOpenAIProvider:
     async def test_chat_no_api_key_returns_empty(self):
         import app.config as cfg
         cfg.config.openai_api_key = ""
-        
+
         provider = OpenAIProvider()
         result = await provider.chat([{"role": "user", "content": "Hi"}])
         assert result == ""
@@ -134,7 +134,7 @@ class TestOpenAIProvider:
     async def test_stream_chat_no_api_key_returns_nothing(self):
         import app.config as cfg
         cfg.config.openai_api_key = ""
-        
+
         provider = OpenAIProvider()
         chunks = []
         async for chunk in provider.stream_chat([{"role": "user", "content": "Hi"}]):
@@ -154,7 +154,7 @@ class TestOpenAIProvider:
 
         with patch("app.infrastructure.external_adapters.ai.router.config") as mock_config:
             mock_config.openai_api_key = "sk-test"
-            
+
             with patch("httpx.AsyncClient", return_value=mock_client):
                 provider = OpenAIProvider()
                 result = await provider.chat([{"role": "user", "content": "Hi"}])
@@ -185,7 +185,7 @@ class TestOpenAIProvider:
 
         with patch("app.infrastructure.external_adapters.ai.router.config") as mock_config:
             mock_config.openai_api_key = "sk-test"
-            
+
             with patch("httpx.AsyncClient", return_value=mock_client_ctx):
                 chunks = []
                 async for chunk in provider.stream_chat([{"role": "user", "content": "Hi"}]):

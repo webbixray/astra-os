@@ -100,7 +100,7 @@ export function getStatusColor(status: string, domain?: string): string {
   }
 
   for (const map of Object.values(maps)) {
-    if (status in map) return map[status];
+    if (status in map) return map[status]!;
   }
   return muted;
 }

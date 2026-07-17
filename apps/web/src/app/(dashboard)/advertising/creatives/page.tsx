@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { Plus, Image, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
+import { LegacySelect as Select } from '@/components/ui/select';
 import { useAdCreatives, useCreateAdCreative } from '@/features/advertising/api/useAdvertising';
 import { useOrg } from '@/lib/org';
 import Link from 'next/link';

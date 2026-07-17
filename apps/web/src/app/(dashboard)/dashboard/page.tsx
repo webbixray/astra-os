@@ -97,6 +97,7 @@ export default function DashboardPage() {
     const maxY = existing.reduce((m, w) => Math.max(m, w.pos_y + w.height), 0);
     addWidget.mutate({
       dashboard_id: selectedDashId,
+      organization_id: orgId,
       widget_type: widgetType,
       title: WIDGET_TYPE_OPTIONS.find((o) => o.type === widgetType)?.label || widgetType,
       pos_x: 0,
@@ -335,7 +336,7 @@ export default function DashboardPage() {
                         </button>
                       </div>
 
-{/* Widget body */}
+                      {/* Widget body */}
                       <div className="p-4">
                         {dataItem ? (
                           <>
@@ -367,15 +368,17 @@ export default function DashboardPage() {
                             </div>
                           ))
                         )}
+                      </div>
+                    </div>
+                  );
+                }) : (
+                  <div className="col-span-full flex flex-col items-center justify-center py-20 text-muted-foreground">
+                    <BarChart3 className="mb-3 h-10 w-10 opacity-20" />
+                    <p className="font-medium">Empty dashboard</p>
+                    <p className="mt-1 text-sm">Click &quot;Add Widget&quot; to start building</p>
+                  </div>
+                )}
               </div>
-
-              {canvasWidgets.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-                  <BarChart3 className="mb-3 h-10 w-10 opacity-20" />
-                  <p className="font-medium">Empty dashboard</p>
-                  <p className="mt-1 text-sm">Click "Add Widget" to start building</p>
-                </div>
-              )}
             </>
           )}
         </div>

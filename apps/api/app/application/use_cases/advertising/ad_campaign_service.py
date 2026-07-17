@@ -1,5 +1,6 @@
 from uuid import UUID
 
+from app.domain.entities.advertising.ad_account import Platform
 from app.domain.entities.advertising.ad_campaign import AdCampaign, CampaignObjective
 from app.infrastructure.db.repositories.advertising.advertising_repository import (
     AdCampaignRepository,
@@ -68,15 +69,11 @@ class AdCampaignService:
             return {"error": "Campaign not found"}
 
         adapter = AdPlatformFactory.create(
-            __import__(
-                "app.domain.entities.advertising.ad_account", fromlist=["Platform"]
-            ).Platform(model.platform),
+            Platform(model.platform),
         )
 
         platform_id = await adapter.create_campaign(
-            __import__(
-                "app.domain.entities.advertising.ad_campaign", fromlist=["AdCampaign"]
-            ).AdCampaign(
+            AdCampaign(
                 name=model.name,
                 platform=model.platform,
             )

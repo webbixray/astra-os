@@ -106,7 +106,6 @@ async def lifespan(app: FastAPI):
     # Start content schedule worker
     from app.application.workers.content_schedule_worker import (
         ContentScheduleWorker,
-        content_schedule_worker as _worker_var,
     )
 
     content_schedule_worker = ContentScheduleWorker(app.state.db)
@@ -231,15 +230,16 @@ def _init_opentelemetry(app: FastAPI) -> None:
 def create_app() -> FastAPI:
     _init_sentry()
 
+    is_prod = config.environment == "production"
     app = FastAPI(
         title="ASTRA OS API",
-        version="0.0.1",
+        version="1.0.2",
         description="AI-Native Marketing & Business Growth Operating System",
         lifespan=lifespan,
         root_path="",
-        openapi_url="/api/v1/openapi.json",
-        docs_url="/api/v1/docs",
-        redoc_url="/api/v1/redoc",
+        openapi_url=None if is_prod else "/api/v1/openapi.json",
+        docs_url=None if is_prod else "/api/v1/docs",
+        redoc_url=None if is_prod else "/api/v1/redoc",
     )
 
     cors_origins = config.cors_origin_list

@@ -122,7 +122,7 @@ class TestCalendarService:
             name="Ad Campaign",
             start_date="2025-01-10",
         )
-        empty = _make_result([])
+        _make_result([])
         session.execute.side_effect = [
             _make_result([camp]),
             _make_result([content]),

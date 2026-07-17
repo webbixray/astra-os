@@ -5,7 +5,7 @@ import { useNotificationTemplates, useCreateNotificationTemplate, useDeleteNotif
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select } from '@/components/ui/select';
+import { LegacySelect as Select } from '@/components/ui/select';
 import { Loader2, FileText, Plus } from 'lucide-react';
 
 const NOTIF_TYPES = [

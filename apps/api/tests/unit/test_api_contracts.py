@@ -1,13 +1,27 @@
+from unittest.mock import AsyncMock, MagicMock
+from uuid import uuid4
+
 import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
 from app.main import create_app
+from app.presentation.middleware.auth import require_user_id
 
 
 @pytest.fixture(scope="module")
 def app() -> FastAPI:
-    return create_app()
+    a = create_app()
+
+    mock_session = AsyncMock()
+    mock_session.execute = AsyncMock()
+    mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+    mock_session.__aexit__ = AsyncMock(return_value=None)
+    mock_session_factory = MagicMock(return_value=mock_session)
+    a.state.db = mock_session_factory
+    a.dependency_overrides[require_user_id] = uuid4
+
+    return a
 
 
 @pytest.fixture(scope="module")
@@ -19,7 +33,7 @@ class TestOpenAPISchema:
     def test_schema_has_info(self, openapi_schema: dict):
         info = openapi_schema.get("info", {})
         assert info.get("title") == "ASTRA OS API"
-        assert info.get("version") == "0.0.1"
+        assert info.get("version") == "1.0.2"
         assert "description" in info
 
     def test_schema_has_all_required_paths(self, openapi_schema: dict):
@@ -30,20 +44,20 @@ class TestOpenAPISchema:
             "/api/v1/auth/signin",
             "/api/v1/auth/signup",
             "/api/v1/auth/refresh",
-            "/api/v1/users/me",
+            "/api/v1/auth/me",
             "/api/v1/organizations",
             "/api/v1/campaigns",
             "/api/v1/content",
             "/api/v1/chat",
             "/api/v1/agents",
             "/api/v1/workflows",
-            "/api/v1/advertising",
-            "/api/v1/calendar",
+            "/api/v1/ad/accounts",
+            "/api/v1/calendar/events",
             "/api/v1/notifications",
             "/api/v1/notification-templates",
             "/api/v1/notification-preferences",
-            "/api/v1/dashboards",
-            "/api/v1/knowledge",
+            "/api/v1/dashboards/{dashboard_id}",
+            "/api/v1/knowledge/search",
         ]
         for path in required_paths:
             assert path in paths, f"Missing required path: {path}"
@@ -134,11 +148,13 @@ class TestErrorHandlingContract:
 
     @pytest.mark.asyncio
     async def test_unauthenticated_returns_401(self, app: FastAPI):
+        app.dependency_overrides.pop(require_user_id, None)
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
-            response = await client.get("/api/v1/users/me")
+            response = await client.get("/api/v1/auth/me")
 
         assert response.status_code in (401, 403)
+        app.dependency_overrides[require_user_id] = uuid4
 
     @pytest.mark.asyncio
     async def test_cors_headers_present(self, app: FastAPI):

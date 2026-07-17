@@ -1,8 +1,9 @@
+from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 import pytest
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
 from app.domain.entities.prompts import PromptCategory, PromptStatus, SystemPrompt
@@ -24,8 +25,8 @@ def _mock_prompt(**kwargs) -> MagicMock:
     p.status = kwargs.get("status", PromptStatus.ACTIVE)
     p.is_builtin = kwargs.get("is_builtin", False)
     p.created_by = kwargs.get("created_by")
-    p.created_at = kwargs.get("created_at", __import__("datetime").datetime.now())
-    p.updated_at = kwargs.get("updated_at", __import__("datetime").datetime.now())
+    p.created_at = kwargs.get("created_at", datetime.now())
+    p.updated_at = kwargs.get("updated_at", datetime.now())
     p.bump_version = MagicMock()
     return p
 
@@ -137,11 +138,12 @@ class TestPromptRoutes:
         self, app: FastAPI, test_client: AsyncClient, mock_use_case: MagicMock
     ):
         prompt_id = uuid4()
-        prompt = _mock_prompt(id=prompt_id, name="found")
+        org_id = uuid4()
+        prompt = _mock_prompt(id=prompt_id, name="found", org_id=org_id)
         mock_use_case.get_prompt = AsyncMock(return_value=prompt)
         app.dependency_overrides[get_manage_use_case] = lambda: mock_use_case
 
-        response = await test_client.get(f"/api/v1/prompts/{prompt_id}")
+        response = await test_client.get(f"/api/v1/prompts/{prompt_id}", params={"organization_id": str(org_id)})
         assert response.status_code == 200
         assert response.json()["data"]["name"] == "found"
 
@@ -152,7 +154,7 @@ class TestPromptRoutes:
         mock_use_case.get_prompt = AsyncMock(return_value=None)
         app.dependency_overrides[get_manage_use_case] = lambda: mock_use_case
 
-        response = await test_client.get(f"/api/v1/prompts/{uuid4()}")
+        response = await test_client.get(f"/api/v1/prompts/{uuid4()}", params={"organization_id": str(uuid4())})
         assert response.status_code == 404
 
     @pytest.mark.asyncio
@@ -194,13 +196,16 @@ class TestPromptRoutes:
         self, app: FastAPI, test_client: AsyncClient, mock_use_case: MagicMock
     ):
         prompt_id = uuid4()
-        prompt = _mock_prompt(id=prompt_id, name="updated", content="new content")
+        org_id = uuid4()
+        prompt = _mock_prompt(id=prompt_id, name="updated", content="new content", org_id=org_id)
         mock_use_case.update_prompt = AsyncMock(return_value=prompt)
+        mock_use_case.get_prompt = AsyncMock(return_value=prompt)
         app.dependency_overrides[get_manage_use_case] = lambda: mock_use_case
 
         csrf = _setup_csrf(test_client)
         response = await test_client.patch(
             f"/api/v1/prompts/{prompt_id}",
+            params={"organization_id": str(org_id)},
             json={"content": "new content", "description": "updated desc"},
             headers=csrf,
         )
@@ -211,14 +216,13 @@ class TestPromptRoutes:
     async def test_update_prompt_not_found(
         self, app: FastAPI, test_client: AsyncClient, mock_use_case: MagicMock
     ):
-        mock_use_case.update_prompt = AsyncMock(
-            side_effect=HTTPException(status_code=404, detail="Prompt not found")
-        )
+        mock_use_case.get_prompt = AsyncMock(return_value=None)
         app.dependency_overrides[get_manage_use_case] = lambda: mock_use_case
 
         csrf = _setup_csrf(test_client)
         response = await test_client.patch(
             f"/api/v1/prompts/{uuid4()}",
+            params={"organization_id": str(uuid4())},
             json={"content": "updated"},
             headers=csrf,
         )
@@ -242,11 +246,18 @@ class TestPromptRoutes:
     async def test_delete_prompt(
         self, app: FastAPI, test_client: AsyncClient, mock_use_case: MagicMock
     ):
+        org_id = uuid4()
+        existing = _mock_prompt(id=uuid4(), org_id=org_id)
+        mock_use_case.get_prompt = AsyncMock(return_value=existing)
         mock_use_case.delete_prompt = AsyncMock()
         app.dependency_overrides[get_manage_use_case] = lambda: mock_use_case
 
         csrf = _setup_csrf(test_client)
-        response = await test_client.delete(f"/api/v1/prompts/{uuid4()}", headers=csrf)
+        response = await test_client.delete(
+            f"/api/v1/prompts/{existing.id}",
+            params={"organization_id": str(org_id)},
+            headers=csrf,
+        )
         assert response.status_code == 204
 
     @pytest.mark.asyncio

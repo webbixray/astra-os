@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { ChevronDownIcon } from '@radix-ui/react-icons';
 import {
   Select,
@@ -9,9 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
   SelectIcon,
-  SelectSeparator,
 } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
 import { Loader2, Building2, CheckIcon } from 'lucide-react';
 import { useTenantStore, useCurrentTenantId } from '@/stores/tenant-store';
 import type { OrganizationResponse } from '@/lib/api/generated';
@@ -28,7 +26,7 @@ export function TenantSwitcher({
   compact = false,
 }: TenantSwitcherProps) {
   const {
-    currentTenant,
+    currentTenant: _currentTenant,
     availableTenants,
     isLoading,
     fetchTenants,
@@ -44,9 +42,9 @@ export function TenantSwitcher({
     }
   }, [availableTenants.length, isLoading, fetchTenants]);
 
-  const handleTenantChange = async (value: string) => {
+  const handleTenantChange = (value: string) => {
     if (value && value !== currentTenantId) {
-      await switchTenant(value);
+      switchTenant(value);
     }
   };
 
@@ -56,7 +54,6 @@ export function TenantSwitcher({
         value={currentTenantId ?? ''}
         onValueChange={handleTenantChange}
         disabled={isLoading || availableTenants.length <= 1}
-        className={`w-full ${className}`}
       >
         <SelectTrigger className="w-[200px] h-8">
           <SelectValue placeholder="Select tenant..." />
@@ -66,7 +63,7 @@ export function TenantSwitcher({
         </SelectTrigger>
         <SelectContent>
           {isLoading ? (
-            <SelectItem disabled>
+            <SelectItem disabled value="__loading__">
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Loading tenants...
             </SelectItem>
@@ -107,12 +104,12 @@ export function TenantSwitcher({
         </SelectTrigger>
         <SelectContent position="popper">
           {isLoading ? (
-            <SelectItem disabled className="flex items-center gap-2 px-2 py-3">
+            <SelectItem disabled value="__loading__" className="flex items-center gap-2 px-2 py-3">
               <Loader2 className="h-4 w-4 animate-spin" />
               Loading tenants...
             </SelectItem>
           ) : availableTenants.length === 0 ? (
-            <SelectItem disabled className="px-2 py-3 text-muted-foreground">
+            <SelectItem disabled value="__no_tenants__" className="px-2 py-3 text-muted-foreground">
               No tenants available
             </SelectItem>
           ) : (
@@ -143,7 +140,7 @@ export function TenantSwitcher({
 
 // Simplified version for header usage
 export function HeaderTenantSwitcher() {
-  const { currentTenant, availableTenants, isLoading, fetchTenants, switchTenant } =
+  const { currentTenant: _currentTenant, availableTenants, isLoading, fetchTenants, switchTenant } =
     useTenantStore();
   const currentTenantId = useCurrentTenantId();
 
@@ -172,7 +169,7 @@ export function HeaderTenantSwitcher() {
         </SelectTrigger>
         <SelectContent>
           {isLoading ? (
-            <SelectItem disabled className="flex items-center gap-2 px-2 py-2">
+            <SelectItem disabled value="__loading__" className="flex items-center gap-2 px-2 py-2">
               <Loader2 className="h-4 w-4 animate-spin" />
               Loading...
             </SelectItem>

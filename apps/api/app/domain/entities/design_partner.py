@@ -272,7 +272,6 @@ class DesignPartner:
             "feedback_count": self.feedback_count,
             "support_tier": self.support_tier,
             "open_tickets": self.open_tickets,
-            "status": self.status.value,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
         }

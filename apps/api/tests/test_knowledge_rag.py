@@ -172,7 +172,7 @@ class TestRagPipelineSearch:
         mock_ks.search = AsyncMock(return_value=[
             {"id": str(uuid4()), "type": "content", "name": "Blog", "description": "d", "similarity": 0.8, "properties": {}},
         ])
-        results = await pipeline.search("blog", org_id, type_filter="content")
+        await pipeline.search("blog", org_id, type_filter="content")
         # Type filter is passed to the knowledge service
         mock_ks.search.assert_called()
 

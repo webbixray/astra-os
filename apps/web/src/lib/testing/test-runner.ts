@@ -97,7 +97,7 @@ export class TestRunner {
     }
   }
 
-  private async runTest(test: TestResult, suite: TestSuite): Promise<void> {
+  private async runTest(test: TestResult, _suite: TestSuite): Promise<void> {
     const startTime = Date.now();
     let retries = 0;
 
@@ -196,7 +196,7 @@ export function describe(name: string, fn: () => void): TestSuite {
 
   const originalFn = fn;
   fn = () => {
-    global.it = (testName: string, testFn: () => Promise<void> | void) => {
+    global.it = (testName: string, _testFn: () => Promise<void> | void) => {
       suite.tests.push({
         name: testName,
         suite: name,

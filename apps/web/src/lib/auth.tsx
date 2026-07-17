@@ -37,15 +37,11 @@ function getStoredUser(): User | null {
   }
 }
 
-function setStoredAuth(data: AuthResponse) {
-  localStorage.setItem('astra_access_token', data.access_token);
-  localStorage.setItem('astra_refresh_token', data.refresh_token);
-  localStorage.setItem('astra_user', JSON.stringify(data.user));
+function setStoredUser(user: User) {
+  localStorage.setItem('astra_user', JSON.stringify(user));
 }
 
-function clearStoredAuth() {
-  localStorage.removeItem('astra_access_token');
-  localStorage.removeItem('astra_refresh_token');
+function clearStoredUser() {
   localStorage.removeItem('astra_user');
   localStorage.removeItem('astra_orgs');
 }
@@ -55,18 +51,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('astra_access_token');
-    if (!token) {
-      setIsLoading(false);
-      return;
-    }
     api.get<User>('/auth/me')
       .then((u) => {
         setUser(u);
-        localStorage.setItem('astra_user', JSON.stringify(u));
+        setStoredUser(u);
       })
       .catch(() => {
-        clearStoredAuth();
+        clearStoredUser();
         setUser(null);
       })
       .finally(() => setIsLoading(false));
@@ -74,18 +65,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (email: string, password: string) => {
     const data = await api.post<AuthResponse>('/auth/signin', { email, password }, true);
-    setStoredAuth(data);
+    setStoredUser(data.user);
     setUser(data.user);
   }, []);
 
   const signup = useCallback(async (email: string, password: string, name: string) => {
     const data = await api.post<AuthResponse>('/auth/signup', { email, password, name }, true);
-    setStoredAuth(data);
+    setStoredUser(data.user);
     setUser(data.user);
   }, []);
 
   const logout = useCallback(() => {
-    clearStoredAuth();
+    clearStoredUser();
     setUser(null);
     api.post('/auth/logout', {}).catch(() => {});
   }, []);

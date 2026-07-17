@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
@@ -29,9 +28,9 @@ describe('PublishingQueuePage', () => {
 
   it('shows loading state', () => {
     mockUsePublishingQueue.mockReturnValue({ data: null, isLoading: true, isError: false, error: null });
-    render(<PublishingQueuePage />);
+    const { container } = render(<PublishingQueuePage />);
     expect(screen.getByText('Publishing Queue')).toBeInTheDocument();
-    expect(screen.getByText('Skeleton line')).toBeInTheDocument();
+    expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
   });
 
   it('shows error state', () => {
@@ -46,18 +45,18 @@ describe('PublishingQueuePage', () => {
   it('shows empty state when no items', () => {
     mockUsePublishingQueue.mockReturnValue({ data: [], isLoading: false, isError: false, error: null });
     render(<PublishingQueuePage />);
-    expect(screen.getByText('Queue is empty')).toBeInTheDocument();
+    expect(screen.getByText('No publishing activity')).toBeInTheDocument();
   });
 
   it('renders queue items', () => {
     const items = [
-      { id: '1', content_title: 'Blog Post', platform: 'website', status: 'scheduled', scheduled_at: '2026-07-15T10:00:00Z' },
-      { id: '2', content_title: 'Social Update', platform: 'twitter', status: 'published', published_at: '2026-07-10T10:00:00Z' },
+      { id: '1', content_id: 'blog-post-id', platform: 'website', status: 'scheduled', scheduled_at: '2026-07-15T10:00:00Z' },
+      { id: '2', content_id: 'social-update', platform: 'twitter', status: 'published', published_at: '2026-07-10T10:00:00Z' },
     ];
     mockUsePublishingQueue.mockReturnValue({ data: items, isLoading: false, isError: false, error: null });
     render(<PublishingQueuePage />);
-    expect(screen.getByText('Blog Post')).toBeInTheDocument();
-    expect(screen.getByText('Social Update')).toBeInTheDocument();
+    expect(screen.getByText('website')).toBeInTheDocument();
+    expect(screen.getByText('twitter')).toBeInTheDocument();
   });
 
 });

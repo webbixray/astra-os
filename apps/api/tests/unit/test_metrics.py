@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
@@ -8,6 +10,7 @@ from app.infrastructure.metrics import (
     workflows_completed,
     workflows_failed,
 )
+from app.presentation.middleware.auth import require_user_id
 from app.presentation.middleware.metrics import MetricsMiddleware
 from app.presentation.routes.metrics import router as metrics_router
 
@@ -16,6 +19,7 @@ from app.presentation.routes.metrics import router as metrics_router
 def app() -> FastAPI:
     app = FastAPI()
     app.include_router(metrics_router, prefix="/api/v1")
+    app.dependency_overrides[require_user_id] = lambda: uuid4()
 
     @app.get("/api/v1/test")
     async def test_route() -> dict:

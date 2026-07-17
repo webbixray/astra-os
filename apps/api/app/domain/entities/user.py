@@ -13,8 +13,8 @@ class User:
     avatar_url: str | None = None
     password_hash: str = ""
     is_active: bool = True
-    created_at: datetime = field(default_factory=lambda: datetime.now(UTC).replace(tzinfo=None))
-    updated_at: datetime = field(default_factory=lambda: datetime.now(UTC).replace(tzinfo=None))
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     @classmethod
     def create(cls, email: str, name: str, password_hash: str = "") -> "User":
@@ -35,15 +35,15 @@ class User:
             self.name = name
         if avatar_url is not None:
             self.avatar_url = avatar_url
-        self.updated_at = datetime.now(UTC).replace(tzinfo=None)
+        self.updated_at = datetime.now(UTC)
 
     def deactivate(self) -> None:
         self.is_active = False
-        self.updated_at = datetime.now(UTC).replace(tzinfo=None)
+        self.updated_at = datetime.now(UTC)
 
     def set_password_hash(self, password_hash: str) -> None:
         self.password_hash = password_hash
-        self.updated_at = datetime.now(UTC).replace(tzinfo=None)
+        self.updated_at = datetime.now(UTC)
 
     def to_safe_dict(self) -> dict:
         """Return user data dict excluding sensitive fields like password_hash."""

@@ -38,7 +38,7 @@ interface WorkflowStepCardProps {
   className?: string;
 }
 
-export function WorkflowStepCard({ step, index, isLast, onEdit, onDelete, className }: WorkflowStepCardProps) {
+export function WorkflowStepCard({ step, isLast, onEdit, onDelete, className }: WorkflowStepCardProps) {
   const stepIcons: Record<WorkflowStep['type'], string> = {
     trigger: '⚡',
     action: '🎯',
@@ -70,7 +70,7 @@ export function WorkflowStepCard({ step, index, isLast, onEdit, onDelete, classN
                 <Badge variant="secondary" className="text-xs">
                   {step.type}
                 </Badge>
-                {step.status && <StatusBadge status={step.status} />}
+                {step.status && <StatusBadge status={step.status as 'active' | 'inactive' | 'pending' | 'error' | 'success' | 'warning' | 'info'} />}
               </div>
               {step.description && (
                 <p className="mt-1 text-sm text-gray-500">{step.description}</p>
@@ -104,7 +104,7 @@ interface WorkflowCardProps {
   className?: string;
 }
 
-export function WorkflowCard({ workflow, onEdit, onDelete, onRun, onPause, className }: WorkflowCardProps) {
+export function WorkflowCard({ workflow, onEdit, onRun, onPause, className }: WorkflowCardProps) {
   return (
     <Card className={cn('transition-shadow hover:shadow-md', className)}>
       <CardHeader className="pb-3">
@@ -115,7 +115,7 @@ export function WorkflowCard({ workflow, onEdit, onDelete, onRun, onPause, class
               <CardDescription>{workflow.description}</CardDescription>
             )}
           </div>
-          <StatusBadge status={workflow.status} />
+          <StatusBadge status={workflow.status as 'active' | 'inactive' | 'pending' | 'error' | 'success' | 'warning' | 'info'} />
         </div>
       </CardHeader>
       <CardContent className="space-y-4">

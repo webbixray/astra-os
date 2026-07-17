@@ -57,8 +57,8 @@ describe('CampaignDetailPage', () => {
 
   it('shows skeleton when loading', () => {
     mockUseCampaign.mockReturnValue({ data: null, isLoading: true, isError: false, error: null });
-    render(<CampaignDetailPage />);
-    expect(screen.getByText('Campaign Details')).toBeInTheDocument();
+    const { container } = render(<CampaignDetailPage />);
+    expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
   });
 
   it('shows error state on failure', () => {
@@ -78,7 +78,7 @@ describe('CampaignDetailPage', () => {
 
   it('renders campaign details when data is loaded', () => {
     mockUseCampaign.mockReturnValue({
-      data: { id: 'camp-1', name: 'Summer Sale', status: 'active', objective: 'conversion', budget: 5000, spent: 1200 },
+      data: { id: 'camp-1', name: 'Summer Sale', status: 'active', objective: 'conversion', budget_amount: 5000, budget_currency: 'USD', spent: 1200, channels: ['email'] },
       isLoading: false, isError: false, error: null,
     });
     render(<CampaignDetailPage />);

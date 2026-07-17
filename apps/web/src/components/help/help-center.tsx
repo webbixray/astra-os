@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
 interface HelpArticle {
   id: string;
@@ -125,7 +126,7 @@ export function FAQSection({ faqs, className }: FAQSectionProps) {
   const groupedFaqs = faqs.reduce(
     (acc, faq) => {
       if (!acc[faq.category]) acc[faq.category] = [];
-      acc[faq.category].push(faq);
+      acc[faq.category]!.push(faq);
       return acc;
     },
     {} as Record<string, FAQItem[]>,

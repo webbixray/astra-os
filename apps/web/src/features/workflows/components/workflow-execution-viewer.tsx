@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { NODE_COLORS, NODE_ICONS, EXECUTION_STATUS_COLORS } from '../types';
+import { EXECUTION_STATUS_COLORS } from '../types';
 import type { WorkflowNode, ExecutionStep } from '../types';
 import { CheckCircle2, XCircle, Clock, AlertCircle, Loader2 } from 'lucide-react';
 
@@ -75,7 +75,7 @@ export function WorkflowExecutionViewer({
                 )}
                 {step.result && step.status === 'completed' && (
                   <p className="mt-1 text-xs text-muted-foreground truncate">
-                    {step.result.step || step.result.status || 'Done'}
+                    {String(step.result.step || step.result.status || 'Done')}
                   </p>
                 )}
               </div>

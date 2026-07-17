@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { FileText, Plus, Trash2, Download } from 'lucide-react';
+import { Plus, Trash2, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
+import { LegacySelect as Select } from '@/components/ui/select';
 import {
   useReportTemplates, useCreateReportTemplate, useDeleteReportTemplate,
   getReportExportUrl,

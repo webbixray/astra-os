@@ -2,10 +2,11 @@ import { cn } from '@/lib/utils';
 
 interface SkeletonProps {
   className?: string;
+  style?: React.CSSProperties;
 }
 
-export function Skeleton({ className }: SkeletonProps) {
-  return <div className={cn('animate-pulse rounded bg-muted', className)} />;
+export function Skeleton({ className, style }: SkeletonProps) {
+  return <div className={cn('animate-pulse rounded bg-muted', className)} style={style} />;
 }
 
 export function SkeletonCard() {

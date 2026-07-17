@@ -299,7 +299,7 @@ class AlertingService:
         """Evaluate a single alert rule."""
         # Query the metric
         end = now()
-        start = end - timedelta(seconds=rule.evaluation_window_seconds)
+        end - timedelta(seconds=rule.evaluation_window_seconds)
 
         # In production, this would query the actual metric store
         # For now, return empty - actual implementation would query metric store

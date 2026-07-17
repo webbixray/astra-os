@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event';
 const mockPush = vi.fn();
 const mockBack = vi.fn();
 const mockMutateAsync = vi.fn().mockResolvedValue({ id: 'content-1' });
+let mockIsPending = false;
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush, back: mockBack }),
@@ -15,7 +16,7 @@ vi.mock('@/lib/org', () => ({
 }));
 
 vi.mock('@/features/content/api/useContent', () => ({
-  useCreateContent: () => ({ mutateAsync: mockMutateAsync, isPending: false }),
+  useCreateContent: () => ({ mutateAsync: mockMutateAsync, get isPending() { return mockIsPending; } }),
 }));
 
 import NewContentPage from './page';
@@ -103,13 +104,11 @@ describe('NewContentPage', () => {
     expect(mockBack).toHaveBeenCalled();
   });
 
-  it('shows Creating... when submitting', async () => {
-    const user = userEvent.setup();
+  it('shows Creating... when submitting', () => {
+    mockIsPending = true;
     render(<NewContentPage />);
-
-    await user.type(screen.getByLabelText('Title'), 'Content Title');
-    await user.click(screen.getByRole('button', { name: 'Create Content' }));
-
-    expect(await screen.findByText('Creating...')).toBeInTheDocument();
+    expect(screen.getByText('Creating...')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Creating...' })).toBeDisabled();
+    mockIsPending = false;
   });
 });

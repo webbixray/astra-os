@@ -32,6 +32,7 @@ spec:
       fsGroup: 65532
       seccompProfile:
         type: RuntimeDefault
+    priorityClassName: astra-critical
     terminationGracePeriodSeconds: 60
     topologySpreadConstraints:
       - maxSkew: 1

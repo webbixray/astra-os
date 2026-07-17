@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 vi.mock('@/lib/org', () => ({
@@ -17,6 +17,35 @@ vi.mock('@/features/reports/api/useReports', () => ({
   useDeliverReport: () => ({ mutate: vi.fn() }),
   useComparePeriods: () => ({ mutate: vi.fn() }),
   getReportExportUrl: () => '#',
+}));
+
+vi.mock('./ReportsTemplatesTab', () => ({
+  ReportsTemplatesTab: () => (
+    <div>
+      <button>New Template</button>
+      <input placeholder="Template name" />
+    </div>
+  ),
+}));
+
+vi.mock('./ReportsSchedulesTab', () => ({
+  ReportsSchedulesTab: () => <div>Scheduled Reports</div>,
+}));
+
+vi.mock('./ReportsExportTab', () => ({
+  ReportsExportTab: () => <div>Export Report</div>,
+}));
+
+vi.mock('./ReportsDeliverTab', () => ({
+  ReportsDeliverTab: () => <div>Deliver Report</div>,
+}));
+
+vi.mock('./ReportsCompareTab', () => ({
+  ReportsCompareTab: () => <div>Compare</div>,
+}));
+
+vi.mock('./ReportsLogsTab', () => ({
+  ReportsLogsTab: () => <div>History</div>,
 }));
 
 import ReportsPage from './page';
@@ -52,20 +81,20 @@ describe('ReportsPage', () => {
     const user = userEvent.setup();
     render(<ReportsPage />);
     await user.click(screen.getByText('Schedules'));
-    expect(screen.getByText('Scheduled Reports')).toBeInTheDocument();
+    expect(await screen.findByText('Scheduled Reports')).toBeInTheDocument();
   });
 
   it('switches to export tab', async () => {
     const user = userEvent.setup();
     render(<ReportsPage />);
     await user.click(screen.getByText('Export'));
-    expect(screen.getByText('Export Report')).toBeInTheDocument();
+    expect(await screen.findByText('Export Report')).toBeInTheDocument();
   });
 
   it('switches to deliver tab', async () => {
     const user = userEvent.setup();
     render(<ReportsPage />);
     await user.click(screen.getByText('Deliver'));
-    expect(screen.getByText('Deliver Report')).toBeInTheDocument();
+    expect(await screen.findByText('Deliver Report')).toBeInTheDocument();
   });
 });

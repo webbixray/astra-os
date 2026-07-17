@@ -1,7 +1,7 @@
 /* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
-/* eslint-disable */
+ 
 export type app__presentation__routes__notifications__notification_hub_routes__CreateTemplateRequest = {
     name: string;
     type?: string;

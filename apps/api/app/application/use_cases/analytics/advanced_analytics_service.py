@@ -4,7 +4,9 @@ from typing import TYPE_CHECKING
 from uuid import UUID
 
 if TYPE_CHECKING:
-    from app.infrastructure.db.repositories.campaigns.campaign_repository import CampaignRepositoryImpl
+    from app.infrastructure.db.repositories.campaigns.campaign_repository import (
+        CampaignRepositoryImpl,
+    )
     from app.infrastructure.db.repositories.content.content_repository import ContentRepositoryImpl
 
 
@@ -87,36 +89,36 @@ class AdvancedAnalyticsService:
     def _get_granularity_delta(self, granularity: str) -> timedelta:
         if granularity == "hour":
             return timedelta(hours=1)
-        elif granularity == "day":
+        if granularity == "day":
             return timedelta(days=1)
-        elif granularity == "week":
+        if granularity == "week":
             return timedelta(weeks=1)
-        elif granularity == "month":
+        if granularity == "month":
             return timedelta(days=30)  # Approximation
         return timedelta(days=1)
 
     def _calculate_metric_value(self, metric: str, campaigns: list, contents: list) -> Decimal:
         if metric == "campaigns":
             return Decimal(len(campaigns))
-        elif metric == "content":
+        if metric == "content":
             return Decimal(len(contents))
-        elif metric == "spend":
+        if metric == "spend":
             return sum(Decimal(str(c.budget_amount or 0)) for c in campaigns)
-        elif metric == "revenue":
+        if metric == "revenue":
             # Placeholder - would come from ad platforms
-            return Decimal("0")
-        elif metric == "overview":
+            return Decimal(0)
+        if metric == "overview":
             return Decimal(len(campaigns) + len(contents))
-        return Decimal("0")
+        return Decimal(0)
 
     def _format_timestamp(self, dt: datetime, granularity: str) -> str:
         if granularity == "hour":
             return dt.strftime("%Y-%m-%d %H:00")
-        elif granularity == "day":
+        if granularity == "day":
             return dt.strftime("%Y-%m-%d")
-        elif granularity == "week":
+        if granularity == "week":
             return dt.strftime("%Y-W%U")
-        elif granularity == "month":
+        if granularity == "month":
             return dt.strftime("%Y-%m")
         return dt.strftime("%Y-%m-%d")
 
@@ -260,7 +262,7 @@ class AdvancedAnalyticsService:
         # This would normally integrate with ad platform data
         # For now, return a structured response template
         attribution_items = []
-        total_revenue = Decimal("0")
+        total_revenue = Decimal(0)
 
         for c in campaigns:
             # Mock attribution data - in production this would come from ad platforms

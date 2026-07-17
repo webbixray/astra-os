@@ -35,21 +35,23 @@ describe('AutomationPage', () => {
     expect(screen.getByText('Campaign Automation')).toBeInTheDocument();
   });
 
-  it('shows empty rules state', () => {
+  it('shows empty rules state', async () => {
     render(<AutomationPage />);
-    expect(screen.getByText('No automation rules yet')).toBeInTheDocument();
+    expect(await screen.findByText('No automation rules yet')).toBeInTheDocument();
   });
 
   it('opens new rule form', async () => {
     const user = userEvent.setup();
     render(<AutomationPage />);
+    await screen.findByText('No automation rules yet');
     await user.click(screen.getByText('New Rule'));
-    expect(screen.getByPlaceholderText('Rule name')).toBeInTheDocument();
+    expect(await screen.findByText('Rule name')).toBeInTheDocument();
   });
 
   it('creates a rule', async () => {
     const user = userEvent.setup();
     render(<AutomationPage />);
+    await screen.findByText('No automation rules yet');
     await user.click(screen.getByText('New Rule'));
 
     await user.type(screen.getByPlaceholderText('Rule name'), 'Pause on low budget');

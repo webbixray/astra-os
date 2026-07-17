@@ -17,44 +17,21 @@ interface Envelope<T> {
 function getCsrfToken(): string | null {
   if (typeof window === 'undefined') return null;
   const match = document.cookie.match(/(?:^|;\s*)astra_csrf=([^;]*)/);
-  return match ? decodeURIComponent(match[1]) : null;
-}
-
-function getStoredTokens() {
-  if (typeof window === 'undefined') return { accessToken: null, refreshToken: null };
-  return {
-    accessToken: localStorage.getItem('astra_access_token'),
-    refreshToken: localStorage.getItem('astra_refresh_token'),
-  };
-}
-
-function clearAuth() {
-  localStorage.removeItem('astra_access_token');
-  localStorage.removeItem('astra_refresh_token');
-  localStorage.removeItem('astra_user');
-  localStorage.removeItem('astra_orgs');
+  return match ? decodeURIComponent(match[1]!) : null;
 }
 
 async function attemptTokenRefresh(): Promise<boolean> {
-  const { refreshToken } = getStoredTokens();
-  if (!refreshToken) return false;
-
   try {
     const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refresh_token: refreshToken }),
       credentials: 'include',
     });
 
     if (!response.ok) return false;
 
     const envelope: Envelope<{ access_token: string; refresh_token: string }> = await response.json();
-    if (!envelope.success || !envelope.data) return false;
-
-    localStorage.setItem('astra_access_token', envelope.data.access_token);
-    localStorage.setItem('astra_refresh_token', envelope.data.refresh_token);
-    return true;
+    return !!(envelope.success && envelope.data);
   } catch {
     return false;
   }
@@ -74,7 +51,7 @@ async function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-class ApiError extends Error {
+export class ApiError extends Error {
   constructor(
     public status: number,
     public code: string,
@@ -118,7 +95,6 @@ async function request<T>(
     signal,
   } = options;
 
-  const { accessToken } = getStoredTokens();
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
 
@@ -127,18 +103,13 @@ async function request<T>(
     : controller.signal;
 
   const makeRequest = async (
-    token: string | null,
-    attempt: number,
+    _attempt: number,
   ): Promise<Response> => {
     const csrfToken = getCsrfToken();
     const requestHeaders: Record<string, string> = {
       'Content-Type': 'application/json',
       ...headers,
     };
-
-    if (token && !skipAuth) {
-      requestHeaders['Authorization'] = `Bearer ${token}`;
-    }
 
     if (csrfToken && method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS') {
       requestHeaders['X-CSRF-Token'] = csrfToken;
@@ -155,7 +126,7 @@ async function request<T>(
 
   const executeWithRetry = async (attempt: number): Promise<T> => {
     try {
-      let response = await makeRequest(accessToken, attempt);
+      let response = await makeRequest(attempt);
 
       if (response.status === 401 && !skipAuth) {
         if (!isRefreshing) {
@@ -168,11 +139,11 @@ async function request<T>(
 
         const refreshed = await refreshPromise;
         if (refreshed) {
-          const { accessToken: newToken } = getStoredTokens();
-          response = await makeRequest(newToken, attempt);
+          response = await makeRequest(attempt);
         } else {
-          clearAuth();
           if (typeof window !== 'undefined') {
+            localStorage.removeItem('astra_user');
+            localStorage.removeItem('astra_orgs');
             window.location.href = '/login';
           }
           throw new ApiError(401, 'session_expired', 'Session expired. Please log in again.');
@@ -269,5 +240,3 @@ export const api = {
   delete: <T>(path: string, signal?: AbortSignal) =>
     request<T>(path, { method: 'DELETE', signal }),
 };
-
-export { ApiError };

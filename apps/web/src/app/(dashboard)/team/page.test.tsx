@@ -14,9 +14,15 @@ vi.mock('@/lib/org', () => ({
 }));
 
 vi.mock('@/features/organizations/api/useOrganizations', () => ({
+  useMembers: () => ({
+    data: [{ id: 'user-1', name: 'Alice', email: 'alice@test.com', role: 'admin' }],
+    isLoading: false,
+  }),
+  useInvitations: () => ({ data: [] }),
   useInviteMember: () => ({ mutate: mockMutate, isPending: false }),
-  useUpdateMemberRole: () => ({ mutate: vi.fn() }),
-  useOrgMembers: () => ({ data: [{ id: 'user-1', display_name: 'Alice', email: 'alice@test.com', role: 'admin' }] }),
+  useCancelInvitation: () => ({ mutate: vi.fn() }),
+  useChangeMemberRole: () => ({ mutate: vi.fn() }),
+  useRemoveMember: () => ({ mutate: vi.fn() }),
 }));
 
 import TeamPage from './page';
@@ -41,7 +47,8 @@ describe('TeamPage', () => {
     const user = userEvent.setup();
     render(<TeamPage />);
 
-    await user.type(screen.getByPlaceholderText('colleague@company.com'), 'new@test.com');
+    await user.click(screen.getByText('Invite Member'));
+    await user.type(screen.getByPlaceholderText('Email address'), 'new@test.com');
     await user.click(screen.getByText('Send Invite'));
 
     await waitFor(() => {

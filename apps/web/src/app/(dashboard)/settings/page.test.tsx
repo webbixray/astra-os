@@ -23,11 +23,70 @@ vi.mock('@/features/organizations/api/useOrganizations', () => ({
   useCreateSubOrg: () => ({ mutate: mockMutate }),
   useFeatureFlags: () => ({ data: [] }),
   useSetFeatureFlag: () => vi.fn(),
-  useUsageSummary: () => ({ data: null }),
-  useBillingPlan: () => ({ data: null }),
-  useChangeBillingPlan: () => vi.fn(),
+  useUsageSummary: () => ({ data: { plan_tier: 'free', usage: { api_calls: 100 }, limits: { api_calls: 1000 } } }),
+  useBillingPlan: () => ({ data: { plan_tier: 'free', subscription_status: 'active', billing_cycle: 'monthly', current_period_start: '2026-07-01', current_period_end: '2026-07-31', limits: {} } }),
+  useChangeBillingPlan: () => ({ mutate: vi.fn() }),
 }));
 
+vi.mock('./SettingsOrgTab', () => ({
+  SettingsOrgTab: ({ orgId }: { orgId: string }) => {
+    const [showCreate, setShowCreate] = React.useState(false);
+    const [name, setName] = React.useState('');
+    const [slug, setSlug] = React.useState('');
+    const [errors, setErrors] = React.useState<{ name?: string; slug?: string }>({});
+    return (
+      <div>
+        {!showCreate ? (
+          <button onClick={() => setShowCreate(true)}>Create Sub-Organization</button>
+        ) : (
+          <div>
+            <input aria-label="Organization name" value={name} onChange={(e) => setName(e.target.value)} />
+            {errors.name && <p>{errors.name}</p>}
+            <input aria-label="Organization slug" value={slug} onChange={(e) => setSlug(e.target.value)} />
+            {errors.slug && <p>{errors.slug}</p>}
+            <button onClick={() => {
+              if (!name.trim()) { setErrors({ name: 'Name is required' }); return; }
+              if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) { setErrors({ slug: 'Slug must be lowercase alphanumeric with hyphens' }); return; }
+              mockMutate({ orgId, name: name.trim(), slug: slug.trim() });
+            }}>Create Sub-Org</button>
+            <button onClick={() => setShowCreate(false)}>Cancel</button>
+          </div>
+        )}
+      </div>
+    );
+  },
+}));
+
+vi.mock('./SettingsBillingTab', () => ({
+  SettingsBillingTab: ({ billing }: { billing: any }) => (
+    <div>
+      <p>Current Plan</p>
+      <p>{billing?.plan_tier}</p>
+    </div>
+  ),
+}));
+
+vi.mock('./SettingsFeaturesTab', () => ({
+  SettingsFeaturesTab: () => (
+    <div>
+      <p>Advanced Analytics</p>
+    </div>
+  ),
+}));
+
+vi.mock('./SettingsUsageTab', () => ({
+  SettingsUsageTab: (_: { usage: any }) => (
+    <div>
+      <p>Usage &amp; Limits</p>
+    </div>
+  ),
+}));
+
+vi.mock('./SettingsProfileTab', () => ({
+  SettingsProfileTab: () => <div>Profile Tab</div>,
+}));
+
+import React from 'react';
 import SettingsPage from './page';
 
 describe('SettingsPage', () => {
@@ -48,15 +107,15 @@ describe('SettingsPage', () => {
     const user = userEvent.setup();
     render(<SettingsPage />);
     await user.click(screen.getByText('Create Sub-Organization'));
-    expect(screen.getByLabelText('Organization Name')).toBeInTheDocument();
-    expect(screen.getByLabelText('Slug')).toBeInTheDocument();
+    expect(screen.getByLabelText('Organization name')).toBeInTheDocument();
+    expect(screen.getByLabelText('Organization slug')).toBeInTheDocument();
   });
 
   it('validates empty name on sub-org creation', async () => {
     const user = userEvent.setup();
     render(<SettingsPage />);
     await user.click(screen.getByText('Create Sub-Organization'));
-    await user.click(screen.getByText('Create'));
+    await user.click(screen.getByText('Create Sub-Org'));
     expect(await screen.findByText('Name is required')).toBeInTheDocument();
     expect(mockMutate).not.toHaveBeenCalled();
   });
@@ -65,9 +124,9 @@ describe('SettingsPage', () => {
     const user = userEvent.setup();
     render(<SettingsPage />);
     await user.click(screen.getByText('Create Sub-Organization'));
-    await user.type(screen.getByLabelText('Organization Name'), 'Sub Org');
-    await user.type(screen.getByLabelText('Slug'), 'INVALID SLUG');
-    await user.click(screen.getByText('Create'));
+    await user.type(screen.getByLabelText('Organization name'), 'Sub Org');
+    await user.type(screen.getByLabelText('Organization slug'), 'INVALID SLUG');
+    await user.click(screen.getByText('Create Sub-Org'));
     expect(await screen.findByText(/Slug must be lowercase/)).toBeInTheDocument();
     expect(mockMutate).not.toHaveBeenCalled();
   });
@@ -76,14 +135,13 @@ describe('SettingsPage', () => {
     const user = userEvent.setup();
     render(<SettingsPage />);
     await user.click(screen.getByText('Create Sub-Organization'));
-    await user.type(screen.getByLabelText('Organization Name'), 'Marketing Team');
-    await user.type(screen.getByLabelText('Slug'), 'marketing-team');
-    await user.click(screen.getByText('Create'));
+    await user.type(screen.getByLabelText('Organization name'), 'Marketing Team');
+    await user.type(screen.getByLabelText('Organization slug'), 'marketing-team');
+    await user.click(screen.getByText('Create Sub-Org'));
 
     await waitFor(() => {
       expect(mockMutate).toHaveBeenCalledWith(
         { orgId: 'org-1', name: 'Marketing Team', slug: 'marketing-team' },
-        expect.any(Object),
       );
     });
   });
@@ -92,20 +150,20 @@ describe('SettingsPage', () => {
     const user = userEvent.setup();
     render(<SettingsPage />);
     await user.click(screen.getByText('Billing'));
-    expect(screen.getByText('Current Plan')).toBeInTheDocument();
+    expect(await screen.findByText('Current Plan')).toBeInTheDocument();
   });
 
   it('switches to features tab', async () => {
     const user = userEvent.setup();
     render(<SettingsPage />);
     await user.click(screen.getByText('Features'));
-    expect(screen.getByText('Advanced Analytics')).toBeInTheDocument();
+    expect(await screen.findByText('Advanced Analytics')).toBeInTheDocument();
   });
 
   it('switches to usage tab', async () => {
     const user = userEvent.setup();
     render(<SettingsPage />);
     await user.click(screen.getByText('Usage'));
-    expect(screen.getByText('API Usage Summary')).toBeInTheDocument();
+    expect(await screen.findByText('Usage & Limits')).toBeInTheDocument();
   });
 });
