@@ -1,31 +1,100 @@
----
 name: Bug Report
-about: Create a report to help us improve
+description: Create a report to help us improve
 title: '[BUG] '
-labels: ['bug']
-assignees: ''
----
+labels: ['bug', 'triage']
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Please fill out the information below.
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      description: A clear and concise description of what the bug is.
+    validations:
+      required: true
 
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Steps to reproduce the behavior.
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. Scroll down to '...'
+        4. See error
+    validations:
+      required: true
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: A clear and concise description of what you expected to happen.
+    validations:
+      required: true
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - API (Backend)
+        - Web Dashboard (Frontend)
+        - Authentication / Auth
+        - Campaigns
+        - Content Generation
+        - Analytics / Reporting
+        - Email Marketing
+        - Workflows
+        - Ad Management
+        - Infrastructure / Docker / K8s
+        - Other
+    validations:
+      required: true
 
-**Environment (please complete the following information):**
- - OS: [e.g. iOS]
- - Browser [e.g. chrome, safari]
- - Version [e.g. 22]
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - Critical (system down / data loss)
+        - High (major feature broken)
+        - Medium (feature impaired but workaround exists)
+        - Low (cosmetic / minor issue)
+    validations:
+      required: true
 
-**Additional context**
-Add any other context about the problem here.
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: |
+        Please provide your environment details.
+      placeholder: |
+        - OS: macOS 14.5
+        - Browser: Chrome 125
+        - Node: 20.x
+        - Python: 3.12
+    validations:
+      required: false
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots / Logs
+      description: If applicable, add screenshots or relevant log output.
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Any other context about the problem.
+    validations:
+      required: false

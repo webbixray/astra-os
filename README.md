@@ -1,5 +1,12 @@
 # Astra OS
 
+![CI/CD](https://github.com/webbixray/astra-os/actions/workflows/ci-cd.yaml/badge.svg)
+![Tests](https://img.shields.io/badge/tests-1089%20passed-brightgreen)
+![License](https://img.shields.io/badge/license-proprietary-blue)
+![Python](https://img.shields.io/badge/python-3.12-blue)
+![Node](https://img.shields.io/badge/node-20+-brightgreen)
+![TypeScript](https://img.shields.io/badge/typescript-5.5+-blue)
+
 **AI-Native Marketing & Business Growth Operating System**
 
 Astra OS is a comprehensive platform that replaces your entire marketing department with AI-powered agents, workflow automation, content generation, ad management, analytics, and knowledge management.

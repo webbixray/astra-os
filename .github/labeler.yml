@@ -1,0 +1,55 @@
+# Labeler configuration
+# Auto-labels PRs based on file paths changed
+
+label-rule:
+  - changed-files:
+      - any-glob-to-any-file:
+          - apps/api/**
+    labels:
+      - api
+      - backend
+
+  - changed-files:
+      - any-glob-to-any-file:
+          - apps/web/**
+    labels:
+      - frontend
+      - web
+
+  - changed-files:
+      - any-glob-to-any-file:
+          - k8s/**
+          - docker/**
+    labels:
+      - infrastructure
+      - devops
+
+  - changed-files:
+      - any-glob-to-any-file:
+          - .github/**
+    labels:
+      - ci/cd
+
+  - changed-files:
+      - any-glob-to-any-file:
+          - docs/**
+          - README.md
+          - CONTRIBUTING.md
+          - DEVELOPMENT.md
+    labels:
+      - documentation
+
+  - changed-files:
+      - any-glob-to-any-file:
+          - apps/api/tests/**
+          - apps/web/**/*.test.*
+    labels:
+      - tests
+
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/package.json'
+          - '**/pyproject.toml'
+          - pnpm-lock.yaml
+    labels:
+      - dependencies
