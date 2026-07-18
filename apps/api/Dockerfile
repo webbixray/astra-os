@@ -17,7 +17,8 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 WORKDIR /build
 
-COPY pyproject.toml ./
+COPY apps/api/pyproject.toml ./
+COPY services/agent_orchestrator ./services/agent_orchestrator
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
     pip install --no-cache-dir -e "."
 
@@ -42,7 +43,11 @@ ENV PATH="/opt/venv/bin:$PATH" \
 WORKDIR /app
 
 # Copy application code
-COPY --chown=astra:astra . .
+COPY --chown=astra:astra apps/api/app ./app
+COPY --chown=astra:astra apps/api/alembic ./alembic
+COPY --chown=astra:astra apps/api/alembic.ini ./alembic.ini
+COPY --chown=astra:astra apps/api/entrypoint.py ./entrypoint.py
+COPY --chown=astra:astra services/agent_orchestrator ./services/agent_orchestrator
 
 # Create required directories
 RUN mkdir -p /app/config /app/logs && chown -R astra:astra /app
