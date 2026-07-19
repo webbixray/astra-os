@@ -27,3 +27,5 @@ export { ConfirmDialog } from './confirm-dialog';
 export { ErrorBoundary, withErrorBoundary } from './error-boundary';
 export { ToastProvider, useToast } from './toast';
 export type { Toast } from './toast';
+
+export { Tabs, TabsList, TabsTrigger, TabsContent } from './tabs';

@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 import httpx
 
 # Circuit breaker integration
-from services.resilience import (
+from astra_agent_orchestrator.resilience import (
     CircuitBreaker,
     CircuitBreakerConfig,
     CircuitOpenError,

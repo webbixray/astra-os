@@ -130,7 +130,7 @@ class TestGetAdPerformance:
                       platform=MagicMock(value="google"), id="c2", name="Campaign 2"),
         ]
 
-        with patch("app.application.use_cases.analytics.analytics_service.AdPlatformFactory") as mock_factory:
+        with patch("app.infrastructure.external_adapters.adplatforms.base_adapter.AdPlatformFactory") as mock_factory:
             mock_factory.get_connected_campaigns = AsyncMock(return_value=mock_campaigns)
             result = await service.get_ad_performance([{"platform": "google", "access_token": "tok"}])
 

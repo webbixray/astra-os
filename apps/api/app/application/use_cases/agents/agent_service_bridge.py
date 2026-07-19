@@ -17,22 +17,22 @@ import logging
 from typing import Any
 from uuid import UUID, uuid4
 
-from services.agent import (
+from astra_agent_orchestrator.agent import (
     AgentContext,
     AgentType,
     get_agent_registry,
 )
-from services.agents.ceo import CEOAgent
-from services.agents.director import DirectorAgent
-from services.comms import get_agent_audit_trail
-from services.events import Event, get_event_bus
-from services.hierarchy import (
+from astra_agent_orchestrator.agents.ceo import CEOAgent
+from astra_agent_orchestrator.agents.director import DirectorAgent
+from astra_agent_orchestrator.comms import get_agent_audit_trail
+from astra_agent_orchestrator.events import Event, get_event_bus
+from astra_agent_orchestrator.hierarchy import (
     AgentCoordinator,
     AgentHierarchy,
     CommunicationProtocol,
     HandoffManager,
 )
-from services.memory import MemoryManager
+from astra_agent_orchestrator.memory import MemoryManager
 
 logger = logging.getLogger(__name__)
 

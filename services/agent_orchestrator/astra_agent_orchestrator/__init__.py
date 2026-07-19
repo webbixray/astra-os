@@ -107,6 +107,9 @@ from .agents import (
     SpecialistAgent,
 )
 
+# Import tests module to make it discoverable
+from . import tests
+
 # Concrete agent implementations
 # Import from astra_agent_orchestrator.agents directly:
 #   from astra_agent_orchestrator.agents import CEOAgent, DirectorAgent, SpecialistAgent

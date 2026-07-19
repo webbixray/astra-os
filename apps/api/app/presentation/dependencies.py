@@ -15,9 +15,11 @@ from app.infrastructure.db.repositories.team_member_repository import TeamMember
 from app.infrastructure.db.repositories.user_repository import UserRepositoryImpl
 
 
-def get_db_session_factory(request: Request) -> async_sessionmaker[AsyncSession] | None:
+def get_db_session_factory(app_or_request) -> async_sessionmaker[AsyncSession] | None:
     """Get the database session factory from app state."""
-    return getattr(request.app.state, "db", None)
+    # Can be called with either a Request or FastAPI app
+    app = app_or_request.app if hasattr(app_or_request, 'app') else app_or_request
+    return getattr(app.state, "db", None)
 
 
 async def get_db(request: Request) -> AsyncGenerator[AsyncSession, None]:

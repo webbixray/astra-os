@@ -168,31 +168,28 @@ export default function BestPracticesPage() {
                       {CATEGORIES.find(c => c.id === category)?.label}
                     </h3>
                     {sections.map((section) => (
-                      <Link
-                        key={section.id}
-                        href={section.href}
-                        className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-                      >
-                        <span className="flex h-5 w-5 items-center justify-center text-muted-foreground">
-                          {section.icon}
-                        </span>
-                        <span className="flex-1 truncate">{section.title}</span>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                      </Link>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </div>
+                                          <Link
+                                            key={section.id}
+                                            href={section.href}
+                                            className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                                          >
+                                            <span className="flex h-5 w-5 items-center justify-center text-muted-foreground">
+                                              {section.icon}
+                                            </span>
+                                            <span className="flex-1 truncate">{section.title}</span>
+                                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                          </Link>
+                                        ))}
 
-          <div className="border-t p-4">
-            <a href="https://github.com/webbixray/astra-os" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
-              <ExternalLink className="h-3 w-3" />
-              View on GitHub
-            </a>
-          </div>
-        </div>
-      </aside>
+                                                        </div>
+                                                        <div className="border-t p-4">
+                                                          <a href="https://github.com/webbixray/astra-os" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
+                                                            <ExternalLink className="h-3 w-3" />
+                                                            View on GitHub
+                                                          </a>
+                                                        </div>
+                                                      </div>
+                                                      </aside>
 
       {/* Mobile sidebar toggle */}
       <button

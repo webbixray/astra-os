@@ -162,7 +162,7 @@ export default function AccountSetupPage() {
                         Completed
                       </span>
                     )}
-                  </h3>
+                  </div>
                   <p className="text-muted-foreground mb-4">{step.description}</p>
                   <Link
                     href={step.href}
