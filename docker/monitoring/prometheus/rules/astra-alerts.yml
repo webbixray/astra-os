@@ -1,0 +1,193 @@
+groups:
+  # API Availability and Latency
+  - name: astra-api-availability
+    interval: 30s
+    rules:
+      - alert: APIHighErrorRate
+        expr: |
+          sum(rate(http_requests_total{job="astra-api",status=~"5.."}[5m])) 
+          / 
+          sum(rate(http_requests_total{job="astra-api"}[5m])) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+          service: astra-api
+        annotations:
+          summary: "High error rate on API ({{ $value | humanizePercentage }})"
+          description: "API error rate has exceeded 5% for 2 minutes"
+          runbook_url: "https://runbooks.astra-os.io/RB-001"
+
+      - alert: APIHighLatency
+        expr: |
+          histogram_quantile(0.95, 
+            sum(rate(http_request_duration_seconds_bucket{job="astra-api"}[5m])) by (le)
+          ) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: astra-api
+        annotations:
+          summary: "High API latency (p95: {{ $value }}s)"
+          description: "API p95 latency has exceeded 1 second for 5 minutes"
+          runbook_url: "https://runbooks.astra-os.io/RB-002"
+
+  # Agent Orchestrator
+  - name: astra-agent-orchestrator
+    interval: 30s
+    rules:
+      - alert: AgentOrchestratorDown
+        expr: up{job="astra-agent-orchestrator"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: agent-orchestrator
+        annotations:
+          summary: "Agent Orchestrator is down"
+          description: "Agent Orchestrator has been down for 1 minute"
+          runbook_url: "https://runbooks.astra-os.io/RB-003"
+
+      - alert: AgentRunFailuresHigh
+        expr: |
+          sum(rate(agent_runs_total{job="astra-agent-orchestrator",success="false"}[5m]))
+          /
+          sum(rate(agent_runs_total{job="astra-agent-orchestrator"}[5m])) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+          service: agent-orchestrator
+        annotations:
+          summary: "High agent run failure rate ({{ $value | humanizePercentage }})"
+          description: "Agent run failure rate has exceeded 10% for 2 minutes"
+          runbook_url: "https://runbooks.astra-os.io/RB-004"
+
+      - alert: CircuitBreakerOpen
+        expr: |
+          sum(circuit_breaker_state{job="astra-agent-orchestrator",state="open"}) > 0
+        for: 1m
+        labels:
+          severity: critical
+          service: agent-orchestrator
+        annotations:
+          summary: "Circuit breaker open"
+          description: "At least one circuit breaker is in OPEN state"
+          runbook_url: "https://runbooks.astra-os.io/RB-005"
+
+      - alert: DLQBacklogHigh
+        expr: astra_dlq_pending{job="astra-agent-orchestrator"} > 100
+        for: 5m
+        labels:
+          severity: warning
+          service: agent-orchestrator
+        annotations:
+          summary: "DLQ backlog high ({{ $value }} messages)"
+          description: "Dead letter queue has more than 100 messages pending"
+          runbook_url: "https://runbooks.astra-os.io/RB-006"
+
+  # Cost Monitoring
+  - name: astra-cost
+    interval: 1m
+    rules:
+      - alert: CostBudgetExceeded
+        expr: |
+          sum(increase(agent_cost_usd_total[1h])) > 1000
+        for: 5m
+        labels:
+          severity: warning
+          service: cost
+        annotations:
+          summary: "Hourly cost exceeded $1000"
+          description: "AI agent costs have exceeded $1000 in the last hour"
+          runbook_url: "https://runbooks.astra-os.io/RB-007"
+
+      - alert: CostBudget80Percent
+        expr: |
+          sum(increase(agent_cost_usd_total[24h])) > 0.8 * 50000
+        for: 5m
+        labels:
+          severity: warning
+          service: cost
+        annotations:
+          summary: "Daily cost exceeded 80% of budget"
+          description: "Daily AI costs have exceeded 80% of $50,000 budget"
+          runbook_url: "https://runbooks.astra-os.io/RB-007"
+
+  # Database
+  - name: astra-database
+    interval: 30s
+    rules:
+      - alert: DatabaseDown
+        expr: pg_up{job="postgres"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: database
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "PostgreSQL database is not responding"
+          runbook_url: "https://runbooks.astra-os.io/RB-008"
+
+      - alert: DatabaseConnectionsHigh
+        expr: |
+          (pg_stat_database_numbackends / pg_settings_max_connections) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "High database connection usage ({{ $value | humanizePercentage }})"
+          description: "Database connections have exceeded 80% of max"
+          runbook_url: "https://runbooks.astra-os.io/RB-009"
+
+      - alert: DatabaseReplicationLag
+        expr: pg_replication_lag_seconds > 30
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "PostgreSQL replication lag ({{ $value }}s)"
+          description: "Replica is lagging behind primary by more than 30 seconds"
+          runbook_url: "https://runbooks.astra-os.io/RB-010"
+
+  # Redis
+  - name: astra-redis
+    interval: 30s
+    rules:
+      - alert: RedisDown
+        expr: redis_up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: redis
+        annotations:
+          summary: "Redis is down"
+          description: "Redis server is not responding"
+          runbook_url: "https://runbooks.astra-os.io/RB-011"
+
+      - alert: RedisMemoryHigh
+        expr: |
+          (redis_memory_used_bytes / redis_memory_max_bytes) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          service: redis
+        annotations:
+          summary: "Redis memory usage high ({{ $value | humanizePercentage }})"
+          description: "Redis memory usage has exceeded 85%"
+          runbook_url: "https://runbooks.astra-os.io/RB-012"
+
+  # Cost per 1k runs
+  - name: astra-cost-per-run
+    interval: 5m
+    rules:
+      - alert: CostPerRunHigh
+        expr: |
+          sum(rate(agent_cost_usd_total[5m])) / sum(rate(agent_runs_total[5m])) > 0.50
+        for: 10m
+        labels:
+          severity: warning
+          service: cost
+        annotations:
+          summary: "Cost per agent run exceeded $0.50"
+          description: "Average cost per agent run is {{ $value | humanizeCurrency }}"
+          runbook_url: "https://runbooks.astra-os.io/RB-013"

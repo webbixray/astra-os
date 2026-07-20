@@ -1,0 +1,59 @@
+server:
+  http_listen_port: 3200
+  grpc_listen_port: 9095
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+    zipkin:
+      endpoint: 0.0.0.0:9411
+
+ingester:
+  max_block_duration: 5m
+  max_block_bytes: 1_048_576
+  trace_idle_period: 10s
+  wal:
+    enabled: true
+    path: /var/tempo/wal
+
+compactor:
+  compaction:
+    block_retention: 30d
+    compacted_block_retention: 1h
+  retention: 30d
+
+storage:
+  trace:
+    backend: local
+    local:
+      path: /var/tempo/traces
+    wal:
+      path: /var/tempo/wal
+    pool:
+      max_workers: 100
+      queue_depth: 10000
+
+query_frontend:
+  search:
+    duration: 30s
+    max_duration: 30s
+
+metrics_generator:
+  registry:
+    external_labels:
+      source: tempo
+      cluster: astra-dev
+  storage:
+    path: /var/tempo/metrics
+    remote_write:
+      - url: http://prometheus:9090/api/v1/write
+        send_exemplars: true
+
+overrides:
+  defaults:
+    metrics_generator_processors: [service-graphs, span-metrics, local-blocks]
