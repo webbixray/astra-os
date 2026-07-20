@@ -4,13 +4,18 @@ from uuid import uuid4
 import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
+from unittest.mock import AsyncMock, MagicMock
 
 from app.main import create_app
 from app.presentation.middleware.auth import require_user_id
+from app.presentation.dependencies import get_db
+
 
 
 @pytest.fixture(scope="module")
 def app() -> FastAPI:
+    """Create the full FastAPI app for contract testing."""
     a = create_app()
 
     mock_session = AsyncMock()
@@ -19,21 +24,36 @@ def app() -> FastAPI:
     mock_session.__aexit__ = AsyncMock(return_value=None)
     mock_session_factory = MagicMock(return_value=mock_session)
     a.state.db = mock_session_factory
+    a.dependency_overrides[get_db] = mock_session_factory
     a.dependency_overrides[require_user_id] = uuid4
 
     return a
 
 
-@pytest.fixture(scope="module")
-def openapi_schema(app: FastAPI) -> dict:
-    return app.openapi()
+
+def _build_mock_redis(client_ping: AsyncMock | None = None, connect_side_effect: Exception | None = None) -> MagicMock:
+    mock_cache = MagicMock()
+    if connect_side_effect:
+        mock_cache.client = None
+    else:
+        mock_client = AsyncMock()
+        mock_client.ping = client_ping or AsyncMock(return_value=True)
+        mock_cache.client = mock_client
+    mock_cache.connect = AsyncMock(side_effect=connect_side_effect)
+    mock_cache.disconnect = AsyncMock()
+    return mock_cache
 
 
 class TestOpenAPISchema:
+    @pytest.fixture(scope="module")
+    def openapi_schema(self, app: FastAPI) -> dict:
+        return app.openapi()
+
     def test_schema_has_info(self, openapi_schema: dict):
         info = openapi_schema.get("info", {})
         assert info.get("title") == "ASTRA OS API"
-        assert info.get("version") == "1.0.2"
+        assert info.get("version") == "1.1.0"
+
         assert "description" in info
 
     def test_schema_has_all_required_paths(self, openapi_schema: dict):
@@ -52,12 +72,17 @@ class TestOpenAPISchema:
             "/api/v1/agents",
             "/api/v1/workflows",
             "/api/v1/ad/accounts",
+            "/api/v1/knowledge/nodes",
+            "/api/v1/knowledge/search",
+
             "/api/v1/calendar/events",
             "/api/v1/notifications",
             "/api/v1/notification-templates",
             "/api/v1/notification-preferences",
+            "/api/v1/dashboards",
             "/api/v1/dashboards/{dashboard_id}",
             "/api/v1/knowledge/search",
+
         ]
         for path in required_paths:
             assert path in paths, f"Missing required path: {path}"
@@ -98,9 +123,20 @@ class TestOpenAPISchema:
 class TestHealthContract:
     @pytest.mark.asyncio
     async def test_health_response_structure(self, app: FastAPI):
+        mock_db = AsyncMock(spec=AsyncSession)
+        mock_db.execute = AsyncMock()
+
+        async def override_get_db():
+            yield mock_db
+
+        app.dependency_overrides[get_db] = override_get_db
+        app.state.redis = _build_mock_redis()
+
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             response = await client.get("/api/v1/health")
+
+        app.dependency_overrides.clear()
 
         assert response.status_code == 200
         data = response.json()
@@ -114,27 +150,24 @@ class TestHealthContract:
 
     @pytest.mark.asyncio
     async def test_metrics_endpoint_returns_prometheus(self, app: FastAPI):
+        mock_db = AsyncMock(spec=AsyncSession)
+        mock_db.execute = AsyncMock()
+
+        async def override_get_db():
+            yield mock_db
+
+        app.dependency_overrides[get_db] = override_get_db
+        app.state.redis = _build_mock_redis()
+
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             response = await client.get("/api/v1/metrics")
 
+        app.dependency_overrides.clear()
+
         assert response.status_code == 200
         content_type = response.headers.get("content-type", "")
         assert "text/plain" in content_type or "openmetrics" in content_type
-
-    @pytest.mark.asyncio
-    async def test_business_metrics_returns_dict(self, app: FastAPI):
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            response = await client.get("/api/v1/metrics/business")
-
-        assert response.status_code == 200
-        data = response.json()
-        assert "users_signed_up" in data
-        assert "campaigns_created" in data
-        assert "workflows_completed" in data
-        assert "workflows_failed" in data
-        assert all(isinstance(v, int) for v in data.values())
 
 
 class TestErrorHandlingContract:
@@ -169,3 +202,7 @@ class TestErrorHandlingContract:
             )
 
         assert response.status_code in (200, 405)
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

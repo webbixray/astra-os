@@ -1,78 +1,114 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { BarChart, BookOpen, ChevronRight, Code, ExternalLink, FileText, LayoutDashboard, Target, TrendingUp, Zap } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
+'use client'
 
-const ANALYTICS_SECTIONS = [
+import { useState } from "react";
+import Link from "next/link";
+import { ChevronRight, Zap, Code, Shield, ExternalLink, Terminal, AlertCircle, CheckCircle, Zap as ZapIcon, Database, Globe, Users, Search, ChevronRight as ChevronRightIcon, ChevronLeft, BookOpen, MessageSquare, Heart, Share2, Reply, Filter, Eye, EyeOff, TrendingUp, Target, ArrowUpRight, Users as UsersIcon, BarChart, PieChart, Activity, LineChart } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+
+interface DocSection {
+  id: string;
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  href: string;
+  category: "getting-started" | "guides" | "api" | "advanced";
+}
+
   {
-    id: 'overview',
-    title: 'Analytics Overview',
-    description: 'Understand the analytics dashboard and key metrics',
+    id: "overview",
+    title: "Analytics Overview",
+    description: "Understand your marketing performance at a glance",
     icon: <BarChart className="h-5 w-5" />,
-    href: '/docs/analytics/overview',
-    category: 'guides',
+    href: "/docs/analytics/overview",
+    category: "getting-started",
   },
   {
-    id: 'dashboards',
-    title: 'Custom Dashboards',
-    description: 'Build custom dashboards for your team',
-    icon: <LayoutDashboard className="h-5 w-5" />,
-    href: '/docs/analytics/dashboards',
-    category: 'guides',
+    id: "dashboards",
+    title: "Custom Dashboards",
+    description: "Build personalized analytics dashboards",
+    icon: <LineChart className="h-5 w-5" />,
+    href: "/docs/analytics/dashboards",
+    category: "guides",
   },
   {
-    id: 'campaign-analytics',
-    title: 'Campaign Analytics',
-    description: 'Deep dive into campaign performance metrics',
-    icon: <BarChart className="h-5 w-5" />,
-    href: '/docs/analytics/campaign-analytics',
-    category: 'guides',
-  },
-  {
-    id: 'attribution',
-    title: 'Attribution Modeling',
-    description: 'Understand which channels drive conversions',
-    icon: <Target className="h-5 w-5" />,
-    href: '/docs/analytics/attribution',
-    category: 'guides',
-  },
-  {
-    id: 'roi-analysis',
-    title: 'ROI Analysis',
-    description: 'Calculate and optimize return on ad spend',
-    icon: <TrendingUp className="h-5 w-5" />,
-    href: '/docs/analytics/roi-analysis',
-    category: 'guides',
-  },
-  {
-    id: 'reports',
-    title: 'Automated Reports',
-    description: 'Set up scheduled reports and alerts',
+    id: "reports",
+    title: "Automated Reports",
+    description: "Schedule and automate report delivery",
     icon: <FileText className="h-5 w-5" />,
-    href: '/docs/analytics/reports',
-    category: 'guides',
+    href: "/docs/analytics/reports",
+    category: "guides",
+  },
+  {
+    id: "roi-tracking",
+    title: "ROI Tracking",
+    description: "Measure and optimize your marketing ROI",
+    icon: <TrendingUp className="h-5 w-5" />,
+    href: "/docs/analytics/roi-tracking",
+    category: "guides",
+  },
+  {
+    id: "attribution",
+    title: "Attribution Modeling",
+    description: "Understand which channels drive conversions",
+    icon: <Target className="h-5 w-5" />,
+    href: "/docs/analytics/attribution",
+    category: "advanced",
+  },
+  {
+    id: "predictive",
+    title: "Predictive Analytics",
+    description: "Forecast trends with AI-powered predictions",
+    icon: <Activity className="h-5 w-5" />,
+    href: "/docs/analytics/predictive",
+    category: "advanced",
+  },
+  {
+    id: "api",
+    title: "Analytics API",
+    description: "Integrate analytics data into your applications",
+    icon: <Code className="h-5 w-5" />,
+    href: "/docs/analytics/api",
+    category: "api",
+  },
+  {
+    id: "webhooks",
+    title: "Webhook Integration",
+    description: "Real-time analytics data via webhooks",
+    icon: <Zap className="h-5 w-5" />,
+    href: "/docs/analytics/webhooks",
+    category: "api",
+  },
+  {
+    id: "export",
+    title: "Data Export",
+    description: "Export analytics data for external analysis",
+    icon: <Download className="h-5 w-5" />,
+    href: "/docs/analytics/export",
+    category: "api",
   },
 ];
 
 const CATEGORIES = [
-  { id: 'all', label: 'All' },
-  { id: 'getting-started', label: 'Getting Started' },
-  { id: 'guides', label: 'User Guides' },
-  { id: 'api', label: 'API Reference' },
-  { id: 'advanced', label: 'Advanced' },
+  { id: "all", label: "All" },
+  { id: "getting-started", label: "Getting Started" },
+  { id: "guides", label: "User Guides" },
+  { id: "api", label: "API Reference" },
+  { id: "advanced", label: "Advanced" },
 ];
 
 export default function AnalyticsPage() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeCategory, setActiveCategory] = useState('all');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState("all");
 
   const filteredSections = ANALYTICS_SECTIONS.filter((section) => {
     const matchesSearch = section.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       section.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = activeCategory === 'all' || section.category === activeCategory;
+    const matchesCategory = activeCategory === "all" || section.category === activeCategory;
     return matchesSearch && matchesCategory;
   });
 
@@ -82,7 +118,7 @@ export default function AnalyticsPage() {
     }
     acc[section.category]!.push(section);
     return acc;
-  }, {} as Record<string, typeof ANALYTICS_SECTIONS>);
+  }, {} as Record<string, DocSection[]>);
 
   return (
     <div className="flex h-screen bg-background">
@@ -112,10 +148,10 @@ export default function AnalyticsPage() {
                   key={cat.id}
                   onClick={() => setActiveCategory(cat.id)}
                   className={cn(
-                    'w-full px-3 py-2 rounded-md text-sm font-medium transition-colors text-left',
+                    "w-full px-3 py-2 rounded-md text-sm font-medium transition-colors text-left",
                     activeCategory === cat.id
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                   )}
                 >
                   {cat.label}
@@ -127,7 +163,7 @@ export default function AnalyticsPage() {
               {Object.entries(groupedSections).filter(([, sections]) => sections.length > 0).map(([category, sections]) => (
                   <div key={category} className="space-y-1">
                     <h3 className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                      {CATEGORIES.find(c => c.id === category)?.label}
+                      {CATEGORIES.find((c) => c.id === category)?.label}
                     </h3>
                     {sections.map((section) => (
                       <Link
@@ -139,22 +175,24 @@ export default function AnalyticsPage() {
                           {section.icon}
                         </span>
                         <span className="flex-1 truncate">{section.title}</span>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        <ChevronRightIcon className="h-4 w-4 text-muted-foreground" />
                       </Link>
                     ))}
                   </div>
-                ))}
+
+              <div className="border-t p-4 mt-4">
+                <a
+                  href="https://github.com/webbixray/astra-os"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 hover:text-primary"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  View on GitHub
+                </a>
               </div>
             </div>
-
-          <div className="border-t p-4">
-            <a href="https://github.com/webbixray/astra-os" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
-              <ExternalLink className="h-3 w-3" />
-              View on GitHub
-            </a>
-          </div>
-        </div>
-      </aside>
+          </aside>
 
       {/* Mobile sidebar toggle */}
       <button
@@ -169,9 +207,9 @@ export default function AnalyticsPage() {
           <div className="mb-8">
             <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
               <Link href="/dashboard" className="hover:text-foreground">Dashboard</Link>
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRightIcon className="h-4 w-4" />
               <Link href="/docs" className="hover:text-foreground">Documentation</Link>
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRightIcon className="h-4 w-4" />
               <span>Analytics & Reporting</span>
             </nav>
             <h1 className="text-3xl font-bold tracking-tight">Analytics & Reporting</h1>
@@ -184,7 +222,7 @@ export default function AnalyticsPage() {
             {Object.entries(groupedSections).filter(([, sections]) => sections.length > 0).map(([category, sections]) => (
                 <div key={category}>
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-semibold capitalize">{CATEGORIES.find(c => c.id === category)?.label}</h2>
+                    <h2 className="text-xl font-semibold capitalize">{CATEGORIES.find((c) => c.id === category)?.label}</h2>
                     <span className="text-sm text-muted-foreground">{sections.length} articles</span>
                   </div>
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -199,7 +237,7 @@ export default function AnalyticsPage() {
                             {section.icon}
                           </div>
                           <span className="text-xs font-medium text-primary uppercase tracking-wider">
-                            {CATEGORIES.find(c => c.id === category)?.label}
+                            {CATEGORIES.find((c) => c.id === category)?.label}
                           </span>
                         </div>
                         <h3 className="font-semibold text-lg mb-2 group-hover:text-primary transition-colors">
@@ -212,51 +250,55 @@ export default function AnalyticsPage() {
                           <span className="text-sm font-medium text-primary group-hover:text-primary/80 transition-colors">
                             Read more
                           </span>
-                          <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                          <ChevronRightIcon className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                         </div>
                       </Link>
                     ))}
                   </div>
                 </div>
               ))}
-            </div>
 
-            {/* Quick Links */}
-            <div className="mt-12 rounded-xl border bg-muted/30 p-6">
-              <h2 className="text-lg font-semibold mb-4">Quick Links</h2>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Link href="/docs/quickstart" className="flex items-center gap-3 p-4 rounded-lg border hover:bg-accent transition-colors">
-                  <Zap className="h-5 w-5 text-primary" />
-                  <div>
-                    <p className="font-medium">Quick Start</p>
-                    <p className="text-sm text-muted-foreground">5-minute setup guide</p>
-                  </div>
-                </Link>
-                <Link href="/docs/api-reference" className="flex items-center gap-3 p-4 rounded-lg border hover:bg-accent transition-colors">
-                  <Code className="h-5 w-5 text-primary" />
-                  <div>
-                    <p className="font-medium">API Reference</p>
-                    <p className="text-sm text-muted-foreground">Complete endpoint docs</p>
-                  </div>
-                </Link>
-                <Link href="/docs/best-practices" className="flex items-center gap-3 p-4 rounded-lg border hover:bg-accent transition-colors">
-                  <Zap className="h-5 w-5 text-primary" />
-                  <div>
-                    <p className="font-medium">Best Practices</p>
-                    <p className="text-sm text-muted-foreground">Tips for success</p>
-                  </div>
-                </Link>
-                <Link href="https://github.com/webbixray/astra-os" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 rounded-lg border hover:bg-accent transition-colors">
-                  <ExternalLink className="h-5 w-5 text-primary" />
-                  <div>
-                    <p className="font-medium">GitHub Repository</p>
-                    <p className="text-sm text-muted-foreground">Source code & issues</p>
-                  </div>
-                </Link>
+              {/* Quick Links */}
+              <div className="mt-12 rounded-xl border bg-muted/30 p-6">
+                <h2 className="text-lg font-semibold mb-4">Quick Links</h2>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                  <Link href="/docs/quickstart" className="flex items-center gap-3 p-4 rounded-lg border hover:bg-accent transition-colors">
+                    <Zap className="h-5 w-5 text-primary" />
+                    <div>
+                      <p className="font-medium">Quick Start</p>
+                      <p className="text-sm text-muted-foreground">5-minute setup guide</p>
+                    </div>
+                  </Link>
+                  <Link href="/docs/api-reference" className="flex items-center gap-3 p-4 rounded-lg border hover:bg-accent transition-colors">
+                    <Code className="h-5 w-5 text-primary" />
+                    <div>
+                      <p className="font-medium">API Reference</p>
+                      <p className="text-sm text-muted-foreground">Complete endpoint docs</p>
+                    </div>
+                  </Link>
+                  <Link href="/docs/best-practices" className="flex items-center gap-3 p-4 rounded-lg border hover:bg-accent transition-colors">
+                    <Zap className="h-5 w-5 text-primary" />
+                    <div>
+                      <p className="font-medium">Best Practices</p>
+                      <p className="text-sm text-muted-foreground">Tips for success</p>
+                    </div>
+                  </Link>
+                  <Link href="https://github.com/webbixray/astra-os" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 rounded-lg border hover:bg-accent transition-colors">
+                    <ExternalLink className="h-5 w-5 text-primary" />
+                    <div>
+                      <p className="font-medium">GitHub Repository</p>
+                      <p className="text-sm text-muted-foreground">Source code & issues</p>
+                    </div>
+                  </Link>
+                </div>
               </div>
             </div>
-          </div>
-      </main>
-    </div>
-  );
+          </main>
+        </div>
+      );
+    }
+  }
 }
+
+export { AnalyticsPage as default };
+

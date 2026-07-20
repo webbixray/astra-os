@@ -233,7 +233,8 @@ def create_app() -> FastAPI:
     is_prod = config.environment == "production"
     app = FastAPI(
         title="ASTRA OS API",
-        version="1.0.2",
+        version="1.1.0",
+
         description="AI-Native Marketing & Business Growth Operating System",
         lifespan=lifespan,
         root_path="",

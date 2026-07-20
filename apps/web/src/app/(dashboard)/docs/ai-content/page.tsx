@@ -1,10 +1,15 @@
-'use client';
+'use client'
+
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ChevronRight, Zap, Code, ExternalLink, Users, Mail, FileText, Search, BookOpen } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { ChevronRight, Zap, Code, Shield, ExternalLink, Terminal, AlertCircle, CheckCircle, Zap as ZapIcon, Database, Globe, Users, ArrowRight, Code as CodeIcon, Sparkles, Brain, Settings, FileText, BarChart, Search, BookOpen, Mail } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
 import { cn } from '@/lib/utils';
+import { useState } from 'react';
+import { Input } from '@/components/ui/input';
 
 interface DocSection {
   id: string;
@@ -176,15 +181,20 @@ export default function AiContentPage() {
                       </Link>
                     ))}
                   </div>
-                ))}
+                )
+              ))}
+              <div className="border-t p-4 mt-4">
+                <a
+                  href="https://github.com/webbixray/astra-os"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 hover:text-primary"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  View on GitHub
+                </a>
               </div>
             </div>
-
-          <div className="border-t p-4">
-            <a href="https://github.com/webbixray/astra-os" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
-              <ExternalLink className="h-3 w-3" />
-              View on GitHub
-            </a>
           </div>
         </div>
       </aside>
@@ -251,8 +261,6 @@ export default function AiContentPage() {
                     ))}
                   </div>
                 </div>
-              ))}
-            </div>
 
             {/* Quick Links */}
             <div className="mt-12 rounded-xl border bg-muted/30 p-6">

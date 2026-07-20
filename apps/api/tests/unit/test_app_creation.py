@@ -23,7 +23,8 @@ class TestAppCreation:
 
     def test_create_app_version(self):
         app = create_app()
-        assert app.version == "1.0.2"
+        assert app.version == "1.1.0"
+
 
     def test_openapi_generates(self):
         app = create_app()

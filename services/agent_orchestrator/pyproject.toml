@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "astra-agent-orchestrator"
-version = "1.0.2"
+version = "1.1.0"
 description = "Agent Orchestrator Runtime for ASTRA OS"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -35,7 +35,6 @@ dev = [
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["*"]
-exclude = ["tests*"]
 
 [tool.ruff]
 line-length = 100

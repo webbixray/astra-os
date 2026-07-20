@@ -8,7 +8,7 @@ from astra_agent_orchestrator.tools import (
     ToolRegistry,
 )
 
-from tests.conftest import MockTool
+from .conftest import MockTool
 
 
 class TestToolRegistry:

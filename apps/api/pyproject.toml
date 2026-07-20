@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "astra-api"
-version = "1.0.2"
+version = "1.1.0"
 description = "ASTRA OS — API Backend"
 requires-python = ">=3.12"
 dependencies = [
@@ -15,6 +15,7 @@ dependencies = [
     "pydantic[email]>=2.8.0",
     "pydantic-settings>=2.4.0",
     "sqlalchemy[asyncio]>=2.0.30",
+    "pgvector>=0.5.0",
     "asyncpg>=0.30.0",
     "alembic>=1.13.0",
     "redis[hiredis]>=5.1.0",

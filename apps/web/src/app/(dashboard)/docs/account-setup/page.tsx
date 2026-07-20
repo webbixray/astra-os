@@ -151,7 +151,8 @@ export default function AccountSetupPage() {
                         Completed
                       </span>
                     )}
-                    </div>
+                  </div>
+
                   <p className="text-muted-foreground mb-4">{step.description}</p>
                   <Link
                     href={step.href}
