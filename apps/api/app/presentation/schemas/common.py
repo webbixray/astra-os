@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import TypeVar
+from typing import Generic, TypeVar
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -8,7 +8,7 @@ T = TypeVar("T")
 DataT = TypeVar("DataT")
 
 
-class SuccessResponse[T](BaseModel):
+class SuccessResponse(BaseModel, Generic[T]):
     success: bool = True
     data: T
 
@@ -20,7 +20,7 @@ class ErrorResponse(BaseModel):
     details: dict | None = None
 
 
-class PaginatedResponse[T](BaseModel):
+class PaginatedResponse(BaseModel, Generic[T]):
     success: bool = True
     data: list[T]
     total: int

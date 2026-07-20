@@ -62,12 +62,12 @@ def _mock_brand_voice(**kwargs):
 
 def _mock_generated_content(**kwargs):
     """Create mock generated content."""
-    c = MagicMock()
-    c.content = kwargs.get("content", "Generated content about topic")
-    c.tokens_used = kwargs.get("tokens_used", 100)
-    c.cost_usd = kwargs.get("cost_usd", 0.001)
-    c.model = kwargs.get("model", "gpt-4")
-    return c
+    return {
+        "content": kwargs.get("content", "Generated content about topic"),
+        "tokens_used": kwargs.get("tokens_used", 100),
+        "cost_usd": kwargs.get("cost_usd", 0.001),
+        "model": kwargs.get("model", "gpt-4"),
+    }
 
 
 def _mock_seo_score(**kwargs):
@@ -185,7 +185,7 @@ class TestContentGenerate:
 
         assert response.status_code == 200
         data = response.json()
-        assert "content" in data or "generated" in str(data).lower()
+        assert "content" in data["data"] or "generated" in str(data).lower()
 
     @pytest.mark.asyncio
     async def test_generate_content_template_not_found(self, test_app: FastAPI, test_client: AsyncClient):
@@ -302,7 +302,7 @@ class TestContentRewrite:
 
         assert response.status_code == 200
         data = response.json()
-        assert "content" in data
+        assert "content" in data["data"]
 
     @pytest.mark.asyncio
     async def test_rewrite_content_without_brand_voice(self, test_app: FastAPI, test_client: AsyncClient):
@@ -378,8 +378,8 @@ class TestBulkGenerate:
 
         assert response.status_code == 200
         data = response.json()
-        assert "results" in data
-        assert data["total"] == 3
+        assert "results" in data["data"]
+        assert data["data"]["total"] == 3
 
     @pytest.mark.asyncio
     async def test_bulk_generate_template_not_found(self, test_app: FastAPI, test_client: AsyncClient):
@@ -431,19 +431,21 @@ class TestSEOScore:
 
         with patch("app.presentation.routes.content.gen_routes.SEOScorer",
                    return_value=mock_scorer):
+            csrf_headers = _setup_csrf(test_client)
             response = await test_client.post(
                 "/api/v1/ai/content/seo-score",
                 json={
                     "content": "This is a test article about marketing and AI.",
                     "target_keywords": ["marketing", "AI"],
                 },
+                headers=csrf_headers,
             )
 
         assert response.status_code == 200
         data = response.json()
-        assert "score" in data
-        assert data["score"] == 85
-        assert "suggestions" in data
+        assert "score" in data["data"]
+        assert data["data"]["score"] == 85
+        assert "suggestions" in data["data"]
 
 
 # ============================================================
@@ -466,7 +468,7 @@ class TestBrandVoices:
             created_by=user_id,
         )
 
-        with patch("app.presentation.routes.content.gen_routes.BrandVoice") as mock_voice_class, \
+        with patch("app.domain.entities.content.brand_voice.BrandVoice") as mock_voice_class, \
              patch("app.presentation.routes.content.gen_routes.BrandVoiceRepository") as mock_repo_class:
 
             mock_voice_class.create = MagicMock(return_value=mock_voice)
@@ -492,8 +494,8 @@ class TestBrandVoices:
 
         assert response.status_code == 201
         data = response.json()
-        assert data["name"] == "Professional Voice"
-        assert data["tone"] == "professional"
+        assert data["data"]["name"] == "Professional Voice"
+        assert data["data"]["tone"] == "professional"
 
     @pytest.mark.asyncio
     async def test_list_brand_voices(self, test_app: FastAPI, test_client: AsyncClient):
@@ -550,8 +552,8 @@ class TestBrandVoices:
 
         assert response.status_code == 200
         data = response.json()
-        assert data["name"] == "Updated Voice"
-        assert data["tone"] == "casual"
+        assert data["data"]["name"] == "Updated Voice"
+        assert data["data"]["tone"] == "casual"
 
     @pytest.mark.asyncio
     async def test_delete_brand_voice(self, test_app: FastAPI, test_client: AsyncClient):
@@ -597,7 +599,7 @@ class TestContentTemplates:
             description="Standard blog template",
         )
 
-        with patch("app.presentation.routes.content.gen_routes.ContentTemplate") as mock_template_class, \
+        with patch("app.domain.entities.content.content_template.ContentTemplate") as mock_template_class, \
              patch("app.presentation.routes.content.gen_routes.ContentTemplateRepository") as mock_repo_class:
 
             mock_template_class.create = MagicMock(return_value=mock_template)
@@ -624,8 +626,8 @@ class TestContentTemplates:
 
         assert response.status_code == 201
         data = response.json()
-        assert data["name"] == "Blog Template"
-        assert data["content_type"] == "blog"
+        assert data["data"]["name"] == "Blog Template"
+        assert data["data"]["content_type"] == "blog"
 
     @pytest.mark.asyncio
     async def test_list_templates(self, test_app: FastAPI, test_client: AsyncClient):
@@ -678,9 +680,9 @@ class TestContentTemplates:
 
         assert response.status_code == 200
         data = response.json()
-        assert data["id"] == str(template_id)
-        assert data["name"] == "Test Template"
-        assert data["sections"] == [{"title": "Intro"}]
+        assert data["data"]["id"] == str(template_id)
+        assert data["data"]["name"] == "Test Template"
+        assert data["data"]["sections"] == [{"title": "Intro"}]
 
     @pytest.mark.asyncio
     async def test_update_template(self, test_app: FastAPI, test_client: AsyncClient):
@@ -714,8 +716,8 @@ class TestContentTemplates:
 
         assert response.status_code == 200
         data = response.json()
-        assert data["name"] == "Updated Template"
-        assert data["updated"] is True
+        assert data["data"]["name"] == "Updated Template"
+        assert data["data"]["updated"] is True
 
     @pytest.mark.asyncio
     async def test_delete_template(self, test_app: FastAPI, test_client: AsyncClient):
@@ -775,8 +777,8 @@ class TestContentGenerationIntegration:
             content="Professional blog post about AI marketing strategies..."
         )
 
-        with patch("app.presentation.routes.content.gen_routes.ContentTemplate") as mock_template_class, \
-             patch("app.presentation.routes.content.gen_routes.BrandVoice") as mock_voice_class, \
+        with patch("app.domain.entities.content.content_template.ContentTemplate") as mock_template_class, \
+             patch("app.domain.entities.content.brand_voice.BrandVoice") as mock_voice_class, \
              patch("app.presentation.routes.content.gen_routes.ContentTemplateRepository") as mock_template_repo_class, \
              patch("app.presentation.routes.content.gen_routes.BrandVoiceRepository") as mock_voice_repo_class, \
              patch("app.presentation.routes.content.gen_routes._get_content_service") as mock_get_service:

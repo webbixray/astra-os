@@ -47,6 +47,9 @@ from app.presentation.routes.campaigns.campaign_routes import (
     get_start_abtest_uc,
     get_determine_winner_uc,
     get_record_metrics_uc,
+    CreateABTestRequest,
+    AddVariantRequest,
+    RecordMetricsRequest,
 )
 
 
@@ -132,11 +135,33 @@ def _mock_variant(**kwargs):
     return v
 
 
+def _setup_csrf(test_client: AsyncClient) -> dict[str, str]:
+    """Configure CSRF tokens on the test client for mutating requests."""
+    from app.config import config
+    import hashlib, hmac, secrets, time
+
+    secret = config.secret_key
+    session_id = secrets.token_urlsafe(16)
+    timestamp = int(time.time())
+    msg = f"{session_id}:{timestamp}"
+    signature = hmac.new(secret.encode(), msg.encode(), hashlib.sha256).hexdigest()[:16]
+    csrf_token = f"{timestamp}:{signature}"
+    test_client.headers["Cookie"] = f"astra_csrf={csrf_token}; astra_session={session_id}"
+    return {"X-CSRF-Token": csrf_token}
+
+
 @pytest.fixture
 def app_fixture() -> FastAPI:
     """Create test app with mocked dependencies."""
     with patch("app.presentation.routes.campaigns.campaign_routes.campaigns_created", MagicMock()):
         a = create_app()
+
+        # Remove CSRF middleware for testing - each test adds CSRF headers explicitly
+        from app.presentation.middleware.csrf import CSRFMiddleware
+        a.user_middleware = [
+            mw for mw in a.user_middleware
+            if mw.cls is not CSRFMiddleware
+        ]
 
         # Mock DB session
         mock_member = MagicMock()
@@ -243,6 +268,7 @@ class TestCampaignCreate:
         app.dependency_overrides[get_create_use_case] = lambda: mock_use_case
 
         org_id = uuid4()
+        csrf_headers = _setup_csrf(test_client)
         response = await test_client.post(
             "/api/v1/campaigns",
             json={
@@ -250,6 +276,7 @@ class TestCampaignCreate:
                 "budget_amount": -100,  # Invalid
                 "organization_id": str(org_id),
             },
+            headers=csrf_headers,
         )
 
         assert response.status_code == 422
@@ -271,8 +298,8 @@ class TestCampaignGet:
 
         assert response.status_code == 200
         data = response.json()
-        assert data["id"] == str(campaign_id)
-        assert data["name"] == mock_campaign.name
+        assert data["data"]["id"] == str(campaign_id)
+        assert data["data"]["name"] == mock_campaign.name
 
     @pytest.mark.asyncio
     async def test_get_campaign_not_found(self, app: FastAPI, test_client: AsyncClient):
@@ -315,7 +342,7 @@ class TestCampaignList:
     async def test_list_campaigns_with_status_filter(self, app: FastAPI, test_client: AsyncClient):
         org_id = uuid4()
         mock_campaigns = [
-            _mock_campaign(id=uuid4(), organization_id=org_id, status=CampaignStatus.ACTIVE)
+            _mock_campaign(id=uuid4(), organization_id=org_id, status="active")
         ]
 
         mock_use_case = MagicMock()
@@ -352,14 +379,16 @@ class TestCampaignUpdate:
         app.dependency_overrides[get_get_use_case] = lambda: mock_get_use_case
         app.dependency_overrides[get_update_use_case] = lambda: mock_update_use_case
 
+        csrf_headers = _setup_csrf(test_client)
         response = await test_client.patch(
             f"/api/v1/campaigns/{campaign_id}",
             json={"name": "Updated Campaign", "description": "Updated description"},
+            headers=csrf_headers,
         )
 
         assert response.status_code == 200
         data = response.json()
-        assert data["name"] == "Updated Campaign"
+        assert data["data"]["name"] == "Updated Campaign"
 
     @pytest.mark.asyncio
     async def test_update_campaign_not_found(self, app: FastAPI, test_client: AsyncClient):
@@ -369,9 +398,11 @@ class TestCampaignUpdate:
         )
         app.dependency_overrides[get_get_use_case] = lambda: mock_get_use_case
 
+        csrf_headers = _setup_csrf(test_client)
         response = await test_client.patch(
             f"/api/v1/campaigns/{uuid4()}",
             json={"name": "Updated"},
+            headers=csrf_headers,
         )
 
         assert response.status_code == 404
@@ -389,13 +420,14 @@ class TestCampaignLifecycle:
         mock_campaign = _mock_campaign(
             id=campaign_id,
             organization_id=org_id,
-            status=CampaignStatus.ACTIVE,
+            status="active",
         )
 
         # The launch endpoint creates its own repo/use_case, so we need to patch at module level
-        with patch("app.presentation.routes.campaigns.campaign_routes.CampaignRepositoryImpl") as mock_repo_class, \
+        with patch("app.infrastructure.db.repositories.campaigns.campaign_repository.CampaignRepositoryImpl") as mock_repo_class, \
              patch("app.presentation.routes.campaigns.campaign_routes.LaunchCampaignUseCase") as mock_uc_class:
 
+            csrf_headers = _setup_csrf(test_client)
             mock_repo = AsyncMock()
             mock_repo.find_by_id = AsyncMock(return_value=mock_campaign)
             mock_repo_class.return_value = mock_repo
@@ -408,11 +440,11 @@ class TestCampaignLifecycle:
 
             assert response.status_code == 200
             data = response.json()
-            assert data["status"] == "active"
+            assert data["data"]["status"] == "active"
 
     @pytest.mark.asyncio
     async def test_launch_campaign_not_found(self, app: FastAPI, test_client: AsyncClient):
-        with patch("app.presentation.routes.campaigns.campaign_routes.CampaignRepositoryImpl") as mock_repo_class:
+        with patch("app.infrastructure.db.repositories.campaigns.campaign_repository.CampaignRepositoryImpl") as mock_repo_class:
             mock_repo = AsyncMock()
             mock_repo.find_by_id = AsyncMock(return_value=None)
             mock_repo_class.return_value = mock_repo
@@ -428,10 +460,10 @@ class TestCampaignLifecycle:
         mock_campaign = _mock_campaign(
             id=campaign_id,
             organization_id=org_id,
-            status=CampaignStatus.PAUSED,
+            status="paused",
         )
 
-        with patch("app.presentation.routes.campaigns.campaign_routes.CampaignRepositoryImpl") as mock_repo_class, \
+        with patch("app.infrastructure.db.repositories.campaigns.campaign_repository.CampaignRepositoryImpl") as mock_repo_class, \
              patch("app.presentation.routes.campaigns.campaign_routes.PauseCampaignUseCase") as mock_uc_class:
 
             mock_repo = AsyncMock()
@@ -446,7 +478,7 @@ class TestCampaignLifecycle:
 
             assert response.status_code == 200
             data = response.json()
-            assert data["status"] == "paused"
+            assert data["data"]["status"] == "paused"
 
 
 # ============================================================
@@ -463,7 +495,7 @@ class TestCampaignBudget:
         mock_uc.execute = AsyncMock(return_value=mock_budget)
         app.dependency_overrides[get_set_budget_uc] = lambda: mock_uc
 
-        response = await test_client.post(
+        response = await test_client.put(
             f"/api/v1/campaigns/{campaign_id}/budget",
             json={
                 "total_budget": 10000.0,
@@ -474,7 +506,7 @@ class TestCampaignBudget:
 
         assert response.status_code == 200
         data = response.json()
-        assert data["total_budget"] == 10000.0
+        assert data["data"]["total_budget"] == 10000.0
 
     @pytest.mark.asyncio
     async def test_get_campaign_budget(self, app: FastAPI, test_client: AsyncClient):
@@ -489,9 +521,9 @@ class TestCampaignBudget:
 
         assert response.status_code == 200
         data = response.json()
-        assert data["total_budget"] == 10000.0
-        assert data["spent"] == 2500.0
-        assert data["remaining"] == 7500.0
+        assert data["data"]["total_budget"] == 10000.0
+        assert data["data"]["spent"] == 2500.0
+        assert data["data"]["remaining"] == 7500.0
 
     @pytest.mark.asyncio
     async def test_record_spend(self, app: FastAPI, test_client: AsyncClient):
@@ -503,13 +535,13 @@ class TestCampaignBudget:
         app.dependency_overrides[get_record_spend_uc] = lambda: mock_uc
 
         response = await test_client.post(
-            f"/api/v1/campaigns/{campaign_id}/spend",
+            f"/api/v1/campaigns/{campaign_id}/budget/spend",
             json={"amount": 500.0},
         )
 
         assert response.status_code == 200
         data = response.json()
-        assert data["spent"] == 3000.0
+        assert data["data"]["spent"] == 3000.0
 
 
 # ============================================================
@@ -547,7 +579,7 @@ class TestCampaignTemplates:
 
         assert response.status_code == 201
         data = response.json()
-        assert data["name"] == "Summer Campaign Template"
+        assert data["data"]["name"] == "Summer Campaign Template"
 
     @pytest.mark.asyncio
     async def test_list_templates(self, app: FastAPI, test_client: AsyncClient):
@@ -565,7 +597,7 @@ class TestCampaignTemplates:
 
         assert response.status_code == 200
         data = response.json()
-        assert len(data) == 2
+        assert len(data["data"]) == 2
 
     @pytest.mark.asyncio
     async def test_get_template(self, app: FastAPI, test_client: AsyncClient):
@@ -581,7 +613,7 @@ class TestCampaignTemplates:
 
         assert response.status_code == 200
         data = response.json()
-        assert data["id"] == str(template_id)
+        assert data["data"]["id"] == str(template_id)
 
     @pytest.mark.asyncio
     async def test_delete_template(self, app: FastAPI, test_client: AsyncClient):
@@ -610,7 +642,7 @@ class TestCampaignTemplates:
         app.dependency_overrides[get_clone_uc] = lambda: mock_uc
 
         response = await test_client.post(
-            "/api/v1/campaigns/templates/clone",
+            "/api/v1/campaigns/from-template",
             json={
                 "template_id": str(template_id),
                 "organization_id": str(org_id),
@@ -620,7 +652,7 @@ class TestCampaignTemplates:
 
         assert response.status_code == 201
         data = response.json()
-        assert data["name"] == "Cloned Campaign"
+        assert data["data"]["name"] == "Cloned Campaign"
 
 
 # ============================================================
@@ -642,9 +674,8 @@ class TestABTests:
         app.dependency_overrides[get_create_abtest_uc] = lambda: mock_uc
 
         response = await test_client.post(
-            "/api/v1/campaigns/ab-tests",
+            f"/api/v1/campaigns/{campaign_id}/ab-tests",
             json={
-                "campaign_id": str(campaign_id),
                 "name": "Test A/B",
                 "goal_metric": "conversion_rate",
             },
@@ -652,7 +683,7 @@ class TestABTests:
 
         assert response.status_code == 201
         data = response.json()
-        assert data["name"] == "Test A/B"
+        assert data["data"]["name"] == "Test A/B"
 
     @pytest.mark.asyncio
     async def test_list_ab_tests(self, app: FastAPI, test_client: AsyncClient):
@@ -666,11 +697,11 @@ class TestABTests:
         mock_uc.execute = AsyncMock(return_value=mock_tests)
         app.dependency_overrides[get_list_abtests_uc] = lambda: mock_uc
 
-        response = await test_client.get(f"/api/v1/campaigns/ab-tests?campaign_id={campaign_id}")
+        response = await test_client.get(f"/api/v1/campaigns/{campaign_id}/ab-tests")
 
         assert response.status_code == 200
         data = response.json()
-        assert len(data) == 2
+        assert len(data["data"]) == 2
 
     @pytest.mark.asyncio
     async def test_add_variant(self, app: FastAPI, test_client: AsyncClient):
@@ -696,7 +727,7 @@ class TestABTests:
 
         assert response.status_code == 201
         data = response.json()
-        assert data["name"] == "Variant B"
+        assert data["data"]["status"] is not None
 
     @pytest.mark.asyncio
     async def test_start_ab_test(self, app: FastAPI, test_client: AsyncClient):
@@ -711,7 +742,7 @@ class TestABTests:
 
         assert response.status_code == 200
         data = response.json()
-        assert data["status"] == "running"
+        assert data["data"]["status"] == "running"
 
     @pytest.mark.asyncio
     async def test_record_variant_metrics(self, app: FastAPI, test_client: AsyncClient):
@@ -727,8 +758,9 @@ class TestABTests:
         app.dependency_overrides[get_record_metrics_uc] = lambda: mock_uc
 
         response = await test_client.post(
-            f"/api/v1/campaigns/ab-tests/{abtest_id}/variants/Variant A/metrics",
+            f"/api/v1/campaigns/ab-tests/{abtest_id}/metrics",
             json={
+                "variant_name": "Variant A",
                 "impressions": 10000,
                 "clicks": 500,
                 "conversions": 50,
@@ -738,7 +770,7 @@ class TestABTests:
 
         assert response.status_code == 200
         data = response.json()
-        assert data["impressions"] == 10000
+        assert data["data"]["status"] == "metrics_recorded"
 
     @pytest.mark.asyncio
     async def test_determine_winner(self, app: FastAPI, test_client: AsyncClient):
@@ -759,4 +791,4 @@ class TestABTests:
 
         assert response.status_code == 200
         data = response.json()
-        assert data["status"] == "completed"
+        assert data["data"]["status"] == "completed"

@@ -97,13 +97,18 @@ class AuditMiddleware(BaseHTTPMiddleware):
 
     @staticmethod
     async def _capture_response_body(response):
+        """Capture response body without consuming the response stream.
+
+        Uses response.body property if available (non-streaming responses),
+        otherwise returns None to avoid consuming the body_iterator.
+        """
         if response.status_code < 400:
             return None
         try:
-            raw = b""
-            async for chunk in response.body_iterator:
-                raw += chunk
-            return json.loads(raw.decode("utf-8")) if raw else None
+            body = getattr(response, "body", None)
+            if body is not None:
+                return json.loads(body.decode("utf-8")) if body else None
+            return "<streaming body not captured>"
         except Exception:
             return "<unable to parse>"
 

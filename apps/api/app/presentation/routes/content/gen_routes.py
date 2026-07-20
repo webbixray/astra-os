@@ -17,7 +17,7 @@ from app.presentation.dependencies import get_db, pagination_params
 from app.presentation.middleware.auth import require_user_id
 from app.presentation.middleware.feature_flags import require_feature
 from app.presentation.middleware.rbac import require_org_role
-from app.presentation.schemas.common import PaginatedResponse
+from app.presentation.schemas.common import PaginatedResponse, SuccessResponse
 
 
 async def _get_content_service(db: AsyncSession) -> ContentGenerationService:
@@ -100,7 +100,7 @@ async def generate_content(
     request: GenerateRequest,
     db: AsyncSession = Depends(get_db),
     user_id: UUID = Depends(require_user_id),
-) -> dict:
+) -> SuccessResponse:
     await require_org_role(request.organization_id, "viewer", user_id, db)
     await require_feature("ai_content_generation", request.organization_id, "auto", db)
     service = await _get_content_service(db)
@@ -117,13 +117,14 @@ async def generate_content(
         if brand_voice is None:
             raise HTTPException(status_code=404, detail="Brand voice not found")
 
-    return await service.generate(
+    result = await service.generate(
         template=template,
         variables=request.variables,
         brand_voice=brand_voice,
         tone=request.tone,
         instructions=request.instructions,
     )
+    return SuccessResponse(data=result)
 
 
 @router.post("/ai/content/rewrite", summary="Rewrite content with AI")
@@ -131,7 +132,7 @@ async def rewrite_content(
     request: RewriteRequest,
     db: AsyncSession = Depends(get_db),
     user_id: UUID = Depends(require_user_id),
-) -> dict:
+) -> SuccessResponse:
     await require_org_role(request.organization_id, "viewer", user_id, db)
     service = await _get_content_service(db)
     voice_repo = BrandVoiceRepository(db)
@@ -149,7 +150,7 @@ async def rewrite_content(
         instructions=request.instructions,
     )
 
-    return {"content": result}
+    return SuccessResponse(data={"content": result})
 
 
 @router.post("/ai/content/generate/bulk", summary="Bulk generate AI content")
@@ -157,7 +158,7 @@ async def bulk_generate(
     request: BulkGenerateRequest,
     db: AsyncSession = Depends(get_db),
     user_id: UUID = Depends(require_user_id),
-) -> dict:
+) -> SuccessResponse:
     await require_org_role(request.organization_id, "viewer", user_id, db)
     service = await _get_content_service(db)
     template_repo = ContentTemplateRepository(db)
@@ -178,16 +179,16 @@ async def bulk_generate(
         tone=request.tone,
     )
 
-    return {"results": results, "total": len(results)}
+    return SuccessResponse(data={"results": results, "total": len(results)})
 
 
 @router.post("/ai/content/seo-score", summary="Score content for SEO")
 async def score_content(
     request: SEOScoreRequest,
     user_id: UUID = Depends(require_user_id),
-) -> dict:
+) -> SuccessResponse:
     scorer = SEOScorer()
-    return scorer.score(request.content, request.target_keywords)
+    return SuccessResponse(data=scorer.score(request.content, request.target_keywords))
 
 
 @router.post("/brand-voices", status_code=201, summary="Create a brand voice")
@@ -195,7 +196,7 @@ async def create_brand_voice(
     request: BrandVoiceCreate,
     db: AsyncSession = Depends(get_db),
     user_id: UUID = Depends(require_user_id),
-) -> dict:
+) -> SuccessResponse:
     await require_org_role(request.organization_id, "member", user_id, db)
     from app.domain.entities.content.brand_voice import BrandVoice
 
@@ -210,12 +211,12 @@ async def create_brand_voice(
     )
     repo = BrandVoiceRepository(db)
     saved = await repo.save(voice)
-    return {
+    return SuccessResponse(data={
         "id": str(saved.id),
         "name": saved.name,
         "tone": saved.tone,
         "is_active": saved.is_active,
-    }
+    })
 
 
 @router.get("/brand-voices", summary="List brand voices")
@@ -260,7 +261,7 @@ async def update_brand_voice(
     organization_id: UUID = Query(...),
     db: AsyncSession = Depends(get_db),
     user_id: UUID = Depends(require_user_id),
-) -> dict:
+) -> SuccessResponse:
     await require_org_role(organization_id, "member", user_id, db)
     repo = BrandVoiceRepository(db)
     voice = await repo.find_by_id(voice_id)
@@ -282,12 +283,12 @@ async def update_brand_voice(
         voice.is_active = request.is_active
         voice.updated_at = now()
     saved = await repo.save(voice)
-    return {
+    return SuccessResponse(data={
         "id": str(saved.id),
         "name": saved.name,
         "tone": saved.tone,
         "is_active": saved.is_active,
-    }
+    })
 
 
 @router.delete("/brand-voices/{voice_id}", status_code=204, summary="Delete a brand voice")
@@ -310,7 +311,7 @@ async def create_template(
     request: TemplateCreate,
     db: AsyncSession = Depends(get_db),
     user_id: UUID = Depends(require_user_id),
-) -> dict:
+) -> SuccessResponse:
     await require_org_role(request.organization_id, "member", user_id, db)
     from app.domain.entities.content.content_template import ContentTemplate
 
@@ -326,11 +327,11 @@ async def create_template(
     )
     repo = ContentTemplateRepository(db)
     saved = await repo.save(template)
-    return {
+    return SuccessResponse(data={
         "id": str(saved.id),
         "name": saved.name,
         "content_type": saved.content_type,
-    }
+    })
 
 
 @router.get("/content/templates", summary="List content templates")
@@ -383,13 +384,13 @@ async def get_template(
     organization_id: UUID = Query(...),
     db: AsyncSession = Depends(get_db),
     user_id: UUID = Depends(require_user_id),
-) -> dict:
+) -> SuccessResponse:
     await require_org_role(organization_id, "viewer", user_id, db)
     repo = ContentTemplateRepository(db)
     template = await repo.find_by_id(template_id)
     if template is None:
         raise HTTPException(status_code=404, detail="Template not found")
-    return {
+    return SuccessResponse(data={
         "id": str(template.id),
         "name": template.name,
         "content_type": template.content_type,
@@ -399,7 +400,7 @@ async def get_template(
         "system_prompt": template.system_prompt,
         "is_builtin": template.is_builtin,
         "created_at": template.created_at.isoformat(),
-    }
+    })
 
 
 @router.patch("/content/templates/{template_id}", summary="Update a content template")
@@ -409,7 +410,7 @@ async def update_template(
     organization_id: UUID = Query(...),
     db: AsyncSession = Depends(get_db),
     user_id: UUID = Depends(require_user_id),
-) -> dict:
+) -> SuccessResponse:
     await require_org_role(organization_id, "member", user_id, db)
     repo = ContentTemplateRepository(db)
     template = await repo.find_by_id(template_id)
@@ -429,11 +430,11 @@ async def update_template(
         template.system_prompt = request.system_prompt
         template.updated_at = now()
     saved = await repo.save(template)
-    return {
+    return SuccessResponse(data={
         "id": str(saved.id),
         "name": saved.name,
         "updated": True,
-    }
+    })
 
 
 @router.delete(

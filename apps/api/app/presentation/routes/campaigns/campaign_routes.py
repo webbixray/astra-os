@@ -111,7 +111,6 @@ class CloneFromTemplateRequest(BaseModel):
 
 
 class CreateABTestRequest(BaseModel):
-    campaign_id: UUID
     name: str
     description: str = ""
     goal_metric: str = "conversion_rate"
@@ -308,6 +307,378 @@ async def create_campaign(
         updated_at=campaign.updated_at,
     )
 
+
+# ── Template endpoints ────────────────────────────────────────────────────────
+
+
+@router.post(
+    "/templates", status_code=status.HTTP_201_CREATED, summary="Create a campaign template"
+)
+async def create_template(
+    request: CreateTemplateRequest,
+    use_case: CreateTemplateUseCase = Depends(get_create_template_uc),
+    user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    await require_org_role(request.organization_id, "member", user_id, db)
+    template = await use_case.execute(
+        organization_id=request.organization_id,
+        name=request.name,
+        created_by=user_id,
+        description=request.description,
+        channels=request.channels,
+        objective=request.objective,
+        budget_amount=request.budget_amount,
+        budget_currency=request.budget_currency,
+        default_duration_days=request.default_duration_days,
+        config=request.config,
+    )
+    return {
+        "id": str(template.id),
+        "name": template.name,
+        "description": template.description,
+        "channels": template.channels,
+        "objective": template.objective,
+        "budget_amount": template.budget_amount,
+        "budget_currency": template.budget_currency,
+        "default_duration_days": template.default_duration_days,
+    }
+
+
+@router.get("/templates", summary="List all campaign templates")
+async def list_templates(
+    org_id: UUID = Query(..., alias="organization_id"),
+    use_case: ListTemplatesUseCase = Depends(get_list_templates_uc),
+    user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
+) -> list[dict]:
+    await require_org_role(org_id, "viewer", user_id, db)
+    templates = await use_case.execute(org_id=org_id)
+    return [
+        {
+            "id": str(t.id),
+            "name": t.name,
+            "description": t.description,
+            "channels": t.channels,
+            "objective": t.objective,
+            "budget_amount": t.budget_amount,
+            "budget_currency": t.budget_currency,
+            "default_duration_days": t.default_duration_days,
+            "created_by": str(t.created_by),
+        }
+        for t in templates
+    ]
+
+
+@router.get("/templates/{template_id}", summary="Get a template by ID")
+async def get_template(
+    template_id: UUID,
+    use_case: GetTemplateUseCase = Depends(get_get_template_uc),
+    user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    try:
+        template = await use_case.execute(template_id=template_id)
+        await require_org_role(template.organization_id, "viewer", user_id, db)
+    except EntityNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Template not found"
+        ) from None
+    return {
+        "id": str(template.id),
+        "name": template.name,
+        "description": template.description,
+        "channels": template.channels,
+        "objective": template.objective,
+        "budget_amount": template.budget_amount,
+        "budget_currency": template.budget_currency,
+        "default_duration_days": template.default_duration_days,
+        "config": template.config,
+    }
+
+
+@router.delete(
+    "/templates/{template_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete a campaign template",
+)
+async def delete_template(
+    template_id: UUID,
+    get_template: GetTemplateUseCase = Depends(get_get_template_uc),
+    delete_template_uc: DeleteTemplateUseCase = Depends(get_delete_template_uc),
+    user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    try:
+        template = await get_template.execute(template_id=template_id)
+        await require_org_role(template.organization_id, "member", user_id, db)
+        await delete_template_uc.execute(template_id=template_id)
+    except EntityNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Template not found"
+        ) from None
+
+
+@router.post(
+    "/from-template", status_code=status.HTTP_201_CREATED, summary="Clone campaign from template"
+)
+async def clone_from_template(
+    request: CloneFromTemplateRequest,
+    use_case: CloneCampaignFromTemplateUseCase = Depends(get_clone_uc),
+    user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
+) -> CampaignResponse:
+    await require_org_role(request.organization_id, "member", user_id, db)
+    try:
+        campaign = await use_case.execute(
+            template_id=request.template_id,
+            organization_id=request.organization_id,
+            name=request.name,
+            created_by=user_id,
+            start_date=request.start_date,
+        )
+    except EntityNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Template not found"
+        ) from None
+    return CampaignResponse(
+        id=campaign.id,
+        organization_id=campaign.organization_id,
+        name=campaign.name,
+        description=campaign.description,
+        status=campaign.status,
+        budget_amount=campaign.budget_amount,
+        budget_currency=campaign.budget_currency,
+        start_date=campaign.start_date.isoformat() if campaign.start_date else None,
+        end_date=None,
+        channels=campaign.channels,
+        objective=campaign.objective,
+        created_by=campaign.created_by,
+        ai_generated=campaign.ai_generated,
+        created_at=campaign.created_at,
+        updated_at=campaign.updated_at,
+    )
+
+
+# ── A/B test endpoints ────────────────────────────────────────────────────────
+
+
+
+@router.get("/ab-tests/{test_id}", summary="Get A/B test details")
+async def get_ab_test(
+    test_id: UUID,
+    use_case: GetABTestUseCase = Depends(get_get_abtest_uc),
+    user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    try:
+        test = await use_case.execute(test_id=test_id)
+        from app.infrastructure.db.repositories.campaigns.campaign_repository import (
+            CampaignRepositoryImpl,
+        )
+
+        campaign_repo = CampaignRepositoryImpl(db)
+        campaign = await campaign_repo.find_by_id(test.campaign_id)
+        if not campaign:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found"
+            ) from None
+        await require_org_role(campaign.organization_id, "viewer", user_id, db)
+    except EntityNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="AB test not found"
+        ) from None
+    return {
+        "id": str(test.id),
+        "campaign_id": str(test.campaign_id),
+        "name": test.name,
+        "description": test.description,
+        "status": test.status,
+        "goal_metric": test.goal_metric,
+        "winner_variant_id": str(test.winner_variant_id) if test.winner_variant_id else None,
+        "start_date": test.start_date.isoformat() if test.start_date else None,
+        "end_date": test.end_date.isoformat() if test.end_date else None,
+        "variants": [
+            {
+                "id": str(v.id),
+                "name": v.name,
+                "description": v.description,
+                "traffic_percent": v.traffic_percent,
+                "impressions": v.impressions,
+                "clicks": v.clicks,
+                "conversions": v.conversions,
+                "spend": v.spend,
+                "ctr": v.ctr,
+                "conversion_rate": v.conversion_rate,
+                "cpa": v.cpa,
+            }
+            for v in test.variants
+        ],
+    }
+
+
+@router.post(
+    "/ab-tests/{test_id}/variants",
+    status_code=status.HTTP_201_CREATED,
+    summary="Add variant to A/B test",
+)
+async def add_variant(
+    test_id: UUID,
+    request: AddVariantRequest,
+    use_case: AddVariantUseCase = Depends(get_add_variant_uc),
+    get_abtest: GetABTestUseCase = Depends(get_get_abtest_uc),
+    user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    try:
+        existing_test = await get_abtest.execute(test_id=test_id)
+        from app.infrastructure.db.repositories.campaigns.campaign_repository import (
+            CampaignRepositoryImpl,
+        )
+
+        campaign_repo = CampaignRepositoryImpl(db)
+        campaign = await campaign_repo.find_by_id(existing_test.campaign_id)
+        if not campaign:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found"
+            ) from None
+        await require_org_role(campaign.organization_id, "member", user_id, db)
+        test = await use_case.execute(
+            test_id=test_id,
+            name=request.name,
+            description=request.description,
+            config=request.config,
+            traffic_percent=request.traffic_percent,
+        )
+    except (EntityNotFoundError, ValidationError) as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND
+            if isinstance(e, EntityNotFoundError)
+            else status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(e),
+        ) from None
+    return {
+        "id": str(test.id),
+        "status": test.status,
+        "variants": [
+            {
+                "id": str(v.id),
+                "name": v.name,
+                "traffic_percent": v.traffic_percent,
+            }
+            for v in test.variants
+        ],
+    }
+
+
+@router.post("/ab-tests/{test_id}/start", summary="Start an A/B test")
+async def start_ab_test(
+    test_id: UUID,
+    use_case: StartABTestUseCase = Depends(get_start_abtest_uc),
+    get_abtest: GetABTestUseCase = Depends(get_get_abtest_uc),
+    user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    try:
+        existing_test = await get_abtest.execute(test_id=test_id)
+        from app.infrastructure.db.repositories.campaigns.campaign_repository import (
+            CampaignRepositoryImpl,
+        )
+
+        campaign_repo = CampaignRepositoryImpl(db)
+        campaign = await campaign_repo.find_by_id(existing_test.campaign_id)
+        if not campaign:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found"
+            ) from None
+        await require_org_role(campaign.organization_id, "member", user_id, db)
+        test = await use_case.execute(test_id=test_id)
+    except (EntityNotFoundError, ValidationError) as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND
+            if isinstance(e, EntityNotFoundError)
+            else status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(e),
+        ) from None
+    return {
+        "id": str(test.id),
+        "status": test.status,
+        "start_date": test.start_date.isoformat() if test.start_date else None,
+    }
+
+
+@router.post("/ab-tests/{test_id}/determine-winner", summary="Determine A/B test winner")
+async def determine_winner(
+    test_id: UUID,
+    use_case: DetermineWinnerUseCase = Depends(get_determine_winner_uc),
+    get_abtest: GetABTestUseCase = Depends(get_get_abtest_uc),
+    user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    try:
+        existing_test = await get_abtest.execute(test_id=test_id)
+        from app.infrastructure.db.repositories.campaigns.campaign_repository import (
+            CampaignRepositoryImpl,
+        )
+
+        campaign_repo = CampaignRepositoryImpl(db)
+        campaign = await campaign_repo.find_by_id(existing_test.campaign_id)
+        if not campaign:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found"
+            ) from None
+        await require_org_role(campaign.organization_id, "member", user_id, db)
+        test = await use_case.execute(test_id=test_id)
+    except EntityNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="AB test not found"
+        ) from None
+    return {
+        "id": str(test.id),
+        "status": test.status,
+        "winner_variant_id": str(test.winner_variant_id) if test.winner_variant_id else None,
+        "end_date": test.end_date.isoformat() if test.end_date else None,
+    }
+
+
+@router.post("/ab-tests/{test_id}/metrics", summary="Record variant metrics")
+async def record_variant_metrics(
+    test_id: UUID,
+    request: RecordMetricsRequest,
+    use_case: RecordVariantMetricsUseCase = Depends(get_record_metrics_uc),
+    get_abtest: GetABTestUseCase = Depends(get_get_abtest_uc),
+    user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    try:
+        existing_test = await get_abtest.execute(test_id=test_id)
+        from app.infrastructure.db.repositories.campaigns.campaign_repository import (
+            CampaignRepositoryImpl,
+        )
+
+        campaign_repo = CampaignRepositoryImpl(db)
+        campaign = await campaign_repo.find_by_id(existing_test.campaign_id)
+        if not campaign:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found"
+            ) from None
+        await require_org_role(campaign.organization_id, "member", user_id, db)
+        test = await use_case.execute(
+            test_id=test_id,
+            variant_name=request.variant_name,
+            impressions=request.impressions,
+            clicks=request.clicks,
+            conversions=request.conversions,
+            spend=request.spend,
+        )
+    except EntityNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Variant not found"
+        ) from None
+    return {"id": str(test.id), "status": "metrics_recorded"}
+
+
+# ── Pacing endpoints ──────────────────────────────────────────────────────────
 
 @router.get("/{campaign_id}", summary="Get a campaign by ID")
 async def get_campaign(
@@ -720,160 +1091,6 @@ async def record_campaign_spend(
     }
 
 
-# ── Template endpoints ────────────────────────────────────────────────────────
-
-
-@router.post(
-    "/templates", status_code=status.HTTP_201_CREATED, summary="Create a campaign template"
-)
-async def create_template(
-    request: CreateTemplateRequest,
-    use_case: CreateTemplateUseCase = Depends(get_create_template_uc),
-    user_id: UUID = Depends(require_user_id),
-    db: AsyncSession = Depends(get_db),
-) -> dict:
-    await require_org_role(request.organization_id, "member", user_id, db)
-    template = await use_case.execute(
-        organization_id=request.organization_id,
-        name=request.name,
-        created_by=user_id,
-        description=request.description,
-        channels=request.channels,
-        objective=request.objective,
-        budget_amount=request.budget_amount,
-        budget_currency=request.budget_currency,
-        default_duration_days=request.default_duration_days,
-        config=request.config,
-    )
-    return {
-        "id": str(template.id),
-        "name": template.name,
-        "description": template.description,
-        "channels": template.channels,
-        "objective": template.objective,
-        "budget_amount": template.budget_amount,
-        "budget_currency": template.budget_currency,
-        "default_duration_days": template.default_duration_days,
-    }
-
-
-@router.get("/templates", summary="List all campaign templates")
-async def list_templates(
-    org_id: UUID = Query(..., alias="organization_id"),
-    use_case: ListTemplatesUseCase = Depends(get_list_templates_uc),
-    user_id: UUID = Depends(require_user_id),
-    db: AsyncSession = Depends(get_db),
-) -> list[dict]:
-    await require_org_role(org_id, "viewer", user_id, db)
-    templates = await use_case.execute(org_id=org_id)
-    return [
-        {
-            "id": str(t.id),
-            "name": t.name,
-            "description": t.description,
-            "channels": t.channels,
-            "objective": t.objective,
-            "budget_amount": t.budget_amount,
-            "budget_currency": t.budget_currency,
-            "default_duration_days": t.default_duration_days,
-            "created_by": str(t.created_by),
-        }
-        for t in templates
-    ]
-
-
-@router.get("/templates/{template_id}", summary="Get a template by ID")
-async def get_template(
-    template_id: UUID,
-    use_case: GetTemplateUseCase = Depends(get_get_template_uc),
-    user_id: UUID = Depends(require_user_id),
-    db: AsyncSession = Depends(get_db),
-) -> dict:
-    try:
-        template = await use_case.execute(template_id=template_id)
-        await require_org_role(template.organization_id, "viewer", user_id, db)
-    except EntityNotFoundError:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Template not found"
-        ) from None
-    return {
-        "id": str(template.id),
-        "name": template.name,
-        "description": template.description,
-        "channels": template.channels,
-        "objective": template.objective,
-        "budget_amount": template.budget_amount,
-        "budget_currency": template.budget_currency,
-        "default_duration_days": template.default_duration_days,
-        "config": template.config,
-    }
-
-
-@router.delete(
-    "/templates/{template_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
-    summary="Delete a campaign template",
-)
-async def delete_template(
-    template_id: UUID,
-    get_template: GetTemplateUseCase = Depends(get_get_template_uc),
-    delete_template_uc: DeleteTemplateUseCase = Depends(get_delete_template_uc),
-    user_id: UUID = Depends(require_user_id),
-    db: AsyncSession = Depends(get_db),
-) -> None:
-    try:
-        template = await get_template.execute(template_id=template_id)
-        await require_org_role(template.organization_id, "member", user_id, db)
-        await delete_template_uc.execute(template_id=template_id)
-    except EntityNotFoundError:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Template not found"
-        ) from None
-
-
-@router.post(
-    "/from-template", status_code=status.HTTP_201_CREATED, summary="Clone campaign from template"
-)
-async def clone_from_template(
-    request: CloneFromTemplateRequest,
-    use_case: CloneCampaignFromTemplateUseCase = Depends(get_clone_uc),
-    user_id: UUID = Depends(require_user_id),
-    db: AsyncSession = Depends(get_db),
-) -> CampaignResponse:
-    await require_org_role(request.organization_id, "member", user_id, db)
-    try:
-        campaign = await use_case.execute(
-            template_id=request.template_id,
-            organization_id=request.organization_id,
-            name=request.name,
-            created_by=user_id,
-            start_date=request.start_date,
-        )
-    except EntityNotFoundError:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Template not found"
-        ) from None
-    return CampaignResponse(
-        id=campaign.id,
-        organization_id=campaign.organization_id,
-        name=campaign.name,
-        description=campaign.description,
-        status=campaign.status,
-        budget_amount=campaign.budget_amount,
-        budget_currency=campaign.budget_currency,
-        start_date=campaign.start_date.isoformat() if campaign.start_date else None,
-        end_date=None,
-        channels=campaign.channels,
-        objective=campaign.objective,
-        created_by=campaign.created_by,
-        ai_generated=campaign.ai_generated,
-        created_at=campaign.created_at,
-        updated_at=campaign.updated_at,
-    )
-
-
-# ── A/B test endpoints ────────────────────────────────────────────────────────
-
 
 @router.post(
     "/{campaign_id}/ab-tests", status_code=status.HTTP_201_CREATED, summary="Create an A/B test"
@@ -948,224 +1165,6 @@ async def list_ab_tests(
         }
         for t in tests
     ]
-
-
-@router.get("/ab-tests/{test_id}", summary="Get A/B test details")
-async def get_ab_test(
-    test_id: UUID,
-    use_case: GetABTestUseCase = Depends(get_get_abtest_uc),
-    user_id: UUID = Depends(require_user_id),
-    db: AsyncSession = Depends(get_db),
-) -> dict:
-    try:
-        test = await use_case.execute(test_id=test_id)
-        from app.infrastructure.db.repositories.campaigns.campaign_repository import (
-            CampaignRepositoryImpl,
-        )
-
-        campaign_repo = CampaignRepositoryImpl(db)
-        campaign = await campaign_repo.find_by_id(test.campaign_id)
-        if not campaign:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found"
-            ) from None
-        await require_org_role(campaign.organization_id, "viewer", user_id, db)
-    except EntityNotFoundError:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="AB test not found"
-        ) from None
-    return {
-        "id": str(test.id),
-        "campaign_id": str(test.campaign_id),
-        "name": test.name,
-        "description": test.description,
-        "status": test.status,
-        "goal_metric": test.goal_metric,
-        "winner_variant_id": str(test.winner_variant_id) if test.winner_variant_id else None,
-        "start_date": test.start_date.isoformat() if test.start_date else None,
-        "end_date": test.end_date.isoformat() if test.end_date else None,
-        "variants": [
-            {
-                "id": str(v.id),
-                "name": v.name,
-                "description": v.description,
-                "traffic_percent": v.traffic_percent,
-                "impressions": v.impressions,
-                "clicks": v.clicks,
-                "conversions": v.conversions,
-                "spend": v.spend,
-                "ctr": v.ctr,
-                "conversion_rate": v.conversion_rate,
-                "cpa": v.cpa,
-            }
-            for v in test.variants
-        ],
-    }
-
-
-@router.post(
-    "/ab-tests/{test_id}/variants",
-    status_code=status.HTTP_201_CREATED,
-    summary="Add variant to A/B test",
-)
-async def add_variant(
-    test_id: UUID,
-    request: AddVariantRequest,
-    use_case: AddVariantUseCase = Depends(get_add_variant_uc),
-    get_abtest: GetABTestUseCase = Depends(get_get_abtest_uc),
-    user_id: UUID = Depends(require_user_id),
-    db: AsyncSession = Depends(get_db),
-) -> dict:
-    try:
-        existing_test = await get_abtest.execute(test_id=test_id)
-        from app.infrastructure.db.repositories.campaigns.campaign_repository import (
-            CampaignRepositoryImpl,
-        )
-
-        campaign_repo = CampaignRepositoryImpl(db)
-        campaign = await campaign_repo.find_by_id(existing_test.campaign_id)
-        if not campaign:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found"
-            ) from None
-        await require_org_role(campaign.organization_id, "member", user_id, db)
-        test = await use_case.execute(
-            test_id=test_id,
-            name=request.name,
-            description=request.description,
-            config=request.config,
-            traffic_percent=request.traffic_percent,
-        )
-    except (EntityNotFoundError, ValidationError) as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND
-            if isinstance(e, EntityNotFoundError)
-            else status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=str(e),
-        ) from None
-    return {
-        "id": str(test.id),
-        "status": test.status,
-        "variants": [
-            {
-                "id": str(v.id),
-                "name": v.name,
-                "traffic_percent": v.traffic_percent,
-            }
-            for v in test.variants
-        ],
-    }
-
-
-@router.post("/ab-tests/{test_id}/start", summary="Start an A/B test")
-async def start_ab_test(
-    test_id: UUID,
-    use_case: StartABTestUseCase = Depends(get_start_abtest_uc),
-    get_abtest: GetABTestUseCase = Depends(get_get_abtest_uc),
-    user_id: UUID = Depends(require_user_id),
-    db: AsyncSession = Depends(get_db),
-) -> dict:
-    try:
-        existing_test = await get_abtest.execute(test_id=test_id)
-        from app.infrastructure.db.repositories.campaigns.campaign_repository import (
-            CampaignRepositoryImpl,
-        )
-
-        campaign_repo = CampaignRepositoryImpl(db)
-        campaign = await campaign_repo.find_by_id(existing_test.campaign_id)
-        if not campaign:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found"
-            ) from None
-        await require_org_role(campaign.organization_id, "member", user_id, db)
-        test = await use_case.execute(test_id=test_id)
-    except (EntityNotFoundError, ValidationError) as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND
-            if isinstance(e, EntityNotFoundError)
-            else status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=str(e),
-        ) from None
-    return {
-        "id": str(test.id),
-        "status": test.status,
-        "start_date": test.start_date.isoformat() if test.start_date else None,
-    }
-
-
-@router.post("/ab-tests/{test_id}/determine-winner", summary="Determine A/B test winner")
-async def determine_winner(
-    test_id: UUID,
-    use_case: DetermineWinnerUseCase = Depends(get_determine_winner_uc),
-    get_abtest: GetABTestUseCase = Depends(get_get_abtest_uc),
-    user_id: UUID = Depends(require_user_id),
-    db: AsyncSession = Depends(get_db),
-) -> dict:
-    try:
-        existing_test = await get_abtest.execute(test_id=test_id)
-        from app.infrastructure.db.repositories.campaigns.campaign_repository import (
-            CampaignRepositoryImpl,
-        )
-
-        campaign_repo = CampaignRepositoryImpl(db)
-        campaign = await campaign_repo.find_by_id(existing_test.campaign_id)
-        if not campaign:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found"
-            ) from None
-        await require_org_role(campaign.organization_id, "member", user_id, db)
-        test = await use_case.execute(test_id=test_id)
-    except EntityNotFoundError:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="AB test not found"
-        ) from None
-    return {
-        "id": str(test.id),
-        "status": test.status,
-        "winner_variant_id": str(test.winner_variant_id) if test.winner_variant_id else None,
-        "end_date": test.end_date.isoformat() if test.end_date else None,
-    }
-
-
-@router.post("/ab-tests/{test_id}/metrics", summary="Record variant metrics")
-async def record_variant_metrics(
-    test_id: UUID,
-    request: RecordMetricsRequest,
-    use_case: RecordVariantMetricsUseCase = Depends(get_record_metrics_uc),
-    get_abtest: GetABTestUseCase = Depends(get_get_abtest_uc),
-    user_id: UUID = Depends(require_user_id),
-    db: AsyncSession = Depends(get_db),
-) -> dict:
-    try:
-        existing_test = await get_abtest.execute(test_id=test_id)
-        from app.infrastructure.db.repositories.campaigns.campaign_repository import (
-            CampaignRepositoryImpl,
-        )
-
-        campaign_repo = CampaignRepositoryImpl(db)
-        campaign = await campaign_repo.find_by_id(existing_test.campaign_id)
-        if not campaign:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found"
-            ) from None
-        await require_org_role(campaign.organization_id, "member", user_id, db)
-        test = await use_case.execute(
-            test_id=test_id,
-            variant_name=request.variant_name,
-            impressions=request.impressions,
-            clicks=request.clicks,
-            conversions=request.conversions,
-            spend=request.spend,
-        )
-    except EntityNotFoundError:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Variant not found"
-        ) from None
-    return {"id": str(test.id), "status": "metrics_recorded"}
-
-
-# ── Pacing endpoints ──────────────────────────────────────────────────────────
-
 
 @router.get("/{campaign_id}/pacing", summary="Get campaign pacing analysis")
 async def get_campaign_pacing(
