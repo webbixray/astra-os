@@ -25,7 +25,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "lucide-react": "^0.400.0",
-    "tailwind-merge": "^2.3.0"
+    "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
     "@astra/config-eslint": "workspace:*",
