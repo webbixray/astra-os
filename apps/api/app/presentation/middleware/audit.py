@@ -31,10 +31,21 @@ EXCLUDED_PATHS = {
 }
 
 # Fields to redact from request/response bodies in audit logs
-_SENSITIVE_FIELDS = frozenset({
-    "password", "token", "access_token", "refresh_token", "secret",
-    "authorization", "api_key", "apikey", "credit_card", "ssn", "cvv",
-})
+_SENSITIVE_FIELDS = frozenset(
+    {
+        "password",
+        "token",
+        "access_token",
+        "refresh_token",
+        "secret",
+        "authorization",
+        "api_key",
+        "apikey",
+        "credit_card",
+        "ssn",
+        "cvv",
+    }
+)
 
 
 def _redact_sensitive(data):

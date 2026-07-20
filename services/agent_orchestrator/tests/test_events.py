@@ -4,6 +4,7 @@ import asyncio
 import uuid
 
 import pytest
+
 from astra_agent_orchestrator.events import Event, EventBus
 
 
@@ -201,8 +202,6 @@ class TestEventBus:
             received.append(event)
 
         await bus.subscribe("test.event", handler)
-        events = [
-            Event(event_type="test.event", source=f"src-{i}") for i in range(10)
-        ]
+        events = [Event(event_type="test.event", source=f"src-{i}") for i in range(10)]
         await asyncio.gather(*[bus.publish(e) for e in events])
         assert len(received) == 10

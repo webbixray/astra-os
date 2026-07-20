@@ -60,9 +60,7 @@ class TestNvidiaEmbeddingProvider:
         expected = [0.1, 0.2, 0.3]
         mock_response = MagicMock()
         mock_response.raise_for_status = MagicMock()
-        mock_response.json = MagicMock(return_value={
-            "data": [{"embedding": expected}]
-        })
+        mock_response.json = MagicMock(return_value={"data": [{"embedding": expected}]})
 
         mock_client = AsyncMock()
         mock_client.__aenter__.return_value.post = AsyncMock(return_value=mock_response)
@@ -113,9 +111,7 @@ class TestOpenAIEmbeddingProvider:
         expected = [0.4, 0.5, 0.6]
         mock_response = MagicMock()
         mock_response.raise_for_status = MagicMock()
-        mock_response.json = MagicMock(return_value={
-            "data": [{"embedding": expected}]
-        })
+        mock_response.json = MagicMock(return_value={"data": [{"embedding": expected}]})
 
         mock_client = AsyncMock()
         mock_client.__aenter__.return_value.post = AsyncMock(return_value=mock_response)
@@ -150,6 +146,7 @@ class TestOpenAIEmbeddingProvider:
 class TestGetEmbeddingProvider:
     def test_nvidia_first_if_configured(self):
         import app.config as cfg
+
         cfg.config.nvidia_nim_base_url = "https://nvidia.example.com"
         cfg.config.openai_api_key = ""
         provider = get_embedding_provider()
@@ -157,6 +154,7 @@ class TestGetEmbeddingProvider:
 
     def test_openai_if_no_nvidia(self):
         import app.config as cfg
+
         cfg.config.nvidia_nim_base_url = ""
         cfg.config.openai_api_key = "sk-xxx"
         provider = get_embedding_provider()
@@ -164,6 +162,7 @@ class TestGetEmbeddingProvider:
 
     def test_defaults_to_nvidia(self):
         import app.config as cfg
+
         cfg.config.nvidia_nim_base_url = ""
         cfg.config.openai_api_key = ""
         provider = get_embedding_provider()

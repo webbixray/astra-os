@@ -23,9 +23,11 @@ def _get_config_and_url(ctx: click.Context) -> tuple[dict, str]:
         config_path = ctx.obj.get("config_path")
         if config_path:
             from astra_cli.config import load_config
+
             config = load_config(config_path)
         else:
             from astra_cli.config import load_config
+
             config = load_config()
     api_url = ctx.obj.get("api_url", "https://api.astra-os.io")
     return config, api_url
@@ -138,6 +140,7 @@ def validate_schema(ctx: click.Context, schema_name: str, file, data: str):
     # Load data to validate
     if file:
         import yaml
+
         content = file.read()
         if file.name.endswith((".yaml", ".yml")):
             data_to_validate = yaml.safe_load(content)

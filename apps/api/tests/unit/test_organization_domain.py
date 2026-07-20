@@ -152,8 +152,10 @@ class TestOrgInvitation:
     def test_create_invitation_invalid_role(self):
         try:
             OrgInvitation.create(
-                organization_id=uuid4(), invited_by=uuid4(),
-                email="test@test.com", role="superadmin",
+                organization_id=uuid4(),
+                invited_by=uuid4(),
+                email="test@test.com",
+                role="superadmin",
             )
             assert False, "Expected ValidationError"
         except ValidationError:
@@ -162,8 +164,10 @@ class TestOrgInvitation:
     def test_create_invitation_cannot_invite_owner(self):
         try:
             OrgInvitation.create(
-                organization_id=uuid4(), invited_by=uuid4(),
-                email="test@test.com", role="owner",
+                organization_id=uuid4(),
+                invited_by=uuid4(),
+                email="test@test.com",
+                role="owner",
             )
             assert False, "Expected ValidationError"
         except ValidationError as e:
@@ -171,16 +175,20 @@ class TestOrgInvitation:
 
     def test_accept_invitation(self):
         inv = OrgInvitation.create(
-            organization_id=uuid4(), invited_by=uuid4(),
-            email="test@test.com", role="member",
+            organization_id=uuid4(),
+            invited_by=uuid4(),
+            email="test@test.com",
+            role="member",
         )
         inv.accept()
         assert inv.status == "accepted"
 
     def test_accept_non_pending_raises(self):
         inv = OrgInvitation.create(
-            organization_id=uuid4(), invited_by=uuid4(),
-            email="test@test.com", role="member",
+            organization_id=uuid4(),
+            invited_by=uuid4(),
+            email="test@test.com",
+            role="member",
         )
         inv.accept()
         try:
@@ -191,16 +199,20 @@ class TestOrgInvitation:
 
     def test_reject_invitation(self):
         inv = OrgInvitation.create(
-            organization_id=uuid4(), invited_by=uuid4(),
-            email="test@test.com", role="member",
+            organization_id=uuid4(),
+            invited_by=uuid4(),
+            email="test@test.com",
+            role="member",
         )
         inv.reject()
         assert inv.status == "rejected"
 
     def test_reject_non_pending_raises(self):
         inv = OrgInvitation.create(
-            organization_id=uuid4(), invited_by=uuid4(),
-            email="test@test.com", role="member",
+            organization_id=uuid4(),
+            invited_by=uuid4(),
+            email="test@test.com",
+            role="member",
         )
         inv.reject()
         try:
@@ -219,8 +231,10 @@ class TestFeatureFlag:
 
     def test_create_with_config(self):
         flag = FeatureFlag.create(
-            organization_id=uuid4(), feature_key="ai_content",
-            enabled=False, config={"model": "gpt-4"},
+            organization_id=uuid4(),
+            feature_key="ai_content",
+            enabled=False,
+            config={"model": "gpt-4"},
         )
         assert flag.enabled is False
         assert flag.config["model"] == "gpt-4"

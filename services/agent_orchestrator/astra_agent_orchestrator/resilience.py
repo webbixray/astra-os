@@ -12,8 +12,8 @@ from typing import Any
 class CircuitState(Enum):
     """Circuit breaker states."""
 
-    CLOSED = "closed"      # Normal operation, calls go through
-    OPEN = "open"          # Failing, calls rejected immediately
+    CLOSED = "closed"  # Normal operation, calls go through
+    OPEN = "open"  # Failing, calls rejected immediately
     HALF_OPEN = "half_open"  # Testing if service recovered
 
 
@@ -27,19 +27,17 @@ class CircuitOpenError(Exception):
     def __init__(self, name: str, retry_after: float):
         self.name = name
         self.retry_after = retry_after
-        super().__init__(
-            f"Circuit '{name}' is OPEN. Retry after {retry_after:.1f}s"
-        )
+        super().__init__(f"Circuit '{name}' is OPEN. Retry after {retry_after:.1f}s")
 
 
 @dataclass
 class CircuitBreakerConfig:
     """Configuration for circuit breaker behavior."""
 
-    failure_threshold: int = 5          # Failures before opening
-    success_threshold: int = 2          # Successes in HALF_OPEN before closing
-    timeout_seconds: float = 30.0       # Time in OPEN before HALF_OPEN
-    exclude_exceptions: tuple = ()      # Exception types that don't count as failures
+    failure_threshold: int = 5  # Failures before opening
+    success_threshold: int = 2  # Successes in HALF_OPEN before closing
+    timeout_seconds: float = 30.0  # Time in OPEN before HALF_OPEN
+    exclude_exceptions: tuple = ()  # Exception types that don't count as failures
 
 
 @dataclass
@@ -190,7 +188,7 @@ class CircuitBreaker:
                     "failure_threshold": self.config.failure_threshold,
                     "success_threshold": self.config.success_threshold,
                     "timeout_seconds": self.config.timeout_seconds,
-                }
+                },
             }
 
 
@@ -202,16 +200,12 @@ class CircuitBreakerRegistry:
         self._lock = Lock()
 
     def get_or_create(
-        self,
-        name: str,
-        config: CircuitBreakerConfig | None = None
+        self, name: str, config: CircuitBreakerConfig | None = None
     ) -> CircuitBreaker:
         """Get existing breaker or create new one."""
         with self._lock:
             if name not in self._breakers:
-                self._breakers[name] = CircuitBreaker(
-                    name, config or CircuitBreakerConfig()
-                )
+                self._breakers[name] = CircuitBreaker(name, config or CircuitBreakerConfig())
             return self._breakers[name]
 
     def get(self, name: str) -> CircuitBreaker | None:
@@ -261,6 +255,7 @@ def create_circuit_breaker(
 # Retry Policy
 # ============================================================
 
+
 @dataclass
 class RetryConfig:
     """Configuration for retry behavior."""
@@ -281,11 +276,11 @@ class RetryPolicy:
 
     def _calculate_delay(self, attempt: int) -> float:
         delay = min(
-            self.config.base_delay * (self.config.exponential_base ** attempt),
-            self.config.max_delay
+            self.config.base_delay * (self.config.exponential_base**attempt), self.config.max_delay
         )
         if self.config.jitter:
             import random
+
             delay = delay * (0.5 + random.random())
         return delay
 
@@ -306,6 +301,7 @@ class RetryPolicy:
 # ============================================================
 # Bulkhead Pattern
 # ============================================================
+
 
 @dataclass
 class BulkheadConfig:
@@ -340,11 +336,12 @@ class Bulkhead:
             async with self._semaphore:
                 try:
                     return await asyncio.wait_for(
-                        func(*args, **kwargs),
-                        timeout=self.config.timeout_seconds
+                        func(*args, **kwargs), timeout=self.config.timeout_seconds
                     )
-                except asyncio.TimeoutError:
-                    raise TimeoutError(f"Bulkhead execution timed out after {self.config.timeout_seconds}s")
+                except TimeoutError:
+                    raise TimeoutError(
+                        f"Bulkhead execution timed out after {self.config.timeout_seconds}s"
+                    )
         finally:
             async with self._lock:
                 self._queue_size -= 1

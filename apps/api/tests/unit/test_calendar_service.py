@@ -139,9 +139,13 @@ class TestCalendarService:
         from app.application.use_cases.calendar.calendar_service import CalendarEvent
 
         event = CalendarEvent(
-            id="123", type="campaign", title="Test",
-            start_date="2025-01-01", end_date="2025-01-31",
-            status="active", link="/campaigns/123",
+            id="123",
+            type="campaign",
+            title="Test",
+            start_date="2025-01-01",
+            end_date="2025-01-31",
+            status="active",
+            link="/campaigns/123",
         )
         d = event.to_dict()
         assert d["id"] == "123"

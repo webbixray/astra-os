@@ -87,7 +87,9 @@ class TestGetCampaignUseCase:
         campaign_id = uuid4()
         org_id = uuid4()
         campaign = Campaign.create(
-            organization_id=org_id, name="Found", created_by=uuid4(),
+            organization_id=org_id,
+            name="Found",
+            created_by=uuid4(),
         )
         campaign.id = campaign_id
         repo.find_by_id.return_value = campaign
@@ -150,7 +152,9 @@ class TestUpdateCampaignUseCase:
     async def test_update_fields(self, use_case, repo):
         campaign_id = uuid4()
         campaign = Campaign.create(
-            organization_id=uuid4(), name="Original", created_by=uuid4(),
+            organization_id=uuid4(),
+            name="Original",
+            created_by=uuid4(),
         )
         campaign.id = campaign_id
         repo.find_by_id.return_value = campaign
@@ -169,7 +173,9 @@ class TestUpdateCampaignUseCase:
     async def test_update_status_transition(self, use_case, repo):
         campaign_id = uuid4()
         campaign = Campaign.create(
-            organization_id=uuid4(), name="Status Test", created_by=uuid4(),
+            organization_id=uuid4(),
+            name="Status Test",
+            created_by=uuid4(),
         )
         campaign.id = campaign_id
         repo.find_by_id.return_value = campaign

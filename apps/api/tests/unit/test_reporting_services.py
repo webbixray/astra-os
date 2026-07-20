@@ -56,23 +56,43 @@ class TestReportingService:
         assert trends["peak"] == 0
 
     async def test_get_campaign_timeline(self, service, mock_db):
-        ins1 = MagicMock(ad_campaign_id=uuid4(), date="2025-01-01",
-                         impressions=100, clicks=5, spend=50.0, conversions=2, revenue=200.0)
-        ins2 = MagicMock(ad_campaign_id=ins1.ad_campaign_id, date="2025-01-02",
-                         impressions=200, clicks=10, spend=100.0, conversions=4, revenue=400.0)
+        ins1 = MagicMock(
+            ad_campaign_id=uuid4(),
+            date="2025-01-01",
+            impressions=100,
+            clicks=5,
+            spend=50.0,
+            conversions=2,
+            revenue=200.0,
+        )
+        ins2 = MagicMock(
+            ad_campaign_id=ins1.ad_campaign_id,
+            date="2025-01-02",
+            impressions=200,
+            clicks=10,
+            spend=100.0,
+            conversions=4,
+            revenue=400.0,
+        )
         result = MagicMock()
         result.scalars.return_value.all.return_value = [ins1, ins2]
         mock_db.execute.return_value = result
 
-        timeline = await service.get_campaign_timeline(uuid4(), [uuid4()], "2025-01-01", "2025-01-31")
+        timeline = await service.get_campaign_timeline(
+            uuid4(), [uuid4()], "2025-01-01", "2025-01-31"
+        )
 
         assert len(timeline) == 1
         assert len(timeline[0]["data"]) == 2
 
     async def test_get_platform_comparison(self, service, mock_db):
         row = MagicMock(
-            platform="google", impressions=10000, clicks=500,
-            spend=1000.0, conversions=50, revenue=5000.0,
+            platform="google",
+            impressions=10000,
+            clicks=500,
+            spend=1000.0,
+            conversions=50,
+            revenue=5000.0,
         )
         result = MagicMock()
         result.all.return_value = [row]
@@ -87,11 +107,14 @@ class TestReportingService:
 
     async def test_export_csv_campaigns(self, service, mock_db):
         c = MagicMock(
-            id=uuid4(), name="Test Campaign", status="active",
+            id=uuid4(),
+            name="Test Campaign",
+            status="active",
             budget_amount=1000.0,
             start_date=MagicMock(isoformat=lambda: "2025-01-01"),
             end_date=MagicMock(isoformat=lambda: "2025-02-01"),
-            channels=["social", "search"], objective="awareness",
+            channels=["social", "search"],
+            objective="awareness",
         )
         result = MagicMock()
         result.scalars.return_value.all.return_value = [c]
@@ -105,7 +128,10 @@ class TestReportingService:
 
     async def test_export_csv_content(self, service, mock_db):
         c = MagicMock(
-            id=uuid4(), title="Blog Post", content_type="blog", status="published",
+            id=uuid4(),
+            title="Blog Post",
+            content_type="blog",
+            status="published",
             version=1,
             created_at=MagicMock(isoformat=lambda: "2025-01-01T00:00:00"),
             scheduled_at=MagicMock(isoformat=lambda: "2025-01-15T00:00:00"),
@@ -121,9 +147,14 @@ class TestReportingService:
 
     async def test_export_csv_ads(self, service, mock_db):
         ins = MagicMock(
-            date="2025-01-01", platform="google",
-            ad_campaign_id=uuid4(), impressions=1000,
-            clicks=50, spend=100.0, conversions=5, revenue=500.0,
+            date="2025-01-01",
+            platform="google",
+            ad_campaign_id=uuid4(),
+            impressions=1000,
+            clicks=50,
+            spend=100.0,
+            conversions=5,
+            revenue=500.0,
         )
         result = MagicMock()
         result.scalars.return_value.all.return_value = [ins]
@@ -135,17 +166,22 @@ class TestReportingService:
         assert "1000" in csv_output
 
     async def test_export_csv_ad_accounts(self, service, mock_db):
-        with patch.dict("sys.modules", {
-            "app.infrastructure.db.models.advertising.advertising_models": MagicMock(
-                AdAccountModel=MagicMock(
-                    organization_id=uuid4,
+        with patch.dict(
+            "sys.modules",
+            {
+                "app.infrastructure.db.models.advertising.advertising_models": MagicMock(
+                    AdAccountModel=MagicMock(
+                        organization_id=uuid4,
+                    )
                 )
-            )
-        }):
+            },
+        ):
             pass
 
         a = MagicMock(
-            id=uuid4(), platform="google", account_name="My Account",
+            id=uuid4(),
+            platform="google",
+            account_name="My Account",
             status="connected",
             last_synced_at=MagicMock(isoformat=lambda: "2025-01-01T00:00:00"),
             organization_id=uuid4,
@@ -167,9 +203,13 @@ class TestEnhancedReportingService:
 
     async def test_create_template(self, service):
         template_repo = MagicMock()
-        template_repo.save = AsyncMock(return_value=ReportTemplate(
-            id=uuid4(), name="Weekly Report", report_type="campaigns",
-        ))
+        template_repo.save = AsyncMock(
+            return_value=ReportTemplate(
+                id=uuid4(),
+                name="Weekly Report",
+                report_type="campaigns",
+            )
+        )
         service.template_repo = template_repo
 
         result = await service.create_template(uuid4(), "Weekly Report", "campaigns")
@@ -190,9 +230,13 @@ class TestEnhancedReportingService:
     async def test_get_template(self, service):
         template_id = uuid4()
         template_repo = MagicMock()
-        template_repo.find_by_id = AsyncMock(return_value=ReportTemplate(
-            id=template_id, name="Template", report_type="ads",
-        ))
+        template_repo.find_by_id = AsyncMock(
+            return_value=ReportTemplate(
+                id=template_id,
+                name="Template",
+                report_type="ads",
+            )
+        )
         service.template_repo = template_repo
 
         result = await service.get_template(template_id)
@@ -262,15 +306,20 @@ class TestEnhancedReportingService:
 
         with (
             patch.object(service, "_fetch_report_data", AsyncMock(return_value={"total": 0})),
-            patch("app.application.use_cases.reports.enhanced_reporting_service.get_delivery_adapter") as mock_get_adapter,
+            patch(
+                "app.application.use_cases.reports.enhanced_reporting_service.get_delivery_adapter"
+            ) as mock_get_adapter,
         ):
             adapter = MagicMock()
             adapter.deliver = AsyncMock(return_value=True)
             mock_get_adapter.return_value = adapter
 
             log = await service.generate_and_deliver(
-                uuid4(), "overview", channel="email",
-                recipient="admin@test.com", format="csv",
+                uuid4(),
+                "overview",
+                channel="email",
+                recipient="admin@test.com",
+                format="csv",
             )
 
             assert log.status == "success"
@@ -278,14 +327,18 @@ class TestEnhancedReportingService:
     async def test_generate_and_deliver_failure(self, service, mock_db):
         with (
             patch.object(service, "_fetch_report_data", AsyncMock(return_value={"total": 0})),
-            patch("app.application.use_cases.reports.enhanced_reporting_service.get_delivery_adapter") as mock_get_adapter,
+            patch(
+                "app.application.use_cases.reports.enhanced_reporting_service.get_delivery_adapter"
+            ) as mock_get_adapter,
         ):
             adapter = MagicMock()
             adapter.deliver = AsyncMock(side_effect=Exception("SMTP error"))
             mock_get_adapter.return_value = adapter
 
             log = await service.generate_and_deliver(
-                uuid4(), "overview", channel="email",
+                uuid4(),
+                "overview",
+                channel="email",
                 recipient="admin@test.com",
             )
 
@@ -302,9 +355,13 @@ class TestEnhancedReportingService:
     async def test_get_delivery_logs(self, service):
         delivery_repo = MagicMock()
         log = MagicMock(
-            id=uuid4(), report_type="campaigns", format="csv",
-            channel="email", recipient="admin@test.com",
-            status="success", error_message=None,
+            id=uuid4(),
+            report_type="campaigns",
+            format="csv",
+            channel="email",
+            recipient="admin@test.com",
+            status="success",
+            error_message=None,
             generated_at=MagicMock(isoformat=lambda: "2025-01-01T00:00:00"),
         )
         delivery_repo.find_by_organization = AsyncMock(return_value=[log])

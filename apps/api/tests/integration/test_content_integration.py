@@ -50,7 +50,9 @@ class TestContentIntegration:
         return resp.json()
 
     async def _create_org_and_member(
-        self, integration_session_factory, user_id: UUID,
+        self,
+        integration_session_factory,
+        user_id: UUID,
     ) -> UUID:
         async with integration_session_factory() as session:
             org_repo = OrganizationRepositoryImpl(session)
@@ -60,7 +62,9 @@ class TestContentIntegration:
             org = await org_repo.save(org)
 
             member = TeamMember.create(
-                organization_id=org.id, user_id=user_id, role="owner",
+                organization_id=org.id,
+                user_id=user_id,
+                role="owner",
             )
             await member_repo.save(member)
             await session.commit()
@@ -175,7 +179,9 @@ class TestContentIntegration:
                 "content_type": "blog",
             },
         )
-        assert resp.status_code in (403, 404), f"expected forbidden/not-found, got {resp.status_code}"
+        assert resp.status_code in (403, 404), (
+            f"expected forbidden/not-found, got {resp.status_code}"
+        )
 
     async def test_get_nonexistent_content(self, test_client, integration_session_factory):
         auth_resp = await self._signup_user(test_client, "nonexistcontent@test.com")

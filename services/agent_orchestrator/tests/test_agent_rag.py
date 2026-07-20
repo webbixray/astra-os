@@ -16,6 +16,7 @@ from app.domain.services.knowledge.rag_pipeline import (
     RagPipeline,
     SearchResult,
 )
+
 from astra_agent_orchestrator.agent import (
     Agent,
     AgentConfig,
@@ -27,6 +28,7 @@ from astra_agent_orchestrator.agent import (
 # ---------------------------------------------------------------------------
 # Concrete agent for testing
 # ---------------------------------------------------------------------------
+
 
 class DummyAgent(Agent):
     """Minimal concrete agent for testing RAG integration."""
@@ -46,6 +48,7 @@ class DummyAgent(Agent):
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def agent():
     config = AgentConfig(
@@ -61,16 +64,21 @@ def agent():
 def mock_pipeline():
     pipeline = MagicMock(spec=RagPipeline)
     pipeline.search = AsyncMock(return_value=[])
-    pipeline.assemble_context = AsyncMock(return_value=RAGContext(
-        query="test", results=[], context_text="No context",
-        source_node_ids=[],
-    ))
+    pipeline.assemble_context = AsyncMock(
+        return_value=RAGContext(
+            query="test",
+            results=[],
+            context_text="No context",
+            source_node_ids=[],
+        )
+    )
     return pipeline
 
 
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
+
 
 class TestAgentRAGIntegration:
     def test_no_pipeline_by_default(self, agent):
@@ -113,13 +121,19 @@ class TestAgentRAGIntegration:
     @pytest.mark.asyncio
     async def test_search_knowledge_with_pipeline(self, agent, mock_pipeline):
         """search_knowledge should delegate to pipeline and format results."""
-        mock_pipeline.search = AsyncMock(return_value=[
-            SearchResult(
-                node_id=str(uuid4()), node_type="campaign",
-                name="Test Node", description="A test node description",
-                score=0.85, source="vector", properties={},
-            ),
-        ])
+        mock_pipeline.search = AsyncMock(
+            return_value=[
+                SearchResult(
+                    node_id=str(uuid4()),
+                    node_type="campaign",
+                    name="Test Node",
+                    description="A test node description",
+                    score=0.85,
+                    source="vector",
+                    properties={},
+                ),
+            ]
+        )
         agent.set_rag_pipeline(mock_pipeline)
         results = await agent.search_knowledge("test query", uuid4(), limit=5)
         assert len(results) == 1
@@ -142,6 +156,7 @@ class TestAgentRAGIntegration:
         await agent.search_knowledge("test", uuid4(), limit=3)
         mock_pipeline.search.assert_called_once_with(
             query="test",
-            organization_id=mock_pipeline.search.call_args[1].get("organization_id") or mock_pipeline.search.call_args[0][1],
+            organization_id=mock_pipeline.search.call_args[1].get("organization_id")
+            or mock_pipeline.search.call_args[0][1],
             limit=3,
         )

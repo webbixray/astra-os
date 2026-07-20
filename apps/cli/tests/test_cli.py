@@ -69,6 +69,7 @@ class TestConfig:
     def test_yaml_serialization(self):
         config = get_default_config()
         import yaml
+
         yaml_str = yaml.dump(config)
         loaded = yaml.safe_load(yaml_str)
         assert loaded["api"]["url"] == "https://api.astra-os.io"

@@ -53,7 +53,10 @@ class TestPresetAgents:
 
 class TestInit:
     def test_init_with_defaults(self):
-        with patch("app.application.use_cases.agents.orchestrator.AgentOrchestrator._init_preset_agents", MagicMock()):
+        with patch(
+            "app.application.use_cases.agents.orchestrator.AgentOrchestrator._init_preset_agents",
+            MagicMock(),
+        ):
             with patch("app.application.use_cases.agents.orchestrator.ToolRegistry") as MockToolReg:
                 with patch("app.application.use_cases.agents.orchestrator.MessageBus") as MockBus:
                     MockToolReg.return_value = MagicMock()
@@ -138,10 +141,12 @@ class TestProcessUserRequest:
         ceo.set_status = MagicMock()
         orchestrator.agents["ASTRA-CEO"] = ceo
         orchestrator.get_ceo = MagicMock(return_value=ceo)
-        orchestrator._route_task = AsyncMock(return_value={
-            "response": "Done",
-            "agents_involved": ["Campaign Director"],
-        })
+        orchestrator._route_task = AsyncMock(
+            return_value={
+                "response": "Done",
+                "agents_involved": ["Campaign Director"],
+            }
+        )
 
         result = await orchestrator.process_user_request(uuid4(), uuid4(), "Create campaign")
 
@@ -186,14 +191,18 @@ class TestRouteTask:
         director.id = uuid4()
         director.set_status = MagicMock()
         orchestrator.get_director_for_task = AsyncMock(return_value=director)
-        orchestrator._decompose_task = MagicMock(return_value=[
-            make_task(title="Subtask 1"),
-            make_task(title="Subtask 2"),
-        ])
-        orchestrator._execute_subtask = AsyncMock(side_effect=[
-            {"tool": "tool1", "result": "done1"},
-            {"tool": "tool2", "result": "done2"},
-        ])
+        orchestrator._decompose_task = MagicMock(
+            return_value=[
+                make_task(title="Subtask 1"),
+                make_task(title="Subtask 2"),
+            ]
+        )
+        orchestrator._execute_subtask = AsyncMock(
+            side_effect=[
+                {"tool": "tool1", "result": "done1"},
+                {"tool": "tool2", "result": "done2"},
+            ]
+        )
 
         result = await orchestrator._route_task(task=make_task(), organization_id=uuid4())
 
@@ -223,7 +232,9 @@ class TestDecomposeTask:
         assert "Analyze campaign performance" in titles
 
     def test_campaign_director_create_and_optimize(self, orchestrator):
-        task = make_task(title="Create and optimize", description="Create new campaign and improve existing")
+        task = make_task(
+            title="Create and optimize", description="Create new campaign and improve existing"
+        )
         task.assigned_by = uuid4()
 
         subtasks = orchestrator._decompose_task(task, "Campaign Director")
@@ -282,7 +293,9 @@ class TestExecuteSubtask:
         tool.execute = AsyncMock(return_value={"response": "Campaign created"})
         orchestrator.tool_registry.list_by_category = MagicMock(return_value=[tool])
 
-        subtask = make_task(title="Create campaign suggestions", description="Create a new campaign")
+        subtask = make_task(
+            title="Create campaign suggestions", description="Create a new campaign"
+        )
         result = await orchestrator._execute_subtask(subtask, MagicMock(), uuid4())
 
         assert result["tool"] == "create_campaign"
@@ -295,7 +308,9 @@ class TestExecuteSubtask:
         tool.execute = AsyncMock(side_effect=ValueError("API error"))
         orchestrator.tool_registry.list_by_category = MagicMock(return_value=[tool])
 
-        subtask = make_task(title="Create campaign suggestions", description="Create a new campaign")
+        subtask = make_task(
+            title="Create campaign suggestions", description="Create a new campaign"
+        )
         result = await orchestrator._execute_subtask(subtask, MagicMock(), uuid4())
 
         assert result["tool"] == "create_campaign"

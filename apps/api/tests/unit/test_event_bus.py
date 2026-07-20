@@ -40,14 +40,18 @@ class TestDomainEvent:
 
     def test_create_with_correlation_id(self) -> None:
         event = DomainEvent.create(
-            DomainEventType.WORKFLOW_STARTED, "wf-1", "workflow",
+            DomainEventType.WORKFLOW_STARTED,
+            "wf-1",
+            "workflow",
             correlation_id="corr-abc",
         )
         assert event.correlation_id == "corr-abc"
 
     def test_create_with_priority(self) -> None:
         event = DomainEvent.create(
-            DomainEventType.BILLING_PAYMENT_FAILED, "bill-1", "billing",
+            DomainEventType.BILLING_PAYMENT_FAILED,
+            "bill-1",
+            "billing",
             priority=EventPriority.CRITICAL,
         )
         assert event.priority == EventPriority.CRITICAL
@@ -253,11 +257,10 @@ class TestDomainEventSerialization:
         assert restored.timestamp == event.timestamp
 
     def test_to_json_includes_source_instance(self) -> None:
-        event = DomainEvent.create(
-            DomainEventType.CAMPAIGN_CREATED, "c-1", "campaign"
-        )
+        event = DomainEvent.create(DomainEventType.CAMPAIGN_CREATED, "c-1", "campaign")
         json_str = event.to_json()
         import json
+
         payload = json.loads(json_str)
         assert "source_instance" in payload
 

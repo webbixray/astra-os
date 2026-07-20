@@ -1,7 +1,7 @@
 """Telegram Bot Configuration for Astra OS"""
 
-from pydantic_settings import BaseSettings
 from pydantic import Field
+from pydantic_settings import BaseSettings
 
 
 class TelegramConfig(BaseSettings):

@@ -21,7 +21,9 @@ class ReportScheduleModel(Base):
     frequency: Mapped[str] = mapped_column(String(20), nullable=False)
     recipients: Mapped[list[str]] = mapped_column(ARRAY(String), default=list, nullable=False)
     config: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
-    next_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
+    next_run_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, index=True
+    )
     last_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False, index=True)
     created_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)

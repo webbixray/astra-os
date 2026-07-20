@@ -46,11 +46,14 @@ class TestGetClient:
 
             client = TemporalWorkflowClient()
             import builtins
+
             original_import = builtins.__import__
+
             def fake_import(name, *args, **kwargs):
                 if name == "temporalio":
                     raise ImportError("No module temporalio")
                 return original_import(name, *args, **kwargs)
+
             with patch("builtins.__import__", side_effect=fake_import):
                 result = await client.get_client()
 
@@ -67,7 +70,9 @@ class TestGetClient:
 
             mock_module = MagicMock()
             mock_module.Client = mock_conn
-            with patch.dict("sys.modules", {"temporalio": mock_module, "temporalio.client": mock_module}):
+            with patch.dict(
+                "sys.modules", {"temporalio": mock_module, "temporalio.client": mock_module}
+            ):
                 result = await client.get_client()
 
                 assert result is not None

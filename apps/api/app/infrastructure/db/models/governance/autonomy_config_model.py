@@ -40,7 +40,9 @@ class AutonomyConfigModel(Base):
 
         return AutonomyConfig(
             id=self.id if isinstance(self.id, str) else str(self.id),
-            organization_id=self.organization_id if isinstance(self.organization_id, str) else str(self.organization_id),
+            organization_id=self.organization_id
+            if isinstance(self.organization_id, str)
+            else str(self.organization_id),
             default_level=AutonomyLevel(self.default_level),
             agent_levels=agent_levels,
             action_overrides=action_overrides,

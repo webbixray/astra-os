@@ -8,17 +8,16 @@ Tests the complete M2 Campaign Execution flow:
 """
 
 import asyncio
-from datetime import date
-from uuid import UUID, uuid4
-from datetime import timedelta
+from datetime import date, timedelta
+from uuid import uuid4
 
 from app.domain.entities.advertising.ad_creative import (
     CreativeStatus,
     CreativeType,
 )
+from app.domain.events.event_bus import DomainEventType, EventBus
 from apps.api.app.domain.entities.campaigns.campaign import Campaign
 from apps.api.app.domain.entities.campaigns.campaign_budget import CampaignBudget
-from app.domain.events.event_bus import DomainEventType, EventBus
 from apps.api.app.domain.services.campaigns.budget_pacing import (
     BudgetPacingService,
     PacingStatus,
@@ -323,8 +322,12 @@ class TestPacingIntegration:
         )
 
         rec_even = service.analyze(campaign, budget, strategy=PacingStrategy.EVEN, today=start)
-        rec_front = service.analyze(campaign, budget, strategy=PacingStrategy.FRONT_LOADED, today=start)
-        rec_back = service.analyze(campaign, budget, strategy=PacingStrategy.BACK_LOADED, today=start)
+        rec_front = service.analyze(
+            campaign, budget, strategy=PacingStrategy.FRONT_LOADED, today=start
+        )
+        rec_back = service.analyze(
+            campaign, budget, strategy=PacingStrategy.BACK_LOADED, today=start
+        )
 
         # Front-loaded should have higher daily target than even on day 1
         assert rec_front.daily_target > rec_even.daily_target

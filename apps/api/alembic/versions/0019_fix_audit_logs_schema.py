@@ -66,17 +66,11 @@ def upgrade() -> None:
 
     bind = op.get_bind()
     if "actor_id" in columns:
-        bind.execute(
-            text("UPDATE audit_logs SET user_id = actor_id WHERE actor_id IS NOT NULL")
-        )
+        bind.execute(text("UPDATE audit_logs SET user_id = actor_id WHERE actor_id IS NOT NULL"))
     if "metadata" in columns:
-        bind.execute(
-            text("UPDATE audit_logs SET details = metadata")
-        )
+        bind.execute(text("UPDATE audit_logs SET details = metadata"))
     if "ip_address" not in columns:
-        bind.execute(
-            text("UPDATE audit_logs SET ip_address = '' WHERE ip_address IS NULL")
-        )
+        bind.execute(text("UPDATE audit_logs SET ip_address = '' WHERE ip_address IS NULL"))
 
     if "actor_id" in columns:
         op.drop_column("audit_logs", "actor_id")
@@ -85,13 +79,15 @@ def upgrade() -> None:
         op.drop_column("audit_logs", "metadata")
 
     op.alter_column(
-        "audit_logs", "action",
+        "audit_logs",
+        "action",
         type_=sa.String(50),
         existing_type=sa.String(100),
         postgresql_using="action::varchar(50)",
     )
     op.alter_column(
-        "audit_logs", "resource_type",
+        "audit_logs",
+        "resource_type",
         type_=sa.String(50),
         existing_type=sa.String(100),
         postgresql_using="resource_type::varchar(50)",
@@ -99,14 +95,16 @@ def upgrade() -> None:
 
     if "details" not in columns:
         op.alter_column(
-            "audit_logs", "details",
+            "audit_logs",
+            "details",
             nullable=False,
             server_default="{}",
             existing_type=JSONB,
         )
 
     op.alter_column(
-        "audit_logs", "ip_address",
+        "audit_logs",
+        "ip_address",
         nullable=False,
         server_default="",
         existing_type=sa.String(45),
@@ -124,9 +122,7 @@ def downgrade() -> None:
             sa.Column("actor_id", UUID(as_uuid=True), nullable=True, index=True),
         )
         bind = op.get_bind()
-        bind.execute(
-            text("UPDATE audit_logs SET actor_id = user_id WHERE user_id IS NOT NULL")
-        )
+        bind.execute(text("UPDATE audit_logs SET actor_id = user_id WHERE user_id IS NOT NULL"))
 
     if "details" in columns:
         op.add_column(
@@ -134,9 +130,7 @@ def downgrade() -> None:
             sa.Column("metadata", JSONB, server_default="{}", nullable=False),
         )
         bind = op.get_bind()
-        bind.execute(
-            text("UPDATE audit_logs SET metadata = details")
-        )
+        bind.execute(text("UPDATE audit_logs SET metadata = details"))
 
     if "user_id" in columns:
         op.drop_column("audit_logs", "user_id")
@@ -146,13 +140,15 @@ def downgrade() -> None:
         op.drop_column("audit_logs", "ip_address")
 
     op.alter_column(
-        "audit_logs", "action",
+        "audit_logs",
+        "action",
         type_=sa.String(100),
         existing_type=sa.String(50),
         postgresql_using="action::varchar(100)",
     )
     op.alter_column(
-        "audit_logs", "resource_type",
+        "audit_logs",
+        "resource_type",
         type_=sa.String(100),
         existing_type=sa.String(50),
         postgresql_using="resource_type::varchar(100)",

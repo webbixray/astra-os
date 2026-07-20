@@ -127,7 +127,9 @@ class MemoryManager:
     async def _store_redis(self, memory: MemoryEntry) -> None:
         key = f"memory:{memory.tenant_id}:{memory.agent_id}:{memory.memory_type}:{memory.key}"
         data = {
-            "value": json.dumps(memory.value) if not isinstance(memory.value, str) else memory.value,
+            "value": json.dumps(memory.value)
+            if not isinstance(memory.value, str)
+            else memory.value,
             "embedding": json.dumps(memory.embedding) if memory.embedding else None,
             "importance": str(memory.importance),
             "tags": json.dumps(memory.tags),
@@ -217,7 +219,9 @@ class MemoryManager:
             created_at=datetime.fromisoformat(data.get(b"created_at", b"").decode()),
             updated_at=datetime.fromisoformat(data.get(b"updated_at", b"").decode()),
             access_count=int(data.get(b"access_count", b"0")),
-            expires_at=datetime.fromisoformat(data.get(b"expires_at", b"").decode()) if data.get(b"expires_at") else None,
+            expires_at=datetime.fromisoformat(data.get(b"expires_at", b"").decode())
+            if data.get(b"expires_at")
+            else None,
         )
 
     async def _retrieve_pg_by_key(
@@ -234,7 +238,10 @@ class MemoryManager:
                 WHERE tenant_id = $1 AND agent_id = $2 AND memory_type = $3 AND key = $4
                 AND (expires_at IS NULL OR expires_at > NOW())
                 """,
-                tenant_id, agent_id, memory_type, key,
+                tenant_id,
+                agent_id,
+                memory_type,
+                key,
             )
             if row:
                 return self._row_to_memory(row)
@@ -363,7 +370,10 @@ class MemoryManager:
                         DELETE FROM agent_memories
                         WHERE tenant_id = $1 AND agent_id = $2 AND memory_type = $3 AND key = $4
                         """,
-                        tenant_id, agent_id, memory_type, key,
+                        tenant_id,
+                        agent_id,
+                        memory_type,
+                        key,
                     )
                     count += int(result.split()[-1]) if result.startswith("DELETE") else 0
 
@@ -405,7 +415,9 @@ class MemoryManager:
 
         return consolidated
 
-    async def get_stats(self, agent_id: UUID | None = None, tenant_id: UUID | None = None) -> dict[str, Any]:
+    async def get_stats(
+        self, agent_id: UUID | None = None, tenant_id: UUID | None = None
+    ) -> dict[str, Any]:
         """Get memory statistics."""
         stats = {"working": 0, "episodic": 0, "semantic": 0, "total_size_mb": 0}
 

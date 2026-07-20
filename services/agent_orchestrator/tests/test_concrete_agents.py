@@ -4,6 +4,7 @@ import json
 import uuid
 
 import pytest
+
 from astra_agent_orchestrator.agent import (
     AgentRegistry,
     AgentType,
@@ -42,40 +43,48 @@ class TestCEOAgent:
 
     def test_ceo_prepare_input_dict(self) -> None:
         agent = CEOAgent(tenant_id=uuid.uuid4())
-        result = agent.prepare_input({
-            "objective": "Increase Q4 revenue by 20%",
-            "context": {"budget": 50000},
-        })
+        result = agent.prepare_input(
+            {
+                "objective": "Increase Q4 revenue by 20%",
+                "context": {"budget": 50000},
+            }
+        )
         assert "Increase Q4 revenue" in result
         assert "50000" in result
 
     def test_ceo_process_output_final_answer(self) -> None:
         agent = CEOAgent(tenant_id=uuid.uuid4())
-        output = json.dumps({
-            "thought": "I need to decompose this goal",
-            "action": None,
-            "action_input": None,
-            "final_answer": "Campaign plan ready",
-        })
+        output = json.dumps(
+            {
+                "thought": "I need to decompose this goal",
+                "action": None,
+                "action_input": None,
+                "final_answer": "Campaign plan ready",
+            }
+        )
         parsed = agent.process_output(output)
         assert parsed["final_answer"] == "Campaign plan ready"
         assert parsed["action"] is None
 
     def test_ceo_process_output_with_decomposition(self) -> None:
         agent = CEOAgent(tenant_id=uuid.uuid4())
-        output = json.dumps({
-            "thought": "Decomposing into director tasks",
-            "action": None,
-            "action_input": None,
-            "final_answer": json.dumps({
-                "decomposition": {
-                    "objective_summary": "Q4 campaign",
-                    "tasks": [
-                        {"director": "MARKETING_DIRECTOR", "task": "Plan content calendar"}
-                    ],
-                }
-            }),
-        })
+        output = json.dumps(
+            {
+                "thought": "Decomposing into director tasks",
+                "action": None,
+                "action_input": None,
+                "final_answer": json.dumps(
+                    {
+                        "decomposition": {
+                            "objective_summary": "Q4 campaign",
+                            "tasks": [
+                                {"director": "MARKETING_DIRECTOR", "task": "Plan content calendar"}
+                            ],
+                        }
+                    }
+                ),
+            }
+        )
         parsed = agent.process_output(output)
         assert "decomposition" in parsed
 
@@ -114,9 +123,7 @@ class TestDirectorAgent:
         assert agent.config.autonomy_level == 1
 
     def test_director_subordinates(self) -> None:
-        agent = DirectorAgent(
-            agent_type=AgentType.MARKETING_DIRECTOR, tenant_id=uuid.uuid4()
-        )
+        agent = DirectorAgent(agent_type=AgentType.MARKETING_DIRECTOR, tenant_id=uuid.uuid4())
         subs = agent.subordinates
         assert AgentType.CONTENT_SPECIALIST in subs
         assert AgentType.SEO_SPECIALIST in subs
@@ -131,13 +138,13 @@ class TestDirectorAgent:
             assert len(config["subordinates"]) > 0
 
     def test_director_prepare_input(self) -> None:
-        agent = DirectorAgent(
-            agent_type=AgentType.MARKETING_DIRECTOR, tenant_id=uuid.uuid4()
+        agent = DirectorAgent(agent_type=AgentType.MARKETING_DIRECTOR, tenant_id=uuid.uuid4())
+        result = agent.prepare_input(
+            {
+                "task": "Create Q4 content strategy",
+                "requirements": ["blog posts", "social media"],
+            }
         )
-        result = agent.prepare_input({
-            "task": "Create Q4 content strategy",
-            "requirements": ["blog posts", "social media"],
-        })
         assert "Q4 content strategy" in result
         assert "CONTENT_SPECIALIST" in result
 
@@ -181,20 +188,18 @@ class TestSpecialistAgent:
             assert len(config["capabilities"]) > 0
 
     def test_specialist_prepare_input(self) -> None:
-        agent = SpecialistAgent(
-            agent_type=AgentType.CONTENT_SPECIALIST, tenant_id=uuid.uuid4()
+        agent = SpecialistAgent(agent_type=AgentType.CONTENT_SPECIALIST, tenant_id=uuid.uuid4())
+        result = agent.prepare_input(
+            {
+                "task": "Write a blog post about AI marketing",
+                "requirements": ["1500 words", "SEO optimized"],
+            }
         )
-        result = agent.prepare_input({
-            "task": "Write a blog post about AI marketing",
-            "requirements": ["1500 words", "SEO optimized"],
-        })
         assert "AI marketing" in result
         assert "1500 words" in result
 
     def test_specialist_prepare_input_string(self) -> None:
-        agent = SpecialistAgent(
-            agent_type=AgentType.SEO_SPECIALIST, tenant_id=uuid.uuid4()
-        )
+        agent = SpecialistAgent(agent_type=AgentType.SEO_SPECIALIST, tenant_id=uuid.uuid4())
         result = agent.prepare_input("Optimize the landing page")
         assert "Optimize the landing page" in result
 

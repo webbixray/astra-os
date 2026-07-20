@@ -53,7 +53,9 @@ def save_config(config: dict[str, Any], config_path: Path | None = None) -> None
         yaml.dump(config, f, default_flow_style=False, sort_keys=False)
 
 
-def get_config_value(key: str, config: dict[str, Any] | None = None, config_path: Path | None = None) -> Any:
+def get_config_value(
+    key: str, config: dict[str, Any] | None = None, config_path: Path | None = None
+) -> Any:
     """Get a configuration value by dot-notation key (e.g., 'api.url')"""
     if config is None:
         config = load_config(config_path)
@@ -67,7 +69,9 @@ def get_config_value(key: str, config: dict[str, Any] | None = None, config_path
     return value
 
 
-def set_config_value(key: str, value: Any, config: dict[str, Any] | None = None, config_path: Path | None = None) -> dict[str, Any]:
+def set_config_value(
+    key: str, value: Any, config: dict[str, Any] | None = None, config_path: Path | None = None
+) -> dict[str, Any]:
     """Set a configuration value by dot-notation key"""
     if config is None:
         config = load_config(config_path)

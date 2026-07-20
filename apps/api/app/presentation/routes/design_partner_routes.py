@@ -27,6 +27,7 @@ router = APIRouter(prefix="/design-partners", tags=["design-partners"])
 
 # --- Request/Response Models ---
 
+
 class CreatePartnerRequest(BaseModel):
     organization_id: UUID
     tier: DesignPartnerTier = DesignPartnerTier.DESIGN_PARTNER
@@ -108,11 +109,13 @@ class TicketUpdateRequest(BaseModel):
 
 # --- Dependencies ---
 
+
 async def get_partner_service(db: AsyncSession = Depends(get_db)) -> DesignPartnerService:
     from app.infrastructure.db.repositories.design_partner_repository import (
         DesignPartnerFeedbackRepositoryImpl,
         DesignPartnerRepositoryImpl,
     )
+
     repo = DesignPartnerRepositoryImpl(db)
     feedback_repo = DesignPartnerFeedbackRepositoryImpl(db)
     return DesignPartnerService(repo, feedback_repo)
@@ -125,6 +128,7 @@ def _require_admin(user_id: UUID, db: AsyncSession = Depends(get_db)):
 
 
 # --- Partner Routes ---
+
 
 @router.post(
     "",
@@ -336,6 +340,7 @@ async def get_partner_stats(
 
 # --- Feedback Routes ---
 
+
 @router.post(
     "/{partner_id}/feedback",
     response_model=dict,
@@ -405,7 +410,9 @@ async def update_feedback(
     # For now, we'll use the triage/resolve methods
     if "status" in updates:
         if updates["status"] == "resolved":
-            feedback = await service.resolve_feedback(feedback_id, updates.get("resolution_notes", ""))
+            feedback = await service.resolve_feedback(
+                feedback_id, updates.get("resolution_notes", "")
+            )
         elif updates["status"] == "triaged":
             feedback = await service.triage_feedback(feedback_id, user_id)
         else:
@@ -416,6 +423,7 @@ async def update_feedback(
 
 
 # --- Support Ticket Routes ---
+
 
 @router.post(
     "/{partner_id}/tickets",
@@ -456,6 +464,7 @@ async def list_tickets(
 
 # --- Admin Routes ---
 
+
 @router.get(
     "/admin/overview",
     response_model=dict,
@@ -481,5 +490,7 @@ async def admin_list_all_feedback(
     service: DesignPartnerService = Depends(get_partner_service),
     user_id: UUID = Depends(_require_admin),
 ) -> list[dict]:
-    feedback = await service.list_all_feedback(status=status, type=type, priority=priority, limit=limit)
+    feedback = await service.list_all_feedback(
+        status=status, type=type, priority=priority, limit=limit
+    )
     return [f.to_dict() for f in feedback]

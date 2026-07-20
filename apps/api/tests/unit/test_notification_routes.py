@@ -39,9 +39,7 @@ def app() -> FastAPI:
 
 @pytest.fixture
 async def test_client(app: FastAPI) -> AsyncClient:
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as client:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         yield client
 
 
@@ -191,9 +189,7 @@ class TestNotificationHubRoutes:
         assert response.json()["data"]["id"] == str(notification_id)
 
     @pytest.mark.asyncio
-    async def test_archive_notification(
-        self, app: FastAPI, test_client: AsyncClient
-    ):
+    async def test_archive_notification(self, app: FastAPI, test_client: AsyncClient):
         from app.presentation.routes.notifications.notification_hub_routes import (
             get_service,
         )
@@ -219,9 +215,7 @@ class TestNotificationHubRoutes:
         assert response.json() == {"success": True, "data": {"status": "ok"}}
 
     @pytest.mark.asyncio
-    async def test_search_notifications(
-        self, app: FastAPI, test_client: AsyncClient
-    ):
+    async def test_search_notifications(self, app: FastAPI, test_client: AsyncClient):
         from app.presentation.routes.notifications.notification_hub_routes import (
             get_service,
         )

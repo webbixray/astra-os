@@ -36,11 +36,11 @@ class DecisionType(str, Enum):
 
 
 class ComparisonResult(str, Enum):
-    AGREED = "agreed"                 # Agent and human made same decision
-    AGENT_BETTER = "agent_better"     # Agent's decision outperformed human
-    HUMAN_BETTER = "human_better"     # Human's decision outperformed agent
-    DIFFERENT = "different"           # Different decisions, outcome TBD
-    CONFLICT = "conflict"             # Direct conflict, needs review
+    AGREED = "agreed"  # Agent and human made same decision
+    AGENT_BETTER = "agent_better"  # Agent's decision outperformed human
+    HUMAN_BETTER = "human_better"  # Human's decision outperformed agent
+    DIFFERENT = "different"  # Different decisions, outcome TBD
+    CONFLICT = "conflict"  # Direct conflict, needs review
 
 
 class ShadowEventType(str, Enum):
@@ -116,7 +116,9 @@ class ShadowDecision:
             "comparison_notes": self.comparison_notes,
             "compared_at": self.compared_at.isoformat() if self.compared_at else None,
             "outcome": self.outcome,
-            "outcome_recorded_at": self.outcome_recorded_at.isoformat() if self.outcome_recorded_at else None,
+            "outcome_recorded_at": self.outcome_recorded_at.isoformat()
+            if self.outcome_recorded_at
+            else None,
             "lift_vs_baseline": self.lift_vs_baseline,
             "tags": self.tags,
             "created_at": self.created_at.isoformat(),
@@ -299,12 +301,14 @@ class LiftMeasurement:
     # Metrics
     metric_name: str = ""  # e.g., "roas", "ctr", "cpa", "conversion_rate"
     baseline_value: float = 0.0  # Human/control group performance
-    agent_value: float = 0.0     # Agent performance
+    agent_value: float = 0.0  # Agent performance
     lift_percentage: float = 0.0  # (agent - baseline) / baseline * 100
 
     def __post_init__(self) -> None:
         if self.baseline_value != 0:
-            self.lift_percentage = ((self.agent_value - self.baseline_value) / self.baseline_value) * 100
+            self.lift_percentage = (
+                (self.agent_value - self.baseline_value) / self.baseline_value
+            ) * 100
         else:
             self.lift_percentage = 0.0
 
@@ -336,7 +340,9 @@ class LiftMeasurement:
             "lift_percentage": self.lift_percentage,
             "sample_size": self.sample_size,
             "p_value": self.p_value,
-            "confidence_interval": list(self.confidence_interval) if self.confidence_interval else None,
+            "confidence_interval": list(self.confidence_interval)
+            if self.confidence_interval
+            else None,
             "is_significant": self.is_significant,
             "decision_types": [d.value for d in self.decision_types],
             "campaigns": [str(c) for c in self.campaigns],

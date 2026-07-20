@@ -53,7 +53,10 @@ class TestDashboardIntegration:
         return resp.json()
 
     async def _create_org_with_owner(
-        self, integration_session_factory, user_id: UUID, name: str = "Dash Org",
+        self,
+        integration_session_factory,
+        user_id: UUID,
+        name: str = "Dash Org",
         slug: str = "dash-org",
     ) -> UUID:
         async with integration_session_factory() as session:
@@ -62,7 +65,9 @@ class TestDashboardIntegration:
             org = Organization.create(name=name, slug=slug)
             org = await org_repo.save(org)
             member = TeamMember.create(
-                organization_id=org.id, user_id=user_id, role="owner",
+                organization_id=org.id,
+                user_id=user_id,
+                role="owner",
             )
             await member_repo.save(member)
             await session.commit()
@@ -137,28 +142,28 @@ class TestDashboardIntegration:
         assert resp.json()["name"] == "Get Me"
 
     async def test_delete_dashboard(self, test_client, integration_session_factory):
-            auth = await self._signup(test_client, "deldash@test.com")
-            user_id = UUID(auth["user"]["id"])
-            org_id = await self._create_org_with_owner(integration_session_factory, user_id)
-            test_client.headers["Authorization"] = f"Bearer {auth['access_token']}"
+        auth = await self._signup(test_client, "deldash@test.com")
+        user_id = UUID(auth["user"]["id"])
+        org_id = await self._create_org_with_owner(integration_session_factory, user_id)
+        test_client.headers["Authorization"] = f"Bearer {auth['access_token']}"
 
-            resp = await test_client.post(
-                "/api/v1/dashboards",
-                json={"organization_id": str(org_id), "name": "Delete Me"},
+        resp = await test_client.post(
+            "/api/v1/dashboards",
+            json={"organization_id": str(org_id), "name": "Delete Me"},
+        )
+        dash_id = resp.json()["id"]
+
+        resp = await test_client.delete(
+            f"/api/v1/dashboards/{dash_id}",
+            params={"organization_id": str(org_id)},
+        )
+        assert resp.status_code == 204
+
+        async with integration_session_factory() as session:
+            result = await session.execute(
+                select(DashboardModel).where(DashboardModel.id == UUID(dash_id)),
             )
-            dash_id = resp.json()["id"]
-
-            resp = await test_client.delete(
-                f"/api/v1/dashboards/{dash_id}",
-                params={"organization_id": str(org_id)},
-            )
-            assert resp.status_code == 204
-
-            async with integration_session_factory() as session:
-                result = await session.execute(
-                    select(DashboardModel).where(DashboardModel.id == UUID(dash_id)),
-                )
-                assert result.scalar_one_or_none() is None
+            assert result.scalar_one_or_none() is None
 
     async def test_widget_full_flow(self, test_client, integration_session_factory):
         auth = await self._signup(test_client, "widgets@test.com")

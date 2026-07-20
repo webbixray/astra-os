@@ -53,7 +53,9 @@ class ContentScheduleRepository:
         result = await self.session.execute(query)
         return [m.to_domain() for m in result.scalars().all()]
 
-    async def find_due_schedules(self, current_time: datetime | None = None) -> list[ContentSchedule]:
+    async def find_due_schedules(
+        self, current_time: datetime | None = None
+    ) -> list[ContentSchedule]:
         """Find all active schedules that are due to run."""
         current = current_time or datetime.now(UTC)
         result = await self.session.execute(

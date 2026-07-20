@@ -12,9 +12,6 @@ import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
-from app.application.use_cases.ai.content_generation_service import ContentGenerationService
-from app.application.use_cases.ai.prompt_manager import PromptManager
-from app.application.use_cases.ai.seo_scorer import SEOScorer
 from app.domain.entities.content.brand_voice import BrandVoice
 from app.domain.entities.content.content_template import ContentTemplate
 from app.main import create_app
@@ -22,10 +19,6 @@ from app.presentation.dependencies import get_db, pagination_params
 from app.presentation.middleware.auth import require_user_id
 from app.presentation.middleware.feature_flags import require_feature
 from app.presentation.middleware.rbac import require_org_role
-from app.presentation.routes.content.gen_routes import (
-    _get_content_service,
-    router,
-)
 
 
 def _mock_template(**kwargs):
@@ -83,6 +76,7 @@ def _mock_seo_score(**kwargs):
 def _setup_csrf(test_client: AsyncClient):
     """Setup CSRF headers for test client."""
     from app.config import config
+
     secret = config.secret_key
     session_id = secrets.token_urlsafe(16)
     timestamp = int(time.time())
@@ -129,15 +123,14 @@ def test_app() -> FastAPI:
 
 @pytest.fixture
 async def test_client(test_app: FastAPI) -> AsyncClient:
-    async with AsyncClient(
-        transport=ASGITransport(app=test_app), base_url="http://test"
-    ) as client:
+    async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as client:
         yield client
 
 
 # ============================================================
 # CONTENT GENERATION TESTS
 # ============================================================
+
 
 class TestContentGenerate:
     @pytest.mark.asyncio
@@ -149,17 +142,29 @@ class TestContentGenerate:
 
         mock_template = _mock_template(id=template_id, organization_id=org_id)
         mock_brand_voice = _mock_brand_voice(id=uuid4(), organization_id=org_id)
-        mock_content = {"content": "Generated blog post about AI", "model": "gpt-4", "tokens_used": 100, "cost_usd": 0.001}
+        mock_content = {
+            "content": "Generated blog post about AI",
+            "model": "gpt-4",
+            "tokens_used": 100,
+            "cost_usd": 0.001,
+        }
 
         # Mock the content service
         mock_service = MagicMock()
         mock_service.generate = AsyncMock(return_value=mock_content)
 
-        with patch("app.presentation.routes.content.gen_routes._get_content_service",
-                   return_value=mock_service) as mock_get_service, \
-             patch("app.presentation.routes.content.gen_routes.ContentTemplateRepository") as mock_template_class, \
-             patch("app.presentation.routes.content.gen_routes.BrandVoiceRepository") as mock_voice_class:
-
+        with (
+            patch(
+                "app.presentation.routes.content.gen_routes._get_content_service",
+                return_value=mock_service,
+            ) as mock_get_service,
+            patch(
+                "app.presentation.routes.content.gen_routes.ContentTemplateRepository"
+            ) as mock_template_class,
+            patch(
+                "app.presentation.routes.content.gen_routes.BrandVoiceRepository"
+            ) as mock_voice_class,
+        ):
             mock_template_repo = AsyncMock()
             mock_template_repo.find_by_id = AsyncMock(return_value=mock_template)
             mock_template_class.return_value = mock_template_repo
@@ -188,7 +193,9 @@ class TestContentGenerate:
         assert "content" in data["data"] or "generated" in str(data).lower()
 
     @pytest.mark.asyncio
-    async def test_generate_content_template_not_found(self, test_app: FastAPI, test_client: AsyncClient):
+    async def test_generate_content_template_not_found(
+        self, test_app: FastAPI, test_client: AsyncClient
+    ):
         """Test content generation with non-existent template."""
         org_id = uuid4()
         template_id = uuid4()
@@ -196,11 +203,18 @@ class TestContentGenerate:
         mock_service = MagicMock()
         mock_service.generate = AsyncMock()
 
-        with patch("app.presentation.routes.content.gen_routes._get_content_service",
-                   return_value=mock_service) as mock_get_service, \
-             patch("app.presentation.routes.content.gen_routes.ContentTemplateRepository") as mock_template_class, \
-             patch("app.presentation.routes.content.gen_routes.BrandVoiceRepository") as mock_voice_class:
-
+        with (
+            patch(
+                "app.presentation.routes.content.gen_routes._get_content_service",
+                return_value=mock_service,
+            ) as mock_get_service,
+            patch(
+                "app.presentation.routes.content.gen_routes.ContentTemplateRepository"
+            ) as mock_template_class,
+            patch(
+                "app.presentation.routes.content.gen_routes.BrandVoiceRepository"
+            ) as mock_voice_class,
+        ):
             mock_template_repo = AsyncMock()
             mock_template_repo.find_by_id = AsyncMock(return_value=None)
             mock_template_class.return_value = mock_template_repo
@@ -226,7 +240,9 @@ class TestContentGenerate:
         assert "Template not found" in data["detail"]
 
     @pytest.mark.asyncio
-    async def test_generate_content_brand_voice_not_found(self, test_app: FastAPI, test_client: AsyncClient):
+    async def test_generate_content_brand_voice_not_found(
+        self, test_app: FastAPI, test_client: AsyncClient
+    ):
         """Test content generation with non-existent brand voice."""
         org_id = uuid4()
         template_id = uuid4()
@@ -236,11 +252,18 @@ class TestContentGenerate:
         mock_service = MagicMock()
         mock_service.generate = AsyncMock()
 
-        with patch("app.presentation.routes.content.gen_routes._get_content_service",
-                   return_value=mock_service) as mock_get_service, \
-             patch("app.presentation.routes.content.gen_routes.ContentTemplateRepository") as mock_template_class, \
-             patch("app.presentation.routes.content.gen_routes.BrandVoiceRepository") as mock_voice_class:
-
+        with (
+            patch(
+                "app.presentation.routes.content.gen_routes._get_content_service",
+                return_value=mock_service,
+            ) as mock_get_service,
+            patch(
+                "app.presentation.routes.content.gen_routes.ContentTemplateRepository"
+            ) as mock_template_class,
+            patch(
+                "app.presentation.routes.content.gen_routes.BrandVoiceRepository"
+            ) as mock_voice_class,
+        ):
             mock_template_repo = AsyncMock()
             mock_template_repo.find_by_id = AsyncMock(return_value=mock_template)
             mock_template_class.return_value = mock_template_repo
@@ -278,10 +301,15 @@ class TestContentRewrite:
         mock_service = MagicMock()
         mock_service.rewrite = AsyncMock(return_value=mock_content)
 
-        with patch("app.presentation.routes.content.gen_routes._get_content_service",
-                   return_value=mock_service) as mock_get_service, \
-             patch("app.presentation.routes.content.gen_routes.BrandVoiceRepository") as mock_voice_class:
-
+        with (
+            patch(
+                "app.presentation.routes.content.gen_routes._get_content_service",
+                return_value=mock_service,
+            ) as mock_get_service,
+            patch(
+                "app.presentation.routes.content.gen_routes.BrandVoiceRepository"
+            ) as mock_voice_class,
+        ):
             mock_voice_repo = AsyncMock()
             mock_voice_repo.find_by_id = AsyncMock(return_value=mock_brand_voice)
             mock_voice_class.return_value = mock_voice_repo
@@ -305,7 +333,9 @@ class TestContentRewrite:
         assert "content" in data["data"]
 
     @pytest.mark.asyncio
-    async def test_rewrite_content_without_brand_voice(self, test_app: FastAPI, test_client: AsyncClient):
+    async def test_rewrite_content_without_brand_voice(
+        self, test_app: FastAPI, test_client: AsyncClient
+    ):
         """Test content rewriting without brand voice."""
         org_id = uuid4()
         mock_content = {"content": "Rewritten content"}
@@ -313,8 +343,10 @@ class TestContentRewrite:
         mock_service = MagicMock()
         mock_service.rewrite = AsyncMock(return_value=mock_content)
 
-        with patch("app.presentation.routes.content.gen_routes._get_content_service",
-                   return_value=mock_service):
+        with patch(
+            "app.presentation.routes.content.gen_routes._get_content_service",
+            return_value=mock_service,
+        ):
             csrf_headers = _setup_csrf(test_client)
 
             response = await test_client.post(
@@ -339,18 +371,30 @@ class TestBulkGenerate:
 
         mock_template = _mock_template(id=template_id, organization_id=org_id)
         mock_results = [
-            {"content": f"Generated content {i}", "model": "gpt-4", "tokens_used": 100, "cost_usd": 0.001}
+            {
+                "content": f"Generated content {i}",
+                "model": "gpt-4",
+                "tokens_used": 100,
+                "cost_usd": 0.001,
+            }
             for i in range(3)
         ]
 
         mock_service = MagicMock()
         mock_service.generate_bulk = AsyncMock(return_value=mock_results)
 
-        with patch("app.presentation.routes.content.gen_routes._get_content_service",
-                   return_value=mock_service) as mock_get_service, \
-             patch("app.presentation.routes.content.gen_routes.ContentTemplateRepository") as mock_template_class, \
-             patch("app.presentation.routes.content.gen_routes.BrandVoiceRepository") as mock_voice_class:
-
+        with (
+            patch(
+                "app.presentation.routes.content.gen_routes._get_content_service",
+                return_value=mock_service,
+            ) as mock_get_service,
+            patch(
+                "app.presentation.routes.content.gen_routes.ContentTemplateRepository"
+            ) as mock_template_class,
+            patch(
+                "app.presentation.routes.content.gen_routes.BrandVoiceRepository"
+            ) as mock_voice_class,
+        ):
             mock_template_repo = AsyncMock()
             mock_template_repo.find_by_id = AsyncMock(return_value=mock_template)
             mock_template_class.return_value = mock_template_repo
@@ -382,18 +426,27 @@ class TestBulkGenerate:
         assert data["data"]["total"] == 3
 
     @pytest.mark.asyncio
-    async def test_bulk_generate_template_not_found(self, test_app: FastAPI, test_client: AsyncClient):
+    async def test_bulk_generate_template_not_found(
+        self, test_app: FastAPI, test_client: AsyncClient
+    ):
         """Test bulk generation with non-existent template."""
         org_id = uuid4()
         template_id = uuid4()
 
         mock_service = MagicMock()
 
-        with patch("app.presentation.routes.content.gen_routes._get_content_service",
-                   return_value=mock_service) as mock_get_service, \
-             patch("app.presentation.routes.content.gen_routes.ContentTemplateRepository") as mock_template_class, \
-             patch("app.presentation.routes.content.gen_routes.BrandVoiceRepository") as mock_voice_class:
-
+        with (
+            patch(
+                "app.presentation.routes.content.gen_routes._get_content_service",
+                return_value=mock_service,
+            ) as mock_get_service,
+            patch(
+                "app.presentation.routes.content.gen_routes.ContentTemplateRepository"
+            ) as mock_template_class,
+            patch(
+                "app.presentation.routes.content.gen_routes.BrandVoiceRepository"
+            ) as mock_voice_class,
+        ):
             mock_template_repo = AsyncMock()
             mock_template_repo.find_by_id = AsyncMock(return_value=None)
             mock_template_class.return_value = mock_template_repo
@@ -422,15 +475,18 @@ class TestSEOScore:
     async def test_score_content_success(self, test_app: FastAPI, test_client: AsyncClient):
         """Test successful SEO scoring."""
         mock_scorer = MagicMock()
-        mock_scorer.score = MagicMock(return_value={
-            "score": 85,
-            "suggestions": ["Add more keywords", "Increase word count"],
-            "word_count": 500,
-            "keyword_density": {"marketing": 2.5, "AI": 1.8},
-        })
+        mock_scorer.score = MagicMock(
+            return_value={
+                "score": 85,
+                "suggestions": ["Add more keywords", "Increase word count"],
+                "word_count": 500,
+                "keyword_density": {"marketing": 2.5, "AI": 1.8},
+            }
+        )
 
-        with patch("app.presentation.routes.content.gen_routes.SEOScorer",
-                   return_value=mock_scorer):
+        with patch(
+            "app.presentation.routes.content.gen_routes.SEOScorer", return_value=mock_scorer
+        ):
             csrf_headers = _setup_csrf(test_client)
             response = await test_client.post(
                 "/api/v1/ai/content/seo-score",
@@ -452,6 +508,7 @@ class TestSEOScore:
 # BRAND VOICE TESTS
 # ============================================================
 
+
 class TestBrandVoices:
     @pytest.mark.asyncio
     async def test_create_brand_voice(self, test_app: FastAPI, test_client: AsyncClient):
@@ -468,9 +525,12 @@ class TestBrandVoices:
             created_by=user_id,
         )
 
-        with patch("app.domain.entities.content.brand_voice.BrandVoice") as mock_voice_class, \
-             patch("app.presentation.routes.content.gen_routes.BrandVoiceRepository") as mock_repo_class:
-
+        with (
+            patch("app.domain.entities.content.brand_voice.BrandVoice") as mock_voice_class,
+            patch(
+                "app.presentation.routes.content.gen_routes.BrandVoiceRepository"
+            ) as mock_repo_class,
+        ):
             mock_voice_class.create = MagicMock(return_value=mock_voice)
 
             mock_repo = AsyncMock()
@@ -502,11 +562,15 @@ class TestBrandVoices:
         """Test listing brand voices."""
         org_id = uuid4()
         mock_voices = [
-            _mock_brand_voice(id=uuid4(), organization_id=org_id, name="Voice 1", tone="professional"),
+            _mock_brand_voice(
+                id=uuid4(), organization_id=org_id, name="Voice 1", tone="professional"
+            ),
             _mock_brand_voice(id=uuid4(), organization_id=org_id, name="Voice 2", tone="casual"),
         ]
 
-        with patch("app.presentation.routes.content.gen_routes.BrandVoiceRepository") as mock_repo_class:
+        with patch(
+            "app.presentation.routes.content.gen_routes.BrandVoiceRepository"
+        ) as mock_repo_class:
             mock_repo = AsyncMock()
             mock_repo.find_by_organization = AsyncMock(return_value=mock_voices)
             mock_repo_class.return_value = mock_repo
@@ -532,7 +596,9 @@ class TestBrandVoices:
             tone="professional",
         )
 
-        with patch("app.presentation.routes.content.gen_routes.BrandVoiceRepository") as mock_repo_class:
+        with patch(
+            "app.presentation.routes.content.gen_routes.BrandVoiceRepository"
+        ) as mock_repo_class:
             mock_repo = AsyncMock()
             mock_repo.find_by_id = AsyncMock(return_value=mock_voice)
             mock_repo.save = AsyncMock(return_value=mock_voice)
@@ -562,7 +628,9 @@ class TestBrandVoices:
         voice_id = uuid4()
         mock_voice = _mock_brand_voice(id=voice_id, organization_id=org_id)
 
-        with patch("app.presentation.routes.content.gen_routes.BrandVoiceRepository") as mock_repo_class:
+        with patch(
+            "app.presentation.routes.content.gen_routes.BrandVoiceRepository"
+        ) as mock_repo_class:
             mock_repo = AsyncMock()
             mock_repo.find_by_id = AsyncMock(return_value=mock_voice)
             mock_repo.delete = AsyncMock()
@@ -583,6 +651,7 @@ class TestBrandVoices:
 # CONTENT TEMPLATE TESTS
 # ============================================================
 
+
 class TestContentTemplates:
     @pytest.mark.asyncio
     async def test_create_template(self, test_app: FastAPI, test_client: AsyncClient):
@@ -599,9 +668,14 @@ class TestContentTemplates:
             description="Standard blog template",
         )
 
-        with patch("app.domain.entities.content.content_template.ContentTemplate") as mock_template_class, \
-             patch("app.presentation.routes.content.gen_routes.ContentTemplateRepository") as mock_repo_class:
-
+        with (
+            patch(
+                "app.domain.entities.content.content_template.ContentTemplate"
+            ) as mock_template_class,
+            patch(
+                "app.presentation.routes.content.gen_routes.ContentTemplateRepository"
+            ) as mock_repo_class,
+        ):
             mock_template_class.create = MagicMock(return_value=mock_template)
 
             mock_repo = AsyncMock()
@@ -634,11 +708,17 @@ class TestContentTemplates:
         """Test listing content templates."""
         org_id = uuid4()
         mock_templates = [
-            _mock_template(id=uuid4(), organization_id=org_id, name="Template 1", content_type="blog"),
-            _mock_template(id=uuid4(), organization_id=org_id, name="Template 2", content_type="social"),
+            _mock_template(
+                id=uuid4(), organization_id=org_id, name="Template 1", content_type="blog"
+            ),
+            _mock_template(
+                id=uuid4(), organization_id=org_id, name="Template 2", content_type="social"
+            ),
         ]
 
-        with patch("app.presentation.routes.content.gen_routes.ContentTemplateRepository") as mock_repo_class:
+        with patch(
+            "app.presentation.routes.content.gen_routes.ContentTemplateRepository"
+        ) as mock_repo_class:
             mock_repo = AsyncMock()
             mock_repo.find_by_organization = AsyncMock(return_value=mock_templates)
             mock_repo.find_builtin = AsyncMock(return_value=[])
@@ -668,7 +748,9 @@ class TestContentTemplates:
             system_prompt="Write about {topic}",
         )
 
-        with patch("app.presentation.routes.content.gen_routes.ContentTemplateRepository") as mock_repo_class:
+        with patch(
+            "app.presentation.routes.content.gen_routes.ContentTemplateRepository"
+        ) as mock_repo_class:
             mock_repo = AsyncMock()
             mock_repo.find_by_id = AsyncMock(return_value=mock_template)
             mock_repo_class.return_value = mock_repo
@@ -696,7 +778,9 @@ class TestContentTemplates:
             content_type="blog",
         )
 
-        with patch("app.presentation.routes.content.gen_routes.ContentTemplateRepository") as mock_repo_class:
+        with patch(
+            "app.presentation.routes.content.gen_routes.ContentTemplateRepository"
+        ) as mock_repo_class:
             mock_repo = AsyncMock()
             mock_repo.find_by_id = AsyncMock(return_value=mock_template)
             mock_repo.save = AsyncMock(return_value=mock_template)
@@ -726,7 +810,9 @@ class TestContentTemplates:
         template_id = uuid4()
         mock_template = _mock_template(id=template_id, organization_id=org_id)
 
-        with patch("app.presentation.routes.content.gen_routes.ContentTemplateRepository") as mock_repo_class:
+        with patch(
+            "app.presentation.routes.content.gen_routes.ContentTemplateRepository"
+        ) as mock_repo_class:
             mock_repo = AsyncMock()
             mock_repo.find_by_id = AsyncMock(return_value=mock_template)
             mock_repo.delete = AsyncMock()
@@ -746,6 +832,7 @@ class TestContentTemplates:
 # ============================================================
 # INTEGRATION TEST FOR COMPLETE FLOW
 # ============================================================
+
 
 class TestContentGenerationIntegration:
     @pytest.mark.asyncio
@@ -777,12 +864,21 @@ class TestContentGenerationIntegration:
             content="Professional blog post about AI marketing strategies..."
         )
 
-        with patch("app.domain.entities.content.content_template.ContentTemplate") as mock_template_class, \
-             patch("app.domain.entities.content.brand_voice.BrandVoice") as mock_voice_class, \
-             patch("app.presentation.routes.content.gen_routes.ContentTemplateRepository") as mock_template_repo_class, \
-             patch("app.presentation.routes.content.gen_routes.BrandVoiceRepository") as mock_voice_repo_class, \
-             patch("app.presentation.routes.content.gen_routes._get_content_service") as mock_get_service:
-
+        with (
+            patch(
+                "app.domain.entities.content.content_template.ContentTemplate"
+            ) as mock_template_class,
+            patch("app.domain.entities.content.brand_voice.BrandVoice") as mock_voice_class,
+            patch(
+                "app.presentation.routes.content.gen_routes.ContentTemplateRepository"
+            ) as mock_template_repo_class,
+            patch(
+                "app.presentation.routes.content.gen_routes.BrandVoiceRepository"
+            ) as mock_voice_repo_class,
+            patch(
+                "app.presentation.routes.content.gen_routes._get_content_service"
+            ) as mock_get_service,
+        ):
             mock_template_class.create = MagicMock(return_value=mock_template)
             mock_voice_class.create = MagicMock(return_value=mock_voice)
 

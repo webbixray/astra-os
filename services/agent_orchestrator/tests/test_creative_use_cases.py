@@ -4,9 +4,9 @@ All tests are pure unit tests with a mock repository — no DB required.
 """
 
 import asyncio
+from uuid import UUID, uuid4
 
 import pytest
-from uuid import UUID, uuid4
 from app.application.use_cases.campaigns.creative_use_cases import (
     ApproveCreativeUseCase,
     AssociateCreativeToCampaignUseCase,
@@ -70,11 +70,13 @@ class TestCreateCreative:
         uc = CreateCreativeUseCase(repo)
         org_id = uuid4()
 
-        result = asyncio.run(uc.execute(
-            organization_id=org_id,
-            name="Summer Sale Banner",
-            created_by=uuid4(),
-        ))
+        result = asyncio.run(
+            uc.execute(
+                organization_id=org_id,
+                name="Summer Sale Banner",
+                created_by=uuid4(),
+            )
+        )
 
         assert result.name == "Summer Sale Banner"
         assert result.type == CreativeType.IMAGE
@@ -85,12 +87,14 @@ class TestCreateCreative:
         repo = MockCreativeRepo()
         uc = CreateCreativeUseCase(repo)
 
-        result = asyncio.run(uc.execute(
-            organization_id=uuid4(),
-            name="Video Ad",
-            created_by=uuid4(),
-            type=CreativeType.VIDEO,
-        ))
+        result = asyncio.run(
+            uc.execute(
+                organization_id=uuid4(),
+                name="Video Ad",
+                created_by=uuid4(),
+                type=CreativeType.VIDEO,
+            )
+        )
 
         assert result.type == CreativeType.VIDEO
 
@@ -98,15 +102,17 @@ class TestCreateCreative:
         repo = MockCreativeRepo()
         uc = CreateCreativeUseCase(repo)
 
-        result = asyncio.run(uc.execute(
-            organization_id=uuid4(),
-            name="Full Creative",
-            created_by=uuid4(),
-            headline="Buy Now!",
-            body="Limited time offer",
-            destination_url="https://example.com",
-            asset_urls=["https://cdn.example.com/img1.jpg"],
-        ))
+        result = asyncio.run(
+            uc.execute(
+                organization_id=uuid4(),
+                name="Full Creative",
+                created_by=uuid4(),
+                headline="Buy Now!",
+                body="Limited time offer",
+                destination_url="https://example.com",
+                asset_urls=["https://cdn.example.com/img1.jpg"],
+            )
+        )
 
         assert result.headline == "Buy Now!"
         assert result.body == "Limited time offer"
@@ -118,22 +124,26 @@ class TestCreateCreative:
         uc = CreateCreativeUseCase(repo)
 
         with pytest.raises(ValidationError, match="name"):
-            asyncio.run(uc.execute(
-                organization_id=uuid4(),
-                name="",
-                created_by=uuid4(),
-            ))
+            asyncio.run(
+                uc.execute(
+                    organization_id=uuid4(),
+                    name="",
+                    created_by=uuid4(),
+                )
+            )
 
     def test_create_whitespace_name_fails(self):
         repo = MockCreativeRepo()
         uc = CreateCreativeUseCase(repo)
 
         with pytest.raises(ValidationError, match="name"):
-            asyncio.run(uc.execute(
-                organization_id=uuid4(),
-                name="   ",
-                created_by=uuid4(),
-            ))
+            asyncio.run(
+                uc.execute(
+                    organization_id=uuid4(),
+                    name="   ",
+                    created_by=uuid4(),
+                )
+            )
 
 
 # ── Get Tests ────────────────────────────────────────────────────────
@@ -205,11 +215,13 @@ class TestUpdateCreative:
         asyncio.run(repo.save(creative))
 
         uc = UpdateCreativeUseCase(repo)
-        result = asyncio.run(uc.execute(
-            creative_id=creative.id,
-            name="Updated Name",
-            headline="New Headline",
-        ))
+        result = asyncio.run(
+            uc.execute(
+                creative_id=creative.id,
+                name="Updated Name",
+                headline="New Headline",
+            )
+        )
 
         assert result.name == "Updated Name"
         assert result.headline == "New Headline"

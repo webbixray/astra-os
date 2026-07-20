@@ -8,9 +8,7 @@ from astra_agent_orchestrator.agent import (
     AgentRegistry,
     AgentType,
 )
-from astra_agent_orchestrator.agents import CEOAgent
-from astra_agent_orchestrator.agents import DirectorAgent
-from astra_agent_orchestrator.agents import SpecialistAgent
+from astra_agent_orchestrator.agents import CEOAgent, DirectorAgent, SpecialistAgent
 
 
 class TestAgentConfig:

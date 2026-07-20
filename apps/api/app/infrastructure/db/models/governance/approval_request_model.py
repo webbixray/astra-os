@@ -40,6 +40,7 @@ class ApprovalRequestModel(Base):
 
     def to_domain(self) -> ApprovalRequest:
         from datetime import datetime
+
         timeout_at = None
         if self.timeout_at:
             timeout_at = datetime.fromisoformat(self.timeout_at)
@@ -49,7 +50,9 @@ class ApprovalRequestModel(Base):
 
         return ApprovalRequest(
             id=self.id if isinstance(self.id, str) else str(self.id),
-            organization_id=self.organization_id if isinstance(self.organization_id, str) else str(self.organization_id),
+            organization_id=self.organization_id
+            if isinstance(self.organization_id, str)
+            else str(self.organization_id),
             rule_id=self.rule_id if isinstance(self.rule_id, str) else str(self.rule_id),
             rule_name=self.rule_name or "",
             action_type=self.action_type,
@@ -79,7 +82,9 @@ class ApprovalRequestModel(Base):
             action_summary=req.action_summary,
             triggered_by_agent_id=req.triggered_by_agent_id,
             triggered_by_agent_type=req.triggered_by_agent_type,
-            triggered_by_user_id=str(req.triggered_by_user_id) if req.triggered_by_user_id else None,
+            triggered_by_user_id=str(req.triggered_by_user_id)
+            if req.triggered_by_user_id
+            else None,
             status=req.status.value,
             assigned_to=str(req.assigned_to) if req.assigned_to else None,
             assigned_role=req.assigned_role,

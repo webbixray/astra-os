@@ -27,6 +27,7 @@ from app.domain.services.social_intelligence import (
 
 # --- CommentAnalyzer Tests ---
 
+
 class TestCommentAnalyzer:
     @pytest.fixture
     def analyzer(self):
@@ -141,6 +142,7 @@ class TestCommentAnalyzer:
 
 # --- AutoReplyGenerator Tests ---
 
+
 class TestAutoReplyGenerator:
     @pytest.fixture
     def generator(self):
@@ -204,6 +206,7 @@ class TestAutoReplyGenerator:
 
 
 # --- ReplyTemplateManager Tests ---
+
 
 class TestReplyTemplateManager:
     @pytest.fixture
@@ -280,6 +283,7 @@ class TestReplyTemplateManager:
 
 
 # --- SocialInboxManager Tests ---
+
 
 class TestSocialInboxManager:
     @pytest.fixture
@@ -365,6 +369,7 @@ class TestSocialInboxManager:
 
 # --- CommentAnalyticsEngine Tests ---
 
+
 class TestCommentAnalyticsEngine:
     @pytest.fixture
     def engine(self):
@@ -431,7 +436,9 @@ class TestCommentAnalyticsEngine:
     async def test_generate_analytics(self, engine, sample_data):
         org_id, comments, replies = sample_data
         analytics = await engine.generate_analytics(
-            org_id, comments, replies,
+            org_id,
+            comments,
+            replies,
             datetime.now() - timedelta(days=1),
             datetime.now(),
         )
@@ -450,7 +457,9 @@ class TestCommentAnalyticsEngine:
     async def test_engagement_metrics(self, engine, sample_data):
         org_id, comments, replies = sample_data
         analytics = await engine.generate_analytics(
-            org_id, comments, replies,
+            org_id,
+            comments,
+            replies,
             datetime.now() - timedelta(days=1),
             datetime.now(),
         )
@@ -463,7 +472,9 @@ class TestCommentAnalyticsEngine:
     async def test_response_metrics(self, engine, sample_data):
         org_id, comments, replies = sample_data
         analytics = await engine.generate_analytics(
-            org_id, comments, replies,
+            org_id,
+            comments,
+            replies,
             datetime.now() - timedelta(days=1),
             datetime.now(),
         )
@@ -477,19 +488,23 @@ class TestCommentAnalyticsEngine:
     async def test_sentiment_metrics(self, engine, sample_data):
         org_id, comments, replies = sample_data
         analytics = await engine.generate_analytics(
-            org_id, comments, replies,
+            org_id,
+            comments,
+            replies,
             datetime.now() - timedelta(days=1),
             datetime.now(),
         )
 
-        assert analytics.positive_sentiment_pct == 1/3 * 100
-        assert analytics.negative_sentiment_pct == 1/3 * 100
+        assert analytics.positive_sentiment_pct == 1 / 3 * 100
+        assert analytics.negative_sentiment_pct == 1 / 3 * 100
 
     @pytest.mark.asyncio
     async def test_moderation_metrics(self, engine, sample_data):
         org_id, comments, replies = sample_data
         analytics = await engine.generate_analytics(
-            org_id, comments, replies,
+            org_id,
+            comments,
+            replies,
             datetime.now() - timedelta(days=1),
             datetime.now(),
         )
@@ -501,7 +516,9 @@ class TestCommentAnalyticsEngine:
     async def test_auto_reply_metrics(self, engine, sample_data):
         org_id, comments, replies = sample_data
         analytics = await engine.generate_analytics(
-            org_id, comments, replies,
+            org_id,
+            comments,
+            replies,
             datetime.now() - timedelta(days=1),
             datetime.now(),
         )
@@ -512,6 +529,7 @@ class TestCommentAnalyticsEngine:
 
 
 # --- SocialComment Entity Tests ---
+
 
 class TestSocialComment:
     def test_to_dict(self):
@@ -555,6 +573,7 @@ class TestSocialComment:
 
 # --- AutoReply Entity Tests ---
 
+
 class TestAutoReply:
     def test_can_auto_send_high_confidence(self):
         reply = AutoReply(
@@ -589,6 +608,7 @@ class TestAutoReply:
 
 # --- ReplyTemplate Entity Tests ---
 
+
 class TestReplyTemplate:
     def test_to_dict(self):
         template = ReplyTemplate(
@@ -604,6 +624,7 @@ class TestReplyTemplate:
 
 
 # --- CommentAnalytics Entity Tests ---
+
 
 class TestCommentAnalytics:
     def test_to_dict(self):

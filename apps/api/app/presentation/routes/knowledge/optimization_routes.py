@@ -27,6 +27,7 @@ router = APIRouter(prefix="/knowledge/optimization", tags=["knowledge-optimizati
 # Dependency injection
 # ---------------------------------------------------------------------------
 
+
 async def get_optimizer(db: AsyncSession = Depends(get_db)) -> PredictiveOptimizer:
     gs = GraphStore(db)
     return PredictiveOptimizer(
@@ -37,6 +38,7 @@ async def get_optimizer(db: AsyncSession = Depends(get_db)) -> PredictiveOptimiz
 # ---------------------------------------------------------------------------
 # Request models
 # ---------------------------------------------------------------------------
+
 
 class CampaignData(BaseModel):
     id: str
@@ -75,6 +77,7 @@ class SuggestionsRequest(BaseModel):
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
+
 
 @router.post("/budget")
 async def optimize_budget(

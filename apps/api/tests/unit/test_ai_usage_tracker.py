@@ -8,9 +8,34 @@ class TestUsageTracker:
         UsageTracker._records.clear()
 
     def test_record_and_summary(self):
-        UsageTracker.record(UsageRecord(provider="openai", model="gpt-4o-mini", input_tokens=100, output_tokens=50, duration_ms=500.0))
-        UsageTracker.record(UsageRecord(provider="nvidia_nim", model="meta/llama-3.1-70b-instruct", input_tokens=200, output_tokens=100, duration_ms=800.0))
-        UsageTracker.record(UsageRecord(provider="openai", model="gpt-4o", input_tokens=50, output_tokens=30, duration_ms=300.0, error="timeout"))
+        UsageTracker.record(
+            UsageRecord(
+                provider="openai",
+                model="gpt-4o-mini",
+                input_tokens=100,
+                output_tokens=50,
+                duration_ms=500.0,
+            )
+        )
+        UsageTracker.record(
+            UsageRecord(
+                provider="nvidia_nim",
+                model="meta/llama-3.1-70b-instruct",
+                input_tokens=200,
+                output_tokens=100,
+                duration_ms=800.0,
+            )
+        )
+        UsageTracker.record(
+            UsageRecord(
+                provider="openai",
+                model="gpt-4o",
+                input_tokens=50,
+                output_tokens=30,
+                duration_ms=300.0,
+                error="timeout",
+            )
+        )
 
         summary = UsageTracker.get_cost_summary()
         assert summary["total_calls"] == 3

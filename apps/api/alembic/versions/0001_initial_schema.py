@@ -4,6 +4,7 @@ Revision ID: 0001
 Revises:
 Create Date: 2026-07-09
 """
+
 from collections.abc import Sequence
 
 import sqlalchemy as sa
@@ -51,7 +52,9 @@ def upgrade() -> None:
         sa.Column("joined_at", sa.DateTime(timezone=True), nullable=False),
     )
 
-    op.create_index("ix_team_members_org_user", "team_members", ["organization_id", "user_id"], unique=True)
+    op.create_index(
+        "ix_team_members_org_user", "team_members", ["organization_id", "user_id"], unique=True
+    )
 
 
 def downgrade() -> None:

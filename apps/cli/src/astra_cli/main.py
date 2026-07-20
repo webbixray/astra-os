@@ -27,18 +27,21 @@ CREDENTIALS_FILE = CONFIG_DIR / "credentials.yaml"
 @click.group()
 @click.version_option(version="0.1.0", prog_name="astra")
 @click.option(
-    "--config", "-c",
+    "--config",
+    "-c",
     type=click.Path(exists=False, dir_okay=False, path_type=Path),
     default=CONFIG_FILE,
     help="Path to config file",
 )
 @click.option(
-    "--verbose", "-v",
+    "--verbose",
+    "-v",
     count=True,
     help="Increase verbosity",
 )
 @click.option(
-    "--output", "-o",
+    "--output",
+    "-o",
     type=click.Choice(["table", "json", "yaml", "csv"]),
     default="table",
     help="Output format",
@@ -93,7 +96,9 @@ def init(ctx: click.Context):
     console.print(f"[green]✓[/green] Config created at {CONFIG_FILE}")
     console.print("\nNext steps:")
     console.print("  1. Run [bold]astra auth login[/bold] to authenticate")
-    console.print("  2. Run [bold]astra config set defaults.organization <org>[/bold] to set default org")
+    console.print(
+        "  2. Run [bold]astra config set defaults.organization <org>[/bold] to set default org"
+    )
     console.print("  4. Run [bold]astra agents list[/bold] to see available agents")
 
 
@@ -128,6 +133,7 @@ def doctor(ctx: click.Context):
         import pydantic
         import rich
         import yaml
+
         console.print("[green]✓[/green] Core dependencies installed")
     except ImportError as e:
         console.print(f"[red]✗[/red] Missing dependency: {e}")
@@ -140,10 +146,16 @@ def doctor(ctx: click.Context):
     else:
         console.print("[yellow]![/yellow] No API URL configured")
 
-    console.print("\n[bold]Status: Healthy[/bold]" if not any([
-        not config_path.exists(),
-        not CREDENTIALS_FILE.exists(),
-    ]) else "\n[bold]Status: Issues found[/bold]")
+    console.print(
+        "\n[bold]Status: Healthy[/bold]"
+        if not any(
+            [
+                not config_path.exists(),
+                not CREDENTIALS_FILE.exists(),
+            ]
+        )
+        else "\n[bold]Status: Issues found[/bold]"
+    )
 
 
 @cli.command()
@@ -163,9 +175,11 @@ def version(ctx: click.Context, fmt: str):
 
     if fmt == "json":
         import json
+
         console.print(json.dumps(info, indent=2))
     else:
         import yaml
+
         console.print(yaml.dump(info, default_flow_style=False))
 
 
@@ -180,6 +194,7 @@ cli.add_command(auth_group, name="auth")
 # Config subcommands
 config_group = click.Group("config", help="Configuration commands")
 
+
 @config_group.command("get")
 @click.argument("key")
 @click.pass_context
@@ -192,6 +207,7 @@ def config_get(ctx: click.Context, key: str):
     else:
         console.print(value)
 
+
 @config_group.command("set")
 @click.argument("key")
 @click.argument("value")
@@ -202,6 +218,7 @@ def config_set(ctx: click.Context, key: str, value: str):
     set_config_value(config, key, value)
     save_config(config, ctx.obj["config_path"])
     console.print(f"[green]✓[/green] Set {key} = {value}")
+
 
 @config_group.command("list")
 @click.pass_context
@@ -223,6 +240,7 @@ def config_list(ctx: click.Context):
 
     flatten(config)
     console.print(table)
+
 
 cli.add_command(config_group, name="config")
 

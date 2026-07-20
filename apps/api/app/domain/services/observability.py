@@ -30,10 +30,13 @@ logger = logging.getLogger(__name__)
 
 # --- Repository Interfaces ---
 
+
 class MetricDefinitionRepository:
     async def save(self, metric: MetricDefinition) -> MetricDefinition: ...
     async def find_by_id(self, metric_id: UUID) -> MetricDefinition | None: ...
-    async def find_by_organization(self, org_id: UUID, active_only: bool = True) -> list[MetricDefinition]: ...
+    async def find_by_organization(
+        self, org_id: UUID, active_only: bool = True
+    ) -> list[MetricDefinition]: ...
     async def find_by_name(self, org_id: UUID, name: str) -> MetricDefinition | None: ...
 
 
@@ -59,7 +62,9 @@ class MetricSampleRepository:
 class AlertRuleRepository:
     async def save(self, rule: AlertRule) -> AlertRule: ...
     async def find_by_id(self, rule_id: UUID) -> AlertRule | None: ...
-    async def find_by_organization(self, org_id: UUID, active_only: bool = True) -> list[AlertRule]: ...
+    async def find_by_organization(
+        self, org_id: UUID, active_only: bool = True
+    ) -> list[AlertRule]: ...
     async def find_for_evaluation(self, now: datetime) -> list[AlertRule]: ...
 
 
@@ -92,14 +97,20 @@ class CostRecordRepository:
 class BudgetRepository:
     async def save(self, budget: Budget) -> Budget: ...
     async def find_by_id(self, budget_id: UUID) -> Budget | None: ...
-    async def find_by_organization(self, org_id: UUID, active_only: bool = True) -> list[Budget]: ...
-    async def find_by_scope(self, org_id: UUID, project_id: UUID | None, campaign_id: UUID | None) -> list[Budget]: ...
+    async def find_by_organization(
+        self, org_id: UUID, active_only: bool = True
+    ) -> list[Budget]: ...
+    async def find_by_scope(
+        self, org_id: UUID, project_id: UUID | None, campaign_id: UUID | None
+    ) -> list[Budget]: ...
 
 
 class SLARepository:
     async def save(self, sla: SLADefinition) -> SLADefinition: ...
     async def find_by_id(self, sla_id: UUID) -> SLADefinition | None: ...
-    async def find_by_organization(self, org_id: UUID, active_only: bool = True) -> list[SLADefinition]: ...
+    async def find_by_organization(
+        self, org_id: UUID, active_only: bool = True
+    ) -> list[SLADefinition]: ...
 
 
 class SLAReportRepository:
@@ -126,6 +137,7 @@ class DashboardWidgetRepository:
 
 
 # --- Services ---
+
 
 class MetricsService:
     """Service for collecting, storing, and querying metrics."""
@@ -251,14 +263,16 @@ class MetricsService:
 
         result = []
         for bucket_ts, values in sorted(buckets.items()):
-            result.append({
-                "timestamp": datetime.fromtimestamp(bucket_ts).isoformat(),
-                "count": len(values),
-                "avg": sum(values) / len(values),
-                "min": min(values),
-                "max": max(values),
-                "sum": sum(values),
-            })
+            result.append(
+                {
+                    "timestamp": datetime.fromtimestamp(bucket_ts).isoformat(),
+                    "count": len(values),
+                    "avg": sum(values) / len(values),
+                    "min": min(values),
+                    "max": max(values),
+                    "sum": sum(values),
+                }
+            )
         return result
 
 
@@ -399,7 +413,9 @@ class CostTrackingService:
             if r.project_id:
                 by_project[str(r.project_id)] = by_project.get(str(r.project_id), 0) + r.amount_usd
             if r.campaign_id:
-                by_campaign[str(r.campaign_id)] = by_campaign.get(str(r.campaign_id), 0) + r.amount_usd
+                by_campaign[str(r.campaign_id)] = (
+                    by_campaign.get(str(r.campaign_id), 0) + r.amount_usd
+                )
             if r.provider:
                 by_provider[r.provider] = by_provider.get(r.provider, 0) + r.amount_usd
 
@@ -409,7 +425,9 @@ class CostTrackingService:
         # Budget info
         budgets = await self.budget_repo.find_by_organization(organization_id, active_only=True)
         total_budget = sum(b.amount_usd for b in budgets)
-        budget_util = sum(b.current_spend_usd for b in budgets) / total_budget if total_budget > 0 else 0
+        budget_util = (
+            sum(b.current_spend_usd for b in budgets) / total_budget if total_budget > 0 else 0
+        )
 
         return {
             "total_cost_usd": total,
@@ -585,9 +603,11 @@ class SystemHealthService:
 
 # --- Helper Functions ---
 
+
 def generate_fingerprint(rule_id: UUID, labels: dict[str, str]) -> str:
     """Generate a fingerprint for alert deduplication."""
     import hashlib
+
     key = f"{rule_id}:{sorted(labels.items())}"
     return hashlib.sha256(key.encode()).hexdigest()[:16]
 
@@ -595,6 +615,7 @@ def generate_fingerprint(rule_id: UUID, labels: dict[str, str]) -> str:
 def parse_alert_condition(condition: str) -> tuple[str, str, float]:
     """Parse alert condition string like 'avg > 100'."""
     import re
+
     match = re.match(r"(\w+)\s*(>=|<=|>|<|==|!=)\s*([\d.]+)", condition)
     if not match:
         raise ValueError(f"Invalid condition: {condition}")

@@ -44,10 +44,14 @@ def service(session, audit_repo, job_repo, usage_repo):
 
 class TestLogAction:
     async def test_log_action_success(self, service, audit_repo):
-        audit_repo.save = AsyncMock(return_value=AuditLogEntry(
-            organization_id=uuid4(), user_id=uuid4(),
-            action="read", resource_type="campaign",
-        ))
+        audit_repo.save = AsyncMock(
+            return_value=AuditLogEntry(
+                organization_id=uuid4(),
+                user_id=uuid4(),
+                action="read",
+                resource_type="campaign",
+            )
+        )
 
         result = await service.log_action(uuid4(), uuid4(), "read", "campaign")
 
@@ -61,8 +65,10 @@ class TestLogAction:
 class TestGetAuditLogs:
     async def test_get_audit_logs(self, service, audit_repo):
         entry = AuditLogEntry(
-            organization_id=uuid4(), user_id=uuid4(),
-            action="view", resource_type="campaign",
+            organization_id=uuid4(),
+            user_id=uuid4(),
+            action="view",
+            resource_type="campaign",
         )
         audit_repo.find_by_org = AsyncMock(return_value=[entry])
         audit_repo.count_by_org = AsyncMock(return_value=1)
@@ -87,9 +93,12 @@ class TestGetAuditSummary:
 
 class TestCreateJob:
     async def test_create_job(self, service, job_repo):
-        job_repo.save = AsyncMock(return_value=JobRecord(
-            organization_id=uuid4(), job_type="email",
-        ))
+        job_repo.save = AsyncMock(
+            return_value=JobRecord(
+                organization_id=uuid4(),
+                job_type="email",
+            )
+        )
 
         result = await service.create_job(uuid4(), "email")
 
@@ -195,10 +204,15 @@ class TestGetJobSummary:
 
 class TestRecordApiCall:
     async def test_record_api_call(self, service, usage_repo):
-        usage_repo.save = AsyncMock(return_value=ApiUsageRecord(
-            organization_id=uuid4(), user_id=uuid4(),
-            endpoint="/health", method="GET", status_code=200,
-        ))
+        usage_repo.save = AsyncMock(
+            return_value=ApiUsageRecord(
+                organization_id=uuid4(),
+                user_id=uuid4(),
+                endpoint="/health",
+                method="GET",
+                status_code=200,
+            )
+        )
 
         result = await service.record_api_call(uuid4(), uuid4(), "/health", "GET", 200)
 
@@ -207,7 +221,13 @@ class TestRecordApiCall:
 
 class TestGetUsageRecords:
     async def test_get_usage_records(self, service, usage_repo):
-        record = ApiUsageRecord(organization_id=uuid4(), user_id=uuid4(), endpoint="/health", method="GET", status_code=200)
+        record = ApiUsageRecord(
+            organization_id=uuid4(),
+            user_id=uuid4(),
+            endpoint="/health",
+            method="GET",
+            status_code=200,
+        )
         usage_repo.find_by_org = AsyncMock(return_value=[record])
         usage_repo.count_by_org = AsyncMock(return_value=1)
 
@@ -219,8 +239,18 @@ class TestGetUsageRecords:
 
 class TestGetUsageStats:
     async def test_get_usage_stats(self, service, usage_repo):
-        usage_repo.get_stats = AsyncMock(return_value={"total_calls": 100, "avg_response_time_ms": 45.5, "max_response_time_ms": 300.0})
-        usage_repo.count_by_endpoint = AsyncMock(return_value=[{"endpoint": "/health", "method": "GET", "count": 50, "avg_response_time_ms": 12.3}])
+        usage_repo.get_stats = AsyncMock(
+            return_value={
+                "total_calls": 100,
+                "avg_response_time_ms": 45.5,
+                "max_response_time_ms": 300.0,
+            }
+        )
+        usage_repo.count_by_endpoint = AsyncMock(
+            return_value=[
+                {"endpoint": "/health", "method": "GET", "count": 50, "avg_response_time_ms": 12.3}
+            ]
+        )
 
         result = await service.get_usage_stats(uuid4(), hours=48)
 

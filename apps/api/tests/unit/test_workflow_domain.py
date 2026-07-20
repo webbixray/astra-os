@@ -21,9 +21,7 @@ from app.domain.exceptions.domain_exceptions import ValidationError
 
 class TestWorkflowNode:
     def test_create_node(self):
-        node = WorkflowNode.create(
-            id="n1", type=NodeType.ACTION, label="Do Thing", config={"x": 1}
-        )
+        node = WorkflowNode.create(id="n1", type=NodeType.ACTION, label="Do Thing", config={"x": 1})
         assert node.id == "n1"
         assert node.type == NodeType.ACTION
         assert node.label == "Do Thing"
@@ -121,7 +119,9 @@ class TestWorkflow:
 
 class TestWorkflowExecution:
     def test_create_execution(self):
-        ex = WorkflowExecution.create(workflow_id=uuid4(), organization_id=uuid4(), triggered_by=uuid4())
+        ex = WorkflowExecution.create(
+            workflow_id=uuid4(), organization_id=uuid4(), triggered_by=uuid4()
+        )
         assert ex.workflow_id is not None
         assert ex.organization_id is not None
         assert ex.triggered_by is not None
@@ -129,17 +129,23 @@ class TestWorkflowExecution:
         assert ex.steps == []
 
     def test_start_transition(self):
-        ex = WorkflowExecution.create(workflow_id=uuid4(), organization_id=uuid4(), triggered_by=uuid4())
+        ex = WorkflowExecution.create(
+            workflow_id=uuid4(), organization_id=uuid4(), triggered_by=uuid4()
+        )
         ex.start()
         assert ex.status == ExecutionStatus.RUNNING
 
     def test_complete_transition(self):
-        ex = WorkflowExecution.create(workflow_id=uuid4(), organization_id=uuid4(), triggered_by=uuid4())
+        ex = WorkflowExecution.create(
+            workflow_id=uuid4(), organization_id=uuid4(), triggered_by=uuid4()
+        )
         ex.complete()
         assert ex.status == ExecutionStatus.COMPLETED
 
     def test_fail_transition(self):
-        ex = WorkflowExecution.create(workflow_id=uuid4(), organization_id=uuid4(), triggered_by=uuid4())
+        ex = WorkflowExecution.create(
+            workflow_id=uuid4(), organization_id=uuid4(), triggered_by=uuid4()
+        )
         ex.fail("boom")
         assert ex.status == ExecutionStatus.FAILED
         assert ex.error == "boom"

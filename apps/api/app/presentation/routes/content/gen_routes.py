@@ -211,12 +211,14 @@ async def create_brand_voice(
     )
     repo = BrandVoiceRepository(db)
     saved = await repo.save(voice)
-    return SuccessResponse(data={
-        "id": str(saved.id),
-        "name": saved.name,
-        "tone": saved.tone,
-        "is_active": saved.is_active,
-    })
+    return SuccessResponse(
+        data={
+            "id": str(saved.id),
+            "name": saved.name,
+            "tone": saved.tone,
+            "is_active": saved.is_active,
+        }
+    )
 
 
 @router.get("/brand-voices", summary="List brand voices")
@@ -283,12 +285,14 @@ async def update_brand_voice(
         voice.is_active = request.is_active
         voice.updated_at = now()
     saved = await repo.save(voice)
-    return SuccessResponse(data={
-        "id": str(saved.id),
-        "name": saved.name,
-        "tone": saved.tone,
-        "is_active": saved.is_active,
-    })
+    return SuccessResponse(
+        data={
+            "id": str(saved.id),
+            "name": saved.name,
+            "tone": saved.tone,
+            "is_active": saved.is_active,
+        }
+    )
 
 
 @router.delete("/brand-voices/{voice_id}", status_code=204, summary="Delete a brand voice")
@@ -327,11 +331,13 @@ async def create_template(
     )
     repo = ContentTemplateRepository(db)
     saved = await repo.save(template)
-    return SuccessResponse(data={
-        "id": str(saved.id),
-        "name": saved.name,
-        "content_type": saved.content_type,
-    })
+    return SuccessResponse(
+        data={
+            "id": str(saved.id),
+            "name": saved.name,
+            "content_type": saved.content_type,
+        }
+    )
 
 
 @router.get("/content/templates", summary="List content templates")
@@ -390,17 +396,19 @@ async def get_template(
     template = await repo.find_by_id(template_id)
     if template is None:
         raise HTTPException(status_code=404, detail="Template not found")
-    return SuccessResponse(data={
-        "id": str(template.id),
-        "name": template.name,
-        "content_type": template.content_type,
-        "description": template.description,
-        "sections": template.sections,
-        "variables": template.variables,
-        "system_prompt": template.system_prompt,
-        "is_builtin": template.is_builtin,
-        "created_at": template.created_at.isoformat(),
-    })
+    return SuccessResponse(
+        data={
+            "id": str(template.id),
+            "name": template.name,
+            "content_type": template.content_type,
+            "description": template.description,
+            "sections": template.sections,
+            "variables": template.variables,
+            "system_prompt": template.system_prompt,
+            "is_builtin": template.is_builtin,
+            "created_at": template.created_at.isoformat(),
+        }
+    )
 
 
 @router.patch("/content/templates/{template_id}", summary="Update a content template")
@@ -430,11 +438,13 @@ async def update_template(
         template.system_prompt = request.system_prompt
         template.updated_at = now()
     saved = await repo.save(template)
-    return SuccessResponse(data={
-        "id": str(saved.id),
-        "name": saved.name,
-        "updated": True,
-    })
+    return SuccessResponse(
+        data={
+            "id": str(saved.id),
+            "name": saved.name,
+            "updated": True,
+        }
+    )
 
 
 @router.delete(

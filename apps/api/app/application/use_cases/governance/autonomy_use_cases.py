@@ -391,6 +391,4 @@ class GetExplainabilityReportUseCase:
             organization_id,
             limit=1000,
         )
-        return self._explainability.generate_audit_summary(
-            actions, organization_id
-        )
+        return self._explainability.generate_audit_summary(actions, organization_id)

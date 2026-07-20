@@ -101,7 +101,9 @@ def get_metrics(ctx: click.Context, service: str, metric: str, duration: str):
 
 @monitoring_group.command("alerts")
 @click.option("--status", "-s", type=click.Choice(["firing", "resolved", "all"]), default="firing")
-@click.option("--severity", "-sev", type=click.Choice(["critical", "warning", "info", "all"]), default="all")
+@click.option(
+    "--severity", "-sev", type=click.Choice(["critical", "warning", "info", "all"]), default="all"
+)
 @click.pass_context
 def list_alerts(ctx: click.Context, status: str, severity: str):
     """List active alerts"""
@@ -185,9 +187,9 @@ def show_slo(ctx: click.Context, name: str):
         for slo in slos:
             table.add_row(
                 slo.get("name", "N/A"),
-                f"{slo.get('target', 0)*100:.2f}%",
-                f"{slo.get('current', 0)*100:.2f}%",
-                f"{slo.get('error_budget_remaining', 0)*100:.2f}%",
+                f"{slo.get('target', 0) * 100:.2f}%",
+                f"{slo.get('current', 0) * 100:.2f}%",
+                f"{slo.get('error_budget_remaining', 0) * 100:.2f}%",
                 f"{slo.get('burn_rate', 0):.2f}x",
             )
 
@@ -269,7 +271,9 @@ def circuit_breakers(ctx: click.Context):
 
         for cb in breakers:
             state = cb.get("state", "unknown")
-            state_style = "green" if state == "closed" else ("yellow" if state == "half_open" else "red")
+            state_style = (
+                "green" if state == "closed" else ("yellow" if state == "half_open" else "red")
+            )
             table.add_row(
                 cb.get("name", "N/A"),
                 f"[{state_style}]{state}[/{state_style}]",

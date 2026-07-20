@@ -35,7 +35,9 @@ class ApprovalRuleModel(Base):
     def to_domain(self) -> ApprovalRule:
         return ApprovalRule(
             id=self.id if isinstance(self.id, str) else str(self.id),
-            organization_id=self.organization_id if isinstance(self.organization_id, str) else str(self.organization_id),
+            organization_id=self.organization_id
+            if isinstance(self.organization_id, str)
+            else str(self.organization_id),
             name=self.name,
             description=self.description or "",
             trigger=RuleTrigger(self.trigger),

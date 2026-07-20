@@ -98,7 +98,9 @@ class LoadTestReport:
             f"  Total requests:   {self.total_requests}",
             f"  Successful:       {self.successful}",
             f"  Failed:           {self.failed}",
-            f"  Success rate:     {self.successful / self.total_requests * 100:.1f}%" if self.total_requests else "",
+            f"  Success rate:     {self.successful / self.total_requests * 100:.1f}%"
+            if self.total_requests
+            else "",
             "",
             "  Latency Distribution:",
             f"    Min:            {self.min_latency:.1f}ms",
@@ -125,12 +127,14 @@ class LoadTestReport:
 
 def _make_mock_router() -> ModelRouterFacade:
     """Create a mock ModelRouterFacade for load testing."""
-    response_text = json.dumps({
-        "thought": "Processing the request",
-        "action": None,
-        "action_input": None,
-        "final_answer": "Load test response complete",
-    })
+    response_text = json.dumps(
+        {
+            "thought": "Processing the request",
+            "action": None,
+            "action_input": None,
+            "final_answer": "Load test response complete",
+        }
+    )
 
     facade = MagicMock(spec=ModelRouterFacade)
     facade.generate = AsyncMock(
@@ -208,12 +212,14 @@ async def run_load_test(
     for r in results:
         if isinstance(r, Exception):
             report.failed += 1
-            report.results.append(LoadTestResult(
-                request_id=-1,
-                success=False,
-                duration_ms=0,
-                error=str(r),
-            ))
+            report.results.append(
+                LoadTestResult(
+                    request_id=-1,
+                    success=False,
+                    duration_ms=0,
+                    error=str(r),
+                )
+            )
         else:
             report.results.append(r)
             if r.success:
@@ -231,11 +237,17 @@ async def run_load_test(
 def main():
     parser = argparse.ArgumentParser(description="ASTRA OS Agent Load Test")
     parser.add_argument(
-        "--concurrent", "-n", type=int, default=100,
+        "--concurrent",
+        "-n",
+        type=int,
+        default=100,
         help="Number of concurrent requests (default: 100)",
     )
     parser.add_argument(
-        "--timeout", "-t", type=float, default=30.0,
+        "--timeout",
+        "-t",
+        type=float,
+        default=30.0,
         help="Timeout in seconds (default: 30)",
     )
     args = parser.parse_args()

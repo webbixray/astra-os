@@ -172,7 +172,9 @@ class TestCostRecord:
         assert record.amount_usd == 150.50
 
     def test_to_dict(self):
-        record = CostRecord(organization_id=uuid4(), category=CostCategory.COMPUTE, amount_usd=100.0)
+        record = CostRecord(
+            organization_id=uuid4(), category=CostCategory.COMPUTE, amount_usd=100.0
+        )
         d = record.to_dict()
         assert d["amount_usd"] == 100.0
         assert d["category"] == "compute"
@@ -296,7 +298,11 @@ class TestDashboardWidget:
             title="API Latency Over Time",
             metric_names=["api_latency_p50", "api_latency_p95", "api_latency_p99"],
             query="avg(api_latency) by endpoint",
-            visualization_config={"x_axis": "time", "y_axis": "ms", "colors": ["#007bff", "#28a745", "#dc3545"]},
+            visualization_config={
+                "x_axis": "time",
+                "y_axis": "ms",
+                "colors": ["#007bff", "#28a745", "#dc3545"],
+            },
             position_x=0,
             position_y=0,
             width=6,
@@ -309,7 +315,9 @@ class TestDashboardWidget:
         assert widget.height == 4
 
     def test_to_dict(self):
-        widget = DashboardWidget(dashboard_id=uuid4(), title="Test", widget_type=DashboardWidgetType.GAUGE)
+        widget = DashboardWidget(
+            dashboard_id=uuid4(), title="Test", widget_type=DashboardWidgetType.GAUGE
+        )
         d = widget.to_dict()
         assert d["title"] == "Test"
         assert d["widget_type"] == "gauge"

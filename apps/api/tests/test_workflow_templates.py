@@ -18,6 +18,7 @@ from app.domain.services.workflow_templates import (
 # WorkflowTemplate unit tests
 # ---------------------------------------------------------------------------
 
+
 class TestWorkflowTemplate:
     def test_template_creation(self):
         nodes = [
@@ -108,7 +109,9 @@ class TestWorkflowTemplate:
     def test_template_instantiate_preserves_node_structure(self):
         nodes = [
             WorkflowNode.create("t1", NodeType.TRIGGER, "Trigger", {"trigger_type": "manual"}),
-            WorkflowNode.create("a1", NodeType.ACTION, "Action 1", {"action_type": "content.generate"}),
+            WorkflowNode.create(
+                "a1", NodeType.ACTION, "Action 1", {"action_type": "content.generate"}
+            ),
             WorkflowNode.create("c1", NodeType.CONDITION, "Check", {"condition": "score > 80"}),
             WorkflowNode.create("e1", NodeType.END, "Done"),
         ]
@@ -131,6 +134,7 @@ class TestWorkflowTemplate:
 # ---------------------------------------------------------------------------
 # WorkflowTemplateRegistry tests
 # ---------------------------------------------------------------------------
+
 
 class TestWorkflowTemplateRegistry:
     def test_registry_has_builtin_templates(self):
@@ -237,6 +241,7 @@ class TestWorkflowTemplateRegistry:
 # ---------------------------------------------------------------------------
 # Built-in template structure tests
 # ---------------------------------------------------------------------------
+
 
 class TestBuiltinTemplateStructure:
     def test_campaign_launch_has_trigger_and_end(self):

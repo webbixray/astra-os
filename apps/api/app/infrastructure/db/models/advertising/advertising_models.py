@@ -76,7 +76,10 @@ class AdCreativeModel(Base):
         index=True,
     )
     ad_campaign_id = Column(
-        UUID(as_uuid=True), ForeignKey("ad_campaigns.id", ondelete="SET NULL"), nullable=True, index=True
+        UUID(as_uuid=True),
+        ForeignKey("ad_campaigns.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
     )
     name = Column(String(255), nullable=False)
     type = Column(String(50), default="image")
@@ -100,6 +103,7 @@ class AdCreativeModel(Base):
             CreativeStatus,
             CreativeType,
         )
+
         created = self.created_at
         if created and created.tzinfo is None:
             created = created.replace(tzinfo=UTC)
@@ -117,7 +121,9 @@ class AdCreativeModel(Base):
             body=self.body or "",
             destination_url=self.destination_url or "",
             asset_urls=list(self.asset_urls) if self.asset_urls else [],
-            platform_creative_ids=dict(self.platform_creative_ids) if self.platform_creative_ids else {},
+            platform_creative_ids=dict(self.platform_creative_ids)
+            if self.platform_creative_ids
+            else {},
             dimensions=dict(self.dimensions) if self.dimensions else {},
             thumbnail_url=self.thumbnail_url,
             created_by=self.created_by,
@@ -158,7 +164,10 @@ class AdInsightModel(Base):
         index=True,
     )
     ad_account_id = Column(
-        UUID(as_uuid=True), ForeignKey("ad_accounts.id", ondelete="CASCADE"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("ad_accounts.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     ad_campaign_id = Column(
         UUID(as_uuid=True), ForeignKey("ad_campaigns.id", ondelete="CASCADE"), nullable=True

@@ -35,9 +35,11 @@ def _get_config_and_url(ctx: click.Context) -> tuple[dict, str]:
         config_path = ctx.obj.get("config_path")
         if config_path:
             from astra_cli.config import load_config
+
             config = load_config(config_path)
         else:
             from astra_cli.config import load_config
+
             config = load_config()
     api_url = ctx.obj.get("api_url", "https://api.astra-os.io")
     return config, api_url
@@ -57,7 +59,12 @@ def _get_headers(config: dict) -> dict:
 @costs_group.command("report")
 @click.option("--start", "-s", help="Start date (YYYY-MM-DD)")
 @click.option("--end", "-e", help="End date (YYYY-MM-DD)")
-@click.option("--group-by", "-g", type=click.Choice(["agent", "provider", "model", "organization", "day"]), default="agent")
+@click.option(
+    "--group-by",
+    "-g",
+    type=click.Choice(["agent", "provider", "model", "organization", "day"]),
+    default="agent",
+)
 @click.option("--org", "-O", help="Organization ID")
 @click.option("--output", "-Q", type=click.Choice(["table", "json", "csv"]), default="table")
 @click.pass_context
@@ -110,6 +117,7 @@ def cost_report(ctx: click.Context, start: str, end: str, group_by: str, org: st
         if output == "csv":
             import csv
             import io
+
             output_io = io.StringIO()
             if items:
                 writer = csv.DictWriter(output_io, fieldnames=items[0].keys())
@@ -207,7 +215,7 @@ def cost_forecast(ctx: click.Context, days: int, org: str):
                 item.get("date", "N/A"),
                 f"${item.get('projected_cost', 0):,.4f}",
                 f"{item.get('projected_tokens', 0):,}",
-                f"{item.get('confidence', 0)*100:.0f}%",
+                f"{item.get('confidence', 0) * 100:.0f}%",
             )
 
         console.print(table)
@@ -227,7 +235,12 @@ def cost_forecast(ctx: click.Context, days: int, org: str):
 
 
 @costs_group.command("breakdown")
-@click.option("--by", "-b", type=click.Choice(["provider", "model", "agent", "organization"]), default="provider")
+@click.option(
+    "--by",
+    "-b",
+    type=click.Choice(["provider", "model", "agent", "organization"]),
+    default="provider",
+)
 @click.option("--start", "-s", help="Start date (YYYY-MM-DD)")
 @click.option("--end", "-e", help="End date (YYYY-MM-DD)")
 @click.pass_context
@@ -300,7 +313,11 @@ def cost_budget(ctx: click.Context, budget_amount: float | None, org: str, alert
             response = requests.post(
                 f"{ctx.obj.get('api_url', 'https://api.astra-os.io')}/api/v1/costs/budget",
                 headers=_get_headers(ctx.obj.get("config", {})),
-                json={"amount": budget_amount, "organization_id": org, "alert_threshold": alert_threshold},
+                json={
+                    "amount": budget_amount,
+                    "organization_id": org,
+                    "alert_threshold": alert_threshold,
+                },
                 timeout=30,
             )
             response.raise_for_status()

@@ -41,38 +41,31 @@ TOOL_TO_ACTION_MAP: dict[str, str] = {
     "review_content": "content.review",
     "publish_content": "content.publish",
     "delete_content": "content.delete",
-
     # Campaign tools
     "create_campaign": "campaign.create",
     "update_campaign": "campaign.update",
     "launch_campaign": "campaign.launch",
     "pause_campaign": "campaign.pause",
     "complete_campaign": "campaign.complete",
-
     # Budget tools
     "set_budget": "spend.allocate",
     "increase_budget": "spend.increase",
     "reallocate_budget": "budget.reallocate",
-
     # Analytics tools
     "query_analytics": "analytics.query",
     "generate_report": "analytics.report",
-
     # Research tools
     "analyze_competitors": "research.competitors",
     "analyze_trends": "research.trends",
     "research_market": "research.analyze",
-
     # Creative tools
     "create_creative": "creative.create",
     "update_creative": "creative.update",
     "approve_creative": "creative.approve",
-
     # Bid/audience tools
     "update_bid": "bid.update",
     "target_audience": "audience.target",
     "update_schedule": "schedule.update",
-
     # Account tools
     "connect_account": "account.connect",
     "disconnect_account": "account.disconnect",
@@ -213,9 +206,7 @@ class GovernanceMiddleware:
         # ADVISORY: nothing auto-executes
         result.blocked = True
         result.requires_approval = True
-        result.reason = (
-            f"ADVISORY: tool '{tool_name}' requires human approval"
-        )
+        result.reason = f"ADVISORY: tool '{tool_name}' requires human approval"
         self._log_action(action_name, "blocked", "advisory")
         return result
 
@@ -229,14 +220,16 @@ class GovernanceMiddleware:
 
     def _log_action(self, action_name: str, outcome: str, reason_category: str) -> None:
         """Log a governance decision for auditing."""
-        self._action_log.append({
-            "organization_id": str(self.organization_id),
-            "agent_type": self.agent_type,
-            "agent_id": self.agent_id,
-            "action_name": action_name,
-            "outcome": outcome,
-            "reason_category": reason_category,
-        })
+        self._action_log.append(
+            {
+                "organization_id": str(self.organization_id),
+                "agent_type": self.agent_type,
+                "agent_id": self.agent_id,
+                "action_name": action_name,
+                "outcome": outcome,
+                "reason_category": reason_category,
+            }
+        )
 
 
 def create_governance_middleware(

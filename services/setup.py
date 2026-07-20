@@ -5,7 +5,9 @@ setup(
     version="0.1.0",
     description="ASTRA OS Services Package - compatibility layer",
     python_requires=">=3.12",
-    packages=find_packages(where="/tmp/astra-os-fresh", include=["services", "services.*"]),
+    packages=find_packages(
+        where="/tmp/astra-os-fresh", include=["services", "services.*"]
+    ),
     package_dir={"": "/tmp/astra-os-fresh"},
     install_requires=[
         "astra-agent-orchestrator>=0.1.0",

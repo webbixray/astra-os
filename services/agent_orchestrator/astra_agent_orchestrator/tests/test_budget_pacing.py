@@ -137,7 +137,9 @@ class TestFrontLoadedPacing:
         budget = _make_budget(30000)
 
         rec_even = self.service.analyze(campaign, budget, strategy=PacingStrategy.EVEN, today=start)
-        rec_front = self.service.analyze(campaign, budget, strategy=PacingStrategy.FRONT_LOADED, today=start)
+        rec_front = self.service.analyze(
+            campaign, budget, strategy=PacingStrategy.FRONT_LOADED, today=start
+        )
 
         assert rec_front.daily_target > rec_even.daily_target
 
@@ -148,8 +150,12 @@ class TestFrontLoadedPacing:
         campaign = _make_campaign(start, end)
         budget = _make_budget(30000)
 
-        rec_even = self.service.analyze(campaign, budget, strategy=PacingStrategy.EVEN, today=date(2026, 7, 28))
-        rec_front = self.service.analyze(campaign, budget, strategy=PacingStrategy.FRONT_LOADED, today=date(2026, 7, 28))
+        rec_even = self.service.analyze(
+            campaign, budget, strategy=PacingStrategy.EVEN, today=date(2026, 7, 28)
+        )
+        rec_front = self.service.analyze(
+            campaign, budget, strategy=PacingStrategy.FRONT_LOADED, today=date(2026, 7, 28)
+        )
 
         assert rec_front.daily_target < rec_even.daily_target
 
@@ -166,7 +172,9 @@ class TestBackLoadedPacing:
         budget = _make_budget(30000)
 
         rec_even = self.service.analyze(campaign, budget, strategy=PacingStrategy.EVEN, today=start)
-        rec_back = self.service.analyze(campaign, budget, strategy=PacingStrategy.BACK_LOADED, today=start)
+        rec_back = self.service.analyze(
+            campaign, budget, strategy=PacingStrategy.BACK_LOADED, today=start
+        )
 
         assert rec_back.daily_target < rec_even.daily_target
 
@@ -177,8 +185,12 @@ class TestBackLoadedPacing:
         campaign = _make_campaign(start, end)
         budget = _make_budget(30000)
 
-        rec_even = self.service.analyze(campaign, budget, strategy=PacingStrategy.EVEN, today=date(2026, 7, 28))
-        rec_back = self.service.analyze(campaign, budget, strategy=PacingStrategy.BACK_LOADED, today=date(2026, 7, 28))
+        rec_even = self.service.analyze(
+            campaign, budget, strategy=PacingStrategy.EVEN, today=date(2026, 7, 28)
+        )
+        rec_back = self.service.analyze(
+            campaign, budget, strategy=PacingStrategy.BACK_LOADED, today=date(2026, 7, 28)
+        )
 
         assert rec_back.daily_target > rec_even.daily_target
 
@@ -285,7 +297,9 @@ class TestDailySchedule:
         campaign = _make_campaign(start, end)
         budget = _make_budget(30000)
 
-        schedule = self.service.generate_daily_schedule(campaign, budget, PacingStrategy.FRONT_LOADED)
+        schedule = self.service.generate_daily_schedule(
+            campaign, budget, PacingStrategy.FRONT_LOADED
+        )
 
         assert schedule[0].target > schedule[-1].target
 
@@ -295,7 +309,9 @@ class TestDailySchedule:
         campaign = _make_campaign(start, end)
         budget = _make_budget(30000)
 
-        schedule = self.service.generate_daily_schedule(campaign, budget, PacingStrategy.BACK_LOADED)
+        schedule = self.service.generate_daily_schedule(
+            campaign, budget, PacingStrategy.BACK_LOADED
+        )
 
         assert schedule[0].target < schedule[-1].target
 
@@ -359,6 +375,8 @@ class TestEdgeCases:
         budget = _make_budget(30000)
 
         rec_even = self.service.analyze(campaign, budget, strategy=PacingStrategy.EVEN, today=start)
-        rec_custom = self.service.analyze(campaign, budget, strategy=PacingStrategy.CUSTOM, today=start)
+        rec_custom = self.service.analyze(
+            campaign, budget, strategy=PacingStrategy.CUSTOM, today=start
+        )
 
         assert rec_even.daily_target == pytest.approx(rec_custom.daily_target, rel=0.01)

@@ -1,9 +1,9 @@
 """Tests for campaign routes API endpoints."""
 
 import hashlib
+
 """Tests for campaign routes API endpoints."""
 
-import hashlib
 import hmac
 import secrets
 import time
@@ -15,41 +15,31 @@ import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
-from app.domain.entities.advertising.ad_campaign import AdCampaign, CampaignObjective, SyncStatus
-from app.domain.entities.campaigns.ab_test import ABTest, ABTestVariant
-from app.domain.entities.campaigns.campaign_budget import CampaignBudget
-from app.domain.entities.campaigns.campaign_template import CampaignTemplate
+from app.domain.entities.advertising.ad_campaign import AdCampaign
 from app.domain.exceptions.domain_exceptions import EntityNotFoundError, ValidationError
 from app.main import create_app
 from app.presentation.dependencies import get_db
 from app.presentation.middleware.auth import require_user_id
 from app.presentation.middleware.rbac import require_org_role
 from app.presentation.routes.campaigns.campaign_routes import (
-    get_create_use_case,
-    get_get_use_case,
-    get_list_use_case,
-    get_update_use_case,
-    get_budget_repo,
-    get_set_budget_uc,
-    get_get_budget_uc,
-    get_record_spend_uc,
-    get_template_repo,
-    get_create_template_uc,
-    get_list_templates_uc,
-    get_get_template_uc,
-    get_delete_template_uc,
-    get_clone_uc,
-    get_abtest_repo,
-    get_create_abtest_uc,
-    get_list_abtests_uc,
-    get_get_abtest_uc,
     get_add_variant_uc,
-    get_start_abtest_uc,
+    get_clone_uc,
+    get_create_abtest_uc,
+    get_create_template_uc,
+    get_create_use_case,
+    get_delete_template_uc,
     get_determine_winner_uc,
+    get_get_budget_uc,
+    get_get_template_uc,
+    get_get_use_case,
+    get_list_abtests_uc,
+    get_list_templates_uc,
+    get_list_use_case,
     get_record_metrics_uc,
-    CreateABTestRequest,
-    AddVariantRequest,
-    RecordMetricsRequest,
+    get_record_spend_uc,
+    get_set_budget_uc,
+    get_start_abtest_uc,
+    get_update_use_case,
 )
 
 
@@ -64,7 +54,7 @@ def _mock_campaign(**kwargs):
     c.budget_amount = kwargs.get("budget_amount", 1000.0)
     c.budget_currency = kwargs.get("budget_currency", "USD")
     c.start_date = kwargs.get("start_date", datetime.now())
-    c.end_date = kwargs.get("end_date", None)
+    c.end_date = kwargs.get("end_date")
     c.channels = kwargs.get("channels", ["meta", "google"])
     c.objective = kwargs.get("objective", "conversions")
     c.created_by = kwargs.get("created_by", uuid4())
@@ -83,10 +73,14 @@ def _mock_budget(**kwargs):
     b.currency = kwargs.get("currency", "USD")
     b.alert_threshold = kwargs.get("alert_threshold", 80.0)
     b.period_start = kwargs.get("period_start", datetime.now())
-    b.period_end = kwargs.get("period_end", None)
+    b.period_end = kwargs.get("period_end")
     b.spent = kwargs.get("spent", 0.0)
     b.remaining = kwargs.get("total_budget", 10000.0) - kwargs.get("spent", 0.0)
-    b.spend_pct = (kwargs.get("spent", 0.0) / kwargs.get("total_budget", 10000.0)) * 100.0 if kwargs.get("total_budget", 10000.0) > 0 else 0.0
+    b.spend_pct = (
+        (kwargs.get("spent", 0.0) / kwargs.get("total_budget", 10000.0)) * 100.0
+        if kwargs.get("total_budget", 10000.0) > 0
+        else 0.0
+    )
     b.is_alert_triggered = b.spend_pct >= kwargs.get("alert_threshold", 80.0)
     return b
 
@@ -118,7 +112,7 @@ def _mock_abtest(**kwargs):
     a.description = kwargs.get("description", "")
     a.goal_metric = kwargs.get("goal_metric", "conversion_rate")
     a.status = kwargs.get("status", "draft")
-    a.winner_variant_id = kwargs.get("winner_variant_id", None)
+    a.winner_variant_id = kwargs.get("winner_variant_id")
     a.created_at = kwargs.get("created_at", datetime.now())
     return a
 
@@ -137,8 +131,11 @@ def _mock_variant(**kwargs):
 
 def _setup_csrf(test_client: AsyncClient) -> dict[str, str]:
     """Configure CSRF tokens on the test client for mutating requests."""
+    import hashlib
+    import hmac
+    import secrets
+
     from app.config import config
-    import hashlib, hmac, secrets, time
 
     secret = config.secret_key
     session_id = secrets.token_urlsafe(16)
@@ -158,10 +155,8 @@ def app_fixture() -> FastAPI:
 
         # Remove CSRF middleware for testing - each test adds CSRF headers explicitly
         from app.presentation.middleware.csrf import CSRFMiddleware
-        a.user_middleware = [
-            mw for mw in a.user_middleware
-            if mw.cls is not CSRFMiddleware
-        ]
+
+        a.user_middleware = [mw for mw in a.user_middleware if mw.cls is not CSRFMiddleware]
 
         # Mock DB session
         mock_member = MagicMock()
@@ -196,15 +191,14 @@ def app(app_fixture) -> FastAPI:
 
 @pytest.fixture
 async def test_client(app: FastAPI) -> AsyncClient:
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as client:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         yield client
 
 
 # ============================================================
 # CAMPAIGN CRUD TESTS
 # ============================================================
+
 
 class TestCampaignCreate:
     @pytest.mark.asyncio
@@ -215,9 +209,7 @@ class TestCampaignCreate:
             user_id = user_id()
 
         mock_campaign = _mock_campaign(
-            name="New Campaign",
-            organization_id=uuid4(),
-            created_by=user_id
+            name="New Campaign", organization_id=uuid4(), created_by=user_id
         )
 
         mock_use_case = MagicMock()
@@ -228,9 +220,9 @@ class TestCampaignCreate:
 
         # Setup CSRF
         from app.config import config
+
         secret = config.secret_key
         session_id = secrets.token_urlsafe(16)
-        import time
         timestamp = int(time.time())
         msg = f"{session_id}:{timestamp}"
         signature = hmac.new(secret.encode(), msg.encode(), hashlib.sha256).hexdigest()[:16]
@@ -262,9 +254,7 @@ class TestCampaignCreate:
     @pytest.mark.asyncio
     async def test_create_campaign_validation_error(self, app: FastAPI, test_client: AsyncClient):
         mock_use_case = MagicMock()
-        mock_use_case.execute = AsyncMock(
-            side_effect=ValidationError("Invalid budget amount")
-        )
+        mock_use_case.execute = AsyncMock(side_effect=ValidationError("Invalid budget amount"))
         app.dependency_overrides[get_create_use_case] = lambda: mock_use_case
 
         org_id = uuid4()
@@ -328,9 +318,7 @@ class TestCampaignList:
         mock_use_case.execute = AsyncMock(return_value=mock_campaigns)
         app.dependency_overrides[get_list_use_case] = lambda: mock_use_case
 
-        response = await test_client.get(
-            f"/api/v1/campaigns?organization_id={org_id}"
-        )
+        response = await test_client.get(f"/api/v1/campaigns?organization_id={org_id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -341,9 +329,7 @@ class TestCampaignList:
     @pytest.mark.asyncio
     async def test_list_campaigns_with_status_filter(self, app: FastAPI, test_client: AsyncClient):
         org_id = uuid4()
-        mock_campaigns = [
-            _mock_campaign(id=uuid4(), organization_id=org_id, status="active")
-        ]
+        mock_campaigns = [_mock_campaign(id=uuid4(), organization_id=org_id, status="active")]
 
         mock_use_case = MagicMock()
         mock_use_case.execute = AsyncMock(return_value=mock_campaigns)
@@ -412,6 +398,7 @@ class TestCampaignUpdate:
 # CAMPAIGN LIFECYCLE TESTS
 # ============================================================
 
+
 class TestCampaignLifecycle:
     @pytest.mark.asyncio
     async def test_launch_campaign_success(self, app: FastAPI, test_client: AsyncClient):
@@ -424,9 +411,14 @@ class TestCampaignLifecycle:
         )
 
         # The launch endpoint creates its own repo/use_case, so we need to patch at module level
-        with patch("app.infrastructure.db.repositories.campaigns.campaign_repository.CampaignRepositoryImpl") as mock_repo_class, \
-             patch("app.presentation.routes.campaigns.campaign_routes.LaunchCampaignUseCase") as mock_uc_class:
-
+        with (
+            patch(
+                "app.infrastructure.db.repositories.campaigns.campaign_repository.CampaignRepositoryImpl"
+            ) as mock_repo_class,
+            patch(
+                "app.presentation.routes.campaigns.campaign_routes.LaunchCampaignUseCase"
+            ) as mock_uc_class,
+        ):
             csrf_headers = _setup_csrf(test_client)
             mock_repo = AsyncMock()
             mock_repo.find_by_id = AsyncMock(return_value=mock_campaign)
@@ -444,7 +436,9 @@ class TestCampaignLifecycle:
 
     @pytest.mark.asyncio
     async def test_launch_campaign_not_found(self, app: FastAPI, test_client: AsyncClient):
-        with patch("app.infrastructure.db.repositories.campaigns.campaign_repository.CampaignRepositoryImpl") as mock_repo_class:
+        with patch(
+            "app.infrastructure.db.repositories.campaigns.campaign_repository.CampaignRepositoryImpl"
+        ) as mock_repo_class:
             mock_repo = AsyncMock()
             mock_repo.find_by_id = AsyncMock(return_value=None)
             mock_repo_class.return_value = mock_repo
@@ -463,9 +457,14 @@ class TestCampaignLifecycle:
             status="paused",
         )
 
-        with patch("app.infrastructure.db.repositories.campaigns.campaign_repository.CampaignRepositoryImpl") as mock_repo_class, \
-             patch("app.presentation.routes.campaigns.campaign_routes.PauseCampaignUseCase") as mock_uc_class:
-
+        with (
+            patch(
+                "app.infrastructure.db.repositories.campaigns.campaign_repository.CampaignRepositoryImpl"
+            ) as mock_repo_class,
+            patch(
+                "app.presentation.routes.campaigns.campaign_routes.PauseCampaignUseCase"
+            ) as mock_uc_class,
+        ):
             mock_repo = AsyncMock()
             mock_repo.find_by_id = AsyncMock(return_value=mock_campaign)
             mock_repo_class.return_value = mock_repo
@@ -484,6 +483,7 @@ class TestCampaignLifecycle:
 # ============================================================
 # BUDGET MANAGEMENT TESTS
 # ============================================================
+
 
 class TestCampaignBudget:
     @pytest.mark.asyncio
@@ -547,6 +547,7 @@ class TestCampaignBudget:
 # ============================================================
 # TEMPLATE TESTS
 # ============================================================
+
 
 class TestCampaignTemplates:
     @pytest.mark.asyncio
@@ -659,6 +660,7 @@ class TestCampaignTemplates:
 # A/B TEST TESTS
 # ============================================================
 
+
 class TestABTests:
     @pytest.mark.asyncio
     async def test_create_ab_test(self, app: FastAPI, test_client: AsyncClient):
@@ -689,8 +691,7 @@ class TestABTests:
     async def test_list_ab_tests(self, app: FastAPI, test_client: AsyncClient):
         campaign_id = uuid4()
         mock_tests = [
-            _mock_abtest(id=uuid4(), campaign_id=campaign_id, name=f"Test {i}")
-            for i in range(2)
+            _mock_abtest(id=uuid4(), campaign_id=campaign_id, name=f"Test {i}") for i in range(2)
         ]
 
         mock_uc = MagicMock()

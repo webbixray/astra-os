@@ -1,7 +1,7 @@
 """Tests for Prometheus metrics module."""
 
-
 import pytest
+
 from astra_agent_orchestrator.metrics import (
     AGENT_ACTIVE,
     AGENT_COST,
@@ -80,7 +80,10 @@ class TestMetrics:
             duration_seconds=0.5,
         )
 
-        assert TOOL_CALLS.labels(agent_type="CEO", tool_name="web_search", success="true")._value.get() >= 1
+        assert (
+            TOOL_CALLS.labels(agent_type="CEO", tool_name="web_search", success="true")._value.get()
+            >= 1
+        )
         # TOOL_DURATION is a histogram - just verify no error
         TOOL_DURATION.labels(agent_type="CEO", tool_name="web_search")
 
@@ -92,11 +95,12 @@ class TestMetrics:
             success=True,
         )
 
-        assert DELEGATIONS.labels(
-            agent_type="CEO",
-            subagent_type="CONTENT_SPECIALIST",
-            success="true"
-        )._value.get() >= 1
+        assert (
+            DELEGATIONS.labels(
+                agent_type="CEO", subagent_type="CONTENT_SPECIALIST", success="true"
+            )._value.get()
+            >= 1
+        )
 
     @pytest.mark.asyncio
     async def test_agent_metrics_context_manager(self):

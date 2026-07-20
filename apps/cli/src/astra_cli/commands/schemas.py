@@ -120,6 +120,7 @@ def validate_schema(ctx: click.Context, schema_name: str, file, data: str):
     # Load data to validate
     if file:
         import yaml
+
         content = file.read()
         if file.name.endswith((".yaml", ".yml")):
             data_to_validate = yaml.safe_load(content)

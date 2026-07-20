@@ -120,7 +120,9 @@ class SyncCampaignFromPlatformUseCase:
                 organization_id=organization_id,
                 ad_account_id=UUID(),
                 name=platform_campaign.name,
-                objective=platform_campaign.objective if hasattr(platform_campaign, "objective") else None,
+                objective=platform_campaign.objective
+                if hasattr(platform_campaign, "objective")
+                else None,
                 status=platform_campaign.status.value,
                 platform=adapter.platform.value,
                 platform_campaign_id=platform_campaign_id,

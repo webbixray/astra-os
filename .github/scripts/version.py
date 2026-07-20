@@ -23,6 +23,7 @@ VERSION_PATTERNS = {
     "package.json": r'"version"\s*:\s*"([^"]+)"',
 }
 
+
 class VersionManager:
     def __init__(self, repo_root: Path):
         self.repo_root = repo_root
@@ -48,7 +49,7 @@ class VersionManager:
     def parse_version(self, version: str) -> Tuple[int, int, int, Optional[str]]:
         """Parse semantic version string."""
         # Pattern: major.minor.patch[-prerelease]
-        match = re.match(r'^(\d+)\.(\d+)\.(\d+)(?:-([a-zA-Z0-9.-]+))?$', version)
+        match = re.match(r"^(\d+)\.(\d+)\.(\d+)(?:-([a-zA-Z0-9.-]+))?$", version)
         if not match:
             raise ValueError(f"Invalid version format: {version}")
 
@@ -71,17 +72,21 @@ class VersionManager:
         elif bump_type == "patch":
             patch += 1
         else:
-            raise ValueError(f"Invalid bump type: {bump_type}. Use major, minor, or patch.")
+            raise ValueError(
+                f"Invalid bump type: {bump_type}. Use major, minor, or patch."
+            )
 
         # Handle prerelease
         new_prerelease = None
         if prerelease is not None:
-            if existing_prerelease and existing_prerelease.startswith(prerelease.split('.')[0]):
+            if existing_prerelease and existing_prerelease.startswith(
+                prerelease.split(".")[0]
+            ):
                 # Extract number from prerelease (e.g., alpha.1 -> 1)
-                match = re.search(r'(\d+)$', existing_prerelease)
+                match = re.search(r"(\d+)$", existing_prerelease)
                 if match:
                     num = int(match.group(1)) + 1
-                    new_prerelease = re.sub(r'(\d+)$', str(num), existing_prerelease)
+                    new_prerelease = re.sub(r"(\d+)$", str(num), existing_prerelease)
                 else:
                     new_prerelease = f"{prerelease}.1"
             else:
@@ -113,13 +118,11 @@ class VersionManager:
                     r'^version\s*=\s*["\'][^"\']+["\']',
                     f'version = "{new_version}"',
                     content,
-                    flags=re.MULTILINE
+                    flags=re.MULTILINE,
                 )
             elif file_path.endswith("package.json"):
                 new_content = re.sub(
-                    r'"version"\s*:\s*"[^"]+"',
-                    f'"version": "{new_version}"',
-                    content
+                    r'"version"\s*:\s*"[^"]+"', f'"version": "{new_version}"', content
                 )
             else:
                 continue
@@ -130,7 +133,9 @@ class VersionManager:
 
         return updated
 
-    def release(self, bump_type: str, prerelease: Optional[str] = None, dry_run: bool = False) -> str:
+    def release(
+        self, bump_type: str, prerelease: Optional[str] = None, dry_run: bool = False
+    ) -> str:
         """Perform a release."""
         new_version = self.bump_version(bump_type, prerelease)
         current = self.get_current_version()
@@ -152,18 +157,46 @@ class VersionManager:
         # Run tests to verify
         print("\n🧪 Running quick validation...")
         # Install deps first if needed
-        subprocess.run([
-            sys.executable, "-m", "pip", "install", "-e", "apps/api[dev]", "-q"
-        ], capture_output=True, text=True, timeout=120, cwd=self.repo_root)
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "-e", "apps/api[dev]", "-q"],
+            capture_output=True,
+            text=True,
+            timeout=120,
+            cwd=self.repo_root,
+        )
 
         # Also install agent_orchestrator
-        subprocess.run([
-            sys.executable, "-m", "pip", "install", "-e", "services/agent_orchestrator", "-q"
-        ], capture_output=True, text=True, timeout=60, cwd=self.repo_root)
+        subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "pip",
+                "install",
+                "-e",
+                "services/agent_orchestrator",
+                "-q",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            cwd=self.repo_root,
+        )
 
-        result = subprocess.run([
-            sys.executable, "-m", "pytest", "apps/api/tests/integration/", "-x", "-q", "--tb=line"
-        ], capture_output=True, text=True, timeout=300, cwd=self.repo_root)
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "pytest",
+                "apps/api/tests/integration/",
+                "-x",
+                "-q",
+                "--tb=line",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=300,
+            cwd=self.repo_root,
+        )
         if result.returncode != 0:
             print("❌ Tests failed! Rolling back...")
             self.update_version_files(current)
@@ -174,14 +207,27 @@ class VersionManager:
         # Commit and tag
         try:
             subprocess.run(["git", "add", "-A"], check=True)
-            subprocess.run(["git", "commit", "-m", f"chore: release v{new_version}"], check=True)
-            subprocess.run(["git", "tag", "-a", f"v{new_version}", "-m", f"Release v{new_version}"], check=True)
+            subprocess.run(
+                ["git", "commit", "-m", f"chore: release v{new_version}"], check=True
+            )
+            subprocess.run(
+                [
+                    "git",
+                    "tag",
+                    "-a",
+                    f"v{new_version}",
+                    "-m",
+                    f"Release v{new_version}",
+                ],
+                check=True,
+            )
             print(f"\n✅ Release v{new_version} committed and tagged!")
         except subprocess.CalledProcessError as e:
             print(f"\n❌ Git operations failed: {e}")
             raise
 
         return new_version
+
 
 def main():
     import argparse
@@ -190,15 +236,27 @@ def main():
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     # Bump command (for CI/CD)
-    bump_parser = subparsers.add_parser("bump", help="Bump version and output new version")
-    bump_parser.add_argument("bump_type", choices=["major", "minor", "patch"], help="Version bump type")
-    bump_parser.add_argument("--prerelease", help="Prerelease identifier (alpha, beta, rc)")
+    bump_parser = subparsers.add_parser(
+        "bump", help="Bump version and output new version"
+    )
+    bump_parser.add_argument(
+        "bump_type", choices=["major", "minor", "patch"], help="Version bump type"
+    )
+    bump_parser.add_argument(
+        "--prerelease", help="Prerelease identifier (alpha, beta, rc)"
+    )
 
     # Release command (full release with tests, commit, tag)
     release_parser = subparsers.add_parser("release", help="Create a new release")
-    release_parser.add_argument("bump_type", choices=["major", "minor", "patch"], help="Version bump type")
-    release_parser.add_argument("--prerelease", help="Prerelease identifier (alpha, beta, rc)")
-    release_parser.add_argument("--dry-run", action="store_true", help="Dry run (no changes)")
+    release_parser.add_argument(
+        "bump_type", choices=["major", "minor", "patch"], help="Version bump type"
+    )
+    release_parser.add_argument(
+        "--prerelease", help="Prerelease identifier (alpha, beta, rc)"
+    )
+    release_parser.add_argument(
+        "--dry-run", action="store_true", help="Dry run (no changes)"
+    )
 
     # Current version command
     subparsers.add_parser("current", help="Show current version")
@@ -224,6 +282,7 @@ def main():
         except Exception as e:
             print(f"Error: {e}", file=sys.stderr)
             sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

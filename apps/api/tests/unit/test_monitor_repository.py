@@ -23,14 +23,20 @@ class TestAuditLogRepository:
     async def test_save(self, session):
         model_mock = MagicMock()
         model_mock.to_domain.return_value = AuditLogEntry(
-            organization_id=uuid4(), user_id=uuid4(),
-            action="view", resource_type="campaign",
+            organization_id=uuid4(),
+            user_id=uuid4(),
+            action="view",
+            resource_type="campaign",
         )
-        with patch("app.infrastructure.db.repositories.monitoring.monitor_repository.AuditLogEntryModel") as MockModel:
+        with patch(
+            "app.infrastructure.db.repositories.monitoring.monitor_repository.AuditLogEntryModel"
+        ) as MockModel:
             MockModel.from_domain.return_value = model_mock
 
             repo = AuditLogRepository(session)
-            entry = AuditLogEntry(organization_id=uuid4(), user_id=uuid4(), action="view", resource_type="campaign")
+            entry = AuditLogEntry(
+                organization_id=uuid4(), user_id=uuid4(), action="view", resource_type="campaign"
+            )
             result = await repo.save(entry)
 
             assert result is not None
@@ -39,9 +45,13 @@ class TestAuditLogRepository:
 
     async def test_find_by_org(self, session):
         m1 = MagicMock()
-        m1.to_domain.return_value = AuditLogEntry(organization_id=uuid4(), user_id=uuid4(), action="view", resource_type="campaign")
+        m1.to_domain.return_value = AuditLogEntry(
+            organization_id=uuid4(), user_id=uuid4(), action="view", resource_type="campaign"
+        )
         m2 = MagicMock()
-        m2.to_domain.return_value = AuditLogEntry(organization_id=uuid4(), user_id=uuid4(), action="create", resource_type="campaign")
+        m2.to_domain.return_value = AuditLogEntry(
+            organization_id=uuid4(), user_id=uuid4(), action="create", resource_type="campaign"
+        )
         result_mock = MagicMock()
         result_mock.scalars.return_value.all.return_value = [m1, m2]
         session.execute = AsyncMock(return_value=result_mock)
@@ -57,7 +67,9 @@ class TestAuditLogRepository:
         session.execute = AsyncMock(return_value=result_mock)
 
         repo = AuditLogRepository(session)
-        results = await repo.find_by_org(uuid4(), action="view", resource_type="campaign", user_id=uuid4())
+        results = await repo.find_by_org(
+            uuid4(), action="view", resource_type="campaign", user_id=uuid4()
+        )
 
         assert results == []
 
@@ -96,7 +108,9 @@ class TestJobRecordRepository:
     async def test_save(self, session):
         model_mock = MagicMock()
         model_mock.to_domain.return_value = JobRecord(organization_id=uuid4(), job_type="email")
-        with patch("app.infrastructure.db.repositories.monitoring.monitor_repository.JobRecordModel") as MockModel:
+        with patch(
+            "app.infrastructure.db.repositories.monitoring.monitor_repository.JobRecordModel"
+        ) as MockModel:
             MockModel.from_domain.return_value = model_mock
 
             repo = JobRecordRepository(session)
@@ -193,21 +207,38 @@ class TestApiUsageRepository:
     async def test_save(self, session):
         model_mock = MagicMock()
         model_mock.to_domain.return_value = ApiUsageRecord(
-            organization_id=uuid4(), user_id=uuid4(),
-            endpoint="/health", method="GET", status_code=200,
+            organization_id=uuid4(),
+            user_id=uuid4(),
+            endpoint="/health",
+            method="GET",
+            status_code=200,
         )
-        with patch("app.infrastructure.db.repositories.monitoring.monitor_repository.ApiUsageRecordModel") as MockModel:
+        with patch(
+            "app.infrastructure.db.repositories.monitoring.monitor_repository.ApiUsageRecordModel"
+        ) as MockModel:
             MockModel.from_domain.return_value = model_mock
 
             repo = ApiUsageRepository(session)
-            record = ApiUsageRecord(organization_id=uuid4(), user_id=uuid4(), endpoint="/health", method="GET", status_code=200)
+            record = ApiUsageRecord(
+                organization_id=uuid4(),
+                user_id=uuid4(),
+                endpoint="/health",
+                method="GET",
+                status_code=200,
+            )
             result = await repo.save(record)
 
             assert result is not None
 
     async def test_find_by_org(self, session):
         m = MagicMock()
-        m.to_domain.return_value = ApiUsageRecord(organization_id=uuid4(), user_id=uuid4(), endpoint="/health", method="GET", status_code=200)
+        m.to_domain.return_value = ApiUsageRecord(
+            organization_id=uuid4(),
+            user_id=uuid4(),
+            endpoint="/health",
+            method="GET",
+            status_code=200,
+        )
         result_mock = MagicMock()
         result_mock.scalars.return_value.all.return_value = [m]
         session.execute = AsyncMock(return_value=result_mock)
@@ -253,7 +284,10 @@ class TestApiUsageRepository:
 
     async def test_count_by_endpoint(self, session):
         result_mock = MagicMock()
-        result_mock.all.return_value = [("/health", "GET", 50, 12.3), ("/api/data", "POST", 30, 25.0)]
+        result_mock.all.return_value = [
+            ("/health", "GET", 50, 12.3),
+            ("/api/data", "POST", 30, 25.0),
+        ]
         session.execute = AsyncMock(return_value=result_mock)
 
         repo = ApiUsageRepository(session)

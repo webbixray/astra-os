@@ -22,7 +22,13 @@ def upgrade() -> None:
     op.create_table(
         "workflows",
         sa.Column("id", UUID(as_uuid=True), primary_key=True),
-        sa.Column("organization_id", UUID(as_uuid=True), sa.ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True),
+        sa.Column(
+            "organization_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("organizations.id", ondelete="CASCADE"),
+            nullable=False,
+            index=True,
+        ),
         sa.Column("name", sa.String(255), nullable=False),
         sa.Column("description", sa.Text(), server_default=""),
         sa.Column("status", sa.String(50), server_default="draft", index=True),
@@ -36,8 +42,20 @@ def upgrade() -> None:
     op.create_table(
         "workflow_executions",
         sa.Column("id", UUID(as_uuid=True), primary_key=True),
-        sa.Column("workflow_id", UUID(as_uuid=True), sa.ForeignKey("workflows.id", ondelete="CASCADE"), nullable=False, index=True),
-        sa.Column("organization_id", UUID(as_uuid=True), sa.ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True),
+        sa.Column(
+            "workflow_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("workflows.id", ondelete="CASCADE"),
+            nullable=False,
+            index=True,
+        ),
+        sa.Column(
+            "organization_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("organizations.id", ondelete="CASCADE"),
+            nullable=False,
+            index=True,
+        ),
         sa.Column("status", sa.String(50), server_default="pending", index=True),
         sa.Column("steps", sa.JSON(), server_default="[]"),
         sa.Column("triggered_by", UUID(as_uuid=True), nullable=False),

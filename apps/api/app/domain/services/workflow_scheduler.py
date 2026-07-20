@@ -79,9 +79,7 @@ class CronExpression:
     def from_string(cls, cron_str: str) -> CronExpression:
         parts = cron_str.strip().split()
         if len(parts) != 5:
-            raise ValueError(
-                f"Cron expression must have 5 fields, got {len(parts)}: '{cron_str}'"
-            )
+            raise ValueError(f"Cron expression must have 5 fields, got {len(parts)}: '{cron_str}'")
         return cls(
             minute=parts[0],
             hour=parts[1],
@@ -167,7 +165,9 @@ class WorkflowSchedule:
             "cron_expression": self.cron_expression,
             "event_type": self.event_type,
             "is_active": self.is_active,
-            "last_triggered_at": self.last_triggered_at.isoformat() if self.last_triggered_at else None,
+            "last_triggered_at": self.last_triggered_at.isoformat()
+            if self.last_triggered_at
+            else None,
             "next_trigger_at": self.next_trigger_at.isoformat() if self.next_trigger_at else None,
             "trigger_count": self.trigger_count,
             "metadata": self.metadata,
@@ -265,9 +265,7 @@ class WorkflowScheduler:
             return True
         return False
 
-    def register_handler(
-        self, schedule_id: UUID, handler: WorkflowTriggerHandler
-    ) -> None:
+    def register_handler(self, schedule_id: UUID, handler: WorkflowTriggerHandler) -> None:
         """Register a handler to be called when a schedule triggers."""
         self._handlers[schedule_id] = handler
 
@@ -308,9 +306,7 @@ class WorkflowScheduler:
         await self._trigger_workflow(schedule, payload)
         return True
 
-    async def _trigger_workflow(
-        self, schedule: WorkflowSchedule, context: dict[str, Any]
-    ) -> None:
+    async def _trigger_workflow(self, schedule: WorkflowSchedule, context: dict[str, Any]) -> None:
         """Execute the workflow associated with a schedule."""
         handler = self._handlers.get(schedule.id)
         if not handler:
@@ -341,9 +337,7 @@ class WorkflowScheduler:
                 schedule.trigger_count,
             )
         except Exception as e:
-            logger.error(
-                "Failed to trigger workflow %s: %s", schedule.workflow_id, e
-            )
+            logger.error("Failed to trigger workflow %s: %s", schedule.workflow_id, e)
             schedule.is_active = False
             raise
 
@@ -359,7 +353,9 @@ class WorkflowScheduler:
             ):
                 cron = CronExpression.from_string(schedule.cron_expression)
                 if cron.should_trigger(current):
-                    await self._trigger_workflow(schedule, {"trigger": "cron", "time": current.isoformat()})
+                    await self._trigger_workflow(
+                        schedule, {"trigger": "cron", "time": current.isoformat()}
+                    )
                     triggered.append(schedule.id)
         return triggered
 

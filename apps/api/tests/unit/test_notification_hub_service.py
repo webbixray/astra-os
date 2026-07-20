@@ -49,13 +49,19 @@ def service(notif_repo, template_repo, pref_repo, announcement_repo):
 class TestSend:
     async def test_send_notification(self, service, notif_repo, pref_repo):
         pref_repo.find_by_user_and_type = AsyncMock(return_value=None)
-        notif_repo.save = AsyncMock(return_value=Notification(
-            id=uuid4(), type="campaign_milestone", title="Campaign Launched",
-        ))
+        notif_repo.save = AsyncMock(
+            return_value=Notification(
+                id=uuid4(),
+                type="campaign_milestone",
+                title="Campaign Launched",
+            )
+        )
 
         result = await service.send(
-            organization_id=uuid4(), user_id=uuid4(),
-            type="campaign_milestone", title="Campaign Launched",
+            organization_id=uuid4(),
+            user_id=uuid4(),
+            type="campaign_milestone",
+            title="Campaign Launched",
         )
 
         assert result.title == "Campaign Launched"
@@ -64,15 +70,19 @@ class TestSend:
     async def test_send_invalid_type(self, service):
         with pytest.raises(ValidationError, match="Unknown notification type"):
             await service.send(
-                organization_id=uuid4(), user_id=uuid4(),
-                type="invalid_type", title="Test",
+                organization_id=uuid4(),
+                user_id=uuid4(),
+                type="invalid_type",
+                title="Test",
             )
 
     async def test_send_invalid_channel(self, service):
         with pytest.raises(ValidationError, match="Unknown channel"):
             await service.send(
-                organization_id=uuid4(), user_id=uuid4(),
-                type="campaign_milestone", title="Test",
+                organization_id=uuid4(),
+                user_id=uuid4(),
+                type="campaign_milestone",
+                title="Test",
                 channel="invalid_channel",
             )
 
@@ -83,24 +93,34 @@ class TestSend:
 
         with pytest.raises(ValidationError, match="disabled by user"):
             await service.send(
-                organization_id=uuid4(), user_id=uuid4(),
-                type="campaign_milestone", title="Test",
+                organization_id=uuid4(),
+                user_id=uuid4(),
+                type="campaign_milestone",
+                title="Test",
             )
 
     async def test_send_with_email_channel(self, service, notif_repo, pref_repo):
         pref_repo.find_by_user_and_type = AsyncMock(return_value=None)
-        notif_repo.save = AsyncMock(return_value=Notification(
-            id=uuid4(), type="campaign_milestone", title="Test",
-        ))
+        notif_repo.save = AsyncMock(
+            return_value=Notification(
+                id=uuid4(),
+                type="campaign_milestone",
+                title="Test",
+            )
+        )
 
-        with patch("app.application.use_cases.notifications.notification_hub_service.get_delivery_adapter") as mock_get:
+        with patch(
+            "app.application.use_cases.notifications.notification_hub_service.get_delivery_adapter"
+        ) as mock_get:
             adapter = MagicMock()
             adapter.deliver = AsyncMock()
             mock_get.return_value = adapter
 
             await service.send(
-                organization_id=uuid4(), user_id=uuid4(),
-                type="campaign_milestone", title="Test",
+                organization_id=uuid4(),
+                user_id=uuid4(),
+                type="campaign_milestone",
+                title="Test",
                 channel="email",
             )
 
@@ -110,16 +130,22 @@ class TestSend:
         pref_repo.find_by_user_and_type = AsyncMock(return_value=None)
         user_id = uuid4()
         notif_id = uuid4()
-        notif_repo.save = AsyncMock(return_value=Notification(
-            id=notif_id, type="campaign_milestone", title="Test",
-        ))
+        notif_repo.save = AsyncMock(
+            return_value=Notification(
+                id=notif_id,
+                type="campaign_milestone",
+                title="Test",
+            )
+        )
 
         queue = MagicMock()
         _notification_streams[user_id] = [queue]
 
         await service.send(
-            organization_id=uuid4(), user_id=user_id,
-            type="campaign_milestone", title="Test",
+            organization_id=uuid4(),
+            user_id=user_id,
+            type="campaign_milestone",
+            title="Test",
         )
 
         queue.put_nowait.assert_called_once()
@@ -138,7 +164,8 @@ class TestSendFromTemplate:
 
         with patch.object(service, "send", AsyncMock(return_value=Notification(id=uuid4()))):
             result = await service.send_from_template(
-                organization_id=uuid4(), user_id=uuid4(),
+                organization_id=uuid4(),
+                user_id=uuid4(),
                 template_id=template_id,
                 variables={"name": "Alice", "org": "Acme"},
             )
@@ -153,8 +180,10 @@ class TestSendFromTemplate:
 
         with pytest.raises(EntityNotFoundError):
             await service.send_from_template(
-                organization_id=uuid4(), user_id=uuid4(),
-                template_id=uuid4(), variables={},
+                organization_id=uuid4(),
+                user_id=uuid4(),
+                template_id=uuid4(),
+                variables={},
             )
 
 
@@ -176,7 +205,8 @@ class TestListNotifications:
         notif_repo.count_by_user = AsyncMock(return_value=1)
 
         result = await service.list_notifications(
-            user_id=uuid4(), organization_id=uuid4(),
+            user_id=uuid4(),
+            organization_id=uuid4(),
         )
 
         assert result["total"] == 1
@@ -224,7 +254,9 @@ class TestNotificationOperations:
         notif_repo.search = AsyncMock(return_value=[n])
 
         result = await service.search_notifications(
-            user_id=uuid4(), organization_id=uuid4(), q="campaign",
+            user_id=uuid4(),
+            organization_id=uuid4(),
+            q="campaign",
         )
 
         assert len(result) == 1
@@ -233,14 +265,24 @@ class TestNotificationOperations:
 
 class TestTemplates:
     async def test_create_template(self, service, template_repo):
-        template_repo.save = AsyncMock(return_value=NotificationTemplate(
-            id=uuid4(), name="Template", type="campaign_milestone",
-            channel="in_app", title_template="Hello", body_template="World",
-        ))
+        template_repo.save = AsyncMock(
+            return_value=NotificationTemplate(
+                id=uuid4(),
+                name="Template",
+                type="campaign_milestone",
+                channel="in_app",
+                title_template="Hello",
+                body_template="World",
+            )
+        )
 
         result = await service.create_template(
-            org_id=uuid4(), name="Template", type="campaign_milestone",
-            channel="in_app", title_template="Hello", body_template="World",
+            org_id=uuid4(),
+            name="Template",
+            type="campaign_milestone",
+            channel="in_app",
+            title_template="Hello",
+            body_template="World",
         )
 
         assert result.name == "Template"
@@ -248,15 +290,22 @@ class TestTemplates:
     async def test_create_template_invalid_type(self, service):
         with pytest.raises(ValidationError, match="Unknown type"):
             await service.create_template(
-                org_id=uuid4(), name="T", type="bad", channel="in_app",
-                title_template="Hello", body_template="World",
+                org_id=uuid4(),
+                name="T",
+                type="bad",
+                channel="in_app",
+                title_template="Hello",
+                body_template="World",
             )
 
     async def test_create_template_invalid_channel(self, service):
         with pytest.raises(ValidationError, match="Unknown channel"):
             await service.create_template(
-                org_id=uuid4(), name="T", type="campaign_milestone",
-                channel="bad", title_template="Hello",
+                org_id=uuid4(),
+                name="T",
+                type="campaign_milestone",
+                channel="bad",
+                title_template="Hello",
             )
 
     async def test_list_templates(self, service, template_repo):
@@ -276,9 +325,12 @@ class TestTemplates:
 
     async def test_get_template(self, service, template_repo):
         template_id = uuid4()
-        template_repo.find_by_id = AsyncMock(return_value=NotificationTemplate(
-            id=template_id, name="Template",
-        ))
+        template_repo.find_by_id = AsyncMock(
+            return_value=NotificationTemplate(
+                id=template_id,
+                name="Template",
+            )
+        )
 
         result = await service.get_template(template_id)
 
@@ -300,14 +352,20 @@ class TestTemplates:
 
 class TestPreferences:
     async def test_set_preference(self, service, pref_repo):
-        pref_repo.upsert = AsyncMock(return_value=UserNotificationPreference(
-            user_id=uuid4(), notification_type="campaign_milestone",
-            channel="in_app", enabled=True,
-        ))
+        pref_repo.upsert = AsyncMock(
+            return_value=UserNotificationPreference(
+                user_id=uuid4(),
+                notification_type="campaign_milestone",
+                channel="in_app",
+                enabled=True,
+            )
+        )
 
         result = await service.set_preference(
-            user_id=uuid4(), notification_type="campaign_milestone",
-            channel="in_app", enabled=True,
+            user_id=uuid4(),
+            notification_type="campaign_milestone",
+            channel="in_app",
+            enabled=True,
         )
 
         assert result.enabled is True
@@ -328,12 +386,18 @@ class TestPreferences:
 
 class TestAnnouncements:
     async def test_create_announcement(self, service, announcement_repo):
-        announcement_repo.save = AsyncMock(return_value=BroadcastAnnouncement(
-            id=uuid4(), title="System Update", severity="info",
-        ))
+        announcement_repo.save = AsyncMock(
+            return_value=BroadcastAnnouncement(
+                id=uuid4(),
+                title="System Update",
+                severity="info",
+            )
+        )
 
         result = await service.create_announcement(
-            org_id=uuid4(), title="System Update", severity="info",
+            org_id=uuid4(),
+            title="System Update",
+            severity="info",
         )
 
         assert result.title == "System Update"
@@ -341,7 +405,9 @@ class TestAnnouncements:
     async def test_create_announcement_invalid_severity(self, service):
         with pytest.raises(ValidationError, match="Unknown severity"):
             await service.create_announcement(
-                org_id=uuid4(), title="Test", severity="critical",
+                org_id=uuid4(),
+                title="Test",
+                severity="critical",
             )
 
     async def test_list_announcements(self, service, announcement_repo):
@@ -380,8 +446,10 @@ class TestSSEStream:
     def test_subscribe_creates_queue(self):
         user_id = uuid4()
         svc = NotificationHubService(
-            notif_repo=MagicMock(), template_repo=MagicMock(),
-            pref_repo=MagicMock(), announcement_repo=MagicMock(),
+            notif_repo=MagicMock(),
+            template_repo=MagicMock(),
+            pref_repo=MagicMock(),
+            announcement_repo=MagicMock(),
         )
         _notification_streams.clear()
 
@@ -393,8 +461,10 @@ class TestSSEStream:
     def test_unsubscribe_removes_queue(self):
         user_id = uuid4()
         svc = NotificationHubService(
-            notif_repo=MagicMock(), template_repo=MagicMock(),
-            pref_repo=MagicMock(), announcement_repo=MagicMock(),
+            notif_repo=MagicMock(),
+            template_repo=MagicMock(),
+            pref_repo=MagicMock(),
+            announcement_repo=MagicMock(),
         )
         _notification_streams.clear()
         queue = svc.subscribe(user_id)
@@ -407,8 +477,10 @@ class TestSSEStream:
     def test_subscribe_multiple_queues(self):
         user_id = uuid4()
         svc = NotificationHubService(
-            notif_repo=MagicMock(), template_repo=MagicMock(),
-            pref_repo=MagicMock(), announcement_repo=MagicMock(),
+            notif_repo=MagicMock(),
+            template_repo=MagicMock(),
+            pref_repo=MagicMock(),
+            announcement_repo=MagicMock(),
         )
         _notification_streams.clear()
 

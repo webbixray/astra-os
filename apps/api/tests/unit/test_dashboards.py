@@ -41,7 +41,9 @@ class TestDashboardWidget:
 
     def test_invalid_height_raises(self):
         with pytest.raises(ValidationError, match="dimensions must be positive"):
-            DashboardWidget.create(dashboard_id=uuid4(), widget_type="kpi_card", title="X", height=0)
+            DashboardWidget.create(
+                dashboard_id=uuid4(), widget_type="kpi_card", title="X", height=0
+            )
 
     def test_default_config(self):
         w = DashboardWidget.create(dashboard_id=uuid4(), widget_type="kpi_card", title="X")

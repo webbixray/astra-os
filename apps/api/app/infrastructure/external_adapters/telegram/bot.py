@@ -2,56 +2,31 @@
 
 import asyncio
 import logging
-from typing import Any, Callable, Awaitable
 from uuid import UUID
 
 from aiogram import Bot, Dispatcher, types
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
-from aiogram.filters import Command, CommandStart, Filter
-from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.fsm.context import FSMContext
+from aiogram.filters import Filter
 from aiogram.fsm.state import State, StatesGroup
+from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.fsm.storage.redis import RedisStorage
+from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from aiohttp import web
+from redis.asyncio import Redis
 
-from app.infrastructure.external_adapters.telegram.config import get_telegram_config, TelegramConfig
-from app.application.use_cases.organizations.org_service import OrganizationService as OrgService
-from app.application.use_cases.campaigns.campaign_use_cases import (
-    CreateCampaignUseCase, GetCampaignUseCase, ListCampaignsUseCase, UpdateCampaignUseCase
-)
-from app.application.use_cases.content.content_use_cases import (
-    CreateContentUseCase, ListContentUseCase
-)
-from app.application.use_cases.analytics.analytics_service import AnalyticsService
-from app.application.use_cases.knowledge.knowledge_service import KnowledgeGraphService
-from app.application.use_cases.advertising.ad_campaign_service import AdCampaignService
-from app.application.use_cases.ai.content_generation_service import ContentGenerationService
-from app.application.use_cases.ai.prompt_manager import PromptManager
-from app.infrastructure.db.session import create_session_factory
 from app.infrastructure.db.repositories.campaigns.campaign_repository import CampaignRepositoryImpl
 from app.infrastructure.db.repositories.content.content_repository import ContentRepositoryImpl
-from app.infrastructure.db.repositories.content_template_repository import ContentTemplateRepository
-from app.infrastructure.db.repositories.brand_voice_repository import BrandVoiceRepository
-from app.infrastructure.db.repositories.prompt_repository import SystemPromptRepositoryImpl
-from app.infrastructure.external_adapters.knowledge.graph_store import GraphStore
-from app.domain.entities.campaigns.campaign import Campaign
-from app.domain.entities.content.content import Content
-from app.domain.entities.content.content_template import ContentTemplate
-from app.domain.entities.content.brand_voice import BrandVoice
-from app.infrastructure.db.models.campaigns.campaign_model import CampaignModel
-from app.infrastructure.db.models.content.content_model import ContentModel
-from app.infrastructure.db.models.content.content_template_model import ContentTemplateModel
-from app.infrastructure.db.models.content.brand_voice_model import BrandVoiceModel
-from aiogram.fsm.storage.redis import RedisStorage
-from redis.asyncio import Redis
+from app.infrastructure.db.session import create_session_factory
+from app.infrastructure.external_adapters.telegram.config import TelegramConfig, get_telegram_config
 
 logger = logging.getLogger(__name__)
 
 
 class BotStates(StatesGroup):
     """States for multi-step conversations."""
+
     IDLE = State()
     SELECTING_ORG = State()
     CREATING_CAMPAIGN_NAME = State()
@@ -89,7 +64,9 @@ class AuthorizationFilter(Filter):
         if not self.config.allowed_user_ids:
             return True  # No restrictions
 
-        allowed_ids = [int(uid.strip()) for uid in self.config.allowed_user_ids.split(",") if uid.strip()]
+        allowed_ids = [
+            int(uid.strip()) for uid in self.config.allowed_user_ids.split(",") if uid.strip()
+        ]
         return message.from_user.id in allowed_ids if message.from_user else False
 
 
@@ -103,7 +80,9 @@ class AdminFilter(Filter):
         if not self.config.admin_user_ids:
             return False
 
-        admin_ids = [int(uid.strip()) for uid in self.config.admin_user_ids.split(",") if uid.strip()]
+        admin_ids = [
+            int(uid.strip()) for uid in self.config.admin_user_ids.split(",") if uid.strip()
+        ]
         return message.from_user.id in admin_ids if message.from_user else False
 
 
@@ -116,10 +95,10 @@ class WebhookValidationMiddleware:
 
     async def __call__(self, handler, event, data):
         # For webhook updates, validate the secret token
-        if hasattr(event, 'webhook_secret_token') and self.secret_token:
+        if hasattr(event, "webhook_secret_token") and self.secret_token:
             if event.webhook_secret_token != self.secret_token:
                 logger.warning("Invalid webhook secret token")
-                return
+                return None
         return await handler(event, data)
 
 
@@ -138,13 +117,20 @@ class GovernanceMiddleware:
             action = self._map_action(event)
             if action:
                 # Check governance
-                allowed = await self._check_governance(ctx.organization_id, action, event.from_user.id)
+                allowed = await self._check_governance(
+                    ctx.organization_id, action, event.from_user.id
+                )
                 if not allowed:
                     if isinstance(event, CallbackQuery):
-                        await event.answer("🚫 Action blocked by governance policy. Requires approval.", show_alert=True)
+                        await event.answer(
+                            "🚫 Action blocked by governance policy. Requires approval.",
+                            show_alert=True,
+                        )
                     elif isinstance(event, Message):
-                        await event.answer("🚫 Action blocked by governance policy. Requires approval.")
-                    return
+                        await event.answer(
+                            "🚫 Action blocked by governance policy. Requires approval."
+                        )
+                    return None
 
         return await handler(event, data)
 
@@ -154,9 +140,9 @@ class GovernanceMiddleware:
             data = event.data
             if data.startswith("campaign_"):
                 return "campaign.create" if data == "campaign_create" else "campaign.manage"
-            elif data.startswith("content_"):
+            if data.startswith("content_"):
                 return "content.generate"
-            elif data.startswith("ads_"):
+            if data.startswith("ads_"):
                 return "ads.manage"
         elif isinstance(event, Message):
             # Check state for multi-step flows
@@ -267,6 +253,7 @@ class TelegramBot:
     def _register_handlers(self):
         """Register all message and callback handlers."""
         from app.infrastructure.external_adapters.telegram.handlers import register_handlers
+
         register_handlers(self)
 
     async def _set_bot_commands(self):
@@ -286,11 +273,13 @@ class TelegramBot:
         ]
 
         if self.config.admin_user_ids:
-            commands.extend([
-                types.BotCommand(command="admin", description="⚙️ Admin panel"),
-                types.BotCommand(command="users", description="👥 List users"),
-                types.BotCommand(command="logs", description="📋 View logs"),
-            ])
+            commands.extend(
+                [
+                    types.BotCommand(command="admin", description="⚙️ Admin panel"),
+                    types.BotCommand(command="users", description="👥 List users"),
+                    types.BotCommand(command="logs", description="📋 View logs"),
+                ]
+            )
 
         await self.bot.set_my_commands(commands)
 
@@ -407,7 +396,11 @@ class TelegramBot:
             [InlineKeyboardButton(text="🔄 Sync from Platforms", callback_data="campaign_sync")],
             [InlineKeyboardButton(text="⏸️ Pause Campaign", callback_data="campaign_pause")],
             [InlineKeyboardButton(text="▶️ Resume Campaign", callback_data="campaign_resume")],
-            [InlineKeyboardButton(text="📊 Campaign Performance", callback_data="campaign_performance")],
+            [
+                InlineKeyboardButton(
+                    text="📊 Campaign Performance", callback_data="campaign_performance"
+                )
+            ],
             [InlineKeyboardButton(text="🔙 Back to Main", callback_data="menu_main")],
         ]
         return InlineKeyboardMarkup(inline_keyboard=buttons)
@@ -433,7 +426,11 @@ class TelegramBot:
             [InlineKeyboardButton(text="💰 Budget Utilization", callback_data="analytics_budget")],
             [InlineKeyboardButton(text="🎯 ROI Analysis", callback_data="analytics_roi")],
             [InlineKeyboardButton(text="👥 Audience Insights", callback_data="analytics_audience")],
-            [InlineKeyboardButton(text="📱 Channel Performance", callback_data="analytics_channels")],
+            [
+                InlineKeyboardButton(
+                    text="📱 Channel Performance", callback_data="analytics_channels"
+                )
+            ],
             [InlineKeyboardButton(text="🔙 Back to Main", callback_data="menu_main")],
         ]
         return InlineKeyboardMarkup(inline_keyboard=buttons)
@@ -455,12 +452,9 @@ class TelegramBot:
         """Create organization selection keyboard."""
         buttons = []
         for org in orgs:
-            buttons.append([
-                InlineKeyboardButton(
-                    text=f"🏢 {org.name}",
-                    callback_data=f"org_select_{org.id}"
-                )
-            ])
+            buttons.append(
+                [InlineKeyboardButton(text=f"🏢 {org.name}", callback_data=f"org_select_{org.id}")]
+            )
         buttons.append([InlineKeyboardButton(text="🔙 Back", callback_data="menu_main")])
         return InlineKeyboardMarkup(inline_keyboard=buttons)
 

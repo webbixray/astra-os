@@ -2,6 +2,7 @@
 """Entrypoint script for Astra API container.
 Handles database migrations, health checks, and graceful startup.
 """
+
 import logging
 import os
 import subprocess
@@ -9,13 +10,14 @@ import sys
 import time
 
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger("entrypoint")
 
 
-def run_command(cmd: list, env: dict | None = None, check: bool = True) -> subprocess.CompletedProcess:
+def run_command(
+    cmd: list, env: dict | None = None, check: bool = True
+) -> subprocess.CompletedProcess:
     """Run a command and return the result."""
     logger.info(f"Running: {' '.join(cmd)}")
     result = subprocess.run(cmd, env=env or os.environ, capture_output=True, text=True)
@@ -139,25 +141,45 @@ def main():
                 [
                     "gunicorn",
                     "app.main:app",
-                    "--worker-class", "uvicorn.workers.UvicornWorker",
-                    "--bind", "0.0.0.0:8000",
-                    "--workers", "4",
-                    "--max-requests", "10000",
-                    "--max-requests-jitter", "1000",
-                    "--timeout", "60",
-                    "--keep-alive", "5",
-                    "--log-level", "info",
-                    "--access-logfile", "-",
-                    "--error-logfile", "-"
+                    "--worker-class",
+                    "uvicorn.workers.UvicornWorker",
+                    "--bind",
+                    "0.0.0.0:8000",
+                    "--workers",
+                    "4",
+                    "--max-requests",
+                    "10000",
+                    "--max-requests-jitter",
+                    "1000",
+                    "--timeout",
+                    "60",
+                    "--keep-alive",
+                    "5",
+                    "--log-level",
+                    "info",
+                    "--access-logfile",
+                    "-",
+                    "--error-logfile",
+                    "-",
                 ],
-                os.environ
+                os.environ,
             )
         else:
             logger.info("Starting uvicorn server (development)...")
             os.execvpe(
                 "python",
-                ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"],
-                os.environ
+                [
+                    "python",
+                    "-m",
+                    "uvicorn",
+                    "app.main:app",
+                    "--host",
+                    "0.0.0.0",
+                    "--port",
+                    "8000",
+                    "--reload",
+                ],
+                os.environ,
             )
 
 

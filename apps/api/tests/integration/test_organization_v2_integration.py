@@ -48,7 +48,10 @@ class TestOrganizationV2Integration:
         return resp.json()
 
     async def _create_org(
-        self, integration_session_factory, user_id: UUID, name: str = "Test Org",
+        self,
+        integration_session_factory,
+        user_id: UUID,
+        name: str = "Test Org",
         slug: str = "test-org",
     ) -> UUID:
         from app.domain.entities.organization import Organization
@@ -66,7 +69,9 @@ class TestOrganizationV2Integration:
             org = Organization.create(name=name, slug=slug)
             org = await org_repo.save(org)
             member = TeamMember.create(
-                organization_id=org.id, user_id=user_id, role="owner",
+                organization_id=org.id,
+                user_id=user_id,
+                role="owner",
             )
             await member_repo.save(member)
             await session.commit()
@@ -187,7 +192,9 @@ class TestOrganizationV2Integration:
         async with integration_session_factory() as session:
             member_repo = TeamMemberRepositoryImpl(session)
             member = TeamMember.create(
-                organization_id=org_id, user_id=target_id, role="member",
+                organization_id=org_id,
+                user_id=target_id,
+                role="member",
             )
             member = await member_repo.save(member)
             member_id = member.id
@@ -294,10 +301,16 @@ class TestOrganizationV2Integration:
         auth = await self._signup(test_client, "setparent@test.com")
         user_id = UUID(auth["user"]["id"])
         org_a = await self._create_org(
-            integration_session_factory, user_id, name="Org A", slug="org-a",
+            integration_session_factory,
+            user_id,
+            name="Org A",
+            slug="org-a",
         )
         org_b = await self._create_org(
-            integration_session_factory, user_id, name="Org B", slug="org-b",
+            integration_session_factory,
+            user_id,
+            name="Org B",
+            slug="org-b",
         )
         test_client.headers["Authorization"] = f"Bearer {auth['access_token']}"
 

@@ -16,7 +16,9 @@ def app() -> FastAPI:
     return app
 
 
-def _build_mock_redis(client_ping: AsyncMock | None = None, connect_side_effect: Exception | None = None) -> MagicMock:
+def _build_mock_redis(
+    client_ping: AsyncMock | None = None, connect_side_effect: Exception | None = None
+) -> MagicMock:
     mock_cache = MagicMock()
     if connect_side_effect:
         mock_cache.client = None

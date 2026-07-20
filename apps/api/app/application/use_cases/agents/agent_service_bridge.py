@@ -50,10 +50,15 @@ class AgentServiceBridge:
         self._communication = CommunicationProtocol()
         self._event_bus = get_event_bus()
         self._handoff_manager = HandoffManager(
-            self._registry, self._communication, self._event_bus,
+            self._registry,
+            self._communication,
+            self._event_bus,
         )
         self._coordinator = AgentCoordinator(
-            self._hierarchy, self._communication, self._handoff_manager, self._event_bus,
+            self._hierarchy,
+            self._communication,
+            self._handoff_manager,
+            self._event_bus,
         )
         self._audit_trail = get_agent_audit_trail()
         self._memory_manager = MemoryManager()
@@ -81,12 +86,14 @@ class AgentServiceBridge:
         )
 
         # Publish start event
-        await self._event_bus.publish(Event(
-            event_type="agent.request.received",
-            source="api",
-            tenant_id=tenant_id,
-            payload={"user_id": str(user_id), "message": message[:200]},
-        ))
+        await self._event_bus.publish(
+            Event(
+                event_type="agent.request.received",
+                source="api",
+                tenant_id=tenant_id,
+                payload={"user_id": str(user_id), "message": message[:200]},
+            )
+        )
 
         try:
             # Create CEO agent
@@ -108,18 +115,20 @@ class AgentServiceBridge:
             )
 
             # Publish completion event
-            await self._event_bus.publish(Event(
-                event_type="agent.request.completed",
-                source=str(ceo.agent_id),
-                tenant_id=tenant_id,
-                payload={
-                    "success": result.success,
-                    "output": result.output[:500] if result.output else None,
-                    "tokens_used": result.tokens_used,
-                    "cost_usd": result.cost_usd,
-                    "duration_ms": result.duration_ms,
-                },
-            ))
+            await self._event_bus.publish(
+                Event(
+                    event_type="agent.request.completed",
+                    source=str(ceo.agent_id),
+                    tenant_id=tenant_id,
+                    payload={
+                        "success": result.success,
+                        "output": result.output[:500] if result.output else None,
+                        "tokens_used": result.tokens_used,
+                        "cost_usd": result.cost_usd,
+                        "duration_ms": result.duration_ms,
+                    },
+                )
+            )
 
             return {
                 "task_id": str(ceo.agent_id),
@@ -137,12 +146,14 @@ class AgentServiceBridge:
         except Exception as e:
             logger.exception("Agent service bridge failed")
 
-            await self._event_bus.publish(Event(
-                event_type="agent.request.failed",
-                source="api",
-                tenant_id=tenant_id,
-                payload={"error": str(e)},
-            ))
+            await self._event_bus.publish(
+                Event(
+                    event_type="agent.request.failed",
+                    source="api",
+                    tenant_id=tenant_id,
+                    payload={"error": str(e)},
+                )
+            )
 
             return {
                 "task_id": str(uuid4()),
@@ -202,13 +213,15 @@ class AgentServiceBridge:
         for agent_type in self._registry.list_agent_types():
             config = self._registry.get_config(agent_type)
             if config:
-                agents.append({
-                    "type": agent_type.value,
-                    "name": config.name,
-                    "description": config.description,
-                    "capabilities": config.capabilities,
-                    "autonomy_level": config.autonomy_level,
-                })
+                agents.append(
+                    {
+                        "type": agent_type.value,
+                        "name": config.name,
+                        "description": config.description,
+                        "capabilities": config.capabilities,
+                        "autonomy_level": config.autonomy_level,
+                    }
+                )
         return agents
 
     def get_hierarchy(self) -> dict[str, list[str]]:

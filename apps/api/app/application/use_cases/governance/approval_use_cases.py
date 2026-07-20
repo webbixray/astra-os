@@ -62,14 +62,10 @@ class ApprovalRequestRepository(ABC):
     async def find_by_id(self, request_id: UUID) -> ApprovalRequest | None: ...
 
     @abstractmethod
-    async def find_pending_by_organization(
-        self, org_id: UUID
-    ) -> list[ApprovalRequest]: ...
+    async def find_pending_by_organization(self, org_id: UUID) -> list[ApprovalRequest]: ...
 
     @abstractmethod
-    async def find_pending_by_role(
-        self, org_id: UUID, role: str
-    ) -> list[ApprovalRequest]: ...
+    async def find_pending_by_role(self, org_id: UUID, role: str) -> list[ApprovalRequest]: ...
 
     @abstractmethod
     async def find_expired_stale(self, before: datetime) -> list[ApprovalRequest]: ...
@@ -80,9 +76,7 @@ class ApprovalDecisionRepository(ABC):
     async def save(self, decision: ApprovalDecision) -> ApprovalDecision: ...
 
     @abstractmethod
-    async def find_by_request_id(
-        self, request_id: UUID
-    ) -> ApprovalDecision | None: ...
+    async def find_by_request_id(self, request_id: UUID) -> ApprovalDecision | None: ...
 
 
 # ── Use Cases ──────────────────────────────────────────────────────────
@@ -205,9 +199,7 @@ class EvaluateApprovalRulesUseCase:
             EvaluationResult with triggered rules and approval status.
 
         """
-        rules = await self._rule_repo.find_by_organization(
-            organization_id, active_only=True
-        )
+        rules = await self._rule_repo.find_by_organization(organization_id, active_only=True)
         return self._eval_service.evaluate(rules, context)
 
 

@@ -123,12 +123,16 @@ class TestAuthIntegration:
         assert resp.status_code == 201
 
         resp = await test_client.post("/api/v1/auth/signup", json=payload)
-        assert resp.status_code in (409, 422), f"expected duplicate rejection, got {resp.status_code}"
+        assert resp.status_code in (409, 422), (
+            f"expected duplicate rejection, got {resp.status_code}"
+        )
 
     async def test_signup_weak_password(self, test_client):
         payload = {"email": "weak@test.com", "password": "short", "name": "Weak"}
         resp = await test_client.post("/api/v1/auth/signup", json=payload)
-        assert resp.status_code in (400, 422), f"expected weak password rejection, got {resp.status_code}"
+        assert resp.status_code in (400, 422), (
+            f"expected weak password rejection, got {resp.status_code}"
+        )
 
     async def test_signin_wrong_password(self, test_client):
         email = "wrongpw@test.com"
@@ -140,7 +144,9 @@ class TestAuthIntegration:
             "/api/v1/auth/signin",
             json={"email": email, "password": "WrongPassword1!"},
         )
-        assert resp.status_code in (400, 401, 422), f"expected wrong password rejection, got {resp.status_code}"
+        assert resp.status_code in (400, 401, 422), (
+            f"expected wrong password rejection, got {resp.status_code}"
+        )
 
     async def test_me_unauthorized(self, test_client):
         resp = await test_client.get("/api/v1/auth/me")

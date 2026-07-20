@@ -21,6 +21,7 @@ router = APIRouter()
 # Request / Response models
 # ---------------------------------------------------------------------------
 
+
 class InstantiateTemplateRequest(BaseModel):
     organization_id: UUID
     name: str | None = None
@@ -58,14 +59,17 @@ class InstantiatedWorkflowResponse(BaseModel):
 # Dependency — lazy import to avoid circular deps
 # ---------------------------------------------------------------------------
 
+
 def _get_registry():
     from app.domain.services.workflow_templates import template_registry
+
     return template_registry
 
 
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
+
 
 @router.get(
     "",

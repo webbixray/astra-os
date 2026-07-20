@@ -96,7 +96,10 @@ class TestStartupProbe:
             assert any("DATABASE_URL" in w for w in StartupProbe.warnings)
 
     def test_database_url_ok(self):
-        with patch("app.infrastructure.startup.config.database_url", "postgresql://prod:pw@db.internal/prod"):
+        with patch(
+            "app.infrastructure.startup.config.database_url",
+            "postgresql://prod:pw@db.internal/prod",
+        ):
             StartupProbe._check_database_url()
             assert not StartupProbe.errors
             assert not StartupProbe.warnings

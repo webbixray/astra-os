@@ -38,10 +38,10 @@ def upgrade() -> None:
         sa.Column("key", sa.String(500), nullable=False),
         sa.Column("value", JSONB, nullable=False, server_default="{}"),
         sa.Column(
-                    "embedding",
-                    Vector(1536),
-                    nullable=True,
-                ),
+            "embedding",
+            Vector(1536),
+            nullable=True,
+        ),
         sa.Column(
             "importance",
             sa.Float,
@@ -57,8 +57,12 @@ def upgrade() -> None:
             server_default="0",
         ),
         sa.Column("last_accessed", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
         sa.Column("expires_at", sa.DateTime(timezone=True), nullable=True),
     )
 
@@ -98,7 +102,9 @@ def upgrade() -> None:
         sa.Column("tenant_id", UUID(as_uuid=True), nullable=True, index=True),
         sa.Column("payload", JSONB, nullable=False, server_default="{}"),
         sa.Column("metadata", JSONB, nullable=False, server_default="{}"),
-        sa.Column("timestamp", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "timestamp", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
         sa.Column("correlation_id", UUID(as_uuid=True), nullable=True, index=True),
     )
 
@@ -122,10 +128,14 @@ def upgrade() -> None:
         sa.Column("agent_name", sa.String(100), nullable=False),
         sa.Column("iteration", sa.Integer, nullable=False, server_default="0"),
         sa.Column("thought", sa.Text, nullable=True, comment="Agent reasoning at this step"),
-        sa.Column("action", sa.String(200), nullable=True, comment="Tool or delegation action taken"),
+        sa.Column(
+            "action", sa.String(200), nullable=True, comment="Tool or delegation action taken"
+        ),
         sa.Column("action_input", JSONB, nullable=True),
         sa.Column("observation", sa.Text, nullable=True, comment="Result of the action"),
-        sa.Column("final_answer", sa.Text, nullable=True, comment="Final output if this is terminal"),
+        sa.Column(
+            "final_answer", sa.Text, nullable=True, comment="Final output if this is terminal"
+        ),
         sa.Column("tool_calls", JSONB, nullable=False, server_default="[]"),
         sa.Column("tool_results", JSONB, nullable=False, server_default="[]"),
         sa.Column("tokens_used", sa.Integer, nullable=False, server_default="0"),
@@ -134,7 +144,9 @@ def upgrade() -> None:
         sa.Column("success", sa.Boolean, nullable=False, server_default="true"),
         sa.Column("error", sa.Text, nullable=True),
         sa.Column("metadata", JSONB, nullable=False, server_default="{}"),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
     )
 
     op.create_index(

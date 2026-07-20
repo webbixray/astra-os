@@ -160,7 +160,9 @@ class TestChatMessage:
         assert m.timestamp == ts
 
     def test_to_dict_excludes_id_and_timestamp(self):
-        m = ChatMessage(role=MessageRole.SYSTEM, content="System prompt", id="x", timestamp=datetime.now())
+        m = ChatMessage(
+            role=MessageRole.SYSTEM, content="System prompt", id="x", timestamp=datetime.now()
+        )
         d = m.to_dict()
         assert d == {"role": "system", "content": "System prompt"}
         assert "id" not in d

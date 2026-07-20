@@ -34,7 +34,9 @@ class AdCampaignRepoImpl(AdCampaignRepository):
             organization_id=ad_campaign.organization_id,
             ad_account_id=ad_campaign.ad_account_id,
             name=ad_campaign.name,
-            objective=ad_campaign.objective.value if hasattr(ad_campaign.objective, "value") else (ad_campaign.objective or "awareness"),
+            objective=ad_campaign.objective.value
+            if hasattr(ad_campaign.objective, "value")
+            else (ad_campaign.objective or "awareness"),
             status=ad_campaign.status,
             platform_campaign_id=ad_campaign.platform_campaign_id,
             platform=ad_campaign.platform,
@@ -45,7 +47,9 @@ class AdCampaignRepoImpl(AdCampaignRepository):
             end_date=ad_campaign.end_date,
             targeting=ad_campaign.targeting,
             creatives=ad_campaign.creatives,
-            sync_status=ad_campaign.sync_status.value if hasattr(ad_campaign.sync_status, "value") else str(ad_campaign.sync_status),
+            sync_status=ad_campaign.sync_status.value
+            if hasattr(ad_campaign.sync_status, "value")
+            else str(ad_campaign.sync_status),
             created_by=ad_campaign.created_by,
         )
         merged = await self.session.merge(model)
@@ -104,9 +108,7 @@ class AdInsightRepoImpl(AdInsightRepository):
         )
         return [_insight_to_domain(m) for m in result.scalars().all()]
 
-    async def find_by_date_range(
-        self, campaign_id: UUID, start: str, end: str
-    ) -> list[AdInsight]:
+    async def find_by_date_range(self, campaign_id: UUID, start: str, end: str) -> list[AdInsight]:
         result = await self.session.execute(
             select(AdInsightModel)
             .where(

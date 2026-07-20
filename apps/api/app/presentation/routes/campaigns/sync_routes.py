@@ -98,7 +98,9 @@ async def sync_all_campaigns(
                     "id": str(c.id),
                     "name": c.name,
                     "status": c.status,
-                    "sync_status": c.sync_status.value if hasattr(c.sync_status, "value") else str(c.sync_status),
+                    "sync_status": c.sync_status.value
+                    if hasattr(c.sync_status, "value")
+                    else str(c.sync_status),
                 }
                 for c in synced
             ],
@@ -160,7 +162,9 @@ async def sync_single_campaign(
             "id": str(ad_campaign.id),
             "name": ad_campaign.name,
             "status": ad_campaign.status,
-            "sync_status": ad_campaign.sync_status.value if hasattr(ad_campaign.sync_status, "value") else str(ad_campaign.sync_status),
+            "sync_status": ad_campaign.sync_status.value
+            if hasattr(ad_campaign.sync_status, "value")
+            else str(ad_campaign.sync_status),
             "platform": ad_campaign.platform,
         }
     except Exception as e:

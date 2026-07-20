@@ -32,6 +32,7 @@ def auth_group():
 def login(ctx: click.Context, email: str, password: str, sso: bool, org: str):
     """Authenticate with Astra OS"""
     from rich.console import Console
+
     console = Console()
 
     config = load_config(ctx.obj["config_path"])
@@ -102,11 +103,13 @@ def login(ctx: click.Context, email: str, password: str, sso: bool, org: str):
 def logout(ctx: click.Context):
     """Logout and clear credentials"""
     from rich.console import Console
+
     console = Console()
 
     # Clear credentials file
     try:
         from astra_cli.config import CREDENTIALS_FILE
+
         if CREDENTIALS_FILE.exists():
             CREDENTIALS_FILE.unlink()
     except:
@@ -127,6 +130,7 @@ def whoami(ctx: click.Context):
     """Show current user info"""
     from rich.console import Console
     from rich.table import Table
+
     console = Console()
 
     credentials = get_credentials()
@@ -154,6 +158,7 @@ def token_status(ctx: click.Context, verbose: bool):
     """Show token status"""
     from rich.console import Console
     from rich.table import Table
+
     console = Console()
 
     config = load_config(ctx.obj["config_path"])
@@ -172,6 +177,7 @@ def token_status(ctx: click.Context, verbose: bool):
 
     if verbose:
         import jwt
+
         try:
             payload = jwt.decode(token, options={"verify_signature": False})
             table.add_row("Issuer", payload.get("iss", "Unknown"))
@@ -188,6 +194,7 @@ def token_status(ctx: click.Context, verbose: bool):
 def refresh(ctx: click.Context):
     """Refresh access token using refresh token"""
     from rich.console import Console
+
     console = Console()
 
     config = load_config(ctx.obj["config_path"])

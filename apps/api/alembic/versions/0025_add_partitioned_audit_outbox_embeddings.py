@@ -47,7 +47,6 @@ def upgrade() -> None:
     # Create monthly partitions for the next 2 years (proper calendar months)
     for year in range(2026, 2028):
         for month in range(1, 13):
-
             # Calculate partition start and end dates (first day of month to first day of next month)
             if month == 12:
                 next_year = year + 1
@@ -91,10 +90,17 @@ def upgrade() -> None:
         sa.Column("aggregate_id", UUID(as_uuid=True), nullable=False, index=True),
         sa.Column("event_type", sa.String(100), nullable=False),
         sa.Column("payload", sa.dialects.postgresql.JSONB, nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
         sa.Column("published_at", sa.DateTime(timezone=True), nullable=True),
     )
-    op.create_index("ix_outbox_unpublished", "outbox", ["created_at"], postgresql_where=sa.text("published_at IS NULL"))
+    op.create_index(
+        "ix_outbox_unpublished",
+        "outbox",
+        ["created_at"],
+        postgresql_where=sa.text("published_at IS NULL"),
+    )
 
     # Create embeddings table - check pgvector availability first
     # Use a separate connection to check pgvector availability
@@ -115,10 +121,19 @@ def upgrade() -> None:
             sa.Column("source_id", UUID(as_uuid=True), nullable=False),
             sa.Column("content", sa.Text, nullable=False),
             sa.Column("embedding", Vector(1536), nullable=True),
-            sa.Column("metadata", sa.dialects.postgresql.JSONB, nullable=False, server_default="{}"),
-            sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+            sa.Column(
+                "metadata", sa.dialects.postgresql.JSONB, nullable=False, server_default="{}"
+            ),
+            sa.Column(
+                "created_at",
+                sa.DateTime(timezone=True),
+                server_default=sa.func.now(),
+                nullable=False,
+            ),
         )
-        op.create_index("ix_embeddings_tenant_source", "embeddings", ["tenant_id", "source_type", "source_id"])
+        op.create_index(
+            "ix_embeddings_tenant_source", "embeddings", ["tenant_id", "source_type", "source_id"]
+        )
         op.execute("""
             CREATE INDEX IF NOT EXISTS ix_embeddings_vector
             ON embeddings USING hnsw (embedding vector_cosine_ops)
@@ -133,10 +148,19 @@ def upgrade() -> None:
             sa.Column("source_id", UUID(as_uuid=True), nullable=False),
             sa.Column("content", sa.Text, nullable=False),
             sa.Column("embedding", sa.dialects.postgresql.ARRAY(sa.Float), nullable=True),
-            sa.Column("metadata", sa.dialects.postgresql.JSONB, nullable=False, server_default="{}"),
-            sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+            sa.Column(
+                "metadata", sa.dialects.postgresql.JSONB, nullable=False, server_default="{}"
+            ),
+            sa.Column(
+                "created_at",
+                sa.DateTime(timezone=True),
+                server_default=sa.func.now(),
+                nullable=False,
+            ),
         )
-        op.create_index("ix_embeddings_tenant_source", "embeddings", ["tenant_id", "source_type", "source_id"])
+        op.create_index(
+            "ix_embeddings_tenant_source", "embeddings", ["tenant_id", "source_type", "source_id"]
+        )
 
 
 def downgrade() -> None:

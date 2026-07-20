@@ -463,7 +463,6 @@ async def clone_from_template(
 # ── A/B test endpoints ────────────────────────────────────────────────────────
 
 
-
 @router.get("/ab-tests/{test_id}", summary="Get A/B test details")
 async def get_ab_test(
     test_id: UUID,
@@ -679,6 +678,7 @@ async def record_variant_metrics(
 
 
 # ── Pacing endpoints ──────────────────────────────────────────────────────────
+
 
 @router.get("/{campaign_id}", summary="Get a campaign by ID")
 async def get_campaign(
@@ -1091,7 +1091,6 @@ async def record_campaign_spend(
     }
 
 
-
 @router.post(
     "/{campaign_id}/ab-tests", status_code=status.HTTP_201_CREATED, summary="Create an A/B test"
 )
@@ -1165,6 +1164,7 @@ async def list_ab_tests(
         }
         for t in tests
     ]
+
 
 @router.get("/{campaign_id}/pacing", summary="Get campaign pacing analysis")
 async def get_campaign_pacing(
@@ -1322,7 +1322,10 @@ async def create_sample_campaigns(
             "name": "Lead Generation Campaign",
             "objective": CampaignObjective.LEAD_GENERATION,
             "description": "Generate qualified leads through targeted content",
-            "target_audience": {"job_titles": ["CTO", "VP Engineering", "Director"], "company_size": "50-500"},
+            "target_audience": {
+                "job_titles": ["CTO", "VP Engineering", "Director"],
+                "company_size": "50-500",
+            },
             "budget": 3000.0,
         },
         {
@@ -1360,12 +1363,14 @@ async def create_sample_campaigns(
             created_by=user_id,
             description=sc.get("description"),
         )
-        created.append({
-            "id": str(campaign.id),
-            "name": campaign.name,
-            "objective": campaign.objective.value,
-            "budget": campaign.budget,
-        })
+        created.append(
+            {
+                "id": str(campaign.id),
+                "name": campaign.name,
+                "objective": campaign.objective.value,
+                "budget": campaign.budget,
+            }
+        )
 
     return {
         "message": f"Created {len(created)} sample campaigns",

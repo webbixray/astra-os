@@ -47,7 +47,9 @@ class TestRateLimitMiddleware:
         async def health() -> dict:
             return {"ok": True}
 
-        app.add_middleware(RateLimitMiddleware, requests_per_minute=1, whitelist_paths=["/api/v1/health"])
+        app.add_middleware(
+            RateLimitMiddleware, requests_per_minute=1, whitelist_paths=["/api/v1/health"]
+        )
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             resp1 = await client.get("/api/v1/health")
@@ -79,7 +81,12 @@ class TestRateLimitMiddleware:
         async def signin() -> dict:
             return {"ok": True}
 
-        app.add_middleware(RateLimitMiddleware, auth_requests_per_minute=1, requests_per_minute=120, whitelist_paths=[])
+        app.add_middleware(
+            RateLimitMiddleware,
+            auth_requests_per_minute=1,
+            requests_per_minute=120,
+            whitelist_paths=[],
+        )
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             resp1 = await client.post("/api/v1/auth/signin")
@@ -116,7 +123,9 @@ class TestRateLimitMiddleware:
         redis_mock.client.incr = AsyncMock(return_value=1)
         redis_mock.client.expire = AsyncMock()
 
-        app.add_middleware(RateLimitMiddleware, requests_per_minute=120, whitelist_paths=[], redis_cache=redis_mock)
+        app.add_middleware(
+            RateLimitMiddleware, requests_per_minute=120, whitelist_paths=[], redis_cache=redis_mock
+        )
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             response = await client.get("/api/v1/test")

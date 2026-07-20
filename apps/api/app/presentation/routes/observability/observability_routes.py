@@ -46,6 +46,7 @@ router = APIRouter(prefix="/observability", tags=["observability"])
 
 # --- Request/Response Models ---
 
+
 class MetricDefinitionRequest(BaseModel):
     name: str = Field(min_length=1, max_length=100)
     display_name: str = ""
@@ -180,6 +181,7 @@ class AlertAcknowledgeRequest(BaseModel):
 
 # --- Dependencies ---
 
+
 async def _require_org_access(
     organization_id: UUID,
     user_id: UUID = Depends(require_user_id),
@@ -204,6 +206,7 @@ def get_metrics_service(db: AsyncSession = Depends(get_db)) -> MetricsService:
         MetricDefinitionRepositoryImpl,
         MetricSampleRepositoryImpl,
     )
+
     definition_repo = MetricDefinitionRepositoryImpl(db)
     sample_repo = MetricSampleRepositoryImpl(db)
     alert_repo = AlertRuleRepositoryImpl(db)
@@ -211,7 +214,11 @@ def get_metrics_service(db: AsyncSession = Depends(get_db)) -> MetricsService:
 
 
 def get_alerting_service(db: AsyncSession = Depends(get_db)) -> AlertingService:
-    from app.infrastructure.db.repositories.alerting_repository import AlertRepositoryImpl, AlertRuleRepositoryImpl
+    from app.infrastructure.db.repositories.alerting_repository import (
+        AlertRepositoryImpl,
+        AlertRuleRepositoryImpl,
+    )
+
     rule_repo = AlertRuleRepositoryImpl(db)
     alert_repo = AlertRepositoryImpl(db)
     metrics_service = get_metrics_service(db)
@@ -223,6 +230,7 @@ def get_cost_service(db: AsyncSession = Depends(get_db)) -> CostTrackingService:
         BudgetRepositoryImpl,
         CostRecordRepositoryImpl,
     )
+
     cost_repo = CostRecordRepositoryImpl(db)
     budget_repo = BudgetRepositoryImpl(db)
     return CostTrackingService(cost_repo, budget_repo)
@@ -233,6 +241,7 @@ def get_sla_service(db: AsyncSession = Depends(get_db)) -> SLAService:
         SLAReportRepositoryImpl,
         SLARepositoryImpl,
     )
+
     sla_repo = SLARepositoryImpl(db)
     report_repo = SLAReportRepositoryImpl(db)
     return SLAService(sla_repo, report_repo)
@@ -243,6 +252,7 @@ def get_dashboard_service(db: AsyncSession = Depends(get_db)) -> DashboardServic
         DashboardRepositoryImpl,
         DashboardWidgetRepositoryImpl,
     )
+
     dashboard_repo = DashboardRepositoryImpl(db)
     widget_repo = DashboardWidgetRepositoryImpl(db)
     return DashboardService(dashboard_repo, widget_repo)
@@ -255,12 +265,11 @@ def get_system_health_service(
     alerting_service = get_alerting_service(db)
     cost_service = get_cost_service(db)
     sla_service = get_sla_service(db)
-    return SystemHealthService(
-        metrics_service, alerting_service, cost_service, sla_service
-    )
+    return SystemHealthService(metrics_service, alerting_service, cost_service, sla_service)
 
 
 # --- Metrics Routes ---
+
 
 @router.post(
     "/organizations/{organization_id}/metrics/definitions",
@@ -366,7 +375,13 @@ async def query_metric(
         aggregation=aggregation,
         labels=labels,
     )
-    return {"metric": metric_name, "aggregation": aggregation, "value": value, "start": start.isoformat(), "end": end.isoformat()}
+    return {
+        "metric": metric_name,
+        "aggregation": aggregation,
+        "value": value,
+        "start": start.isoformat(),
+        "end": end.isoformat(),
+    }
 
 
 @router.get(
@@ -394,6 +409,7 @@ async def get_metric_series(
 
 
 # --- Alerting Routes ---
+
 
 @router.post(
     "/organizations/{organization_id}/alerts/rules",
@@ -501,6 +517,7 @@ async def resolve_alert(
 
 # --- Cost Tracking Routes ---
 
+
 @router.post(
     "/organizations/{organization_id}/costs",
     status_code=status.HTTP_201_CREATED,
@@ -589,11 +606,14 @@ async def list_budgets(
     org_id: UUID = Depends(_require_org_access),
     service: CostTrackingService = Depends(get_cost_service),
 ) -> list[dict]:
-    budgets = await service.budget_repo.find_by_organization(organization_id, active_only=active_only)
+    budgets = await service.budget_repo.find_by_organization(
+        organization_id, active_only=active_only
+    )
     return [b.to_dict() for b in budgets]
 
 
 # --- SLA Routes ---
+
 
 @router.post(
     "/organizations/{organization_id}/slas",
@@ -675,6 +695,7 @@ async def get_sla_status(
 
 
 # --- Dashboard Routes ---
+
 
 @router.post(
     "/organizations/{organization_id}/dashboards",
@@ -783,6 +804,7 @@ async def create_widget(
 
 # --- System Health ---
 
+
 @router.get(
     "/organizations/{organization_id}/health",
     summary="Get system health report",
@@ -796,6 +818,7 @@ async def get_system_health(
 
 
 # --- Batch Operations ---
+
 
 @router.post(
     "/organizations/{organization_id}/metrics/batch-record",

@@ -114,8 +114,7 @@ class MockApprovalRuleRepo:
 
     async def find_by_organization(self, org_id, active_only=True):
         org_id_str = str(org_id)
-        rules = [r for r in self._rules.values()
-                 if str(r.organization_id) == org_id_str]
+        rules = [r for r in self._rules.values() if str(r.organization_id) == org_id_str]
         if active_only:
             rules = [r for r in rules if r.is_active]
         return rules
@@ -136,18 +135,27 @@ class MockApprovalRequestRepo:
         return self._requests.get(str(request_id))
 
     async def find_pending_by_organization(self, org_id):
-        return [r for r in self._requests.values()
-                if str(r.organization_id) == str(org_id) and r.status == ApprovalStatus.PENDING]
+        return [
+            r
+            for r in self._requests.values()
+            if str(r.organization_id) == str(org_id) and r.status == ApprovalStatus.PENDING
+        ]
 
     async def find_pending_by_role(self, org_id, role):
-        return [r for r in self._requests.values()
-                if str(r.organization_id) == str(org_id)
-                and r.status == ApprovalStatus.PENDING
-                and r.assigned_role == role]
+        return [
+            r
+            for r in self._requests.values()
+            if str(r.organization_id) == str(org_id)
+            and r.status == ApprovalStatus.PENDING
+            and r.assigned_role == role
+        ]
 
     async def find_expired_stale(self, before):
-        return [r for r in self._requests.values()
-                if r.is_pending and r.timeout_at and r.timeout_at < before]
+        return [
+            r
+            for r in self._requests.values()
+            if r.is_pending and r.timeout_at and r.timeout_at < before
+        ]
 
 
 class MockApprovalDecisionRepo:
@@ -190,20 +198,22 @@ class MockAgentActionRepo:
     async def find_by_id(self, action_id):
         return self._actions.get(str(action_id))
 
-    async def find_by_organization(self, org_id, agent_type=None, action_name=None,
-                                   limit=50, offset=0):
-        results = [a for a in self._actions.values()
-                   if str(a.organization_id) == str(org_id)]
+    async def find_by_organization(
+        self, org_id, agent_type=None, action_name=None, limit=50, offset=0
+    ):
+        results = [a for a in self._actions.values() if str(a.organization_id) == str(org_id)]
         if agent_type:
             results = [a for a in results if a.agent_type == agent_type]
         if action_name:
             results = [a for a in results if a.action == action_name]
-        return results[offset:offset + limit]
+        return results[offset : offset + limit]
 
     async def find_by_agent(self, org_id, agent_id, limit=50):
-        return [a for a in self._actions.values()
-                if str(a.organization_id) == str(org_id)
-                and a.agent_id == agent_id][:limit]
+        return [
+            a
+            for a in self._actions.values()
+            if str(a.organization_id) == str(org_id) and a.agent_id == agent_id
+        ][:limit]
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -466,8 +476,12 @@ class TestAgentAction:
 
     def test_to_explanation(self):
         action = AgentAction.create(
-            ORG_ID, "a1", "ContentSpecialist", "content.generate",
-            resource_type="content", resource_id="c-123",
+            ORG_ID,
+            "a1",
+            "ContentSpecialist",
+            "content.generate",
+            resource_type="content",
+            resource_id="c-123",
         )
         action.reasoning = "Created based on brand guidelines"
         explanation = action.to_explanation()
@@ -617,8 +631,12 @@ class TestExplainabilityService:
     def test_explain_action(self):
         svc = ExplainabilityService()
         action = AgentAction.create(
-            ORG_ID, "agent-001", "ContentSpecialist", "content.generate",
-            resource_type="content", resource_id="c-123",
+            ORG_ID,
+            "agent-001",
+            "ContentSpecialist",
+            "content.generate",
+            resource_type="content",
+            resource_id="c-123",
         )
         action.reasoning = "Generated based on brand guidelines"
         output = svc.explain(action)
@@ -713,14 +731,23 @@ class TestAuditEnhancementService:
     def test_verify_chain_valid(self):
         svc = AuditEnhancementService()
         e1 = svc.create_entry(
-            id="e1", event_type="a", entity_type="b", entity_id="c",
+            id="e1",
+            event_type="a",
+            entity_type="b",
+            entity_id="c",
         )
         e2 = svc.create_entry(
-            id="e2", event_type="a", entity_type="b", entity_id="d",
+            id="e2",
+            event_type="a",
+            entity_type="b",
+            entity_id="d",
             previous_hash=e1.entry_hash,
         )
         e3 = svc.create_entry(
-            id="e3", event_type="a", entity_type="b", entity_id="e",
+            id="e3",
+            event_type="a",
+            entity_type="b",
+            entity_id="e",
             previous_hash=e2.entry_hash,
         )
         assert svc.verify_chain([e1, e2, e3]) is True
@@ -728,10 +755,16 @@ class TestAuditEnhancementService:
     def test_verify_chain_broken(self):
         svc = AuditEnhancementService()
         e1 = svc.create_entry(
-            id="e1", event_type="a", entity_type="b", entity_id="c",
+            id="e1",
+            event_type="a",
+            entity_type="b",
+            entity_id="c",
         )
         e2 = svc.create_entry(
-            id="e2", event_type="a", entity_type="b", entity_id="d",
+            id="e2",
+            event_type="a",
+            entity_type="b",
+            entity_id="d",
             previous_hash="wrong-hash",
         )
         assert svc.verify_chain([e1, e2]) is False
@@ -743,7 +776,10 @@ class TestAuditEnhancementService:
     def test_export_without_pii(self):
         svc = AuditEnhancementService()
         entry = svc.create_entry(
-            id="e1", event_type="a", entity_type="b", entity_id="c",
+            id="e1",
+            event_type="a",
+            entity_type="b",
+            entity_id="c",
             details={"email": "test@example.com", "action": "create"},
         )
         exported = svc.export_entries([entry], include_pii=False)
@@ -768,7 +804,10 @@ class TestAuditEnhancementService:
         svc = AuditEnhancementService()
         entries = [
             svc.create_entry(
-                id=f"e{i}", event_type="test.event", entity_type="x", entity_id=f"y{i}",
+                id=f"e{i}",
+                event_type="test.event",
+                entity_type="x",
+                entity_id=f"y{i}",
             )
             for i in range(3)
         ]
@@ -791,12 +830,14 @@ class TestCreateApprovalRuleUseCase:
     def test_create_spend_rule(self):
         repo = MockApprovalRuleRepo()
         uc = CreateApprovalRuleUseCase(repo)
-        rule = asyncio.run(uc.execute(
-            organization_id=ORG_ID,
-            name="Test Rule",
-            trigger=RuleTrigger.SPEND_THRESHOLD,
-            conditions={"min_amount": 200},
-        ))
+        rule = asyncio.run(
+            uc.execute(
+                organization_id=ORG_ID,
+                name="Test Rule",
+                trigger=RuleTrigger.SPEND_THRESHOLD,
+                conditions={"min_amount": 200},
+            )
+        )
         assert rule.name == "Test Rule"
         assert rule.trigger == RuleTrigger.SPEND_THRESHOLD
 
@@ -804,22 +845,26 @@ class TestCreateApprovalRuleUseCase:
         repo = MockApprovalRuleRepo()
         uc = CreateApprovalRuleUseCase(repo)
         with pytest.raises(ValidationError, match="empty"):
-            asyncio.run(uc.execute(
-                organization_id=ORG_ID,
-                name="  ",
-                trigger=RuleTrigger.SPEND_THRESHOLD,
-            ))
+            asyncio.run(
+                uc.execute(
+                    organization_id=ORG_ID,
+                    name="  ",
+                    trigger=RuleTrigger.SPEND_THRESHOLD,
+                )
+            )
 
     def test_negative_priority_rejected(self):
         repo = MockApprovalRuleRepo()
         uc = CreateApprovalRuleUseCase(repo)
         with pytest.raises(ValidationError, match="non-negative"):
-            asyncio.run(uc.execute(
-                organization_id=ORG_ID,
-                name="Test",
-                trigger=RuleTrigger.SPEND_THRESHOLD,
-                priority=-1,
-            ))
+            asyncio.run(
+                uc.execute(
+                    organization_id=ORG_ID,
+                    name="Test",
+                    trigger=RuleTrigger.SPEND_THRESHOLD,
+                    priority=-1,
+                )
+            )
 
 
 class TestEvaluateApprovalRulesUseCase:
@@ -842,41 +887,49 @@ class TestDecideApprovalUseCase:
     def test_approve_request(self):
         rule = _spend_rule(100)
         req = ApprovalRequest.create(
-            organization_id=ORG_ID, rule=rule,
+            organization_id=ORG_ID,
+            rule=rule,
             action_type="campaign.launch",
-            action_resource_id="c1", action_resource_type="campaign",
+            action_resource_id="c1",
+            action_resource_type="campaign",
             action_summary="Launch campaign",
         )
         request_repo = MockApprovalRequestRepo([req])
         decision_repo = MockApprovalDecisionRepo()
         uc = DecideApprovalUseCase(request_repo, decision_repo)
 
-        decision = asyncio.run(uc.execute(
-            request_id=req.id,
-            decided_by=uuid4(),
-            action=DecisionAction.APPROVE,
-            reason="Looks good",
-        ))
+        decision = asyncio.run(
+            uc.execute(
+                request_id=req.id,
+                decided_by=uuid4(),
+                action=DecisionAction.APPROVE,
+                reason="Looks good",
+            )
+        )
         assert decision.action == DecisionAction.APPROVE
 
     def test_reject_request(self):
         rule = _spend_rule(100)
         req = ApprovalRequest.create(
-            organization_id=ORG_ID, rule=rule,
+            organization_id=ORG_ID,
+            rule=rule,
             action_type="campaign.launch",
-            action_resource_id="c1", action_resource_type="campaign",
+            action_resource_id="c1",
+            action_resource_type="campaign",
             action_summary="Launch campaign",
         )
         request_repo = MockApprovalRequestRepo([req])
         decision_repo = MockApprovalDecisionRepo()
         uc = DecideApprovalUseCase(request_repo, decision_repo)
 
-        decision = asyncio.run(uc.execute(
-            request_id=req.id,
-            decided_by=uuid4(),
-            action=DecisionAction.REJECT,
-            reason="Too expensive",
-        ))
+        decision = asyncio.run(
+            uc.execute(
+                request_id=req.id,
+                decided_by=uuid4(),
+                action=DecisionAction.REJECT,
+                reason="Too expensive",
+            )
+        )
         assert decision.action == DecisionAction.REJECT
 
 
@@ -889,11 +942,13 @@ class TestCheckAgentActionUseCase:
         config_repo = MockAutonomyConfigRepo(config)
         uc = CheckAgentActionUseCase(config_repo)
 
-        result = asyncio.run(uc.execute(
-            organization_id=ORG_ID,
-            action_name="content.generate",
-            agent_type="ContentSpecialist",
-        ))
+        result = asyncio.run(
+            uc.execute(
+                organization_id=ORG_ID,
+                action_name="content.generate",
+                agent_type="ContentSpecialist",
+            )
+        )
         assert result.allowed is True
 
     def test_check_high_risk_blocked(self):
@@ -904,22 +959,26 @@ class TestCheckAgentActionUseCase:
         config_repo = MockAutonomyConfigRepo(config)
         uc = CheckAgentActionUseCase(config_repo)
 
-        result = asyncio.run(uc.execute(
-            organization_id=ORG_ID,
-            action_name="campaign.launch",
-            agent_type="AdvertisingDirector",
-        ))
+        result = asyncio.run(
+            uc.execute(
+                organization_id=ORG_ID,
+                action_name="campaign.launch",
+                agent_type="AdvertisingDirector",
+            )
+        )
         assert result.allowed is False
 
     def test_check_creates_default_config(self):
         config_repo = MockAutonomyConfigRepo(None)
         uc = CheckAgentActionUseCase(config_repo)
 
-        result = asyncio.run(uc.execute(
-            organization_id=ORG_ID,
-            action_name="content.generate",
-            agent_type="ContentSpecialist",
-        ))
+        result = asyncio.run(
+            uc.execute(
+                organization_id=ORG_ID,
+                action_name="content.generate",
+                agent_type="ContentSpecialist",
+            )
+        )
         # Should create a default ADVISORY config
         assert config_repo._config is not None
 
@@ -928,28 +987,32 @@ class TestRecordAgentActionUseCase:
     def test_record_action(self):
         repo = MockAgentActionRepo()
         uc = RecordAgentActionUseCase(repo)
-        action = asyncio.run(uc.execute(
-            organization_id=ORG_ID,
-            agent_id="agent-001",
-            agent_type="ContentSpecialist",
-            action_name="content.generate",
-            reasoning="Created based on guidelines",
-            success=True,
-        ))
+        action = asyncio.run(
+            uc.execute(
+                organization_id=ORG_ID,
+                agent_id="agent-001",
+                agent_type="ContentSpecialist",
+                action_name="content.generate",
+                reasoning="Created based on guidelines",
+                success=True,
+            )
+        )
         assert action.action == "content.generate"
         assert action.success is True
 
     def test_record_failed_action(self):
         repo = MockAgentActionRepo()
         uc = RecordAgentActionUseCase(repo)
-        action = asyncio.run(uc.execute(
-            organization_id=ORG_ID,
-            agent_id="agent-001",
-            agent_type="ContentSpecialist",
-            action_name="content.generate",
-            success=False,
-            error_message="Rate limited",
-        ))
+        action = asyncio.run(
+            uc.execute(
+                organization_id=ORG_ID,
+                agent_id="agent-001",
+                agent_type="ContentSpecialist",
+                action_name="content.generate",
+                success=False,
+                error_message="Rate limited",
+            )
+        )
         assert action.success is False
         assert action.error_message == "Rate limited"
 
@@ -958,8 +1021,12 @@ class TestGetExplainabilityReportUseCase:
     def test_explain_action(self):
         repo = MockAgentActionRepo()
         action = AgentAction.create(
-            ORG_ID, "a1", "ContentSpecialist", "content.generate",
-            resource_type="content", resource_id="c1",
+            ORG_ID,
+            "a1",
+            "ContentSpecialist",
+            "content.generate",
+            resource_type="content",
+            resource_id="c1",
         )
         asyncio.run(repo.save(action))
 
@@ -972,7 +1039,10 @@ class TestGetExplainabilityReportUseCase:
         repo = MockAgentActionRepo()
         for i in range(3):
             a = AgentAction.create(
-                ORG_ID, f"a{i}", "ContentSpecialist", "content.generate",
+                ORG_ID,
+                f"a{i}",
+                "ContentSpecialist",
+                "content.generate",
             )
             asyncio.run(repo.save(a))
 

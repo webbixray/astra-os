@@ -79,11 +79,11 @@ class BudgetPacingService:
     """
 
     # Thresholds
-    OVERSPEND_RISK_RATIO = 1.15   # 15% ahead of pace → overspend risk
-    UNDERSPEND_THRESHOLD = 0.70   # 30% behind pace → underspend risk
-    AHEAD_THRESHOLD = 1.05        # 5% ahead → ahead
-    BEHIND_THRESHOLD = 0.95       # 5% behind → behind
-    MAX_DAILY_MULTIPLIER = 1.5    # never recommend >150% of even daily pace
+    OVERSPEND_RISK_RATIO = 1.15  # 15% ahead of pace → overspend risk
+    UNDERSPEND_THRESHOLD = 0.70  # 30% behind pace → underspend risk
+    AHEAD_THRESHOLD = 1.05  # 5% ahead → ahead
+    BEHIND_THRESHOLD = 0.95  # 5% behind → behind
+    MAX_DAILY_MULTIPLIER = 1.5  # never recommend >150% of even daily pace
 
     def analyze(
         self,
@@ -152,9 +152,7 @@ class BudgetPacingService:
 
         # Should we pause?
         should_pause = (
-            status == PacingStatus.OVERSPEND_RISK
-            or budget.is_alert_triggered
-            or remaining <= 0
+            status == PacingStatus.OVERSPEND_RISK or budget.is_alert_triggered or remaining <= 0
         )
 
         # Alert message
@@ -239,13 +237,21 @@ class BudgetPacingService:
             # daily = budget * remaining_weight / sum(all weights)
             remaining_weight = (total_days - days_elapsed) ** 2
             total_weight = sum((total_days - i) ** 2 for i in range(total_days))
-            return total_budget * remaining_weight / total_weight if total_weight > 0 else total_budget / total_days
+            return (
+                total_budget * remaining_weight / total_weight
+                if total_weight > 0
+                else total_budget / total_days
+            )
 
         if strategy == PacingStrategy.BACK_LOADED:
             # Inverse of front-loaded — spend more later
             elapsed_weight = (days_elapsed + 1) ** 2
             total_weight = sum((i + 1) ** 2 for i in range(total_days))
-            return total_budget * elapsed_weight / total_weight if total_weight > 0 else total_budget / total_days
+            return (
+                total_budget * elapsed_weight / total_weight
+                if total_weight > 0
+                else total_budget / total_days
+            )
 
         # CUSTOM or unknown → fall back to even
         return total_budget / total_days
@@ -296,12 +302,10 @@ class BudgetPacingService:
             )
         if status == PacingStatus.AHEAD:
             return (
-                f"📈 Slightly ahead of pace ({pace_ratio:.0%}). "
-                f"Monitor closely to avoid overspend."
+                f"📈 Slightly ahead of pace ({pace_ratio:.0%}). Monitor closely to avoid overspend."
             )
         if status == PacingStatus.BEHIND:
             return (
-                f"📉 Slightly behind pace ({pace_ratio:.0%}). "
-                f"Remaining budget: ${remaining:,.2f}."
+                f"📉 Slightly behind pace ({pace_ratio:.0%}). Remaining budget: ${remaining:,.2f}."
             )
         return None

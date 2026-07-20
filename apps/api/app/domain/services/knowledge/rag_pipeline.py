@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 # Value objects
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class SearchResult:
     """A single search result with relevance metadata."""
@@ -103,14 +104,64 @@ class IngestionResult:
 # RAG Pipeline
 # ---------------------------------------------------------------------------
 
-_STOP_WORDS = frozenset({
-    "the", "a", "an", "is", "are", "was", "were", "be", "been", "being",
-    "have", "has", "had", "do", "does", "did", "will", "would", "could",
-    "should", "may", "might", "can", "shall", "of", "in", "to", "for",
-    "with", "on", "at", "from", "by", "about", "as", "into", "through",
-    "during", "before", "after", "and", "but", "or", "nor", "not", "so",
-    "yet", "both", "this", "that", "these", "those", "it", "its",
-})
+_STOP_WORDS = frozenset(
+    {
+        "the",
+        "a",
+        "an",
+        "is",
+        "are",
+        "was",
+        "were",
+        "be",
+        "been",
+        "being",
+        "have",
+        "has",
+        "had",
+        "do",
+        "does",
+        "did",
+        "will",
+        "would",
+        "could",
+        "should",
+        "may",
+        "might",
+        "can",
+        "shall",
+        "of",
+        "in",
+        "to",
+        "for",
+        "with",
+        "on",
+        "at",
+        "from",
+        "by",
+        "about",
+        "as",
+        "into",
+        "through",
+        "during",
+        "before",
+        "after",
+        "and",
+        "but",
+        "or",
+        "nor",
+        "not",
+        "so",
+        "yet",
+        "both",
+        "this",
+        "that",
+        "these",
+        "those",
+        "it",
+        "its",
+    }
+)
 
 
 class RagPipeline:
@@ -149,14 +200,18 @@ class RagPipeline:
         """Hybrid search combining vector, keyword, and graph traversal."""
         # 1. Vector similarity search (via existing KnowledgeGraphService)
         vector_results = await self._vector_search(
-            query, organization_id,
-            type_filter=type_filter, limit=limit,
+            query,
+            organization_id,
+            type_filter=type_filter,
+            limit=limit,
         )
 
         # 2. Keyword search
         keyword_results = await self._keyword_search(
-            query, organization_id,
-            type_filter=type_filter, limit=limit,
+            query,
+            organization_id,
+            type_filter=type_filter,
+            limit=limit,
         )
 
         # 3. Merge and deduplicate
@@ -183,7 +238,8 @@ class RagPipeline:
     ) -> RAGContext:
         """Assemble rich context for an agent prompt."""
         results = await self.search(
-            query, organization_id,
+            query,
+            organization_id,
             limit=max_results,
         )
 
@@ -215,11 +271,7 @@ class RagPipeline:
             except Exception:
                 logger.debug("Memory recall failed during context assembly")
 
-        context_text = (
-            "\n\n".join(context_parts)
-            if context_parts
-            else "No relevant context found."
-        )
+        context_text = "\n\n".join(context_parts) if context_parts else "No relevant context found."
 
         # Fetch brand guidelines if requested
         brand_guidelines = None
@@ -276,12 +328,14 @@ class RagPipeline:
                 result.memories_created += 1
 
             # Publish event
-            await EventBus.publish(DomainEvent.create(
-                event_type=DomainEventType.CONTENT_CREATED,
-                aggregate_id=node_data.get("id", ""),
-                aggregate_type="knowledge_node",
-                data={"type": "brand_guidelines", "name": name},
-            ))
+            await EventBus.publish(
+                DomainEvent.create(
+                    event_type=DomainEventType.CONTENT_CREATED,
+                    aggregate_id=node_data.get("id", ""),
+                    aggregate_type="knowledge_node",
+                    data={"type": "brand_guidelines", "name": name},
+                )
+            )
 
         except Exception as exc:
             result.errors.append(f"Brand guideline ingestion failed: {exc}")
@@ -390,15 +444,17 @@ class RagPipeline:
                 )
                 for r in raw:
                     score = self._keyword_score(keyword, r)
-                    results.append(SearchResult(
-                        node_id=r["id"],
-                        node_type=r.get("type", ""),
-                        name=r.get("name", ""),
-                        description=r.get("description", ""),
-                        score=score,
-                        source="keyword",
-                        properties=r.get("properties", {}),
-                    ))
+                    results.append(
+                        SearchResult(
+                            node_id=r["id"],
+                            node_type=r.get("type", ""),
+                            name=r.get("name", ""),
+                            description=r.get("description", ""),
+                            score=score,
+                            source="keyword",
+                            properties=r.get("properties", {}),
+                        )
+                    )
             except Exception:
                 continue
 
@@ -451,7 +507,8 @@ class RagPipeline:
                 node_uuid = UUID(r.node_id)
                 relations = await self._ks.get_node_relations(node_uuid)
                 r.related_node_ids = [
-                    rel.get("source_id", "") if rel.get("target_id") == r.node_id
+                    rel.get("source_id", "")
+                    if rel.get("target_id") == r.node_id
                     else rel.get("target_id", "")
                     for rel in relations
                 ]

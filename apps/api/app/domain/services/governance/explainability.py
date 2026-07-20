@@ -87,12 +87,16 @@ class ExplainabilityService:
     def replay_decision(self, action: AgentAction) -> list[dict[str, Any]]:
         """Return the step-by-step reasoning trace for decision replay."""
         if not action.reasoning_trace:
-            return [{
-                "step": 0,
-                "thought": action.reasoning or "No reasoning trace available.",
-                "action": action.action,
-                "result": "Action recorded." if action.success else f"Failed: {action.error_message}",
-            }]
+            return [
+                {
+                    "step": 0,
+                    "thought": action.reasoning or "No reasoning trace available.",
+                    "action": action.action,
+                    "result": "Action recorded."
+                    if action.success
+                    else f"Failed: {action.error_message}",
+                }
+            ]
         return action.reasoning_trace
 
     def generate_audit_summary(
@@ -108,9 +112,7 @@ class ExplainabilityService:
         successful = sum(1 for a in actions if a.success)
         failed = total - successful
         auto_executed = sum(1 for a in actions if a.was_auto_executed)
-        human_approved = sum(
-            1 for a in actions if a.approval_request_id is not None
-        )
+        human_approved = sum(1 for a in actions if a.approval_request_id is not None)
         total_cost = sum(a.cost_usd for a in actions)
         total_tokens = sum(a.tokens_used for a in actions)
 
@@ -208,9 +210,7 @@ class ExplainabilityService:
         if action.success:
             sentences.append("The action completed successfully.")
         else:
-            sentences.append(
-                f"The action FAILED with error: {action.error_message}"
-            )
+            sentences.append(f"The action FAILED with error: {action.error_message}")
 
         return " ".join(sentences)
 

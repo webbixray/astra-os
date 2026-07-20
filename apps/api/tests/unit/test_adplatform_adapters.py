@@ -37,10 +37,19 @@ class TestBaseAdAdapter:
     def adapter(self):
         class ConcreteAdapter(BaseAdAdapter):
             platform = AdPlatform.GOOGLE_ADS
-            async def get_campaigns(self, account_id): return []
-            async def get_performance(self, account_id, campaign_ids=None): return []
-            async def create_campaign(self, campaign): return ""
-            async def update_campaign_status(self, campaign_id, status): return True
+
+            async def get_campaigns(self, account_id):
+                return []
+
+            async def get_performance(self, account_id, campaign_ids=None):
+                return []
+
+            async def create_campaign(self, campaign):
+                return ""
+
+            async def update_campaign_status(self, campaign_id, status):
+                return True
+
         return ConcreteAdapter()
 
     @pytest.mark.asyncio
@@ -98,24 +107,30 @@ class TestGoogleAdsAdapter:
     async def test_real_mode_parses_response(self):
         mock_response = MagicMock()
         mock_response.status_code = 200
-        mock_response.json = MagicMock(return_value={
-            "results": [
-                {
-                    "campaign": {"id": "101", "name": "Real Campaign", "status": "ENABLED"},
-                    "metrics": {
-                        "impressions": 1000, "clicks": 50,
-                        "conversions": 5, "costMicros": 2000000,
-                    },
-                }
-            ]
-        })
+        mock_response.json = MagicMock(
+            return_value={
+                "results": [
+                    {
+                        "campaign": {"id": "101", "name": "Real Campaign", "status": "ENABLED"},
+                        "metrics": {
+                            "impressions": 1000,
+                            "clicks": 50,
+                            "conversions": 5,
+                            "costMicros": 2000000,
+                        },
+                    }
+                ]
+            }
+        )
 
         with patch.object(GoogleAdsAdapter, "get_client", new=AsyncMock()) as mock_get_client:
             mock_client = AsyncMock()
             mock_client.request = AsyncMock(return_value=mock_response)
             mock_get_client.return_value = mock_client
 
-            adapter = GoogleAdsAdapter(credentials={"access_token": "tok", "developer_token": "dev", "customer_id": "123"})
+            adapter = GoogleAdsAdapter(
+                credentials={"access_token": "tok", "developer_token": "dev", "customer_id": "123"}
+            )
             campaigns = await adapter.get_campaigns("customer-123")
 
         assert len(campaigns) == 1
@@ -135,7 +150,9 @@ class TestGoogleAdsAdapter:
             mock_client.request = AsyncMock(return_value=mock_response)
             mock_get_client.return_value = mock_client
 
-            adapter = GoogleAdsAdapter(credentials={"access_token": "tok", "developer_token": "dev"})
+            adapter = GoogleAdsAdapter(
+                credentials={"access_token": "tok", "developer_token": "dev"}
+            )
             campaigns = await adapter.get_campaigns("customer-123")
 
         assert campaigns == MOCK_GOOGLE_CAMPAIGNS
@@ -169,7 +186,9 @@ class TestGoogleAdsAdapter:
             mock_client.request = AsyncMock(return_value=mock_response)
             mock_get_client.return_value = mock_client
 
-            adapter = GoogleAdsAdapter(credentials={"access_token": "tok", "developer_token": "dev", "customer_id": "c-1"})
+            adapter = GoogleAdsAdapter(
+                credentials={"access_token": "tok", "developer_token": "dev", "customer_id": "c-1"}
+            )
             result = await adapter.create_campaign(AdCampaign(name="New"))
             assert result == "real-123"
 
@@ -186,15 +205,23 @@ class TestMetaAdsAdapter:
     async def test_real_mode_parses_response(self):
         mock_response = MagicMock()
         mock_response.status_code = 200
-        mock_response.json = MagicMock(return_value={
-            "data": [
-                {
-                    "id": "m-1", "name": "Meta Campaign", "status": "ACTIVE",
-                    "daily_budget": 5000,
-                    "insights": {"data": [{"impressions": 500, "clicks": 20, "conversions": 2, "spend": 150.0}]},
-                }
-            ]
-        })
+        mock_response.json = MagicMock(
+            return_value={
+                "data": [
+                    {
+                        "id": "m-1",
+                        "name": "Meta Campaign",
+                        "status": "ACTIVE",
+                        "daily_budget": 5000,
+                        "insights": {
+                            "data": [
+                                {"impressions": 500, "clicks": 20, "conversions": 2, "spend": 150.0}
+                            ]
+                        },
+                    }
+                ]
+            }
+        )
 
         with patch.object(MetaAdsAdapter, "get_client", new=AsyncMock()) as mock_get_client:
             mock_client = AsyncMock()
@@ -249,9 +276,9 @@ class TestLinkedInAdsAdapter:
     async def test_real_mode_parses_response(self):
         mock_response = MagicMock()
         mock_response.status_code = 200
-        mock_response.json = MagicMock(return_value={
-            "elements": [{"id": "li-1", "name": "LinkedIn Campaign"}]
-        })
+        mock_response.json = MagicMock(
+            return_value={"elements": [{"id": "li-1", "name": "LinkedIn Campaign"}]}
+        )
 
         with patch.object(LinkedInAdsAdapter, "get_client", new=AsyncMock()) as mock_get_client:
             mock_client = AsyncMock()
@@ -292,16 +319,20 @@ class TestTikTokAdsAdapter:
     async def test_real_mode_parses_response(self):
         mock_response = MagicMock()
         mock_response.status_code = 200
-        mock_response.json = MagicMock(return_value={
-            "data": {"list": [{"campaign_id": "tt-1", "campaign_name": "TikTok Campaign"}]}
-        })
+        mock_response.json = MagicMock(
+            return_value={
+                "data": {"list": [{"campaign_id": "tt-1", "campaign_name": "TikTok Campaign"}]}
+            }
+        )
 
         with patch.object(TikTokAdsAdapter, "get_client", new=AsyncMock()) as mock_get_client:
             mock_client = AsyncMock()
             mock_client.request = AsyncMock(return_value=mock_response)
             mock_get_client.return_value = mock_client
 
-            adapter = TikTokAdsAdapter(credentials={"access_token": "tok", "advertiser_id": "adv-1"})
+            adapter = TikTokAdsAdapter(
+                credentials={"access_token": "tok", "advertiser_id": "adv-1"}
+            )
             campaigns = await adapter.get_campaigns("adv-1")
 
         assert len(campaigns) == 1
@@ -351,8 +382,10 @@ class TestAdPlatformFactory:
 
     def test_adapters_dict_contains_all(self):
         assert set(AdPlatformFactory._adapters.keys()) == {
-            AdPlatform.GOOGLE_ADS, AdPlatform.META,
-            AdPlatform.LINKEDIN, AdPlatform.TIKTOK,
+            AdPlatform.GOOGLE_ADS,
+            AdPlatform.META,
+            AdPlatform.LINKEDIN,
+            AdPlatform.TIKTOK,
         }
 
     @pytest.mark.asyncio
@@ -408,7 +441,10 @@ class TestAdPlatformRetryLogic:
             mock_client.request = AsyncMock(side_effect=[error_response, success_response])
             mock_get_client.return_value = mock_client
 
-            with patch("app.infrastructure.external_adapters.adplatforms.base_adapter.asyncio.sleep", new_callable=AsyncMock):
+            with patch(
+                "app.infrastructure.external_adapters.adplatforms.base_adapter.asyncio.sleep",
+                new_callable=AsyncMock,
+            ):
                 resp = await adapter._request_with_retry("POST", "https://example.com")
 
         assert resp.status_code == 200
@@ -421,10 +457,15 @@ class TestAdPlatformRetryLogic:
         adapter = GoogleAdsAdapter(credentials={"access_token": "tok", "developer_token": "dev"})
         with patch.object(adapter, "get_client") as mock_get_client:
             mock_client = AsyncMock()
-            mock_client.request = AsyncMock(side_effect=[httpx.TimeoutException("timeout"), success_response])
+            mock_client.request = AsyncMock(
+                side_effect=[httpx.TimeoutException("timeout"), success_response]
+            )
             mock_get_client.return_value = mock_client
 
-            with patch("app.infrastructure.external_adapters.adplatforms.base_adapter.asyncio.sleep", new_callable=AsyncMock):
+            with patch(
+                "app.infrastructure.external_adapters.adplatforms.base_adapter.asyncio.sleep",
+                new_callable=AsyncMock,
+            ):
                 resp = await adapter._request_with_retry("POST", "https://example.com")
 
         assert resp.status_code == 200
@@ -438,7 +479,10 @@ class TestAdPlatformRetryLogic:
             mock_get_client.return_value = mock_client
 
             with (
-                patch("app.infrastructure.external_adapters.adplatforms.base_adapter.asyncio.sleep", new_callable=AsyncMock),
+                patch(
+                    "app.infrastructure.external_adapters.adplatforms.base_adapter.asyncio.sleep",
+                    new_callable=AsyncMock,
+                ),
                 pytest.raises(AdPlatformError, match="Request failed after"),
             ):
                 await adapter._request_with_retry("POST", "https://example.com")

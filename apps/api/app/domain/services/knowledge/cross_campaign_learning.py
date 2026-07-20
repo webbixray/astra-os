@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 # Value objects
 # ---------------------------------------------------------------------------
 
+
 class PatternType(str, Enum):
     AUDIENCE_PATTERN = "audience_pattern"
     CONTENT_PATTERN = "content_pattern"
@@ -164,7 +165,9 @@ class CrossCampaignLearner:
         for ptype in types_to_mine:
             try:
                 discovered = await self._mine_pattern_type(
-                    organization_id, campaigns, ptype,
+                    organization_id,
+                    campaigns,
+                    ptype,
                 )
                 patterns.extend(discovered)
             except Exception:
@@ -239,25 +242,27 @@ class CrossCampaignLearner:
                     confidence=min(similarity * 0.8, 0.9),
                 )
 
-                recommendations.append(TransferRecommendation(
-                    source_campaign_id=str(node_id),
-                    source_campaign_name=source_name,
-                    target_campaign_id=target_campaign_id,
-                    target_campaign_name=target_name,
-                    pattern=pattern,
-                    transfer_strategy=(
-                        f"Apply audience targeting parameters from '{source_name}' "
-                        f"to '{target_name}'. Start with a 20% budget test before "
-                        f"full rollout."
-                    ),
-                    expected_lift=f"Estimated {similarity * 15:.0f}% improvement in reach",
-                    confidence=round(pattern.confidence, 2),
-                    prerequisites=[
-                        "Validate audience overlap analysis",
-                        "Set up A/B test with 20% budget allocation",
-                        "Define success metrics and monitoring cadence",
-                    ],
-                ))
+                recommendations.append(
+                    TransferRecommendation(
+                        source_campaign_id=str(node_id),
+                        source_campaign_name=source_name,
+                        target_campaign_id=target_campaign_id,
+                        target_campaign_name=target_name,
+                        pattern=pattern,
+                        transfer_strategy=(
+                            f"Apply audience targeting parameters from '{source_name}' "
+                            f"to '{target_name}'. Start with a 20% budget test before "
+                            f"full rollout."
+                        ),
+                        expected_lift=f"Estimated {similarity * 15:.0f}% improvement in reach",
+                        confidence=round(pattern.confidence, 2),
+                        prerequisites=[
+                            "Validate audience overlap analysis",
+                            "Set up A/B test with 20% budget allocation",
+                            "Define success metrics and monitoring cadence",
+                        ],
+                    )
+                )
 
         except Exception:
             logger.exception("Transfer suggestion failed")
@@ -280,22 +285,26 @@ class CrossCampaignLearner:
         for pattern in patterns:
             if pattern.strength >= _PATTERN_STRENGTH_THRESHOLD:
                 priority = (
-                    "high" if pattern.strength >= 0.7
-                    else "medium" if pattern.strength >= 0.5
+                    "high"
+                    if pattern.strength >= 0.7
+                    else "medium"
+                    if pattern.strength >= 0.5
                     else "low"
                 )
-                insights.append(LearningInsight(
-                    insight_id=f"insight_{pattern.pattern_id}",
-                    title=f"Pattern: {pattern.title}",
-                    description=pattern.description,
-                    supporting_campaigns=pattern.campaign_ids,
-                    insight_type=pattern.pattern_type.value,
-                    priority=priority,
-                    recommended_actions=[
-                        f"Review {pattern.pattern_type.value} across {len(pattern.campaign_ids)} campaigns",
-                        "Apply winning strategy to underperformers",
-                    ],
-                ))
+                insights.append(
+                    LearningInsight(
+                        insight_id=f"insight_{pattern.pattern_id}",
+                        title=f"Pattern: {pattern.title}",
+                        description=pattern.description,
+                        supporting_campaigns=pattern.campaign_ids,
+                        insight_type=pattern.pattern_type.value,
+                        priority=priority,
+                        recommended_actions=[
+                            f"Review {pattern.pattern_type.value} across {len(pattern.campaign_ids)} campaigns",
+                            "Apply winning strategy to underperformers",
+                        ],
+                    )
+                )
 
         insights.sort(key=lambda i: i.priority == "high", reverse=True)
         return insights[:limit]
@@ -320,9 +329,9 @@ class CrossCampaignLearner:
             if campaign_ids:
                 id_set = set(campaign_ids)
                 raw = [
-                    r for r in raw
-                    if r.get("id") in id_set
-                    or r.get("properties", {}).get("campaign_id") in id_set
+                    r
+                    for r in raw
+                    if r.get("id") in id_set or r.get("properties", {}).get("campaign_id") in id_set
                 ]
             return raw
         except Exception:
@@ -362,21 +371,21 @@ class CrossCampaignLearner:
                 # Calculate similarity from name overlap
                 avg_similarity = self._average_similarity(cluster_campaigns)
                 if avg_similarity >= _PATTERN_STRENGTH_THRESHOLD:
-                    patterns.append(CampaignPattern(
-                        pattern_id=f"audience_{cluster_name[:20]}_{len(patterns)}",
-                        pattern_type=PatternType.AUDIENCE_PATTERN,
-                        title=f"Shared audience pattern in '{cluster_name}' campaigns",
-                        description=(
-                            f"{len(cluster_campaigns)} campaigns targeting similar "
-                            f"audiences with {avg_similarity:.0%} overlap."
-                        ),
-                        campaign_ids=[
-                            c.get("id", "") for c in cluster_campaigns
-                        ],
-                        strength=avg_similarity,
-                        sample_size=len(cluster_campaigns),
-                        confidence=min(0.5 + len(cluster_campaigns) * 0.1, 0.9),
-                    ))
+                    patterns.append(
+                        CampaignPattern(
+                            pattern_id=f"audience_{cluster_name[:20]}_{len(patterns)}",
+                            pattern_type=PatternType.AUDIENCE_PATTERN,
+                            title=f"Shared audience pattern in '{cluster_name}' campaigns",
+                            description=(
+                                f"{len(cluster_campaigns)} campaigns targeting similar "
+                                f"audiences with {avg_similarity:.0%} overlap."
+                            ),
+                            campaign_ids=[c.get("id", "") for c in cluster_campaigns],
+                            strength=avg_similarity,
+                            sample_size=len(cluster_campaigns),
+                            confidence=min(0.5 + len(cluster_campaigns) * 0.1, 0.9),
+                        )
+                    )
 
         return patterns
 
@@ -398,21 +407,25 @@ class CrossCampaignLearner:
                     limit=5,
                 )
                 if len(content_nodes) >= 2:
-                    avg_sim = sum(n.get("similarity", 0) for n in content_nodes) / len(content_nodes)
+                    avg_sim = sum(n.get("similarity", 0) for n in content_nodes) / len(
+                        content_nodes
+                    )
                     if avg_sim >= _PATTERN_STRENGTH_THRESHOLD:
-                        patterns.append(CampaignPattern(
-                            pattern_id=f"content_{campaign.get('id', '')[:8]}_{len(patterns)}",
-                            pattern_type=PatternType.CONTENT_PATTERN,
-                            title=f"Content pattern for '{campaign.get('name', 'Unknown')}'",
-                            description=(
-                                f"Found {len(content_nodes)} related content pieces with "
-                                f"{avg_sim:.0%} similarity for this campaign theme."
-                            ),
-                            campaign_ids=[campaign.get("id", "")],
-                            strength=avg_sim,
-                            sample_size=len(content_nodes),
-                            confidence=min(0.4 + avg_sim * 0.4, 0.85),
-                        ))
+                        patterns.append(
+                            CampaignPattern(
+                                pattern_id=f"content_{campaign.get('id', '')[:8]}_{len(patterns)}",
+                                pattern_type=PatternType.CONTENT_PATTERN,
+                                title=f"Content pattern for '{campaign.get('name', 'Unknown')}'",
+                                description=(
+                                    f"Found {len(content_nodes)} related content pieces with "
+                                    f"{avg_sim:.0%} similarity for this campaign theme."
+                                ),
+                                campaign_ids=[campaign.get("id", "")],
+                                strength=avg_sim,
+                                sample_size=len(content_nodes),
+                                confidence=min(0.4 + avg_sim * 0.4, 0.85),
+                            )
+                        )
             except Exception:
                 continue
 
@@ -441,19 +454,21 @@ class CrossCampaignLearner:
                 for ch_name, ch_nodes in clusters.items():
                     if len(ch_nodes) >= 2:
                         avg_sim = self._average_similarity(ch_nodes)
-                        patterns.append(CampaignPattern(
-                            pattern_id=f"channel_{ch_name[:20]}_{len(patterns)}",
-                            pattern_type=PatternType.CHANNEL_PATTERN,
-                            title=f"Channel pattern: {ch_name}",
-                            description=(
-                                f"{len(ch_nodes)} channels show {avg_sim:.0%} similarity "
-                                f"in usage across campaigns."
-                            ),
-                            campaign_ids=[n.get("id", "") for n in ch_nodes],
-                            strength=avg_sim,
-                            sample_size=len(ch_nodes),
-                            confidence=min(0.4 + avg_sim * 0.3, 0.8),
-                        ))
+                        patterns.append(
+                            CampaignPattern(
+                                pattern_id=f"channel_{ch_name[:20]}_{len(patterns)}",
+                                pattern_type=PatternType.CHANNEL_PATTERN,
+                                title=f"Channel pattern: {ch_name}",
+                                description=(
+                                    f"{len(ch_nodes)} channels show {avg_sim:.0%} similarity "
+                                    f"in usage across campaigns."
+                                ),
+                                campaign_ids=[n.get("id", "") for n in ch_nodes],
+                                strength=avg_sim,
+                                sample_size=len(ch_nodes),
+                                confidence=min(0.4 + avg_sim * 0.3, 0.8),
+                            )
+                        )
         except Exception:
             pass
 

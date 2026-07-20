@@ -115,7 +115,9 @@ class Supervisor:
             if not self._shutdown_requested:
                 self._shutdown_requested = True
                 # Schedule shutdown
-                asyncio.create_task(self._orchestrator.shutdown() if self._orchestrator else asyncio.sleep(0))
+                asyncio.create_task(
+                    self._orchestrator.shutdown() if self._orchestrator else asyncio.sleep(0)
+                )
 
         for sig in (signal.SIGTERM, signal.SIGINT):
             try:
@@ -141,8 +143,7 @@ class Supervisor:
 
         # Clean old timestamps outside the window
         self._restart_timestamps = [
-            ts for ts in self._restart_timestamps
-            if now - ts < self.config.restart_window_seconds
+            ts for ts in self._restart_timestamps if now - ts < self.config.restart_window_seconds
         ]
 
         self._restart_timestamps.append(now)
@@ -153,7 +154,7 @@ class Supervisor:
             print(
                 f"Crash-loop detected: {len(self._restart_timestamps)} restarts "
                 f"within {self.config.restart_window_seconds}s. Exiting.",
-                file=sys.stderr
+                file=sys.stderr,
             )
             sys.exit(1)
 
@@ -166,6 +167,5 @@ class Supervisor:
 
         # Increase backoff for next crash
         self._backoff = min(
-            self._backoff * self.config.backoff_multiplier,
-            self.config.max_backoff_seconds
+            self._backoff * self.config.backoff_multiplier, self.config.max_backoff_seconds
         )

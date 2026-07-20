@@ -60,10 +60,12 @@ def list_agents(ctx: click.Context, type: str, status: str, limit: int, output: 
 
         if output == "json":
             import json
+
             click.echo(json.dumps(agents, indent=2))
             return
         if output == "yaml":
             import yaml
+
             click.echo(yaml.dump(agents, default_flow_style=False))
             return
 
@@ -124,6 +126,7 @@ def get_agent(ctx: click.Context, agent_id: str, output: str):
             click.echo(json.dumps(agent, indent=2))
         else:
             import yaml
+
             click.echo(yaml.dump(agent, default_flow_style=False))
 
     except requests.exceptions.HTTPError as e:
@@ -144,11 +147,22 @@ def get_agent(ctx: click.Context, agent_id: str, output: str):
 @click.option("--type", "-t", required=True, help="Agent type (CEO, CONTENT_SPECIALIST, etc.)")
 @click.option("--description", "-d", help="Agent description")
 @click.option("--org", "-o", help="Organization ID")
-@click.option("--autonomy", "-a", type=click.Choice(["0", "1", "2"]), default="1", help="Autonomy level")
+@click.option(
+    "--autonomy", "-a", type=click.Choice(["0", "1", "2"]), default="1", help="Autonomy level"
+)
 @click.option("--model", "-m", help="Model to use")
 @click.option("--input", "-i", help="Input file with agent config (JSON)")
 @click.pass_context
-def create_agent(ctx: click.Context, name: str, type: str, description: str, org: str, autonomy: str, model: str, input: str):
+def create_agent(
+    ctx: click.Context,
+    name: str,
+    type: str,
+    description: str,
+    org: str,
+    autonomy: str,
+    model: str,
+    input: str,
+):
     """Create a new agent"""
     console = Console()
 
@@ -157,12 +171,14 @@ def create_agent(ctx: click.Context, name: str, type: str, description: str, org
         with open(input) as f:
             config_data = json.load(f)
 
-    config_data.update({
-        "name": name,
-        "type": type,
-        "description": description,
-        "autonomy_level": int(autonomy),
-    })
+    config_data.update(
+        {
+            "name": name,
+            "type": type,
+            "description": description,
+            "autonomy_level": int(autonomy),
+        }
+    )
 
     if org:
         config_data["organization_id"] = org
@@ -202,7 +218,14 @@ def create_agent(ctx: click.Context, name: str, type: str, description: str, org
 @click.option("--async", "async_mode", is_flag=True, help="Run asynchronously")
 @click.option("--follow", "-f", is_flag=True, help="Follow execution logs")
 @click.pass_context
-def run_agent(ctx: click.Context, agent_id: str, input: str, file: click.File | None, async_mode: bool, follow: bool):
+def run_agent(
+    ctx: click.Context,
+    agent_id: str,
+    input: str,
+    file: click.File | None,
+    async_mode: bool,
+    follow: bool,
+):
     """Run an agent"""
     console = Console()
 

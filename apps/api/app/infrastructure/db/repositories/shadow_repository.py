@@ -33,15 +33,27 @@ class ShadowSessionRepository:
             agent_type=model.agent_type,
             agent_model=model.agent_model,
             agent_config=json.loads(model.agent_config) if model.agent_config else {},
-            campaigns=[UUID(c) for c in json.loads(model.campaigns) if c] if model.campaigns else [],
+            campaigns=[UUID(c) for c in json.loads(model.campaigns) if c]
+            if model.campaigns
+            else [],
             ad_accounts=json.loads(model.ad_accounts) if model.ad_accounts else [],
-            decision_types=[DecisionType(dt) for dt in json.loads(model.decision_types) if dt] if model.decision_types else [],
-            reviewers=[UUID(r) for r in json.loads(model.reviewers) if r] if model.reviewers else [],
+            decision_types=[DecisionType(dt) for dt in json.loads(model.decision_types) if dt]
+            if model.decision_types
+            else [],
+            reviewers=[UUID(r) for r in json.loads(model.reviewers) if r]
+            if model.reviewers
+            else [],
             require_human_approval=model.require_human_approval.lower() == "true",
-            auto_approve_threshold=float(model.auto_approve_threshold) if model.auto_approve_threshold else 0.9,
-            agreement_threshold=float(model.agreement_threshold) if model.agreement_threshold else 0.7,
+            auto_approve_threshold=float(model.auto_approve_threshold)
+            if model.auto_approve_threshold
+            else 0.9,
+            agreement_threshold=float(model.agreement_threshold)
+            if model.agreement_threshold
+            else 0.7,
             lift_threshold=float(model.lift_threshold) if model.lift_threshold else 0.05,
-            max_human_override_rate=float(model.max_human_override_rate) if model.max_human_override_rate else 0.3,
+            max_human_override_rate=float(model.max_human_override_rate)
+            if model.max_human_override_rate
+            else 0.3,
             schedule_cron=model.schedule_cron,
             started_at=model.started_at,
             ended_at=model.ended_at,
@@ -52,7 +64,9 @@ class ShadowSessionRepository:
             disagreements=int(model.disagreements) if model.disagreements else 0,
             human_overrides=int(model.human_overrides) if model.human_overrides else 0,
             agent_corrections=int(model.agent_corrections) if model.agent_corrections else 0,
-            avg_lift_vs_baseline=float(model.avg_lift_vs_baseline) if model.avg_lift_vs_baseline else 0.0,
+            avg_lift_vs_baseline=float(model.avg_lift_vs_baseline)
+            if model.avg_lift_vs_baseline
+            else 0.0,
             total_lift_measured=int(model.total_lift_measured) if model.total_lift_measured else 0,
             created_by=model.created_by,
             created_at=model.created_at,
@@ -98,6 +112,7 @@ class ShadowSessionRepository:
     async def save(self, session: ShadowSession) -> ShadowSession:
         model_data = self._entity_to_model(session)
         from app.infrastructure.db.models.shadow import ShadowSessionModel as Model
+
         existing = await self.db.get(Model, session.id)
         if existing:
             for attr, value in model_data.items():
@@ -112,6 +127,7 @@ class ShadowSessionRepository:
 
     async def find_by_id(self, session_id: UUID) -> ShadowSession | None:
         from app.infrastructure.db.models.shadow import ShadowSessionModel as Model
+
         result = await self.db.execute(select(Model).where(Model.id == session_id))
         model = result.scalar_one_or_none()
         return self._model_to_entity(model) if model else None
@@ -123,6 +139,7 @@ class ShadowSessionRepository:
         limit: int = 50,
     ) -> list[ShadowSession]:
         from app.infrastructure.db.models.shadow import ShadowSessionModel as Model
+
         query = select(Model).where(Model.organization_id == org_id)
         if status:
             query = query.where(Model.status == status.value)
@@ -137,6 +154,7 @@ class ShadowSessionRepository:
         limit: int = 50,
     ) -> list[ShadowSession]:
         from app.infrastructure.db.models.shadow import ShadowSessionModel as Model
+
         query = select(Model)
         if status:
             query = query.where(Model.status == status.value)
@@ -208,6 +226,7 @@ class ShadowDecisionRepository:
 
     async def save(self, decision) -> ShadowDecision:
         from app.infrastructure.db.models.shadow import ShadowDecisionModel as Model
+
         model_data = self._entity_to_model(decision)
         existing = await self.db.get(Model, decision.id)
         if existing:
@@ -223,12 +242,14 @@ class ShadowDecisionRepository:
 
     async def find_by_id(self, decision_id: UUID):
         from app.infrastructure.db.models.shadow import ShadowDecisionModel as Model
+
         result = await self.db.execute(select(Model).where(Model.id == decision_id))
         model = result.scalar_one_or_none()
         return self._model_to_entity(model) if model else None
 
     async def find_by_session(self, session_id: UUID, limit: int = 100):
         from app.infrastructure.db.models.shadow import ShadowDecisionModel as Model
+
         result = await self.db.execute(
             select(Model)
             .where(Model.shadow_session_id == session_id)
@@ -240,6 +261,7 @@ class ShadowDecisionRepository:
 
     async def find_pending_comparison(self, session_id: UUID, limit: int = 50):
         from app.infrastructure.db.models.shadow import ShadowDecisionModel as Model
+
         result = await self.db.execute(
             select(Model)
             .where(Model.shadow_session_id == session_id)
@@ -252,6 +274,7 @@ class ShadowDecisionRepository:
 
     async def find_by_entity(self, entity_type: str, entity_id: str, limit: int = 10):
         from app.infrastructure.db.models.shadow import ShadowDecisionModel as Model
+
         result = await self.db.execute(
             select(Model)
             .where(Model.entity_type == entity_type)
@@ -300,6 +323,7 @@ class ShadowEventRepository:
 
     async def save(self, event):
         from app.infrastructure.db.models.shadow import ShadowEventModel as Model
+
         model_data = self._entity_to_model(event)
         model = Model(**model_data)
         self.db.add(model)
@@ -309,6 +333,7 @@ class ShadowEventRepository:
 
     async def find_by_session(self, session_id: UUID, event_type=None, limit: int = 100):
         from app.infrastructure.db.models.shadow import ShadowEventModel as Model
+
         query = select(Model).where(Model.shadow_session_id == session_id)
         if event_type:
             query = query.where(Model.event_type == event_type.value)
@@ -335,10 +360,16 @@ class LiftMeasurementRepository:
             lift_percentage=float(model.lift_percentage) if model.lift_percentage else 0.0,
             sample_size=int(model.sample_size) if model.sample_size else 0,
             p_value=float(model.p_value) if model.p_value else None,
-            confidence_interval=json.loads(model.confidence_interval) if model.confidence_interval else None,
+            confidence_interval=json.loads(model.confidence_interval)
+            if model.confidence_interval
+            else None,
             is_significant=model.is_significant.lower() == "true",
-            decision_types=[DecisionType(dt) for dt in json.loads(model.decision_types) if dt] if model.decision_types else [],
-            campaigns=[UUID(c) for c in json.loads(model.campaigns) if c] if model.campaigns else [],
+            decision_types=[DecisionType(dt) for dt in json.loads(model.decision_types) if dt]
+            if model.decision_types
+            else [],
+            campaigns=[UUID(c) for c in json.loads(model.campaigns) if c]
+            if model.campaigns
+            else [],
             calculated_by=model.calculated_by,
             notes=model.notes or "",
             created_at=model.created_at,
@@ -358,7 +389,9 @@ class LiftMeasurementRepository:
             "lift_percentage": str(entity.lift_percentage),
             "sample_size": str(entity.sample_size),
             "p_value": str(entity.p_value) if entity.p_value else None,
-            "confidence_interval": json.dumps(entity.confidence_interval) if entity.confidence_interval else None,
+            "confidence_interval": json.dumps(entity.confidence_interval)
+            if entity.confidence_interval
+            else None,
             "is_significant": str(entity.is_significant).lower(),
             "decision_types": json.dumps([dt.value for dt in entity.decision_types]),
             "campaigns": json.dumps([str(c) for c in entity.campaigns]),
@@ -368,6 +401,7 @@ class LiftMeasurementRepository:
 
     async def save(self, measurement):
         from app.infrastructure.db.models.shadow import LiftMeasurementModel as Model
+
         model_data = self._entity_to_model(measurement)
         existing = await self.db.get(Model, measurement.id)
         if existing:
@@ -383,6 +417,7 @@ class LiftMeasurementRepository:
 
     async def find_by_session(self, session_id: UUID, limit: int = 50):
         from app.infrastructure.db.models.shadow import LiftMeasurementModel as Model
+
         result = await self.db.execute(
             select(Model)
             .where(Model.shadow_session_id == session_id)
@@ -394,6 +429,7 @@ class LiftMeasurementRepository:
 
     async def find_latest(self, session_id: UUID, metric_name: str):
         from app.infrastructure.db.models.shadow import LiftMeasurementModel as Model
+
         result = await self.db.execute(
             select(Model)
             .where(Model.shadow_session_id == session_id)

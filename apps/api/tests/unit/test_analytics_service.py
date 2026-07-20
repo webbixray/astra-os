@@ -124,15 +124,37 @@ class TestGetAdPerformance:
 
     async def test_with_data(self, service):
         mock_campaigns = [
-            MagicMock(impressions=1000, clicks=50, spend=100, conversions=5, revenue=500, budget=1000,
-                      platform=MagicMock(value="google"), id="c1", name="Campaign 1"),
-            MagicMock(impressions=2000, clicks=100, spend=200, conversions=10, revenue=1000, budget=2000,
-                      platform=MagicMock(value="google"), id="c2", name="Campaign 2"),
+            MagicMock(
+                impressions=1000,
+                clicks=50,
+                spend=100,
+                conversions=5,
+                revenue=500,
+                budget=1000,
+                platform=MagicMock(value="google"),
+                id="c1",
+                name="Campaign 1",
+            ),
+            MagicMock(
+                impressions=2000,
+                clicks=100,
+                spend=200,
+                conversions=10,
+                revenue=1000,
+                budget=2000,
+                platform=MagicMock(value="google"),
+                id="c2",
+                name="Campaign 2",
+            ),
         ]
 
-        with patch("app.infrastructure.external_adapters.adplatforms.base_adapter.AdPlatformFactory") as mock_factory:
+        with patch(
+            "app.infrastructure.external_adapters.adplatforms.base_adapter.AdPlatformFactory"
+        ) as mock_factory:
             mock_factory.get_connected_campaigns = AsyncMock(return_value=mock_campaigns)
-            result = await service.get_ad_performance([{"platform": "google", "access_token": "tok"}])
+            result = await service.get_ad_performance(
+                [{"platform": "google", "access_token": "tok"}]
+            )
 
         assert result["total_impressions"] == 3000
         assert result["total_clicks"] == 150

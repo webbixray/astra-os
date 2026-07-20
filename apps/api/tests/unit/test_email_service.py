@@ -71,13 +71,20 @@ def make_campaign(**overrides):
 
 class TestProviderManagement:
     async def test_create_provider(self, service, provider_repo):
-        provider_repo.save = AsyncMock(return_value=EmailProvider(
-            organization_id=uuid4(), provider_type="sendgrid",
-            name="Provider", api_key="sk-123", from_email="t@t.com",
-            created_by=uuid4(),
-        ))
+        provider_repo.save = AsyncMock(
+            return_value=EmailProvider(
+                organization_id=uuid4(),
+                provider_type="sendgrid",
+                name="Provider",
+                api_key="sk-123",
+                from_email="t@t.com",
+                created_by=uuid4(),
+            )
+        )
 
-        result = await service.create_provider(uuid4(), "sendgrid", "Provider", "sk-123", "t@t.com", uuid4())
+        result = await service.create_provider(
+            uuid4(), "sendgrid", "Provider", "sk-123", "t@t.com", uuid4()
+        )
 
         assert result.name == "Provider"
 
@@ -99,25 +106,45 @@ class TestProviderManagement:
 
 class TestCampaignManagement:
     async def test_create_campaign(self, service, campaign_repo):
-        campaign_repo.save = AsyncMock(return_value=EmailCampaign(
-            organization_id=uuid4(), provider_id=uuid4(), name="Campaign",
-            subject="Subject", body="Body", from_email="f@t.com",
-            created_by=uuid4(),
-        ))
+        campaign_repo.save = AsyncMock(
+            return_value=EmailCampaign(
+                organization_id=uuid4(),
+                provider_id=uuid4(),
+                name="Campaign",
+                subject="Subject",
+                body="Body",
+                from_email="f@t.com",
+                created_by=uuid4(),
+            )
+        )
 
-        result = await service.create_campaign(uuid4(), uuid4(), "Campaign", "Subject", "Body", "f@t.com", uuid4())
+        result = await service.create_campaign(
+            uuid4(), uuid4(), "Campaign", "Subject", "Body", "f@t.com", uuid4()
+        )
 
         assert result.name == "Campaign"
 
     async def test_create_campaign_with_schedule(self, service, campaign_repo):
-        campaign_repo.save = AsyncMock(return_value=EmailCampaign(
-            organization_id=uuid4(), provider_id=uuid4(), name="Campaign",
-            subject="Subject", body="Body", from_email="f@t.com",
-            created_by=uuid4(),
-        ))
+        campaign_repo.save = AsyncMock(
+            return_value=EmailCampaign(
+                organization_id=uuid4(),
+                provider_id=uuid4(),
+                name="Campaign",
+                subject="Subject",
+                body="Body",
+                from_email="f@t.com",
+                created_by=uuid4(),
+            )
+        )
 
         result = await service.create_campaign(
-            uuid4(), uuid4(), "Campaign", "Subject", "Body", "f@t.com", uuid4(),
+            uuid4(),
+            uuid4(),
+            "Campaign",
+            "Subject",
+            "Body",
+            "f@t.com",
+            uuid4(),
             scheduled_at="2025-06-15T10:00:00+00:00",
         )
 
@@ -166,7 +193,9 @@ class TestSendCampaign:
         mock_sender = MagicMock()
         mock_sender.send = AsyncMock(return_value={"sent_count": 2})
 
-        with patch("app.application.use_cases.email.email_service.get_sender", return_value=mock_sender):
+        with patch(
+            "app.application.use_cases.email.email_service.get_sender", return_value=mock_sender
+        ):
             await service.send_campaign(campaign.id, ["a@b.com", "c@d.com"])
 
         campaign.send.assert_called_once()
@@ -215,7 +244,9 @@ class TestSendCampaign:
         mock_sender = MagicMock()
         mock_sender.send = AsyncMock(side_effect=RuntimeError("SMTP error"))
 
-        with patch("app.application.use_cases.email.email_service.get_sender", return_value=mock_sender):
+        with patch(
+            "app.application.use_cases.email.email_service.get_sender", return_value=mock_sender
+        ):
             await service.send_campaign(campaign.id, ["a@b.com"])
 
         campaign.fail.assert_called_once()

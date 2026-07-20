@@ -49,9 +49,7 @@ class ApprovalRuleRepositoryImpl(ApprovalRuleRepository):
     async def find_by_organization(
         self, org_id: UUID, active_only: bool = True
     ) -> list[ApprovalRule]:
-        query = select(ApprovalRuleModel).where(
-            ApprovalRuleModel.organization_id == str(org_id)
-        )
+        query = select(ApprovalRuleModel).where(ApprovalRuleModel.organization_id == str(org_id))
         if active_only:
             query = query.where(ApprovalRuleModel.is_active == True)  # noqa: E712
         query = query.order_by(ApprovalRuleModel.priority.desc())
@@ -81,34 +79,32 @@ class ApprovalRequestRepositoryImpl(ApprovalRequestRepository):
 
     async def find_by_id(self, request_id: UUID) -> ApprovalRequest | None:
         result = await self.session.execute(
-            select(ApprovalRequestModel).where(
-                ApprovalRequestModel.id == str(request_id)
-            )
+            select(ApprovalRequestModel).where(ApprovalRequestModel.id == str(request_id))
         )
         model = result.scalar_one_or_none()
         return model.to_domain() if model is not None else None
 
-    async def find_pending_by_organization(
-        self, org_id: UUID
-    ) -> list[ApprovalRequest]:
+    async def find_pending_by_organization(self, org_id: UUID) -> list[ApprovalRequest]:
         result = await self.session.execute(
-            select(ApprovalRequestModel).where(
+            select(ApprovalRequestModel)
+            .where(
                 ApprovalRequestModel.organization_id == str(org_id),
                 ApprovalRequestModel.status == "pending",
-            ).order_by(ApprovalRequestModel.created_at.desc())
+            )
+            .order_by(ApprovalRequestModel.created_at.desc())
         )
         models = result.scalars().all()
         return [m.to_domain() for m in models]
 
-    async def find_pending_by_role(
-        self, org_id: UUID, role: str
-    ) -> list[ApprovalRequest]:
+    async def find_pending_by_role(self, org_id: UUID, role: str) -> list[ApprovalRequest]:
         result = await self.session.execute(
-            select(ApprovalRequestModel).where(
+            select(ApprovalRequestModel)
+            .where(
                 ApprovalRequestModel.organization_id == str(org_id),
                 ApprovalRequestModel.status == "pending",
                 ApprovalRequestModel.assigned_role == role,
-            ).order_by(ApprovalRequestModel.created_at.desc())
+            )
+            .order_by(ApprovalRequestModel.created_at.desc())
         )
         models = result.scalars().all()
         return [m.to_domain() for m in models]
@@ -134,13 +130,9 @@ class ApprovalDecisionRepositoryImpl(ApprovalDecisionRepository):
         await self.session.flush()
         return merged.to_domain()
 
-    async def find_by_request_id(
-        self, request_id: UUID
-    ) -> ApprovalDecision | None:
+    async def find_by_request_id(self, request_id: UUID) -> ApprovalDecision | None:
         result = await self.session.execute(
-            select(ApprovalDecisionModel).where(
-                ApprovalDecisionModel.request_id == str(request_id)
-            )
+            select(ApprovalDecisionModel).where(ApprovalDecisionModel.request_id == str(request_id))
         )
         model = result.scalar_one_or_none()
         return model.to_domain() if model is not None else None

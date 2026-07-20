@@ -77,11 +77,13 @@ class AdvancedAnalyticsService:
             bucket_contents = [c for c in contents if current <= c.created_at < next_bucket]
 
             value = self._calculate_metric_value(metric, bucket_campaigns, bucket_contents)
-            points.append({
-                "timestamp": current,
-                "value": float(value),
-                "label": self._format_timestamp(current, granularity),
-            })
+            points.append(
+                {
+                    "timestamp": current,
+                    "value": float(value),
+                    "label": self._format_timestamp(current, granularity),
+                }
+            )
             current = next_bucket
 
         return points

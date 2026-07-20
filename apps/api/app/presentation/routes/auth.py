@@ -133,6 +133,7 @@ async def refresh_token(
     refresh_token = body.refresh_token or request.cookies.get("astra_refresh_token", "")
     if not refresh_token:
         from fastapi import HTTPException
+
         raise HTTPException(status_code=401, detail="No refresh token provided")
     result = await service.refresh_access_token(refresh_token)
     _set_auth_cookies(response, result["access_token"], result["refresh_token"])

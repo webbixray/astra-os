@@ -244,6 +244,7 @@ class TestWorkflowReplayService:
             async def save_execution(self, execution):
                 self.executions[str(execution.id)] = execution
                 return execution
+
         return MockExecutionRepo()
 
     @pytest.fixture

@@ -32,7 +32,9 @@ class DesignPartnerModel(Base):
         index=True,
     )
     tier = Column(String(50), default=DesignPartnerTier.DESIGN_PARTNER.value, nullable=False)
-    status = Column(String(50), default=DesignPartnerStatus.PENDING.value, nullable=False, index=True)
+    status = Column(
+        String(50), default=DesignPartnerStatus.PENDING.value, nullable=False, index=True
+    )
 
     dedicated_csm_id = Column(PG_UUID(as_uuid=True), nullable=True)
 
@@ -68,7 +70,9 @@ class DesignPartnerModel(Base):
     internal_tags = Column(String(50), default="[]", nullable=False)  # JSON
 
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
     approved_at = Column(DateTime(timezone=True), nullable=True)
     activated_at = Column(DateTime(timezone=True), nullable=True)
 
@@ -112,7 +116,9 @@ class DesignPartnerFeedbackModel(Base):
     metadata = Column(String(50), default="{}", nullable=False)  # JSON
 
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
 
 
 class DesignPartnerRepositoryImpl:
@@ -121,6 +127,7 @@ class DesignPartnerRepositoryImpl:
 
     def _model_to_entity(self, model: DesignPartnerModel) -> DesignPartner:
         import json
+
         return DesignPartner(
             id=model.id,
             organization_id=model.organization_id,
@@ -134,7 +141,9 @@ class DesignPartnerRepositoryImpl:
             custom_pricing=json.loads(model.custom_pricing) if model.custom_pricing else {},
             onboarding_started_at=model.onboarding_started_at,
             onboarding_completed_at=model.onboarding_completed_at,
-            onboarding_milestones=json.loads(model.onboarding_milestones) if model.onboarding_milestones else [],
+            onboarding_milestones=json.loads(model.onboarding_milestones)
+            if model.onboarding_milestones
+            else [],
             onboarding_csm_id=model.onboarding_csm_id,
             weekly_active_users=int(model.weekly_active_users) if model.weekly_active_users else 0,
             campaigns_run=int(model.campaigns_run) if model.campaigns_run else 0,
@@ -147,7 +156,9 @@ class DesignPartnerRepositoryImpl:
             feedback_by_type=json.loads(model.feedback_by_type) if model.feedback_by_type else {},
             support_tier=model.support_tier,
             open_tickets=int(model.open_tickets) if model.open_tickets else 0,
-            avg_resolution_hours=float(model.avg_resolution_hours) if model.avg_resolution_hours else 0.0,
+            avg_resolution_hours=float(model.avg_resolution_hours)
+            if model.avg_resolution_hours
+            else 0.0,
             notes=model.notes,
             internal_tags=json.loads(model.internal_tags) if model.internal_tags else [],
             created_at=model.created_at,
@@ -158,6 +169,7 @@ class DesignPartnerRepositoryImpl:
 
     def _entity_to_model(self, entity: DesignPartner) -> DesignPartnerModel:
         import json
+
         return DesignPartnerModel(
             id=entity.id,
             organization_id=entity.organization_id,
@@ -194,13 +206,35 @@ class DesignPartnerRepositoryImpl:
         existing = await self.db.get(DesignPartnerModel, model.id)
         if existing:
             for attr in (
-                "tier", "status", "dedicated_csm_id", "contract_signed_at", "contract_expires_at",
-                "custom_terms", "billing_contact_email", "custom_pricing", "onboarding_started_at",
-                "onboarding_completed_at", "onboarding_milestones", "onboarding_csm_id",
-                "weekly_active_users", "campaigns_run", "ai_interactions", "last_engagement_at",
-                "nps_score", "nps_reason", "nps_responded_at", "feedback_count",
-                "feedback_by_type", "support_tier", "open_tickets", "avg_resolution_hours",
-                "notes", "internal_tags", "updated_at", "approved_at", "activated_at",
+                "tier",
+                "status",
+                "dedicated_csm_id",
+                "contract_signed_at",
+                "contract_expires_at",
+                "custom_terms",
+                "billing_contact_email",
+                "custom_pricing",
+                "onboarding_started_at",
+                "onboarding_completed_at",
+                "onboarding_milestones",
+                "onboarding_csm_id",
+                "weekly_active_users",
+                "campaigns_run",
+                "ai_interactions",
+                "last_engagement_at",
+                "nps_score",
+                "nps_reason",
+                "nps_responded_at",
+                "feedback_count",
+                "feedback_by_type",
+                "support_tier",
+                "open_tickets",
+                "avg_resolution_hours",
+                "notes",
+                "internal_tags",
+                "updated_at",
+                "approved_at",
+                "activated_at",
             ):
                 setattr(existing, attr, getattr(model, attr))
             model = existing
@@ -243,6 +277,7 @@ class DesignPartnerRepositoryImpl:
 
     async def count(self, status: DesignPartnerStatus | None = None) -> int:
         from sqlalchemy import func
+
         query = select(func.count(DesignPartnerModel.id))
         if status:
             query = query.where(DesignPartnerModel.status == status.value)
@@ -256,6 +291,7 @@ class DesignPartnerFeedbackRepositoryImpl:
 
     def _model_to_entity(self, model: DesignPartnerFeedbackModel) -> DesignPartnerFeedback:
         import json
+
         return DesignPartnerFeedback(
             id=model.id,
             design_partner_id=model.design_partner_id,
@@ -283,6 +319,7 @@ class DesignPartnerFeedbackRepositoryImpl:
 
     def _entity_to_model(self, entity: DesignPartnerFeedback) -> DesignPartnerFeedbackModel:
         import json
+
         return DesignPartnerFeedbackModel(
             id=entity.id,
             design_partner_id=entity.design_partner_id,
@@ -311,10 +348,23 @@ class DesignPartnerFeedbackRepositoryImpl:
         existing = await self.db.get(DesignPartnerFeedbackModel, model.id)
         if existing:
             for attr in (
-                "type", "priority", "status", "title", "description", "feature_area",
-                "related_entity_type", "related_entity_id", "nps_score", "nps_reason",
-                "assigned_to", "triaged_at", "resolution_notes", "resolved_at",
-                "tags", "metadata", "updated_at",
+                "type",
+                "priority",
+                "status",
+                "title",
+                "description",
+                "feature_area",
+                "related_entity_type",
+                "related_entity_id",
+                "nps_score",
+                "nps_reason",
+                "assigned_to",
+                "triaged_at",
+                "resolution_notes",
+                "resolved_at",
+                "tags",
+                "metadata",
+                "updated_at",
             ):
                 setattr(existing, attr, getattr(model, attr))
             model = existing

@@ -1,17 +1,17 @@
-"""
-Tests for Agent Governance Middleware — runtime enforcement of autonomy.
+"""Tests for Agent Governance Middleware — runtime enforcement of autonomy.
 
 Tests the GovernanceMiddleware that intercepts agent tool calls and
 checks them against autonomy config before execution.
 """
 
-import pytest
 from uuid import uuid4
 
+import pytest
 from apps.api.app.domain.entities.governance.autonomy import (
     AutonomyConfig,
     AutonomyLevel,
 )
+
 from astra_agent_orchestrator.governance import (
     TOOL_TO_ACTION_MAP,
     GovernanceCheckResult,
@@ -77,7 +77,6 @@ class TestToolActionMapping:
 
 class TestGovernanceCheckResult:
     def test_allowed_result(self):
-        from astra_agent_orchestrator.governance import GovernanceCheckResult
 
         result = GovernanceCheckResult(
             action_name="content.generate",
@@ -94,7 +93,6 @@ class TestGovernanceCheckResult:
         assert result.risk_level == 1
 
     def test_blocked_result(self):
-        from astra_agent_orchestrator.governance import GovernanceCheckResult
 
         result = GovernanceCheckResult(
             action_name="campaign.launch",
@@ -110,7 +108,6 @@ class TestGovernanceCheckResult:
         assert result.requires_approval is True
 
     def test_approval_needed_result(self):
-        from astra_agent_orchestrator.governance import GovernanceCheckResult
 
         result = GovernanceCheckResult(
             action_name="spend.allocate",
@@ -353,7 +350,7 @@ class TestToolActionMapping:
 
     def test_all_known_tools_mapped(self):
         """Ensure all expected tools have mappings."""
-        from astra_agent_orchestrator.governance import map_tool_to_action, TOOL_TO_ACTION_MAP
+        from astra_agent_orchestrator.governance import map_tool_to_action
 
         expected_mappings = {
             "generate_content": "content.generate",
@@ -382,7 +379,7 @@ class TestToolActionMapping:
 
     def test_action_map_completeness(self):
         """Ensure all mapped actions exist in risk classification."""
-        from astra_agent_orchestrator.governance import get_action_risk_level, TOOL_TO_ACTION_MAP
+        from astra_agent_orchestrator.governance import TOOL_TO_ACTION_MAP, get_action_risk_level
 
         for tool, action in TOOL_TO_ACTION_MAP.items():
             risk = get_action_risk_level(action)

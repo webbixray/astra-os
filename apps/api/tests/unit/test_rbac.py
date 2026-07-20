@@ -32,8 +32,7 @@ class TestRBACHierarchy:
                 higher_perms = set(ROLE_DEFAULT_PERMISSIONS[higher])
                 lower_perms = set(ROLE_DEFAULT_PERMISSIONS[lower])
                 assert lower_perms.issubset(higher_perms), (
-                    f"'{higher}' missing permissions from '{lower}': "
-                    f"{lower_perms - higher_perms}"
+                    f"'{higher}' missing permissions from '{lower}': {lower_perms - higher_perms}"
                 )
 
     def test_owner_has_all_permissions(self):

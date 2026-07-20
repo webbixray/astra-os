@@ -30,6 +30,7 @@ logger = logging.getLogger(__name__)
 
 # --- Comment Analyzer ---
 
+
 class CommentAnalyzer:
     """Analyzes social media comments for sentiment, intent, entities, and moderation."""
 
@@ -88,22 +89,78 @@ class CommentAnalyzer:
 
     # Sentiment keywords
     POSITIVE_WORDS = {
-        "love", "amazing", "awesome", "great", "excellent", "fantastic", "perfect",
-        "best", "wonderful", "brilliant", "outstanding", "superb", "impressive",
-        "happy", "satisfied", "pleased", "delighted", "thrilled", "excited",
-        "thanks", "thank you", "appreciate", "grateful", "recommend", "favorite"
+        "love",
+        "amazing",
+        "awesome",
+        "great",
+        "excellent",
+        "fantastic",
+        "perfect",
+        "best",
+        "wonderful",
+        "brilliant",
+        "outstanding",
+        "superb",
+        "impressive",
+        "happy",
+        "satisfied",
+        "pleased",
+        "delighted",
+        "thrilled",
+        "excited",
+        "thanks",
+        "thank you",
+        "appreciate",
+        "grateful",
+        "recommend",
+        "favorite",
     }
 
     NEGATIVE_WORDS = {
-        "hate", "terrible", "awful", "horrible", "worst", "bad", "poor", "disappointing",
-        "frustrated", "angry", "annoyed", "upset", "unhappy", "dissatisfied",
-        "useless", "waste", "broken", "failed", "error", "problem", "issue",
-        "complaint", "refund", "cancel", "regret", "mistake", "avoid"
+        "hate",
+        "terrible",
+        "awful",
+        "horrible",
+        "worst",
+        "bad",
+        "poor",
+        "disappointing",
+        "frustrated",
+        "angry",
+        "annoyed",
+        "upset",
+        "unhappy",
+        "dissatisfied",
+        "useless",
+        "waste",
+        "broken",
+        "failed",
+        "error",
+        "problem",
+        "issue",
+        "complaint",
+        "refund",
+        "cancel",
+        "regret",
+        "mistake",
+        "avoid",
     }
 
     TOXIC_WORDS = {
-        "hate", "stupid", "idiot", "moron", "garbage", "trash", "scam", "fraud",
-        "die", "kill", "worthless", "pathetic", "disgusting", "vile"
+        "hate",
+        "stupid",
+        "idiot",
+        "moron",
+        "garbage",
+        "trash",
+        "scam",
+        "fraud",
+        "die",
+        "kill",
+        "worthless",
+        "pathetic",
+        "disgusting",
+        "vile",
     }
 
     SPAM_INDICATORS = [
@@ -121,9 +178,7 @@ class CommentAnalyzer:
 
     def _compile_patterns(self) -> None:
         for intent, patterns in self.INTENT_PATTERNS.items():
-            self._compiled_patterns[intent] = [
-                re.compile(p, re.IGNORECASE) for p in patterns
-            ]
+            self._compiled_patterns[intent] = [re.compile(p, re.IGNORECASE) for p in patterns]
 
         self._spam_patterns = [re.compile(p, re.IGNORECASE) for p in self.SPAM_INDICATORS]
 
@@ -227,10 +282,27 @@ class CommentAnalyzer:
         """Extract key topics/keywords."""
         # Simple TF-IDF style extraction
         words = re.findall(r"\b[a-z]{4,}\b", text.lower())
-        stopwords = {"the", "and", "for", "you", "your", "this", "that", "with", "have", "are", "was", "but", "not", "has", "had"}
+        stopwords = {
+            "the",
+            "and",
+            "for",
+            "you",
+            "your",
+            "this",
+            "that",
+            "with",
+            "have",
+            "are",
+            "was",
+            "but",
+            "not",
+            "has",
+            "had",
+        }
         filtered = [w for w in words if w not in stopwords]
         # Return top 10 by frequency
         from collections import Counter
+
         return [w for w, _ in Counter(filtered).most_common(10)]
 
     def _calculate_spam_score(self, text: str) -> float:
@@ -258,6 +330,7 @@ class CommentAnalyzer:
 
 
 # --- Auto-Reply Generator ---
+
 
 class AutoReplyGenerator:
     """Generates AI-powered replies to social comments."""
@@ -402,6 +475,7 @@ class AutoReplyGenerator:
 
 # --- Social Inbox Manager ---
 
+
 class SocialInboxManager:
     """Manages the social media inbox - fetching, filtering, assignment."""
 
@@ -480,6 +554,7 @@ class SocialInboxManager:
 
 # --- Reply Template Manager ---
 
+
 class ReplyTemplateManager:
     """Manages reply templates for common scenarios."""
 
@@ -537,10 +612,13 @@ class ReplyTemplateManager:
             template.usage_count += 1
             # Update success rate (exponential moving average)
             alpha = 0.1
-            template.success_rate = (1 - alpha) * template.success_rate + alpha * (1.0 if success else 0.0)
+            template.success_rate = (1 - alpha) * template.success_rate + alpha * (
+                1.0 if success else 0.0
+            )
 
 
 # --- Analytics ---
+
 
 class CommentAnalyticsEngine:
     """Generates analytics for social comments."""
@@ -563,19 +641,27 @@ class CommentAnalyticsEngine:
 
         # By platform
         for c in comments:
-            analytics.comments_by_platform[c.platform.value] = analytics.comments_by_platform.get(c.platform.value, 0) + 1
+            analytics.comments_by_platform[c.platform.value] = (
+                analytics.comments_by_platform.get(c.platform.value, 0) + 1
+            )
 
         # By type
         for c in comments:
-            analytics.comments_by_type[c.type.value] = analytics.comments_by_type.get(c.type.value, 0) + 1
+            analytics.comments_by_type[c.type.value] = (
+                analytics.comments_by_type.get(c.type.value, 0) + 1
+            )
 
         # By sentiment
         for c in comments:
-            analytics.comments_by_sentiment[c.sentiment.value] = analytics.comments_by_sentiment.get(c.sentiment.value, 0) + 1
+            analytics.comments_by_sentiment[c.sentiment.value] = (
+                analytics.comments_by_sentiment.get(c.sentiment.value, 0) + 1
+            )
 
         # By intent
         for c in comments:
-            analytics.comments_by_intent[c.intent.value] = analytics.comments_by_intent.get(c.intent.value, 0) + 1
+            analytics.comments_by_intent[c.intent.value] = (
+                analytics.comments_by_intent.get(c.intent.value, 0) + 1
+            )
 
         # Engagement
         analytics.total_likes = sum(c.like_count for c in comments)
@@ -583,12 +669,16 @@ class CommentAnalyticsEngine:
         analytics.total_shares = sum(c.share_count for c in comments)
 
         if comments:
-            analytics.avg_engagement_rate = (analytics.total_likes + analytics.total_replies + analytics.total_shares) / len(comments)
+            analytics.avg_engagement_rate = (
+                analytics.total_likes + analytics.total_replies + analytics.total_shares
+            ) / len(comments)
 
         # Response metrics
         sent_replies = [r for r in replies if r.status == ReplyStatus.SENT]
         analytics.total_replies_sent = len(sent_replies)
-        analytics.auto_replies_sent = len([r for r in sent_replies if r.approved_by is None])  # System-approved
+        analytics.auto_replies_sent = len(
+            [r for r in sent_replies if r.approved_by is None]
+        )  # System-approved
         analytics.manual_replies_sent = analytics.total_replies_sent - analytics.auto_replies_sent
 
         if comments:
@@ -614,7 +704,9 @@ class CommentAnalyticsEngine:
         if auto_replies:
             approved = [r for r in auto_replies if r.status != ReplyStatus.REJECTED]
             analytics.auto_reply_approval_rate = len(approved) / len(auto_replies) * 100
-            analytics.auto_reply_confidence_avg = sum(r.confidence_score for r in auto_replies) / len(auto_replies)
+            analytics.auto_reply_confidence_avg = sum(
+                r.confidence_score for r in auto_replies
+            ) / len(auto_replies)
 
         return analytics
 

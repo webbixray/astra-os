@@ -64,7 +64,9 @@ class RedisMessageBus:
         """Send a message to an agent via Redis Pub/Sub."""
         channel = f"agent:{message.to_agent}"
         envelope = {
-            "message_id": str(message.message_id) if hasattr(message, "message_id") else str(uuid4()),
+            "message_id": str(message.message_id)
+            if hasattr(message, "message_id")
+            else str(uuid4()),
             "from_agent": str(message.from_agent),
             "to_agent": str(message.to_agent),
             "message_type": message.message_type,
@@ -285,8 +287,14 @@ class AgentAuditTrail:
             agent_name=agent_name,
             iteration=result.iterations if hasattr(result, "iterations") else 0,
             final_answer=result.output if hasattr(result, "output") else None,
-            tool_calls=[tc.__dict__ if hasattr(tc, "__dict__") else str(tc) for tc in (result.tool_calls if hasattr(result, "tool_calls") else [])],
-            tool_results=[tr.__dict__ if hasattr(tr, "__dict__") else str(tr) for tr in (result.tool_results if hasattr(result, "tool_results") else [])],
+            tool_calls=[
+                tc.__dict__ if hasattr(tc, "__dict__") else str(tc)
+                for tc in (result.tool_calls if hasattr(result, "tool_calls") else [])
+            ],
+            tool_results=[
+                tr.__dict__ if hasattr(tr, "__dict__") else str(tr)
+                for tr in (result.tool_results if hasattr(result, "tool_results") else [])
+            ],
             tokens_used=result.tokens_used if hasattr(result, "tokens_used") else 0,
             cost_usd=result.cost_usd if hasattr(result, "cost_usd") else 0.0,
             duration_ms=result.duration_ms if hasattr(result, "duration_ms") else None,

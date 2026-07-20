@@ -1,7 +1,7 @@
 """Tests for the model router."""
 
-
 import pytest
+
 from astra_agent_orchestrator.router import (
     ModelCapability,
     ModelConfig,

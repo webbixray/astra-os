@@ -33,9 +33,11 @@ def _get_config_and_url(ctx: click.Context) -> tuple[dict, str]:
         config_path = ctx.obj.get("config_path")
         if config_path:
             from astra_cli.config import load_config
+
             config = load_config(config_path)
         else:
             from astra_cli.config import load_config
+
             config = load_config()
     api_url = ctx.obj.get("api_url", "https://api.astra-os.io")
     return config, api_url
@@ -76,6 +78,7 @@ def list_agents(ctx: click.Context, type: str, status: str, limit: int, output: 
             return
         if output == "yaml":
             import yaml
+
             click.echo(yaml.dump(agents, default_flow_style=False))
             return
 
@@ -138,6 +141,7 @@ def get_agent(ctx: click.Context, agent_id: str, output: str):
             click.echo(json.dumps(agent, indent=2))
         else:
             import yaml
+
             click.echo(yaml.dump(agent, default_flow_style=False))
 
     except requests.exceptions.HTTPError as e:
@@ -158,11 +162,22 @@ def get_agent(ctx: click.Context, agent_id: str, output: str):
 @click.option("--type", "-t", required=True, help="Agent type (CEO, CONTENT_SPECIALIST, etc.)")
 @click.option("--description", "-d", help="Agent description")
 @click.option("--org", "-o", help="Organization ID")
-@click.option("--autonomy", "-a", type=click.Choice(["0", "1", "2"]), default="1", help="Autonomy level")
+@click.option(
+    "--autonomy", "-a", type=click.Choice(["0", "1", "2"]), default="1", help="Autonomy level"
+)
 @click.option("--model", "-m", help="Model to use")
 @click.option("--input", "-i", help="Input file with agent config (JSON)")
 @click.pass_context
-def create_agent(ctx: click.Context, name: str, type: str, description: str, org: str, autonomy: str, model: str, input: str):
+def create_agent(
+    ctx: click.Context,
+    name: str,
+    type: str,
+    description: str,
+    org: str,
+    autonomy: str,
+    model: str,
+    input: str,
+):
     """Create a new agent"""
     console = Console()
 
@@ -171,12 +186,14 @@ def create_agent(ctx: click.Context, name: str, type: str, description: str, org
         with open(input) as f:
             config_data = json.load(f)
 
-    config_data.update({
-        "name": name,
-        "type": type,
-        "description": description,
-        "autonomy_level": int(autonomy),
-    })
+    config_data.update(
+        {
+            "name": name,
+            "type": type,
+            "description": description,
+            "autonomy_level": int(autonomy),
+        }
+    )
 
     if org:
         config_data["organization_id"] = org
@@ -225,6 +242,7 @@ def run_agent(ctx: click.Context, agent_id: str, input: str, file, async_mode: b
     input_data = {}
     if file:
         import yaml
+
         if file.name.endswith((".yaml", ".yml")):
             input_data = yaml.safe_load(file)
         else:

@@ -29,7 +29,9 @@ def _make_csrf_token() -> tuple[str, str, str]:
     timestamp = int(time.time())
     msg = f"{session_id}:{timestamp}"
     signature = hmac.new(
-        secret.encode(), msg.encode(), hashlib.sha256,
+        secret.encode(),
+        msg.encode(),
+        hashlib.sha256,
     ).hexdigest()[:16]
     csrf_token = f"{timestamp}:{signature}"
     return csrf_token, session_id, csrf_token  # (cookie_value, session_id, header_value)
@@ -69,7 +71,9 @@ class TestCampaignIntegration:
         return resp.json()
 
     async def _create_org_and_member(
-        self, integration_session_factory, user_id: UUID,
+        self,
+        integration_session_factory,
+        user_id: UUID,
     ) -> UUID:
         async with integration_session_factory() as session:
             org_repo = OrganizationRepositoryImpl(session)
@@ -79,7 +83,9 @@ class TestCampaignIntegration:
             org = await org_repo.save(org)
 
             member = TeamMember.create(
-                organization_id=org.id, user_id=user_id, role="owner",
+                organization_id=org.id,
+                user_id=user_id,
+                role="owner",
             )
             await member_repo.save(member)
             await session.commit()
@@ -191,7 +197,9 @@ class TestCampaignIntegration:
             "/api/v1/campaigns",
             json={"name": "No Org", "organization_id": str(uuid4())},
         )
-        assert resp.status_code in (403, 404), f"expected forbidden/not-found, got {resp.status_code}"
+        assert resp.status_code in (403, 404), (
+            f"expected forbidden/not-found, got {resp.status_code}"
+        )
 
     async def test_get_nonexistent_campaign(self, test_client, integration_session_factory):
         auth_resp = await self._signup_user(test_client, "nonexist@test.com")

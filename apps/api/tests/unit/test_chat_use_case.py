@@ -98,9 +98,7 @@ class TestChatUseCase:
 
     async def test_execute_with_memory(self):
         mock_router = self._mock_router(return_value="Response with context")
-        mock_memory = self._mock_memory(
-            recall_return=[{"key": "pref", "value": "likes email"}]
-        )
+        mock_memory = self._mock_memory(recall_return=[{"key": "pref", "value": "likes email"}])
         use_case = ChatUseCase(router=mock_router, memory_service=mock_memory)
         request = ChatRequest(organization_id="org1", user_id="user1", message="hello")
         result = await use_case.execute(request)

@@ -5,18 +5,21 @@ from typing import TYPE_CHECKING
 from uuid import UUID
 
 from aiogram import F, Router
+from aiogram.enums import ParseMode
 from aiogram.filters import Command, CommandStart, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import CallbackQuery, Message, InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.enums import ParseMode
+from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
 
-from app.application.use_cases.organizations.org_service import OrganizationService as OrgService
 from app.application.use_cases.ai.content_generation_service import ContentGenerationService
 from app.application.use_cases.ai.prompt_manager import PromptManager
+from app.application.use_cases.organizations.org_service import OrganizationService as OrgService
 
 if TYPE_CHECKING:
-    from app.infrastructure.external_adapters.telegram.bot import TelegramBot, UserContext, BotStates
+    from app.infrastructure.external_adapters.telegram.bot import (
+        BotStates,
+        TelegramBot,
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -26,8 +29,10 @@ router = Router()
 
 # === State Machine for Conversations ===
 
+
 class BotStates(StatesGroup):
     """States for multi-step conversations."""
+
     IDLE = State()
     SELECTING_ORG = State()
     CREATING_CAMPAIGN_NAME = State()
@@ -38,6 +43,7 @@ class BotStates(StatesGroup):
 
 
 # === Start and Help Handlers ===
+
 
 @router.message(CommandStart())
 async def cmd_start(message: Message, state: FSMContext, bot: "TelegramBot"):
@@ -67,7 +73,7 @@ async def cmd_start(message: Message, state: FSMContext, bot: "TelegramBot"):
             if not orgs:
                 await message.answer(
                     "⚠️ No organizations found. Please contact admin to set up your organization first.",
-                    parse_mode=ParseMode.HTML
+                    parse_mode=ParseMode.HTML,
                 )
                 return
 
@@ -77,8 +83,7 @@ async def cmd_start(message: Message, state: FSMContext, bot: "TelegramBot"):
     except Exception as e:
         logger.error(f"Error in start command: {e}")
         await message.answer(
-            "❌ Error loading organizations. Please try again later.",
-            parse_mode=ParseMode.HTML
+            "❌ Error loading organizations. Please try again later.", parse_mode=ParseMode.HTML
         )
 
 
@@ -121,11 +126,12 @@ async def cmd_cancel(message: Message, state: FSMContext, bot: "TelegramBot"):
     await message.answer(
         "❌ <b>Operation cancelled.</b> You're back to the main menu.",
         reply_markup=bot.create_main_keyboard(),
-        parse_mode=ParseMode.HTML
+        parse_mode=ParseMode.HTML,
     )
 
 
 # === Organization Selection ===
+
 
 @router.callback_query(F.data.startswith("org_select_"))
 async def callback_org_select(callback: CallbackQuery, state: FSMContext, bot: "TelegramBot"):
@@ -154,9 +160,8 @@ async def callback_org_select(callback: CallbackQuery, state: FSMContext, bot: "
 
     await bot.safe_edit_message(
         callback.message,
-        f"✅ <b>Organization selected:</b> {ctx.organization_name}\n\n"
-        f"What would you like to do?",
-        reply_markup=bot.create_main_keyboard()
+        f"✅ <b>Organization selected:</b> {ctx.organization_name}\n\nWhat would you like to do?",
+        reply_markup=bot.create_main_keyboard(),
     )
 
 
@@ -178,9 +183,7 @@ async def cmd_org(message: Message, state: FSMContext, bot: "TelegramBot"):
 
             keyboard = bot.create_org_selection_keyboard(orgs)
             await message.answer(
-                "🏢 <b>Select Organization:</b>",
-                reply_markup=keyboard,
-                parse_mode=ParseMode.HTML
+                "🏢 <b>Select Organization:</b>", reply_markup=keyboard, parse_mode=ParseMode.HTML
             )
             await state.set_state(BotStates.SELECTING_ORG)
     except Exception as e:
@@ -189,6 +192,7 @@ async def cmd_org(message: Message, state: FSMContext, bot: "TelegramBot"):
 
 
 # === Main Menu Handlers ===
+
 
 @router.callback_query(F.data == "menu_main")
 async def callback_main_menu(callback: CallbackQuery, state: FSMContext, bot: "TelegramBot"):
@@ -201,10 +205,8 @@ async def callback_main_menu(callback: CallbackQuery, state: FSMContext, bot: "T
 
     await bot.safe_edit_message(
         callback.message,
-        f"🏠 <b>Main Menu</b>\n\n"
-        f"🏢 Organization: <b>{org_name}</b>\n\n"
-        f"Choose an action:",
-        reply_markup=bot.create_main_keyboard()
+        f"🏠 <b>Main Menu</b>\n\n🏢 Organization: <b>{org_name}</b>\n\nChoose an action:",
+        reply_markup=bot.create_main_keyboard(),
     )
 
 
@@ -219,7 +221,7 @@ async def callback_menu_campaigns(callback: CallbackQuery, bot: "TelegramBot"):
     await bot.safe_edit_message(
         callback.message,
         "📊 <b>Campaign Management</b>\n\nSelect an action:",
-        reply_markup=bot.create_campaign_keyboard()
+        reply_markup=bot.create_campaign_keyboard(),
     )
 
 
@@ -234,7 +236,7 @@ async def callback_menu_content(callback: CallbackQuery, bot: "TelegramBot"):
     await bot.safe_edit_message(
         callback.message,
         "✍️ <b>Content Generation</b>\n\nWhat type of content would you like to create?",
-        reply_markup=bot.create_content_keyboard()
+        reply_markup=bot.create_content_keyboard(),
     )
 
 
@@ -249,7 +251,7 @@ async def callback_menu_analytics(callback: CallbackQuery, bot: "TelegramBot"):
     await bot.safe_edit_message(
         callback.message,
         "📈 <b>Analytics & Reports</b>\n\nSelect a report type:",
-        reply_markup=bot.create_analytics_keyboard()
+        reply_markup=bot.create_analytics_keyboard(),
     )
 
 
@@ -264,7 +266,7 @@ async def callback_menu_ads(callback: CallbackQuery, bot: "TelegramBot"):
     await bot.safe_edit_message(
         callback.message,
         "📢 <b>Ad Campaign Management</b>\n\nSelect an action:",
-        reply_markup=bot.create_ads_keyboard()
+        reply_markup=bot.create_ads_keyboard(),
     )
 
 
@@ -288,14 +290,15 @@ async def callback_menu_knowledge(callback: CallbackQuery, state: FSMContext, bo
         "• Best practices\n"
         "• Campaign optimization tips\n\n"
         "Type your question:",
-        reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
-            InlineKeyboardButton(text="❌ Cancel", callback_data="menu_main")
-        ]]),
-        parse_mode=ParseMode.HTML
+        reply_markup=InlineKeyboardMarkup(
+            inline_keyboard=[[InlineKeyboardButton(text="❌ Cancel", callback_data="menu_main")]]
+        ),
+        parse_mode=ParseMode.HTML,
     )
 
 
 # === Campaign Handlers ===
+
 
 @router.callback_query(F.data == "campaign_list")
 async def callback_campaign_list(callback: CallbackQuery, bot: "TelegramBot"):
@@ -318,7 +321,9 @@ async def callback_campaign_list(callback: CallbackQuery, bot: "TelegramBot"):
             else:
                 text = f"📋 <b>Campaigns ({len(campaigns)})</b>\n\n"
                 for c in campaigns[:10]:
-                    status_emoji = "🟢" if c.status == "active" else "🔴" if c.status == "paused" else "⚪"
+                    status_emoji = (
+                        "🟢" if c.status == "active" else "🔴" if c.status == "paused" else "⚪"
+                    )
                     text += f"{status_emoji} <b>{c.name}</b>\n"
                     text += f"   Status: {c.status} | Budget: ${c.budget_amount or 0:,.2f}\n\n"
 
@@ -326,16 +331,14 @@ async def callback_campaign_list(callback: CallbackQuery, bot: "TelegramBot"):
                     text += f"... and {len(campaigns) - 10} more"
 
             await bot.safe_edit_message(
-                callback.message,
-                text,
-                reply_markup=bot.create_campaign_keyboard()
+                callback.message, text, reply_markup=bot.create_campaign_keyboard()
             )
     except Exception as e:
         logger.error(f"Error listing campaigns: {e}")
         await bot.safe_edit_message(
             callback.message,
             "❌ Error loading campaigns. Please try again.",
-            reply_markup=bot.create_campaign_keyboard()
+            reply_markup=bot.create_campaign_keyboard(),
         )
 
 
@@ -352,11 +355,12 @@ async def callback_campaign_create(callback: CallbackQuery, state: FSMContext, b
 
     await bot.safe_edit_message(
         callback.message,
-        "➕ <b>Create New Campaign</b>\n\n"
-        "Step 1/3: Enter campaign name:",
-        reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
-            InlineKeyboardButton(text="❌ Cancel", callback_data="menu_campaigns")
-        ]])
+        "➕ <b>Create New Campaign</b>\n\nStep 1/3: Enter campaign name:",
+        reply_markup=InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(text="❌ Cancel", callback_data="menu_campaigns")]
+            ]
+        ),
     )
 
 
@@ -370,12 +374,13 @@ async def process_campaign_name(message: Message, state: FSMContext, bot: "Teleg
     await state.set_state(BotStates.CREATING_CAMPAIGN_BUDGET)
 
     await message.answer(
-        f"✅ Name: <b>{message.text}</b>\n\n"
-        "Step 2/3: Enter budget (USD):",
-        reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
-            InlineKeyboardButton(text="❌ Cancel", callback_data="menu_campaigns")
-        ]]),
-        parse_mode=ParseMode.HTML
+        f"✅ Name: <b>{message.text}</b>\n\nStep 2/3: Enter budget (USD):",
+        reply_markup=InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(text="❌ Cancel", callback_data="menu_campaigns")]
+            ]
+        ),
+        parse_mode=ParseMode.HTML,
     )
 
 
@@ -398,10 +403,12 @@ async def process_campaign_budget(message: Message, state: FSMContext, bot: "Tel
         f"✅ Budget: <b>${budget:,.2f}</b>\n\n"
         "Step 3/3: Enter campaign goal/objective:\n"
         "<i>(e.g., 'Increase brand awareness', 'Drive sales for new product', 'Generate leads')</i>",
-        reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
-            InlineKeyboardButton(text="❌ Cancel", callback_data="menu_campaigns")
-        ]]),
-        parse_mode=ParseMode.HTML
+        reply_markup=InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(text="❌ Cancel", callback_data="menu_campaigns")]
+            ]
+        ),
+        parse_mode=ParseMode.HTML,
     )
 
 
@@ -419,9 +426,11 @@ async def process_campaign_goal(message: Message, state: FSMContext, bot: "Teleg
             use_case = CreateCampaignUseCase(campaign_repo)
 
             # Need a user ID - using a system user for bot
-            from app.domain.entities.users.user import User
             # For bot, we'll use a system user or the first member
-            from app.infrastructure.db.repositories.organizations.organization_repository import OrganizationRepositoryImpl
+            from app.infrastructure.db.repositories.organizations.organization_repository import (
+                OrganizationRepositoryImpl,
+            )
+
             org_repo = OrganizationRepositoryImpl(session)
             members = await org_repo.get_members(ctx.organization_id)
             creator_id = members[0].user_id if members else None
@@ -451,18 +460,19 @@ async def process_campaign_goal(message: Message, state: FSMContext, bot: "Teleg
             f"🆔 <b>ID:</b> <code>{campaign.id}</code>\n\n"
             f"The campaign is ready. You can now activate it or add content.",
             reply_markup=bot.create_campaign_keyboard(),
-            parse_mode=ParseMode.HTML
+            parse_mode=ParseMode.HTML,
         )
     except Exception as e:
         logger.error(f"Error creating campaign: {e}")
         await message.answer(
             "❌ Error creating campaign. Please try again.",
             reply_markup=bot.create_campaign_keyboard(),
-            parse_mode=ParseMode.HTML
+            parse_mode=ParseMode.HTML,
         )
 
 
 # === Content Generation Handlers ===
+
 
 @router.callback_query(F.data.startswith("content_"))
 async def callback_content_type(callback: CallbackQuery, state: FSMContext, bot: "TelegramBot"):
@@ -498,10 +508,10 @@ async def callback_content_type(callback: CallbackQuery, state: FSMContext, bot:
         f"✍️ <b>Generate {type_names.get(content_type, 'Content')}</b>\n\n"
         f"Enter the topic or brief:\n"
         f"<i>(e.g., 'Benefits of AI in marketing', 'Summer sale announcement', 'Product launch email')</i>",
-        reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
-            InlineKeyboardButton(text="❌ Cancel", callback_data="menu_content")
-        ]]),
-        parse_mode=ParseMode.HTML
+        reply_markup=InlineKeyboardMarkup(
+            inline_keyboard=[[InlineKeyboardButton(text="❌ Cancel", callback_data="menu_content")]]
+        ),
+        parse_mode=ParseMode.HTML,
     )
 
 
@@ -538,8 +548,14 @@ async def process_content_topic(message: Message, state: FSMContext, bot: "Teleg
 
             if not template:
                 # Use built-in templates
-                from app.application.use_cases.ai.content_generation_service import BUILTIN_TEMPLATES
-                template = next((t for t in BUILTIN_TEMPLATES if t.content_type == content_type), BUILTIN_TEMPLATES[0])
+                from app.application.use_cases.ai.content_generation_service import (
+                    BUILTIN_TEMPLATES,
+                )
+
+                template = next(
+                    (t for t in BUILTIN_TEMPLATES if t.content_type == content_type),
+                    BUILTIN_TEMPLATES[0],
+                )
 
             # Get brand voice if available
             brand_voice = None
@@ -568,7 +584,10 @@ async def process_content_topic(message: Message, state: FSMContext, bot: "Teleg
             # Save content to workspace
             content_repo = ContentRepositoryImpl(session)
             # Get creator ID (first member of org)
-            from app.infrastructure.db.repositories.organizations.organization_repository import OrganizationRepositoryImpl
+            from app.infrastructure.db.repositories.organizations.organization_repository import (
+                OrganizationRepositoryImpl,
+            )
+
             org_repo = OrganizationRepositoryImpl(session)
             members = await org_repo.get_members(ctx.organization_id)
             creator_id = members[0].user_id if members else None
@@ -596,7 +615,9 @@ async def process_content_topic(message: Message, state: FSMContext, bot: "Teleg
         ctx.clear()
 
         # Format response with sections
-        response_text = f"✨ <b>Content Generated: {type_names.get(content_type, 'Content')}</b>\n\n"
+        response_text = (
+            f"✨ <b>Content Generated: {type_names.get(content_type, 'Content')}</b>\n\n"
+        )
         response_text += f"📝 <b>Topic:</b> {topic}\n\n"
         response_text += f"{generated_content}\n\n"
 
@@ -608,20 +629,19 @@ async def process_content_topic(message: Message, state: FSMContext, bot: "Teleg
         response_text += "\n💾 Content has been saved to your workspace."
 
         await message.answer(
-            response_text,
-            reply_markup=bot.create_content_keyboard(),
-            parse_mode=ParseMode.HTML
+            response_text, reply_markup=bot.create_content_keyboard(), parse_mode=ParseMode.HTML
         )
     except Exception as e:
         logger.error(f"Error generating content: {e}", exc_info=True)
         await message.answer(
             "❌ Error generating content. Please try again.",
             reply_markup=bot.create_content_keyboard(),
-            parse_mode=ParseMode.HTML
+            parse_mode=ParseMode.HTML,
         )
 
 
 # === Analytics Handlers ===
+
 
 @router.callback_query(F.data.startswith("analytics_"))
 async def callback_analytics(callback: CallbackQuery, bot: "TelegramBot"):
@@ -662,16 +682,14 @@ async def callback_analytics(callback: CallbackQuery, bot: "TelegramBot"):
             text = format_analytics_report(report_type, data)
 
         await bot.safe_edit_message(
-            callback.message,
-            text,
-            reply_markup=bot.create_analytics_keyboard()
+            callback.message, text, reply_markup=bot.create_analytics_keyboard()
         )
     except Exception as e:
         logger.error(f"Error generating analytics: {e}")
         await bot.safe_edit_message(
             callback.message,
             "❌ Error generating report. Please try again.",
-            reply_markup=bot.create_analytics_keyboard()
+            reply_markup=bot.create_analytics_keyboard(),
         )
 
 
@@ -688,7 +706,7 @@ def format_analytics_report(report_type: str, data: dict) -> str:
             f"📤 Published: {data.get('published_content', 0)}\n"
             f"💰 Total Budget: ${data.get('total_budget', 0):,.2f}"
         )
-    elif report_type == "budget":
+    if report_type == "budget":
         return (
             f"💰 <b>Budget Utilization</b>\n\n"
             f"Total Budget: ${data.get('total_budget', 0):,.2f}\n"
@@ -696,7 +714,7 @@ def format_analytics_report(report_type: str, data: dict) -> str:
             f"Remaining: ${data.get('remaining', 0):,.2f}\n"
             f"Utilization: {data.get('utilization_pct', 0):.1f}%"
         )
-    elif report_type == "roi":
+    if report_type == "roi":
         return (
             f"🎯 <b>ROI Analysis</b>\n\n"
             f"Total Revenue: ${data.get('total_revenue', 0):,.2f}\n"
@@ -704,17 +722,17 @@ def format_analytics_report(report_type: str, data: dict) -> str:
             f"ROI: {data.get('roi', 0):.1f}%\n"
             f"ROAS: {data.get('roas', 0):.2f}x"
         )
-    elif report_type == "campaign":
+    if report_type == "campaign":
         campaigns = data.get("campaigns", [])
-        text = f"📈 <b>Campaign Performance</b>\n\n"
+        text = "📈 <b>Campaign Performance</b>\n\n"
         for c in campaigns[:5]:
             text += f"• <b>{c.get('name', 'N/A')}</b>: ${c.get('spend', 0):,.2f} spend, {c.get('conversions', 0)} conv\n"
         return text
-    elif report_type == "audience":
+    if report_type == "audience":
         return f"👥 <b>Audience Insights</b>\n\n{data.get('summary', 'No data available')}"
-    elif report_type == "channels":
+    if report_type == "channels":
         channels = data.get("channels", [])
-        text = f"📱 <b>Channel Performance</b>\n\n"
+        text = "📱 <b>Channel Performance</b>\n\n"
         for ch in channels:
             text += f"• {ch.get('name', 'N/A')}: ${ch.get('spend', 0):,.0f} spend, {ch.get('conversions', 0)} conv\n"
         return text
@@ -722,6 +740,7 @@ def format_analytics_report(report_type: str, data: dict) -> str:
 
 
 # === Ads Management Handlers ===
+
 
 @router.callback_query(F.data.startswith("ads_"))
 async def callback_ads(callback: CallbackQuery, bot: "TelegramBot"):
@@ -742,7 +761,7 @@ async def callback_ads(callback: CallbackQuery, bot: "TelegramBot"):
             "• LinkedIn Ads: Not connected\n"
             "• TikTok Ads: Not connected\n\n"
             "Use 'Connect Ad Account' to add more.",
-            reply_markup=bot.create_ads_keyboard()
+            reply_markup=bot.create_ads_keyboard(),
         )
     elif action == "connect":
         await bot.safe_edit_message(
@@ -754,18 +773,19 @@ async def callback_ads(callback: CallbackQuery, bot: "TelegramBot"):
             "3. LinkedIn Ads\n"
             "4. TikTok Ads\n\n"
             "<i>Feature coming soon - use web dashboard for now.</i>",
-            reply_markup=bot.create_ads_keyboard()
+            reply_markup=bot.create_ads_keyboard(),
         )
     else:
         await bot.safe_edit_message(
             callback.message,
             f"📢 <b>Ad Management: {action.title()}</b>\n\n"
             f"This feature is coming soon. Please use the web dashboard for full ad management.",
-            reply_markup=bot.create_ads_keyboard()
+            reply_markup=bot.create_ads_keyboard(),
         )
 
 
 # === Knowledge Base Handlers ===
+
 
 @router.message(StateFilter(BotStates.QUERYING_KNOWLEDGE))
 async def process_knowledge_query(message: Message, state: FSMContext, bot: "TelegramBot"):
@@ -789,36 +809,45 @@ async def process_knowledge_query(message: Message, state: FSMContext, bot: "Tel
         answer = result.get("answer", "No answer found")
         sources = result.get("sources", [])
 
-        text = f"🧠 <b>Knowledge Base Answer</b>\n\n"
+        text = "🧠 <b>Knowledge Base Answer</b>\n\n"
         text += f"❓ <b>Question:</b> {query}\n\n"
         text += f"💡 <b>Answer:</b>\n{answer}\n\n"
 
         if sources:
-            text += f"📚 <b>Sources:</b>\n"
+            text += "📚 <b>Sources:</b>\n"
             for s in sources[:3]:
                 text += f"• {s}\n"
 
         await message.answer(
             text,
-            reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
-                InlineKeyboardButton(text="🔍 Ask Another", callback_data="menu_knowledge"),
-                InlineKeyboardButton(text="🏠 Main Menu", callback_data="menu_main")
-            ]]),
-            parse_mode=ParseMode.HTML
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(text="🔍 Ask Another", callback_data="menu_knowledge"),
+                        InlineKeyboardButton(text="🏠 Main Menu", callback_data="menu_main"),
+                    ]
+                ]
+            ),
+            parse_mode=ParseMode.HTML,
         )
     except Exception as e:
         logger.error(f"Error querying knowledge: {e}")
         await message.answer(
             "❌ Error querying knowledge base. Please try again.",
-            reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
-                InlineKeyboardButton(text="🔍 Try Again", callback_data="menu_knowledge"),
-                InlineKeyboardButton(text="🏠 Main Menu", callback_data="menu_main")
-            ]]),
-            parse_mode=ParseMode.HTML
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(text="🔍 Try Again", callback_data="menu_knowledge"),
+                        InlineKeyboardButton(text="🏠 Main Menu", callback_data="menu_main"),
+                    ]
+                ]
+            ),
+            parse_mode=ParseMode.HTML,
         )
 
 
 # === Status Handler ===
+
 
 @router.message(Command("status"))
 async def cmd_status(message: Message, bot: "TelegramBot"):
@@ -840,6 +869,7 @@ async def cmd_status(message: Message, bot: "TelegramBot"):
 
 # === Admin Handlers ===
 
+
 @router.message(Command("admin"))
 async def cmd_admin(message: Message, bot: "TelegramBot"):
     """Admin panel (admin only)."""
@@ -854,14 +884,16 @@ async def cmd_admin(message: Message, bot: "TelegramBot"):
 
     await message.answer(
         "⚙️ <b>Admin Panel</b>\n\nSelect an action:",
-        reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="👥 List Users", callback_data="admin_users")],
-            [InlineKeyboardButton(text="📋 View Logs", callback_data="admin_logs")],
-            [InlineKeyboardButton(text="📊 System Stats", callback_data="admin_stats")],
-            [InlineKeyboardButton(text="🔄 Restart Bot", callback_data="admin_restart")],
-            [InlineKeyboardButton(text="🏠 Main Menu", callback_data="menu_main")],
-        ]),
-        parse_mode=ParseMode.HTML
+        reply_markup=InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(text="👥 List Users", callback_data="admin_users")],
+                [InlineKeyboardButton(text="📋 View Logs", callback_data="admin_logs")],
+                [InlineKeyboardButton(text="📊 System Stats", callback_data="admin_stats")],
+                [InlineKeyboardButton(text="🔄 Restart Bot", callback_data="admin_restart")],
+                [InlineKeyboardButton(text="🏠 Main Menu", callback_data="menu_main")],
+            ]
+        ),
+        parse_mode=ParseMode.HTML,
     )
 
 
@@ -883,34 +915,40 @@ async def callback_admin(callback: CallbackQuery, bot: "TelegramBot"):
         await bot.safe_edit_message(
             callback.message,
             "👥 <b>User Management</b>\n\nUser listing feature coming soon.",
-            reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
-                InlineKeyboardButton(text="🔙 Back", callback_data="admin")
-            ]])
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[[InlineKeyboardButton(text="🔙 Back", callback_data="admin")]]
+            ),
         )
     elif action == "logs":
         await bot.safe_edit_message(
             callback.message,
             "📋 <b>System Logs</b>\n\nLog viewing feature coming soon.",
-            reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
-                InlineKeyboardButton(text="🔙 Back", callback_data="admin")
-            ]])
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[[InlineKeyboardButton(text="🔙 Back", callback_data="admin")]]
+            ),
         )
     elif action == "stats":
         await bot.safe_edit_message(
             callback.message,
             "📊 <b>System Statistics</b>\n\nStats feature coming soon.",
-            reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
-                InlineKeyboardButton(text="🔙 Back", callback_data="admin")
-            ]])
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[[InlineKeyboardButton(text="🔙 Back", callback_data="admin")]]
+            ),
         )
     elif action == "restart":
         await bot.safe_edit_message(
             callback.message,
             "🔄 <b>Restart Bot</b>\n\nThis will restart the bot process.",
-            reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
-                InlineKeyboardButton(text="✅ Confirm", callback_data="admin_restart_confirm"),
-                InlineKeyboardButton(text="❌ Cancel", callback_data="admin")
-            ]])
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text="✅ Confirm", callback_data="admin_restart_confirm"
+                        ),
+                        InlineKeyboardButton(text="❌ Cancel", callback_data="admin"),
+                    ]
+                ]
+            ),
         )
 
 

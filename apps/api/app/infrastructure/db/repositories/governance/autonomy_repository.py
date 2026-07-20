@@ -32,9 +32,7 @@ class AutonomyConfigRepositoryImpl(AutonomyConfigRepository):
 
     async def find_by_organization(self, org_id: UUID) -> AutonomyConfig | None:
         result = await self.session.execute(
-            select(AutonomyConfigModel).where(
-                AutonomyConfigModel.organization_id == str(org_id)
-            )
+            select(AutonomyConfigModel).where(AutonomyConfigModel.organization_id == str(org_id))
         )
         model = result.scalar_one_or_none()
         return model.to_domain() if model is not None else None
@@ -52,9 +50,7 @@ class AgentActionRepositoryImpl(AgentActionRepository):
 
     async def find_by_id(self, action_id: UUID) -> AgentAction | None:
         result = await self.session.execute(
-            select(AgentActionModel).where(
-                AgentActionModel.id == str(action_id)
-            )
+            select(AgentActionModel).where(AgentActionModel.id == str(action_id))
         )
         model = result.scalar_one_or_none()
         return model.to_domain() if model is not None else None
@@ -67,9 +63,7 @@ class AgentActionRepositoryImpl(AgentActionRepository):
         limit: int = 50,
         offset: int = 0,
     ) -> list[AgentAction]:
-        query = select(AgentActionModel).where(
-            AgentActionModel.organization_id == str(org_id)
-        )
+        query = select(AgentActionModel).where(AgentActionModel.organization_id == str(org_id))
         if agent_type:
             query = query.where(AgentActionModel.agent_type == agent_type)
         if action_name:
@@ -88,10 +82,13 @@ class AgentActionRepositoryImpl(AgentActionRepository):
         limit: int = 50,
     ) -> list[AgentAction]:
         result = await self.session.execute(
-            select(AgentActionModel).where(
+            select(AgentActionModel)
+            .where(
                 AgentActionModel.organization_id == str(org_id),
                 AgentActionModel.agent_id == agent_id,
-            ).order_by(AgentActionModel.created_at.desc()).limit(limit)
+            )
+            .order_by(AgentActionModel.created_at.desc())
+            .limit(limit)
         )
         models = result.scalars().all()
         return [m.to_domain() for m in models]

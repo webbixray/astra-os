@@ -1,5 +1,7 @@
 """Agent Orchestrator Runtime Package."""
 
+# Import tests module to make it discoverable
+from . import tests
 from .agent import (
     Agent,
     AgentConfig,
@@ -13,6 +15,12 @@ from .agent import (
     ToolResult,
     get_agent_registry,
 )
+from .agents import (
+    CEOAgent,
+    DirectorAgent,
+    ReActAgent,
+    SpecialistAgent,
+)
 from .comms import (
     AgentAuditTrail,
     AgentTraceEntry,
@@ -20,11 +28,21 @@ from .comms import (
     get_agent_audit_trail,
     get_redis_message_bus,
 )
+from .dlq import (
+    DeadLetter,
+    DeadLetterQueue,
+    DLQConsumer,
+    create_dlq_consumer,
+)
 from .events import (
     Event,
     EventBus,
     EventStore,
     get_event_bus,
+)
+from .governance import (
+    GovernanceCheckResult,
+    GovernanceMiddleware,
 )
 from .hierarchy import (
     AgentCoordinator,
@@ -42,6 +60,25 @@ from .memory import (
     MemoryEntry,
     MemoryManager,
 )
+from .metrics import (
+    AgentMetricsContext,
+    RunTracker,
+    get_metrics_response,
+    record_agent_run,
+    record_delegation,
+    record_tool_call,
+    track_agent_run,
+)
+from .resilience import (
+    Bulkhead,
+    BulkheadConfig,
+    CircuitBreaker,
+    CircuitBreakerConfig,
+    CircuitBreakerState,
+    RetryConfig,
+    RetryPolicy,
+    get_circuit_breaker_registry,
+)
 from .router import (
     ModelCapability,
     ModelConfig,
@@ -53,43 +90,14 @@ from .router import (
     StreamingChunk,
     get_model_router,
 )
-from .resilience import (
-    CircuitBreaker,
-    CircuitBreakerConfig,
-    CircuitBreakerState,
-    RetryPolicy,
-    RetryConfig,
-    Bulkhead,
-    BulkheadConfig,
-    get_circuit_breaker_registry,
-)
-from .dlq import (
-    DeadLetterQueue,
-    DeadLetter,
-    DLQConsumer,
-    create_dlq_consumer,
-)
-from .metrics import (
-    AgentMetricsContext,
-    RunTracker,
-    track_agent_run,
-    record_agent_run,
-    record_delegation,
-    record_tool_call,
-    get_metrics_response,
-)
 from .supervisor import (
     Supervisor,
     SupervisorConfig,
 )
 from .telemetry import (
-    init_tracing,
     get_tracer,
+    init_tracing,
     shutdown_tracing,
-)
-from .governance import (
-    GovernanceMiddleware,
-    GovernanceCheckResult,
 )
 from .tools import (
     ExecutionSandbox,
@@ -100,15 +108,6 @@ from .tools import (
     default_sandbox,
     tool_registry,
 )
-from .agents import (
-    CEOAgent,
-    DirectorAgent,
-    ReActAgent,
-    SpecialistAgent,
-)
-
-# Import tests module to make it discoverable
-from . import tests
 
 # Concrete agent implementations
 # Import from astra_agent_orchestrator.agents directly:

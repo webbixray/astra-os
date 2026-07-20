@@ -25,7 +25,6 @@ class TestAppCreation:
         app = create_app()
         assert app.version == "1.1.0"
 
-
     def test_openapi_generates(self):
         app = create_app()
         schema = app.openapi()

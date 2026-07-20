@@ -41,6 +41,7 @@ def _setup_csrf(client):
     import time
 
     from app.config import config
+
     secret = config.secret_key
     session_id = secrets.token_urlsafe(16)
     timestamp = int(time.time())
@@ -76,9 +77,7 @@ def app() -> FastAPI:
 
 @pytest.fixture
 async def test_client(app: FastAPI) -> AsyncClient:
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as client:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         yield client
 
 
@@ -143,7 +142,9 @@ class TestPromptRoutes:
         mock_use_case.get_prompt = AsyncMock(return_value=prompt)
         app.dependency_overrides[get_manage_use_case] = lambda: mock_use_case
 
-        response = await test_client.get(f"/api/v1/prompts/{prompt_id}", params={"organization_id": str(org_id)})
+        response = await test_client.get(
+            f"/api/v1/prompts/{prompt_id}", params={"organization_id": str(org_id)}
+        )
         assert response.status_code == 200
         assert response.json()["data"]["name"] == "found"
 
@@ -154,7 +155,9 @@ class TestPromptRoutes:
         mock_use_case.get_prompt = AsyncMock(return_value=None)
         app.dependency_overrides[get_manage_use_case] = lambda: mock_use_case
 
-        response = await test_client.get(f"/api/v1/prompts/{uuid4()}", params={"organization_id": str(uuid4())})
+        response = await test_client.get(
+            f"/api/v1/prompts/{uuid4()}", params={"organization_id": str(uuid4())}
+        )
         assert response.status_code == 404
 
     @pytest.mark.asyncio
@@ -261,16 +264,20 @@ class TestPromptRoutes:
         assert response.status_code == 204
 
     @pytest.mark.asyncio
-    async def test_list_builtins(
-        self, app: FastAPI, test_client: AsyncClient
-    ):
+    async def test_list_builtins(self, app: FastAPI, test_client: AsyncClient):
         response = await test_client.get("/api/v1/prompts/builtins")
         assert response.status_code == 200
         data = response.json()["data"]
         assert isinstance(data, list)
         assert len(data) > 0
         assert data[0]["name"] in (
-            "system_chat", "content_writer", "content_rewriter",
-            "agent_ceo", "agent_campaign_director", "agent_content_director",
-            "agent_analytics_director", "agent_workflow_director", "slash_commands",
+            "system_chat",
+            "content_writer",
+            "content_rewriter",
+            "agent_ceo",
+            "agent_campaign_director",
+            "agent_content_director",
+            "agent_analytics_director",
+            "agent_workflow_director",
+            "slash_commands",
         )

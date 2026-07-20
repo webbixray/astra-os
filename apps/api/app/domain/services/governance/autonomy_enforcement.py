@@ -109,8 +109,7 @@ class AutonomyEnforcementService:
                     result.approval_result = eval_result
                     result.allowed = False
                     result.reason = (
-                        f"Approval required by rule(s): "
-                        f"{', '.join(eval_result.triggered_rule_ids)}"
+                        f"Approval required by rule(s): {', '.join(eval_result.triggered_rule_ids)}"
                     )
                     return result
 
@@ -150,8 +149,7 @@ class AutonomyEnforcementService:
 
                 result.allowed = True
                 result.reason = (
-                    f"Low-risk action '{action.action}' auto-executed "
-                    f"at SEMI_AUTO level"
+                    f"Low-risk action '{action.action}' auto-executed at SEMI_AUTO level"
                 )
                 action.record_auto_executed(level)
                 return result
@@ -159,9 +157,7 @@ class AutonomyEnforcementService:
         # ADVISORY: nothing auto-executes
         result.allowed = False
         result.requires_approval = True
-        result.reason = (
-            f"ADVISORY level — action '{action.action}' requires human approval"
-        )
+        result.reason = f"ADVISORY level — action '{action.action}' requires human approval"
         if rules:
             eval_ctx = context or self._build_default_context(action)
             eval_result = self._approval_service.evaluate(rules, eval_ctx)
@@ -201,9 +197,7 @@ class AutonomyEnforcementService:
             ctx.update(action.details)
         return ctx
 
-    def _extract_spend_amount(
-        self, context: dict[str, Any], action: AgentAction
-    ) -> float:
+    def _extract_spend_amount(self, context: dict[str, Any], action: AgentAction) -> float:
         """Extract spend amount from context or action details."""
         amount = context.get("amount", 0.0)
         if not amount:

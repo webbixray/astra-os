@@ -260,15 +260,41 @@ class ExecutionSandbox:
     ):
         self.timeout_seconds = timeout_seconds
         self.max_memory_mb = max_memory_mb
-        self.allowed_imports = set(allowed_imports or [
-            "json", "re", "math", "random", "datetime", "itertools",
-            "collections", "statistics", "hashlib", "base64", "uuid",
-        ])
-        self.blocked_imports = set(blocked_imports or [
-            "os", "sys", "subprocess", "socket", "requests",
-            "urllib", "http", "ftplib", "smtplib", "pickle",
-            "marshal", "importlib", "pkgutil", "runpy",
-        ])
+        self.allowed_imports = set(
+            allowed_imports
+            or [
+                "json",
+                "re",
+                "math",
+                "random",
+                "datetime",
+                "itertools",
+                "collections",
+                "statistics",
+                "hashlib",
+                "base64",
+                "uuid",
+            ]
+        )
+        self.blocked_imports = set(
+            blocked_imports
+            or [
+                "os",
+                "sys",
+                "subprocess",
+                "socket",
+                "requests",
+                "urllib",
+                "http",
+                "ftplib",
+                "smtplib",
+                "pickle",
+                "marshal",
+                "importlib",
+                "pkgutil",
+                "runpy",
+            ]
+        )
         self.allow_network = allow_network
         self.allow_filesystem = allow_filesystem
 
@@ -289,9 +315,17 @@ class ExecutionSandbox:
 
         # Check for dangerous patterns
         dangerous_patterns = [
-            "eval(", "exec(", "compile(", "__import__(",
-            "open(", "os.", "sys.", "subprocess.",
-            "socket.", "requests.", "urllib.",
+            "eval(",
+            "exec(",
+            "compile(",
+            "__import__(",
+            "open(",
+            "os.",
+            "sys.",
+            "subprocess.",
+            "socket.",
+            "requests.",
+            "urllib.",
         ]
         for pattern in dangerous_patterns:
             if pattern in code:
@@ -302,10 +336,27 @@ class ExecutionSandbox:
     def _is_stdlib_safe(self, module: str) -> bool:
         """Check if a standard library module is safe."""
         safe_modules = {
-            "json", "re", "math", "random", "datetime", "itertools",
-            "collections", "statistics", "hashlib", "base64", "uuid",
-            "decimal", "fractions", "typing", "dataclasses", "enum",
-            "string", "textwrap", "unicodedata", "copy", "pprint",
+            "json",
+            "re",
+            "math",
+            "random",
+            "datetime",
+            "itertools",
+            "collections",
+            "statistics",
+            "hashlib",
+            "base64",
+            "uuid",
+            "decimal",
+            "fractions",
+            "typing",
+            "dataclasses",
+            "enum",
+            "string",
+            "textwrap",
+            "unicodedata",
+            "copy",
+            "pprint",
         }
         return module in safe_modules
 
@@ -323,15 +374,35 @@ class ExecutionSandbox:
         # Prepare restricted globals
         safe_globals = {
             "__builtins__": {
-                "len": len, "str": str, "int": int, "float": float,
-                "bool": bool, "list": list, "dict": dict, "set": set,
-                "tuple": tuple, "range": range, "enumerate": enumerate,
-                "zip": zip, "map": map, "filter": filter, "sum": sum,
-                "min": min, "max": max, "abs": abs, "round": round,
-                "sorted": sorted, "reversed": reversed, "any": any,
-                "all": all, "isinstance": isinstance,
-                "print": print, "Exception": Exception, "ValueError": ValueError,
-                "TypeError": TypeError, "KeyError": KeyError,
+                "len": len,
+                "str": str,
+                "int": int,
+                "float": float,
+                "bool": bool,
+                "list": list,
+                "dict": dict,
+                "set": set,
+                "tuple": tuple,
+                "range": range,
+                "enumerate": enumerate,
+                "zip": zip,
+                "map": map,
+                "filter": filter,
+                "sum": sum,
+                "min": min,
+                "max": max,
+                "abs": abs,
+                "round": round,
+                "sorted": sorted,
+                "reversed": reversed,
+                "any": any,
+                "all": all,
+                "isinstance": isinstance,
+                "print": print,
+                "Exception": Exception,
+                "ValueError": ValueError,
+                "TypeError": TypeError,
+                "KeyError": KeyError,
             },
         }
 

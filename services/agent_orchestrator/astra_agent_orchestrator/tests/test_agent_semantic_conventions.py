@@ -5,6 +5,7 @@ from uuid import uuid4
 
 import pytest
 from opentelemetry.trace import SpanKind
+
 from astra_agent_orchestrator.agent import (
     AgentConfig,
     AgentContext,
@@ -17,6 +18,7 @@ from astra_agent_orchestrator.agents.ceo import CEOAgent
 @pytest.fixture
 def tenant_id():
     return uuid4()
+
 
 @pytest.fixture
 def agent_config(tenant_id):
@@ -51,14 +53,16 @@ class TestAgentSemanticConventions:
             mock_span = MagicMock()
             mock_tracer.start_as_current_span.return_value.__enter__.return_value = mock_span
 
-            agent.execute = AsyncMock(return_value=AgentResult(
-                agent_id=agent_config.agent_id,
-                success=True,
-                duration_ms=150,
-                tokens_used=100,
-                cost_usd=0.001,
-                iterations=1,
-            ))
+            agent.execute = AsyncMock(
+                return_value=AgentResult(
+                    agent_id=agent_config.agent_id,
+                    success=True,
+                    duration_ms=150,
+                    tokens_used=100,
+                    cost_usd=0.001,
+                    iterations=1,
+                )
+            )
 
             await agent.run(mock_context, {"task": "test"})
 
@@ -83,10 +87,12 @@ class TestAgentSemanticConventions:
             mock_span = MagicMock()
             mock_tracer.start_as_current_span.return_value.__enter__.return_value = mock_span
 
-            agent.tool_registry.execute_tool = AsyncMock(return_value={
-                "success": True,
-                "result": "output",
-            })
+            agent.tool_registry.execute_tool = AsyncMock(
+                return_value={
+                    "success": True,
+                    "result": "output",
+                }
+            )
 
             await agent.call_tool("web_search", {"query": "test"}, mock_context)
 
@@ -115,14 +121,18 @@ class TestAgentSemanticConventions:
                 mock_subagent = AsyncMock()
                 mock_subagent.agent_id = uuid4()
                 mock_subagent.agent_type = AgentType.CONTENT_SPECIALIST
-                mock_subagent.run = AsyncMock(return_value=AgentResult(
-                    agent_id=mock_subagent.agent_id,
-                    success=True,
-                    duration_ms=100,
-                ))
+                mock_subagent.run = AsyncMock(
+                    return_value=AgentResult(
+                        agent_id=mock_subagent.agent_id,
+                        success=True,
+                        duration_ms=100,
+                    )
+                )
                 mock_registry.return_value.create_agent.return_value = mock_subagent
 
-                await agent.delegate_to_subagent(AgentType.CONTENT_SPECIALIST, {"task": "write"}, mock_context)
+                await agent.delegate_to_subagent(
+                    AgentType.CONTENT_SPECIALIST, {"task": "write"}, mock_context
+                )
 
                 # Check semantic conventions - they are passed as attributes when starting the span
                 call_args = mock_tracer.start_as_current_span.call_args
@@ -145,11 +155,13 @@ class TestAgentSemanticConventions:
             mock_span = MagicMock()
             mock_tracer.start_as_current_span.return_value.__enter__.return_value = mock_span
 
-            agent.execute = AsyncMock(return_value=AgentResult(
-                agent_id=agent_config.agent_id,
-                success=True,
-                duration_ms=150,
-            ))
+            agent.execute = AsyncMock(
+                return_value=AgentResult(
+                    agent_id=agent_config.agent_id,
+                    success=True,
+                    duration_ms=150,
+                )
+            )
 
             await agent.run(mock_context, {"task": "test"})
 
@@ -172,17 +184,21 @@ class TestAgentSemanticConventions:
             mock_span = MagicMock()
             mock_tracer.start_as_current_span.return_value.__enter__.return_value = mock_span
 
-            agent.tool_registry.execute_tool = AsyncMock(return_value={
-                "success": True,
-                "result": "output",
-            })
+            agent.tool_registry.execute_tool = AsyncMock(
+                return_value={
+                    "success": True,
+                    "result": "output",
+                }
+            )
 
             await agent.call_tool("web_search", {"query": "test"}, mock_context)
 
             # Check SpanKind.CLIENT was used
             call_args = mock_tracer.start_as_current_span.call_args
             assert call_args is not None
-            assert call_args.kwargs.get("kind") == SpanKind.CLIENT or (len(call_args.args) > 1 and call_args.args[1] == SpanKind.CLIENT)
+            assert call_args.kwargs.get("kind") == SpanKind.CLIENT or (
+                len(call_args.args) > 1 and call_args.args[1] == SpanKind.CLIENT
+            )
 
 
 if __name__ == "__main__":

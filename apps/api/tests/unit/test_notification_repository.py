@@ -18,8 +18,12 @@ def session():
 class TestSave:
     async def test_save(self, session):
         model = MagicMock()
-        model.to_domain.return_value = Notification(user_id=uuid4(), organization_id=uuid4(), type="info", title="Test")
-        with patch("app.infrastructure.db.repositories.notification_repository.NotificationModel") as MockModel:
+        model.to_domain.return_value = Notification(
+            user_id=uuid4(), organization_id=uuid4(), type="info", title="Test"
+        )
+        with patch(
+            "app.infrastructure.db.repositories.notification_repository.NotificationModel"
+        ) as MockModel:
             MockModel.from_domain.return_value = model
 
             repo = NotificationRepository(session)
@@ -34,7 +38,9 @@ class TestSave:
 class TestFindByUser:
     async def test_find_by_user(self, session):
         m = MagicMock()
-        m.to_domain.return_value = Notification(user_id=uuid4(), organization_id=uuid4(), type="info", title="Test")
+        m.to_domain.return_value = Notification(
+            user_id=uuid4(), organization_id=uuid4(), type="info", title="Test"
+        )
         result_mock = MagicMock()
         result_mock.scalars.return_value.all.return_value = [m]
         session.execute = AsyncMock(return_value=result_mock)
@@ -56,7 +62,9 @@ class TestFindByUser:
 
     async def test_no_archive(self, session):
         m = MagicMock()
-        m.to_domain.return_value = Notification(user_id=uuid4(), organization_id=uuid4(), type="info", title="Test")
+        m.to_domain.return_value = Notification(
+            user_id=uuid4(), organization_id=uuid4(), type="info", title="Test"
+        )
         result_mock = MagicMock()
         result_mock.scalars.return_value.all.return_value = [m]
         session.execute = AsyncMock(return_value=result_mock)
@@ -156,7 +164,9 @@ class TestArchive:
 class TestSearch:
     async def test_search(self, session):
         m = MagicMock()
-        m.to_domain.return_value = Notification(user_id=uuid4(), organization_id=uuid4(), type="info", title="Test")
+        m.to_domain.return_value = Notification(
+            user_id=uuid4(), organization_id=uuid4(), type="info", title="Test"
+        )
         result_mock = MagicMock()
         result_mock.scalars.return_value.all.return_value = [m]
         session.execute = AsyncMock(return_value=result_mock)

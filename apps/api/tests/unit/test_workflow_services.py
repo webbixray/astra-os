@@ -156,7 +156,9 @@ class TestWorkflowRunner:
         runner = WorkflowRunner(on_notification=AsyncMock())
         wf = Workflow(organization_id=uuid4(), name="Bad", created_by=uuid4())
         wf.nodes = []
-        ex = WorkflowExecution.create(workflow_id=uuid4(), organization_id=uuid4(), triggered_by=uuid4())
+        ex = WorkflowExecution.create(
+            workflow_id=uuid4(), organization_id=uuid4(), triggered_by=uuid4()
+        )
         result = await runner.execute(wf, ex)
         assert result.status == ExecutionStatus.FAILED
         assert "no nodes" in result.error.lower()
@@ -186,10 +188,14 @@ class TestWorkflowRunner:
             user = uuid4()
             wf = Workflow.create(organization_id=org, name="Fail", created_by=user)
             # Add action node after trigger
-            wf.nodes.append(WorkflowNode.create(
-                id="a1", type=NodeType.ACTION, label="Failing",
-                config={"action_type": "fail_action"}
-            ))
+            wf.nodes.append(
+                WorkflowNode.create(
+                    id="a1",
+                    type=NodeType.ACTION,
+                    label="Failing",
+                    config={"action_type": "fail_action"},
+                )
+            )
             wf.edges.append(WorkflowEdge.create(id="e2", source_id="trigger-1", target_id="a1"))
             ex = WorkflowExecution.create(workflow_id=wf.id, organization_id=org, triggered_by=user)
             result = await runner.execute(wf, ex)
@@ -206,10 +212,14 @@ class TestWorkflowRunner:
         org = uuid4()
         user = uuid4()
         wf = Workflow.create(organization_id=org, name="Delay", created_by=user)
-        wf.nodes.append(WorkflowNode.create(
-            id="d1", type=NodeType.DELAY, label="Wait",
-            config={"seconds": 0}  # use 0 for test
-        ))
+        wf.nodes.append(
+            WorkflowNode.create(
+                id="d1",
+                type=NodeType.DELAY,
+                label="Wait",
+                config={"seconds": 0},  # use 0 for test
+            )
+        )
         wf.edges.append(WorkflowEdge.create(id="e2", source_id="trigger-1", target_id="d1"))
         ex = WorkflowExecution.create(workflow_id=wf.id, organization_id=org, triggered_by=user)
         runner = WorkflowRunner()
@@ -222,9 +232,7 @@ class TestWorkflowRunner:
         org = uuid4()
         user = uuid4()
         wf = Workflow.create(organization_id=org, name="Approval", created_by=user)
-        wf.nodes.append(WorkflowNode.create(
-            id="ap1", type=NodeType.APPROVAL, label="Approve me"
-        ))
+        wf.nodes.append(WorkflowNode.create(id="ap1", type=NodeType.APPROVAL, label="Approve me"))
         wf.edges.append(WorkflowEdge.create(id="e2", source_id="trigger-1", target_id="ap1"))
         ex = WorkflowExecution.create(workflow_id=wf.id, organization_id=org, triggered_by=user)
         runner = WorkflowRunner(on_notification=AsyncMock())
@@ -239,10 +247,11 @@ class TestWorkflowRunner:
         org = uuid4()
         user = uuid4()
         wf = Workflow.create(organization_id=org, name="Sim", created_by=user)
-        wf.nodes.append(WorkflowNode.create(
-            id="a1", type=NodeType.ACTION, label="Do Thing",
-            config={"action_type": "unknown"}
-        ))
+        wf.nodes.append(
+            WorkflowNode.create(
+                id="a1", type=NodeType.ACTION, label="Do Thing", config={"action_type": "unknown"}
+            )
+        )
         wf.edges.append(WorkflowEdge.create(id="e2", source_id="trigger-1", target_id="a1"))
         ex = WorkflowExecution.create(workflow_id=wf.id, organization_id=org, triggered_by=user)
         runner = WorkflowRunner()
@@ -262,10 +271,14 @@ class TestWorkflowRunner:
             org = uuid4()
             user = uuid4()
             wf = Workflow.create(organization_id=org, name="Handler", created_by=user)
-            wf.nodes.append(WorkflowNode.create(
-                id="a1", type=NodeType.ACTION, label="Custom",
-                config={"action_type": "my_custom", "value": "test123"}
-            ))
+            wf.nodes.append(
+                WorkflowNode.create(
+                    id="a1",
+                    type=NodeType.ACTION,
+                    label="Custom",
+                    config={"action_type": "my_custom", "value": "test123"},
+                )
+            )
             wf.edges.append(WorkflowEdge.create(id="e2", source_id="trigger-1", target_id="a1"))
             ex = WorkflowExecution.create(workflow_id=wf.id, organization_id=org, triggered_by=user)
             runner = WorkflowRunner()
@@ -301,8 +314,11 @@ class TestWorkflowRunnerExecuteStep:
         try:
             runner = WorkflowRunner()
             step = CompiledStep(
-                order=0, node_id="n1", node_type=NodeType.ACTION,
-                label="Test", config={"action_type": "test"}
+                order=0,
+                node_id="n1",
+                node_type=NodeType.ACTION,
+                label="Test",
+                config={"action_type": "test"},
             )
             result = await runner._execute_step(step, {})
             assert result["from_handler"] is True
@@ -313,8 +329,7 @@ class TestWorkflowRunnerExecuteStep:
     async def test_execute_step_without_handler(self):
         runner = WorkflowRunner()
         step = CompiledStep(
-            order=0, node_id="n1", node_type=NodeType.ACTION,
-            label="Test", config={}
+            order=0, node_id="n1", node_type=NodeType.ACTION, label="Test", config={}
         )
         result = await runner._execute_step(step, {})
         assert result["status"] == "simulated"

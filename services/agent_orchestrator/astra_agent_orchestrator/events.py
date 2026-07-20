@@ -210,16 +210,18 @@ class EventStore:
 
         events = []
         for row in rows:
-            events.append(Event(
-                event_id=row["event_id"],
-                event_type=row["event_type"],
-                source=UUID(row["source"]),
-                tenant_id=row["tenant_id"],
-                payload=json.loads(row["payload"]),
-                metadata=json.loads(row["metadata"]),
-                timestamp=row["timestamp"],
-                correlation_id=row["correlation_id"],
-            ))
+            events.append(
+                Event(
+                    event_id=row["event_id"],
+                    event_type=row["event_type"],
+                    source=UUID(row["source"]),
+                    tenant_id=row["tenant_id"],
+                    payload=json.loads(row["payload"]),
+                    metadata=json.loads(row["metadata"]),
+                    timestamp=row["timestamp"],
+                    correlation_id=row["correlation_id"],
+                )
+            )
 
         return events
 

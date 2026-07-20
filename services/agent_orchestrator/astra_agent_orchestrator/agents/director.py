@@ -20,7 +20,10 @@ DIRECTOR_CONFIGS: dict[AgentType, dict[str, Any]] = {
         "name": "Marketing Director",
         "description": "Orchestrates marketing strategy across channels",
         "capabilities": [
-            "planning", "delegation", "campaign_strategy", "brand_management",
+            "planning",
+            "delegation",
+            "campaign_strategy",
+            "brand_management",
         ],
         "system_prompt": """You are the Marketing Director of ASTRA OS.
 You orchestrate marketing campaigns by delegating to specialists:
@@ -56,7 +59,10 @@ Return a JSON with your decomposition:
         "name": "Creative Director",
         "description": "Ensures brand consistency and creative quality",
         "capabilities": [
-            "brand_voice", "design_review", "creative_direction", "approval",
+            "brand_voice",
+            "design_review",
+            "creative_direction",
+            "approval",
         ],
         "system_prompt": """You are the Creative Director of ASTRA OS.
 You ensure all creative output aligns with brand guidelines.
@@ -72,7 +78,10 @@ Review and approve creative work.""",
         "name": "Advertising Director",
         "description": "Manages paid advertising and campaign optimization",
         "capabilities": [
-            "campaign_optimization", "bidding", "audience_targeting", "budget",
+            "campaign_optimization",
+            "bidding",
+            "audience_targeting",
+            "budget",
         ],
         "system_prompt": """You are the Advertising Director of ASTRA OS.
 You manage paid campaigns across platforms.
@@ -88,7 +97,9 @@ Optimize for ROI and conversion.""",
         "name": "Research Director",
         "description": "Leads market and competitive research",
         "capabilities": [
-            "market_research", "competitor_analysis", "trend_analysis",
+            "market_research",
+            "competitor_analysis",
+            "trend_analysis",
         ],
         "system_prompt": """You are the Research Director of ASTRA OS.
 You lead research initiatives.
@@ -103,7 +114,10 @@ Delegate to: Market Researcher, Competitor Analyst, Trend Analyzer.""",
         "name": "Analytics Director",
         "description": "Oversees data analysis and reporting",
         "capabilities": [
-            "data_analysis", "attribution", "reporting", "visualization",
+            "data_analysis",
+            "attribution",
+            "reporting",
+            "visualization",
         ],
         "system_prompt": """You are the Analytics Director of ASTRA OS.
 You oversee data analysis and performance reporting.
@@ -118,7 +132,10 @@ Delegate to: Data Analyst, Attribution Modeler, Report Generator.""",
         "name": "Workflow Director",
         "description": "Manages automation and integration workflows",
         "capabilities": [
-            "workflow_design", "automation", "integration", "scheduling",
+            "workflow_design",
+            "automation",
+            "integration",
+            "scheduling",
         ],
         "system_prompt": """You are the Workflow Director of ASTRA OS.
 You design and manage automated workflows.
@@ -133,7 +150,10 @@ Delegate to: Workflow Builder, Automation Scheduler, Integration Manager.""",
         "name": "Compliance Director",
         "description": "Ensures regulatory compliance and brand safety",
         "capabilities": [
-            "content_review", "privacy", "policy_enforcement", "audit",
+            "content_review",
+            "privacy",
+            "policy_enforcement",
+            "audit",
         ],
         "system_prompt": """You are the Compliance Director of ASTRA OS.
 You ensure all content and activities comply with regulations and policies.
@@ -184,8 +204,7 @@ class DirectorAgent(ReActAgent):
 
     def get_system_prompt(self) -> str:
         return self.config.system_prompt or (
-            f"You are the {self.config.name}. "
-            "Delegate tasks to your specialist team members."
+            f"You are the {self.config.name}. Delegate tasks to your specialist team members."
         )
 
     def prepare_input(self, input_data: Any) -> str:

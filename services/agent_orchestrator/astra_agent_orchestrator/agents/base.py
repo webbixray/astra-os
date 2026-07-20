@@ -231,7 +231,9 @@ class ReActAgent(Agent):
             )
 
         except Exception as e:
-            logger.exception("ReAct agent %s failed at iteration %d", self.agent_id, self._iteration)
+            logger.exception(
+                "ReAct agent %s failed at iteration %d", self.agent_id, self._iteration
+            )
             return AgentResult(
                 agent_id=self.agent_id,
                 success=False,

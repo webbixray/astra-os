@@ -23,7 +23,9 @@ class TestContentDomain:
 
     def test_create_content_empty_title_raises_error(self):
         with pytest.raises(ValidationError, match="Content title is required"):
-            Content.create(organization_id=uuid4(), title="", content_type="blog", created_by=uuid4())
+            Content.create(
+                organization_id=uuid4(), title="", content_type="blog", created_by=uuid4()
+            )
 
     def test_create_content_invalid_type_raises_error(self):
         with pytest.raises(ValidationError, match="Invalid content type"):

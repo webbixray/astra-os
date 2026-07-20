@@ -23,6 +23,7 @@ from app.domain.services.shadow_mode import (
 
 # --- Mock Repositories ---
 
+
 class MockSessionRepository:
     def __init__(self):
         self.sessions: dict = {}
@@ -82,7 +83,8 @@ class MockDecisionRepository:
         limit: int = 50,
     ) -> list[ShadowDecision]:
         results = [
-            d for d in self.decisions.values()
+            d
+            for d in self.decisions.values()
             if d.shadow_session_id == session_id and not d.has_human_decision()
         ]
         return results[:limit]
@@ -94,7 +96,8 @@ class MockDecisionRepository:
         limit: int = 10,
     ) -> list[ShadowDecision]:
         results = [
-            d for d in self.decisions.values()
+            d
+            for d in self.decisions.values()
             if d.entity_type == entity_type and d.entity_id == entity_id
         ]
         return results[:limit]
@@ -144,7 +147,8 @@ class MockLiftRepository:
         metric_name: str,
     ) -> LiftMeasurement | None:
         results = [
-            m for m in self.measurements.values()
+            m
+            for m in self.measurements.values()
             if m.shadow_session_id == session_id and m.metric_name == metric_name
         ]
         if not results:
@@ -154,29 +158,36 @@ class MockLiftRepository:
 
 # --- Fixtures ---
 
+
 @pytest.fixture
 def session_repo():
     return MockSessionRepository()
+
 
 @pytest.fixture
 def decision_repo():
     return MockDecisionRepository()
 
+
 @pytest.fixture
 def event_repo():
     return MockEventRepository()
+
 
 @pytest.fixture
 def lift_repo():
     return MockLiftRepository()
 
+
 @pytest.fixture
 def session_service(session_repo, decision_repo, event_repo):
     return ShadowSessionService(session_repo, decision_repo, event_repo)
 
+
 @pytest.fixture
 def decision_service(session_repo, decision_repo, event_repo):
     return ShadowDecisionService(session_repo, decision_repo, event_repo)
+
 
 @pytest.fixture
 def lift_service(decision_repo):
@@ -184,19 +195,25 @@ def lift_service(decision_repo):
     class MockLiftRepo:
         def __init__(self):
             self.measurements = {}
+
         async def save(self, m):
             self.measurements[m.id] = m
             return m
+
         async def find_by_session(self, session_id, limit=50):
             return list(self.measurements.values())[:limit]
+
         async def find_latest(self, session_id, metric_name):
             return None
+
     lift_repo = MockLiftRepo()
     session_repo_for_lift = MockSessionRepository()
     MockDecisionRepository()
     return LiftMeasurementService(lift_repo, decision_repo, session_repo_for_lift)
 
+
 # --- Entity Tests ---
+
 
 class TestShadowSession:
     def test_create_session(self):
@@ -357,6 +374,7 @@ class TestLiftMeasurement:
 
 # --- Service Tests ---
 
+
 class TestShadowSessionService:
     @pytest.mark.asyncio
     async def test_create_session(self, session_service):
@@ -448,6 +466,7 @@ class TestShadowSessionService:
 
         # Add some decisions
         from app.domain.entities.shadow_mode import DecisionType, ShadowDecision
+
         for i in range(10):
             decision = ShadowDecision(
                 organization_id=org_id,

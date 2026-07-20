@@ -26,6 +26,7 @@ router = APIRouter(prefix="/knowledge/rag", tags=["knowledge-rag"])
 # Dependency injection
 # ---------------------------------------------------------------------------
 
+
 async def get_rag_pipeline(db: AsyncSession = Depends(get_db)) -> RagPipeline:
     gs = GraphStore(db)
     return RagPipeline(
@@ -37,6 +38,7 @@ async def get_rag_pipeline(db: AsyncSession = Depends(get_db)) -> RagPipeline:
 # ---------------------------------------------------------------------------
 # Request / Response models
 # ---------------------------------------------------------------------------
+
 
 class RAGSearchRequest(BaseModel):
     organization_id: UUID
@@ -74,6 +76,7 @@ class IngestCampaignDataRequest(BaseModel):
 # Endpoints
 # ---------------------------------------------------------------------------
 
+
 @router.post("/search")
 async def rag_search(
     request: RAGSearchRequest,
@@ -91,17 +94,22 @@ async def rag_search(
         min_score=request.min_score,
     )
     return {
-        "results": [r.to_dict() if hasattr(r, "to_dict") else {
-            "node_id": r.node_id,
-            "node_type": r.node_type,
-            "name": r.name,
-            "description": r.description,
-            "score": round(r.score, 3),
-            "source": r.source,
-            "relevance": r.relevance_label,
-            "properties": r.properties,
-            "related_node_ids": r.related_node_ids,
-        } for r in results],
+        "results": [
+            r.to_dict()
+            if hasattr(r, "to_dict")
+            else {
+                "node_id": r.node_id,
+                "node_type": r.node_type,
+                "name": r.name,
+                "description": r.description,
+                "score": round(r.score, 3),
+                "source": r.source,
+                "relevance": r.relevance_label,
+                "properties": r.properties,
+                "related_node_ids": r.related_node_ids,
+            }
+            for r in results
+        ],
         "total": len(results),
         "query": request.query,
     }

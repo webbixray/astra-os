@@ -18,7 +18,7 @@ from app.infrastructure.db.repositories.user_repository import UserRepositoryImp
 def get_db_session_factory(app_or_request) -> async_sessionmaker[AsyncSession] | None:
     """Get the database session factory from app state."""
     # Can be called with either a Request or FastAPI app
-    app = app_or_request.app if hasattr(app_or_request, 'app') else app_or_request
+    app = app_or_request.app if hasattr(app_or_request, "app") else app_or_request
     return getattr(app.state, "db", None)
 
 

@@ -202,9 +202,12 @@ class TestDetectAnomalies:
     async def test_no_anomalies(self, mock_db):
         result = MagicMock()
         result.all.return_value = [
-            ("2025-01-01", 100.0), ("2025-01-02", 102.0),
-            ("2025-01-03", 98.0), ("2025-01-04", 101.0),
-            ("2025-01-05", 99.0), ("2025-01-06", 100.0),
+            ("2025-01-01", 100.0),
+            ("2025-01-02", 102.0),
+            ("2025-01-03", 98.0),
+            ("2025-01-04", 101.0),
+            ("2025-01-05", 99.0),
+            ("2025-01-06", 100.0),
             ("2025-01-07", 101.0),
         ]
         mock_db.execute.return_value = result
@@ -216,9 +219,12 @@ class TestDetectAnomalies:
     async def test_detects_anomaly(self, mock_db):
         result = MagicMock()
         result.all.return_value = [
-            ("2025-01-01", 100.0), ("2025-01-02", 102.0),
-            ("2025-01-03", 98.0), ("2025-01-04", 101.0),
-            ("2025-01-05", 99.0), ("2025-01-06", 100.0),
+            ("2025-01-01", 100.0),
+            ("2025-01-02", 102.0),
+            ("2025-01-03", 98.0),
+            ("2025-01-04", 101.0),
+            ("2025-01-05", 99.0),
+            ("2025-01-06", 100.0),
             ("2025-01-07", 1000.0),
         ]
         mock_db.execute.return_value = result
@@ -240,9 +246,12 @@ class TestDetectAnomalies:
     async def test_zero_stdev(self, mock_db):
         result = MagicMock()
         result.all.return_value = [
-            ("2025-01-01", 100.0), ("2025-01-02", 100.0),
-            ("2025-01-03", 100.0), ("2025-01-04", 100.0),
-            ("2025-01-05", 100.0), ("2025-01-06", 100.0),
+            ("2025-01-01", 100.0),
+            ("2025-01-02", 100.0),
+            ("2025-01-03", 100.0),
+            ("2025-01-04", 100.0),
+            ("2025-01-05", 100.0),
+            ("2025-01-06", 100.0),
             ("2025-01-07", 100.0),
         ]
         mock_db.execute.return_value = result
@@ -302,12 +311,17 @@ class TestDashboardService:
 
     async def test_list_dashboards(self, service, dash_repo, widget_repo):
         dash_id = uuid4()
-        dash = Dashboard(id=dash_id, name="Test", description="desc",
-                         layout_columns=3, is_default=True)
+        dash = Dashboard(
+            id=dash_id, name="Test", description="desc", layout_columns=3, is_default=True
+        )
         dash_repo.find_by_organization = AsyncMock(return_value=[dash])
-        widget_repo.find_by_dashboard_ids = AsyncMock(return_value=[
-            DashboardWidget(id=uuid4(), dashboard_id=dash_id, widget_type="kpi_card", title="Spend"),
-        ])
+        widget_repo.find_by_dashboard_ids = AsyncMock(
+            return_value=[
+                DashboardWidget(
+                    id=uuid4(), dashboard_id=dash_id, widget_type="kpi_card", title="Spend"
+                ),
+            ]
+        )
 
         result = await service.list_dashboards(uuid4())
 
@@ -345,9 +359,14 @@ class TestDashboardService:
     async def test_add_widget(self, service, dash_repo, widget_repo):
         dash_id = uuid4()
         dash_repo.find_by_id = AsyncMock(return_value=Dashboard(id=dash_id, name="Dash"))
-        widget_repo.save = AsyncMock(return_value=DashboardWidget(
-            id=uuid4(), dashboard_id=dash_id, widget_type="kpi_card", title="Spend",
-        ))
+        widget_repo.save = AsyncMock(
+            return_value=DashboardWidget(
+                id=uuid4(),
+                dashboard_id=dash_id,
+                widget_type="kpi_card",
+                title="Spend",
+            )
+        )
 
         result = await service.add_widget(dash_id, "kpi_card", "Spend")
 

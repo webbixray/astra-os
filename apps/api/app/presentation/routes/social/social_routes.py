@@ -33,6 +33,7 @@ router = APIRouter(prefix="/social", tags=["social-intelligence"])
 
 # --- Request/Response Models ---
 
+
 class SocialCommentResponse(BaseModel):
     id: str
     organization_id: str
@@ -175,6 +176,7 @@ class CommentAnalyticsResponse(BaseModel):
 
 # --- Dependencies ---
 
+
 async def _require_org_access(
     organization_id: UUID,
     user_id: UUID = Depends(require_user_id),
@@ -194,6 +196,7 @@ async def _require_org_admin(
 
 
 # --- Comment Routes ---
+
 
 @router.get(
     "/organizations/{organization_id}/comments",
@@ -254,6 +257,7 @@ async def moderate_comment(
 
 
 # --- Auto-Reply Routes ---
+
 
 @router.post(
     "/organizations/{organization_id}/comments/{comment_id}/reply/generate",
@@ -359,6 +363,7 @@ async def reject_reply(
 
 # --- Inbox Routes ---
 
+
 @router.post(
     "/organizations/{organization_id}/inbox",
     response_model=list[SocialCommentResponse],
@@ -402,10 +407,15 @@ async def assign_comment(
 ) -> dict:
     """Assign a comment to a team member."""
     await require_org_role(organization_id, "admin", assignee_id, db)
-    return {"message": "Comment assigned", "comment_id": str(comment_id), "assignee_id": str(assignee_id)}
+    return {
+        "message": "Comment assigned",
+        "comment_id": str(comment_id),
+        "assignee_id": str(assignee_id),
+    }
 
 
 # --- Reply Template Routes ---
+
 
 @router.post(
     "/organizations/{organization_id}/reply-templates",
@@ -524,6 +534,7 @@ async def match_templates(
 
 # --- Analytics Routes ---
 
+
 @router.get(
     "/organizations/{organization_id}/analytics/comments",
     response_model=CommentAnalyticsResponse,
@@ -603,6 +614,7 @@ async def get_top_comments(
 
 # --- Batch Operations ---
 
+
 @router.post(
     "/organizations/{organization_id}/comments/batch-moderate",
     summary="Batch moderate comments",
@@ -651,6 +663,7 @@ async def batch_send_replies(
 
 
 # --- Webhook Routes ---
+
 
 @router.post(
     "/webhooks/{platform}/comments",

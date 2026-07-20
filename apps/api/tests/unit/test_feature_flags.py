@@ -75,23 +75,29 @@ class TestRequireFeature:
             assert exc_info.value.status_code == 403
 
     async def test_allows_override(self, org_id: str) -> None:
-        with patch(
-            "app.presentation.middleware.feature_flags.get_plan_features",
-            return_value=set(),
-        ), patch(
-            "app.infrastructure.db.repositories.feature_flag_repository.FeatureFlagRepository.find_by_key",
-            new=AsyncMock(return_value=MagicMock(is_enabled=True)),
+        with (
+            patch(
+                "app.presentation.middleware.feature_flags.get_plan_features",
+                return_value=set(),
+            ),
+            patch(
+                "app.infrastructure.db.repositories.feature_flag_repository.FeatureFlagRepository.find_by_key",
+                new=AsyncMock(return_value=MagicMock(is_enabled=True)),
+            ),
         ):
             result = await require_feature("ai_content_generation", org_id, "free", AsyncMock())
             assert result is True
 
     async def test_override_disabled_still_denies(self, org_id: str) -> None:
-        with patch(
-            "app.presentation.middleware.feature_flags.get_plan_features",
-            return_value=set(),
-        ), patch(
-            "app.infrastructure.db.repositories.feature_flag_repository.FeatureFlagRepository.find_by_key",
-            new=AsyncMock(return_value=MagicMock(is_enabled=False)),
+        with (
+            patch(
+                "app.presentation.middleware.feature_flags.get_plan_features",
+                return_value=set(),
+            ),
+            patch(
+                "app.infrastructure.db.repositories.feature_flag_repository.FeatureFlagRepository.find_by_key",
+                new=AsyncMock(return_value=MagicMock(is_enabled=False)),
+            ),
         ):
             with pytest.raises(HTTPException) as exc_info:
                 await require_feature("ai_content_generation", org_id, "free", AsyncMock())

@@ -28,6 +28,7 @@ router = APIRouter(prefix="/knowledge/patterns", tags=["knowledge-patterns"])
 # Dependency injection
 # ---------------------------------------------------------------------------
 
+
 async def get_learner(db: AsyncSession = Depends(get_db)) -> CrossCampaignLearner:
     gs = GraphStore(db)
     return CrossCampaignLearner(
@@ -38,6 +39,7 @@ async def get_learner(db: AsyncSession = Depends(get_db)) -> CrossCampaignLearne
 # ---------------------------------------------------------------------------
 # Request models
 # ---------------------------------------------------------------------------
+
 
 class MinePatternsRequest(BaseModel):
     organization_id: UUID
@@ -60,6 +62,7 @@ class LearningInsightsRequest(BaseModel):
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
+
 
 @router.post("/mine")
 async def mine_patterns(

@@ -138,7 +138,9 @@ async def update_config(
 
         config = await uc.execute(
             organization_id=body.organization_id,
-            default_level=AutonomyLevel(body.default_level) if body.default_level is not None else None,
+            default_level=AutonomyLevel(body.default_level)
+            if body.default_level is not None
+            else None,
             agent_levels=agent_levels,
             action_overrides=action_overrides,
             auto_approve_spend_limit=body.auto_approve_spend_limit,

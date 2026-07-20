@@ -5,12 +5,10 @@ import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
-from unittest.mock import AsyncMock, MagicMock
 
 from app.main import create_app
-from app.presentation.middleware.auth import require_user_id
 from app.presentation.dependencies import get_db
-
+from app.presentation.middleware.auth import require_user_id
 
 
 @pytest.fixture(scope="module")
@@ -30,8 +28,9 @@ def app() -> FastAPI:
     return a
 
 
-
-def _build_mock_redis(client_ping: AsyncMock | None = None, connect_side_effect: Exception | None = None) -> MagicMock:
+def _build_mock_redis(
+    client_ping: AsyncMock | None = None, connect_side_effect: Exception | None = None
+) -> MagicMock:
     mock_cache = MagicMock()
     if connect_side_effect:
         mock_cache.client = None
@@ -74,7 +73,6 @@ class TestOpenAPISchema:
             "/api/v1/ad/accounts",
             "/api/v1/knowledge/nodes",
             "/api/v1/knowledge/search",
-
             "/api/v1/calendar/events",
             "/api/v1/notifications",
             "/api/v1/notification-templates",
@@ -82,7 +80,6 @@ class TestOpenAPISchema:
             "/api/v1/dashboards",
             "/api/v1/dashboards/{dashboard_id}",
             "/api/v1/knowledge/search",
-
         ]
         for path in required_paths:
             assert path in paths, f"Missing required path: {path}"

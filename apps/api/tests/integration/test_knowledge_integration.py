@@ -50,7 +50,9 @@ class TestKnowledgeIntegration:
         return resp.json()
 
     async def _create_org_with_owner(
-        self, integration_session_factory, user_id: UUID,
+        self,
+        integration_session_factory,
+        user_id: UUID,
     ) -> UUID:
         async with integration_session_factory() as session:
             org_repo = OrganizationRepositoryImpl(session)
@@ -58,14 +60,18 @@ class TestKnowledgeIntegration:
             org = Organization.create(name="Know Org", slug="know-org")
             org = await org_repo.save(org)
             member = TeamMember.create(
-                organization_id=org.id, user_id=user_id, role="owner",
+                organization_id=org.id,
+                user_id=user_id,
+                role="owner",
             )
             await member_repo.save(member)
             await session.commit()
             return org.id
 
     @patch("app.presentation.routes.knowledge.knowledge_routes.GraphStore", autospec=True)
-    async def test_create_node(self, mock_graph_store_cls, test_client, integration_session_factory):
+    async def test_create_node(
+        self, mock_graph_store_cls, test_client, integration_session_factory
+    ):
         mock_store = AsyncMock(spec=GraphStore)
         mock_store.upsert_node = AsyncMock()
         mock_graph_store_cls.return_value = mock_store
@@ -91,14 +97,14 @@ class TestKnowledgeIntegration:
         assert UUID(body["id"])
         mock_store.upsert_node.assert_called_once()
 
-
-
     @patch("app.presentation.routes.knowledge.knowledge_routes.GraphStore", autospec=True)
     async def test_search(self, mock_graph_store_cls, test_client, integration_session_factory):
         mock_store = AsyncMock(spec=GraphStore)
-        mock_store.search_similar = AsyncMock(return_value=[
-            {"id": str(uuid4()), "type": "concept", "name": "AI", "similarity": 0.95},
-        ])
+        mock_store.search_similar = AsyncMock(
+            return_value=[
+                {"id": str(uuid4()), "type": "concept", "name": "AI", "similarity": 0.95},
+            ]
+        )
         mock_graph_store_cls.return_value = mock_store
 
         auth = await self._signup(test_client, "ksearch@test.com")
@@ -118,12 +124,16 @@ class TestKnowledgeIntegration:
         assert len(resp.json()) == 1
 
     @patch("app.presentation.routes.knowledge.knowledge_routes.GraphStore", autospec=True)
-    async def test_memory_remember_and_recall(self, mock_graph_store_cls, test_client, integration_session_factory):
+    async def test_memory_remember_and_recall(
+        self, mock_graph_store_cls, test_client, integration_session_factory
+    ):
         mock_store = AsyncMock(spec=GraphStore)
         mock_store.upsert_memory = AsyncMock()
-        mock_store.search_memories = AsyncMock(return_value=[
-            {"id": str(uuid4()), "key": "user_pref", "value": "dark_mode", "similarity": 0.9},
-        ])
+        mock_store.search_memories = AsyncMock(
+            return_value=[
+                {"id": str(uuid4()), "key": "user_pref", "value": "dark_mode", "similarity": 0.9},
+            ]
+        )
         mock_graph_store_cls.return_value = mock_store
 
         auth = await self._signup(test_client, "kmem@test.com")
@@ -155,8 +165,12 @@ class TestKnowledgeIntegration:
         assert len(results) == 1
         assert results[0]["key"] == "user_pref"
 
-    @patch("app.presentation.routes.knowledge.knowledge_routes.KnowledgeGraphService", autospec=True)
-    async def test_get_node_relations(self, mock_service_cls, test_client, integration_session_factory):
+    @patch(
+        "app.presentation.routes.knowledge.knowledge_routes.KnowledgeGraphService", autospec=True
+    )
+    async def test_get_node_relations(
+        self, mock_service_cls, test_client, integration_session_factory
+    ):
         auth = await self._signup(test_client, "krelget@test.com")
         user_id = UUID(auth["user"]["id"])
         org_id = await self._create_org_with_owner(integration_session_factory, user_id)
@@ -168,7 +182,12 @@ class TestKnowledgeIntegration:
         mock_instance = AsyncMock()
         mock_instance.get_node.return_value = FakeNode()
         mock_instance.get_node_relations.return_value = [
-            {"id": str(uuid4()), "source_name": "Python", "target_name": "Django", "relation_type": "related_to"},
+            {
+                "id": str(uuid4()),
+                "source_name": "Python",
+                "target_name": "Django",
+                "relation_type": "related_to",
+            },
         ]
         mock_service_cls.return_value = mock_instance
 
@@ -177,11 +196,15 @@ class TestKnowledgeIntegration:
         assert len(resp.json()) == 1
 
     @patch("app.presentation.routes.knowledge.knowledge_routes.GraphStore", autospec=True)
-    async def test_get_memories(self, mock_graph_store_cls, test_client, integration_session_factory):
+    async def test_get_memories(
+        self, mock_graph_store_cls, test_client, integration_session_factory
+    ):
         mock_store = AsyncMock(spec=GraphStore)
-        mock_store.get_memories = AsyncMock(return_value=[
-            {"id": str(uuid4()), "key": "pref", "value": "admin", "type": "conversation"},
-        ])
+        mock_store.get_memories = AsyncMock(
+            return_value=[
+                {"id": str(uuid4()), "key": "pref", "value": "admin", "type": "conversation"},
+            ]
+        )
         mock_graph_store_cls.return_value = mock_store
 
         auth = await self._signup(test_client, "kmget@test.com")

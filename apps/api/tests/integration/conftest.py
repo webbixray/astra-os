@@ -40,7 +40,9 @@ async def integration_engine():
 @pytest_asyncio.fixture
 async def integration_session_factory(integration_engine):
     return async_sessionmaker(
-        integration_engine, class_=AsyncSession, expire_on_commit=False,
+        integration_engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
     )
 
 

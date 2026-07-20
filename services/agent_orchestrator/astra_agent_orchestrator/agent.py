@@ -6,20 +6,20 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from uuid import UUID, uuid4
 
 # OpenTelemetry tracing
-from opentelemetry import trace
 from opentelemetry.trace import SpanKind
 from pydantic import BaseModel, Field
+
 # Lazy imports to avoid circular dependencies
 if TYPE_CHECKING:
     from .governance import GovernanceMiddleware
-    from .metrics import AgentMetricsContext, record_agent_run, record_tool_call, record_delegation
-    from .telemetry import get_tracer
+    from .metrics import AgentMetricsContext, record_agent_run, record_delegation, record_tool_call
 
 # Runtime imports for default parameter values
+from .metrics import AgentMetricsContext, record_agent_run, record_delegation, record_tool_call
 from .tools import (
     ExecutionSandbox,
     Tool,
@@ -27,19 +27,21 @@ from .tools import (
     default_sandbox,
     tool_registry,
 )
-from .metrics import AgentMetricsContext, record_agent_run, record_tool_call, record_delegation
 
 logger = logging.getLogger(__name__)
 
 # Tracer instance for this module - lazy initialization
 _TRACER = None
 
+
 def get_tracer_instance():
     global _TRACER
     if _TRACER is None:
         from .telemetry import get_tracer
+
         _TRACER = get_tracer()
     return _TRACER
+
 
 # RAG pipeline type — imported lazily to avoid circular deps
 class _RAGPipelineStub:
@@ -137,7 +139,7 @@ class AgentContext:
         tenant_id: UUID,
         user_id: UUID | None = None,
         session_id: UUID | None = None,
-        parent_context: "AgentContext | None" = None,
+        parent_context: AgentContext | None = None,
     ):
         self.agent_id = agent_id
         self.tenant_id = tenant_id
@@ -148,7 +150,7 @@ class AgentContext:
         self.created_at = datetime.now(UTC)
         self.trace_id = uuid4()
 
-    def child_context(self, agent_id: UUID) -> "AgentContext":
+    def child_context(self, agent_id: UUID) -> AgentContext:
         """Create a child context for a sub-agent."""
         return AgentContext(
             agent_id=agent_id,
@@ -199,7 +201,7 @@ class AgentResult(BaseModel):
     error: str | None = None
     tool_calls: list[ToolCall] = Field(default_factory=list)
     tool_results: list[ToolResult] = Field(default_factory=list)
-    sub_agent_results: list["AgentResult"] = Field(default_factory=list)
+    sub_agent_results: list[AgentResult] = Field(default_factory=list)
     tokens_used: int = 0
     cost_usd: float = 0.0
     duration_ms: int = 0
@@ -277,7 +279,7 @@ class Agent(ABC):
                     "agent.astra.autonomy_level": self.config.autonomy_level,
                     "agent.astra.tenant_id": str(self.tenant_id) if self.tenant_id else "",
                     "agent.astra.session_id": str(context.session_id) if context.session_id else "",
-                }
+                },
             ) as span:
                 try:
                     self.state = AgentState.RUNNING
@@ -318,7 +320,8 @@ class Agent(ABC):
                     trace_ctx = get_trace_context()
                     logger.exception(
                         "Agent %s failed: %s",
-                        self.agent_id, e,
+                        self.agent_id,
+                        e,
                         extra=trace_ctx,
                     )
                     return AgentResult(
@@ -335,7 +338,10 @@ class Agent(ABC):
         duration_ms = int((time.time() - self._start_time) * 1000)
         logger.info(
             "Agent %s completed in %dms, iterations: %d, tools: %d",
-            self.agent_id, duration_ms, self._iteration, len(self._tool_calls)
+            self.agent_id,
+            duration_ms,
+            self._iteration,
+            len(self._tool_calls),
         )
 
     async def call_tool(
@@ -359,14 +365,19 @@ class Agent(ABC):
             if check_result.blocked:
                 logger.warning(
                     "Agent %s tool call '%s' BLOCKED by governance: %s",
-                    self.agent_id, tool_name, check_result.reason,
+                    self.agent_id,
+                    tool_name,
+                    check_result.reason,
                 )
                 # Add governance block event to span
-                span.add_event("governance.blocked", {
-                    "tool.name": tool_name,
-                    "reason": check_result.reason,
-                    "agent.autonomy_level": self.config.autonomy_level,
-                })
+                span.add_event(
+                    "governance.blocked",
+                    {
+                        "tool.name": tool_name,
+                        "reason": check_result.reason,
+                        "agent.autonomy_level": self.config.autonomy_level,
+                    },
+                )
                 self.state = AgentState.WAITING_FOR_APPROVAL
                 call = ToolCall(tool_name=tool_name, parameters=parameters)
                 self._tool_calls.append(call)
@@ -383,13 +394,18 @@ class Agent(ABC):
             if check_result.requires_approval and not check_result.blocked:
                 logger.info(
                     "Agent %s tool call '%s' requires approval: %s",
-                    self.agent_id, tool_name, check_result.reason,
+                    self.agent_id,
+                    tool_name,
+                    check_result.reason,
                 )
                 # Add governance approval required event to span
-                span.add_event("governance.approval_required", {
-                    "tool.name": tool_name,
-                    "reason": check_result.reason,
-                })
+                span.add_event(
+                    "governance.approval_required",
+                    {
+                        "tool.name": tool_name,
+                        "reason": check_result.reason,
+                    },
+                )
                 # In SEMI_AUTO mode, log but still execute low-risk tools
                 # The approval is tracked for audit purposes
 
@@ -405,13 +421,11 @@ class Agent(ABC):
                 "agent.id": str(self.agent_id),
                 "agent.type": self.agent_type.value,
                 "tool.name": tool_name,
-            }
+            },
         ) as span:
             start = time.time()
             try:
-                result_data = await self.tool_registry.execute_tool(
-                    tool_name, parameters, context
-                )
+                result_data = await self.tool_registry.execute_tool(tool_name, parameters, context)
                 duration_ms = int((time.time() - start) * 1000)
                 duration_seconds = duration_ms / 1000.0
 
@@ -426,16 +440,22 @@ class Agent(ABC):
 
                 # Record on span with events
                 if result.success:
-                    span.add_event("tool.call.completed", {
-                        "tool.name": tool_name,
-                        "duration_ms": duration_ms,
-                    })
+                    span.add_event(
+                        "tool.call.completed",
+                        {
+                            "tool.name": tool_name,
+                            "duration_ms": duration_ms,
+                        },
+                    )
                 else:
-                    span.add_event("tool.call.failed", {
-                        "tool.name": tool_name,
-                        "error": result.error,
-                        "duration_ms": duration_ms,
-                    })
+                    span.add_event(
+                        "tool.call.failed",
+                        {
+                            "tool.name": tool_name,
+                            "error": result.error,
+                            "duration_ms": duration_ms,
+                        },
+                    )
 
                 span.set_attribute("tool.success", result.success)
                 span.set_attribute("tool.duration_ms", duration_ms)
@@ -455,11 +475,14 @@ class Agent(ABC):
                 return result
             except Exception as e:
                 duration_ms = int((time.time() - start) * 1000)
-                span.add_event("tool.call.exception", {
-                    "tool.name": tool_name,
-                    "error": str(e),
-                    "duration_ms": duration_ms,
-                })
+                span.add_event(
+                    "tool.call.exception",
+                    {
+                        "tool.name": tool_name,
+                        "error": str(e),
+                        "duration_ms": duration_ms,
+                    },
+                )
                 span.record_exception(e)
                 span.set_attribute("tool.success", False)
                 span.set_attribute("tool.error", str(e))
@@ -497,18 +520,21 @@ class Agent(ABC):
                 "agent.type": self.agent_type.value,
                 "subagent.type": subagent_type.value,
                 "subagent.id": str(subagent.agent_id),
-            }
+            },
         ) as span:
             try:
                 result = await subagent.run(sub_context, input_data)
 
                 # Add delegation success event
-                span.add_event("agent.delegation.completed", {
-                    "subagent.id": str(subagent.agent_id),
-                    "subagent.type": subagent_type.value,
-                    "success": result.success,
-                    "duration_ms": result.duration_ms,
-                })
+                span.add_event(
+                    "agent.delegation.completed",
+                    {
+                        "subagent.id": str(subagent.agent_id),
+                        "subagent.type": subagent_type.value,
+                        "success": result.success,
+                        "duration_ms": result.duration_ms,
+                    },
+                )
 
                 span.set_attribute("subagent.success", result.success)
                 span.set_attribute("subagent.duration_ms", result.duration_ms)
@@ -523,11 +549,14 @@ class Agent(ABC):
                 self._sub_agent_results.append(result)
                 return result
             except Exception as e:
-                span.add_event("agent.delegation.failed", {
-                    "subagent.id": str(subagent.agent_id),
-                    "subagent.type": subagent_type.value,
-                    "error": str(e),
-                })
+                span.add_event(
+                    "agent.delegation.failed",
+                    {
+                        "subagent.id": str(subagent.agent_id),
+                        "subagent.type": subagent_type.value,
+                        "error": str(e),
+                    },
+                )
                 span.set_attribute("subagent.success", False)
                 span.set_attribute("subagent.error", str(e))
 
@@ -799,9 +828,12 @@ Review and approve content from Copywriter, Designer, Brand Voice agents.""",
             )
 
         director_types = {
-            AgentType.MARKETING_DIRECTOR, AgentType.CREATIVE_DIRECTOR,
-            AgentType.ADVERTISING_DIRECTOR, AgentType.RESEARCH_DIRECTOR,
-            AgentType.ANALYTICS_DIRECTOR, AgentType.WORKFLOW_DIRECTOR,
+            AgentType.MARKETING_DIRECTOR,
+            AgentType.CREATIVE_DIRECTOR,
+            AgentType.ADVERTISING_DIRECTOR,
+            AgentType.RESEARCH_DIRECTOR,
+            AgentType.ANALYTICS_DIRECTOR,
+            AgentType.WORKFLOW_DIRECTOR,
             AgentType.COMPLIANCE_DIRECTOR,
         }
         if agent_type in director_types:

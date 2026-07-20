@@ -189,4 +189,5 @@ def get_burn_rate_configs() -> dict[str, dict[str, Any]]:
 
 if __name__ == "__main__":
     import json
+
     print(json.dumps(get_slo_config(), indent=2))

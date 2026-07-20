@@ -37,6 +37,7 @@ _audit_service = AuditEnhancementService()
 def _dict_to_audit_entry(d: dict) -> AuditEntry:
     """Convert a dict back to an AuditEntry for service methods."""
     from datetime import datetime
+
     return AuditEntry(
         id=d.get("id", ""),
         event_type=d.get("event_type", ""),
@@ -49,7 +50,9 @@ def _dict_to_audit_entry(d: dict) -> AuditEntry:
         ip_address=d.get("ip_address", ""),
         entry_hash=d.get("entry_hash", ""),
         previous_hash=d.get("previous_hash", ""),
-        created_at=datetime.fromisoformat(d["created_at"]) if d.get("created_at") else datetime.now(),
+        created_at=datetime.fromisoformat(d["created_at"])
+        if d.get("created_at")
+        else datetime.now(),
     )
 
 

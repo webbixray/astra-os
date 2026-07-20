@@ -30,6 +30,7 @@ logger = logging.getLogger(__name__)
 
 # --- Repository Interfaces ---
 
+
 class ShadowSessionRepository:
     async def save(self, session: ShadowSession) -> ShadowSession: ...
     async def find_by_id(self, session_id: UUID) -> ShadowSession | None: ...
@@ -93,6 +94,7 @@ class LiftMeasurementRepository:
 
 # --- Shadow Session Service ---
 
+
 class ShadowSessionService:
     """Manages shadow mode sessions lifecycle."""
 
@@ -134,7 +136,8 @@ class ShadowSessionService:
             agent_model=agent_model,
             campaigns=campaigns or [],
             ad_accounts=ad_accounts or [],
-            decision_types=decision_types or [
+            decision_types=decision_types
+            or [
                 DecisionType.BUDGET_ADJUSTMENT,
                 DecisionType.BID_OPTIMIZATION,
                 DecisionType.TARGETING_CHANGE,
@@ -248,9 +251,17 @@ class ShadowSessionService:
         with_human = [d for d in decisions if d.has_human_decision()]
         agreements = [d for d in with_human if d.comparison_result == ComparisonResult.AGREED]
         disagreements = [d for d in with_human if d.comparison_result == ComparisonResult.DIFFERENT]
-        agent_better = [d for d in with_human if d.comparison_result == ComparisonResult.AGENT_BETTER]
-        human_better = [d for d in with_human if d.comparison_result == ComparisonResult.HUMAN_BETTER]
-        overrides = [d for d in decisions if d.human_decision and d.comparison_result != ComparisonResult.AGREED]
+        agent_better = [
+            d for d in with_human if d.comparison_result == ComparisonResult.AGENT_BETTER
+        ]
+        human_better = [
+            d for d in with_human if d.comparison_result == ComparisonResult.HUMAN_BETTER
+        ]
+        overrides = [
+            d
+            for d in decisions
+            if d.human_decision and d.comparison_result != ComparisonResult.AGREED
+        ]
 
         return {
             "session": session.to_dict(),
@@ -290,6 +301,7 @@ class ShadowSessionService:
 
 
 # --- Shadow Decision Service ---
+
 
 class ShadowDecisionService:
     """Manages shadow decisions - recording, comparison, and tracking."""
@@ -490,6 +502,7 @@ class ShadowDecisionService:
 
 
 # --- Lift Measurement Service ---
+
 
 class LiftMeasurementService:
     """Calculates and tracks lift measurements for shadow sessions."""

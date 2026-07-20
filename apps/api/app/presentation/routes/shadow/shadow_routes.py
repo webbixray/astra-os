@@ -38,6 +38,7 @@ router = APIRouter(prefix="/shadow", tags=["shadow-mode"])
 
 # --- Request/Response Models ---
 
+
 class ShadowSessionResponse(BaseModel):
     id: str
     organization_id: str
@@ -222,6 +223,7 @@ class CalculateLiftRequest(BaseModel):
 
 # --- Dependencies ---
 
+
 async def _require_org_access(
     organization_id: UUID,
     user_id: UUID = Depends(require_user_id),
@@ -245,6 +247,7 @@ def get_shadow_session_service(db: AsyncSession = Depends(get_db)) -> ShadowSess
         ShadowDecisionRepositoryImpl,
         ShadowEventRepositoryImpl,
     )
+
     session_repo = ShadowSessionRepositoryImpl(db)
     decision_repo = ShadowDecisionRepositoryImpl(db)
     event_repo = ShadowEventRepositoryImpl(db)
@@ -256,6 +259,7 @@ def get_shadow_decision_service(db: AsyncSession = Depends(get_db)) -> ShadowDec
         ShadowDecisionRepositoryImpl,
         ShadowEventRepositoryImpl,
     )
+
     session_repo = ShadowSessionRepositoryImpl(db)
     decision_repo = ShadowDecisionRepositoryImpl(db)
     event_repo = ShadowEventRepositoryImpl(db)
@@ -267,6 +271,7 @@ def get_lift_measurement_service(db: AsyncSession = Depends(get_db)) -> LiftMeas
         LiftMeasurementRepositoryImpl,
         ShadowDecisionRepositoryImpl,
     )
+
     session_repo = ShadowSessionRepositoryImpl(db)
     decision_repo = ShadowDecisionRepositoryImpl(db)
     measurement_repo = LiftMeasurementRepositoryImpl(db)
@@ -275,11 +280,13 @@ def get_lift_measurement_service(db: AsyncSession = Depends(get_db)) -> LiftMeas
 
 def get_shadow_event_service(db: AsyncSession = Depends(get_db)) -> ShadowEventService:
     from app.infrastructure.db.repositories.shadow_repository import ShadowEventRepositoryImpl
+
     event_repo = ShadowEventRepositoryImpl(db)
     return ShadowEventService(event_repo)
 
 
 # --- Session Routes ---
+
 
 @router.post(
     "/organizations/{organization_id}/sessions",
@@ -299,6 +306,7 @@ async def create_shadow_session(
         ShadowDecisionRepositoryImpl,
         ShadowEventRepositoryImpl,
     )
+
     session_repo = ShadowSessionRepositoryImpl(db)
     decision_repo = ShadowDecisionRepositoryImpl(db)
     event_repo = ShadowEventRepositoryImpl(db)
@@ -313,7 +321,9 @@ async def create_shadow_session(
         created_by=user_id,
         campaigns=[UUID(c) for c in request.campaigns] if request.campaigns else None,
         ad_accounts=request.ad_accounts,
-        decision_types=[DecisionType(dt) for dt in request.decision_types] if request.decision_types else None,
+        decision_types=[DecisionType(dt) for dt in request.decision_types]
+        if request.decision_types
+        else None,
         reviewers=[UUID(r) for r in request.reviewers] if request.reviewers else None,
         require_human_approval=request.require_human_approval,
         auto_approve_threshold=request.auto_approve_threshold,
@@ -338,6 +348,7 @@ async def list_shadow_sessions(
     db: AsyncSession = Depends(get_db),
 ) -> list[dict]:
     from app.domain.services.shadow_mode import ShadowSessionService
+
     session_repo = ShadowSessionRepositoryImpl(db)
     decision_repo = ShadowDecisionRepositoryImpl(db)
     event_repo = ShadowEventRepositoryImpl(db)
@@ -382,6 +393,7 @@ async def start_shadow_session(
     decision_repo = ShadowDecisionRepositoryImpl(db)
     event_repo = ShadowEventRepositoryImpl(db)
     from app.domain.services.shadow_mode import ShadowSessionService
+
     service = ShadowSessionService(session_repo, decision_repo, event_repo)
     session = await service.start_session(session_id, user_id)
     return session.to_dict()
@@ -400,6 +412,7 @@ async def pause_shadow_session(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     from app.domain.services.shadow_mode import ShadowSessionService
+
     session_repo = ShadowSessionRepositoryImpl(db)
     decision_repo = ShadowDecisionRepositoryImpl(db)
     event_repo = ShadowEventRepositoryImpl(db)
@@ -421,6 +434,7 @@ async def end_shadow_session(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     from app.domain.services.shadow_mode import ShadowSessionService
+
     session_repo = ShadowSessionRepositoryImpl(db)
     decision_repo = ShadowDecisionRepositoryImpl(db)
     event_repo = ShadowEventRepositoryImpl(db)
@@ -441,6 +455,7 @@ async def get_session_stats(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     from app.domain.services.shadow_mode import ShadowSessionService
+
     session_repo = ShadowSessionRepositoryImpl(db)
     decision_repo = ShadowDecisionRepositoryImpl(db)
     event_repo = ShadowEventRepositoryImpl(db)
@@ -449,6 +464,7 @@ async def get_session_stats(
 
 
 # --- Decision Routes ---
+
 
 @router.post(
     "/organizations/{organization_id}/sessions/{session_id}/decisions/agent",
@@ -465,6 +481,7 @@ async def record_agent_decision(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     from app.domain.services.shadow_mode import ShadowDecisionService
+
     session_repo = ShadowSessionRepositoryImpl(db)
     decision_repo = ShadowDecisionRepositoryImpl(db)
     event_repo = ShadowEventRepositoryImpl(db)
@@ -498,6 +515,7 @@ async def record_human_decision(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     from app.domain.services.shadow_mode import ShadowDecisionService
+
     session_repo = ShadowSessionRepositoryImpl(db)
     decision_repo = ShadowDecisionRepositoryImpl(db)
     event_repo = ShadowEventRepositoryImpl(db)
@@ -526,6 +544,7 @@ async def list_decisions(
     db: AsyncSession = Depends(get_db),
 ) -> list[dict]:
     from app.domain.services.shadow_mode import ShadowDecisionService
+
     session_repo = ShadowSessionRepositoryImpl(db)
     decision_repo = ShadowDecisionRepositoryImpl(db)
     event_repo = ShadowEventRepositoryImpl(db)
@@ -548,6 +567,7 @@ async def get_pending_comparisons(
     db: AsyncSession = Depends(get_db),
 ) -> list[dict]:
     from app.domain.services.shadow_mode import ShadowDecisionService
+
     session_repo = ShadowSessionRepositoryImpl(db)
     decision_repo = ShadowDecisionRepositoryImpl(db)
     event_repo = ShadowEventRepositoryImpl(db)
@@ -589,6 +609,7 @@ async def record_outcome(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     from app.domain.services.shadow_mode import ShadowDecisionService
+
     session_repo = ShadowSessionRepositoryImpl(db)
     decision_repo = ShadowDecisionRepositoryImpl(db)
     event_repo = ShadowEventRepositoryImpl(db)
@@ -611,6 +632,7 @@ async def batch_compare_decisions(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     from app.domain.services.shadow_mode import ShadowDecisionService
+
     session_repo = ShadowSessionRepositoryImpl(db)
     decision_repo = ShadowDecisionRepositoryImpl(db)
     event_repo = ShadowEventRepositoryImpl(db)
@@ -626,7 +648,13 @@ async def batch_compare_decisions(
                 human_reasoning=comp.human_reasoning,
                 decided_by=user_id,
             )
-            results.append({"decision_id": comp.decision_id, "status": "success", "comparison": decision.comparison_result.value})
+            results.append(
+                {
+                    "decision_id": comp.decision_id,
+                    "status": "success",
+                    "comparison": decision.comparison_result.value,
+                }
+            )
         except Exception as e:
             results.append({"decision_id": comp.decision_id, "status": "error", "error": str(e)})
 
@@ -634,6 +662,7 @@ async def batch_compare_decisions(
 
 
 # --- Lift Measurement Routes ---
+
 
 @router.post(
     "/organizations/{organization_id}/sessions/{session_id}/lift/calculate",
@@ -650,6 +679,7 @@ async def calculate_lift(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     from app.domain.services.shadow_mode import LiftMeasurementService
+
     session_repo = ShadowSessionRepositoryImpl(db)
     decision_repo = ShadowDecisionRepositoryImpl(db)
     measurement_repo = LiftMeasurementRepositoryImpl(db)
@@ -678,6 +708,7 @@ async def list_lift_measurements(
     db: AsyncSession = Depends(get_db),
 ) -> list[dict]:
     from app.domain.services.shadow_mode import LiftMeasurementService
+
     session_repo = ShadowSessionRepositoryImpl(db)
     decision_repo = ShadowDecisionRepositoryImpl(db)
     measurement_repo = LiftMeasurementRepositoryImpl(db)
@@ -698,6 +729,7 @@ async def get_lift_summary(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     from app.domain.services.shadow_mode import LiftMeasurementService
+
     session_repo = ShadowSessionRepositoryImpl(db)
     decision_repo = ShadowDecisionRepositoryImpl(db)
     measurement_repo = LiftMeasurementRepositoryImpl(db)
@@ -707,6 +739,7 @@ async def get_lift_summary(
 
 
 # --- Event Routes ---
+
 
 @router.get(
     "/organizations/{organization_id}/sessions/{session_id}/events",
@@ -723,6 +756,7 @@ async def get_session_events(
 ) -> list[dict]:
     from app.domain.services.shadow_mode import ShadowEventService
     from app.infrastructure.db.repositories.shadow_repository import ShadowEventRepositoryImpl
+
     event_repo = ShadowEventRepositoryImpl(db)
     service = ShadowEventService(event_repo)
 
@@ -732,6 +766,7 @@ async def get_session_events(
 
 
 # --- Batch Operations ---
+
 
 @router.post(
     "/organizations/{organization_id}/sessions/{session_id}/lift/calculate-multiple",
@@ -746,6 +781,7 @@ async def calculate_multiple_lifts(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     from app.domain.services.shadow_mode import LiftMeasurementService
+
     session_repo = ShadowSessionRepositoryImpl(db)
     decision_repo = ShadowDecisionRepositoryImpl(db)
     measurement_repo = LiftMeasurementRepositoryImpl(db)
@@ -761,7 +797,13 @@ async def calculate_multiple_lifts(
                 period_end=req.period_end,
                 calculated_by=user_id,
             )
-            results.append({"metric": req.metric_name, "status": "success", "lift": measurement.lift_percentage})
+            results.append(
+                {
+                    "metric": req.metric_name,
+                    "status": "success",
+                    "lift": measurement.lift_percentage,
+                }
+            )
         except Exception as e:
             results.append({"metric": req.metric_name, "status": "error", "error": str(e)})
 

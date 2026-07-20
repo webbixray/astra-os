@@ -33,8 +33,12 @@ def upgrade() -> None:
         sa.Column("approver_roles", sa.JSON, nullable=True),
         sa.Column("approver_users", sa.JSON, nullable=True),
         sa.Column("escalation_users", sa.JSON, nullable=True),
-        sa.Column("approval_timeout_hours", sa.Integer, nullable=False, server_default=sa.text("24")),
-        sa.Column("auto_reject_on_timeout", sa.Boolean, nullable=False, server_default=sa.text("false")),
+        sa.Column(
+            "approval_timeout_hours", sa.Integer, nullable=False, server_default=sa.text("24")
+        ),
+        sa.Column(
+            "auto_reject_on_timeout", sa.Boolean, nullable=False, server_default=sa.text("false")
+        ),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
     )
@@ -99,7 +103,9 @@ def upgrade() -> None:
         sa.Column("default_level", sa.Integer, nullable=False, server_default=sa.text("0")),
         sa.Column("agent_levels", sa.JSON, nullable=True),
         sa.Column("action_overrides", sa.JSON, nullable=True),
-        sa.Column("auto_approve_spend_limit", sa.Float, nullable=False, server_default=sa.text("100.0")),
+        sa.Column(
+            "auto_approve_spend_limit", sa.Float, nullable=False, server_default=sa.text("100.0")
+        ),
         sa.Column("auto_approve_currency", sa.String(10), nullable=False, server_default="'USD'"),
         sa.Column("auto_execute_channels", sa.JSON, nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),

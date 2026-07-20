@@ -72,9 +72,7 @@ def app() -> FastAPI:
 
 @pytest.fixture
 async def test_client(app: FastAPI) -> AsyncClient:
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as client:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         yield client
 
 
@@ -115,9 +113,7 @@ class TestAuthRoutes:
         assert data["data"]["user"]["email"] == "test@test.com"
 
     @pytest.mark.asyncio
-    async def test_signup_duplicate_email(
-        self, app: FastAPI, test_client: AsyncClient
-    ):
+    async def test_signup_duplicate_email(self, app: FastAPI, test_client: AsyncClient):
         mock_repo = MagicMock()
         mock_repo.find_by_email = AsyncMock(return_value=MagicMock())
         app.dependency_overrides[get_user_repo] = lambda: mock_repo
@@ -156,9 +152,7 @@ class TestAuthRoutes:
         assert "refresh_token" in data["data"]
 
     @pytest.mark.asyncio
-    async def test_signin_wrong_password(
-        self, app: FastAPI, test_client: AsyncClient
-    ):
+    async def test_signin_wrong_password(self, app: FastAPI, test_client: AsyncClient):
         mock_repo = MagicMock()
         mock_repo.find_by_email = AsyncMock(
             return_value=_mock_user(password_hash="wrong_hash", is_active=True)
@@ -184,9 +178,11 @@ class TestUserRoutes:
         import secrets
 
         from app.config import config
+
         secret = config.secret_key
         session_id = secrets.token_urlsafe(16)
         import time
+
         timestamp = int(time.time())
         msg = f"{session_id}:{timestamp}"
         signature = hmac.new(secret.encode(), msg.encode(), hashlib.sha256).hexdigest()[:16]
@@ -200,13 +196,12 @@ class TestUserRoutes:
         mock_use_case.execute = AsyncMock(
             return_value=_mock_user(id=uuid4(), email="new@test.com", name="New User")
         )
-        app.dependency_overrides[
-            get_create_user_use_case
-        ] = lambda: mock_use_case
+        app.dependency_overrides[get_create_user_use_case] = lambda: mock_use_case
 
         csrf = await self._setup(test_client)
         response = await test_client.post(
-            "/api/v1/users", json={"email": "new@test.com", "name": "New User"},
+            "/api/v1/users",
+            json={"email": "new@test.com", "name": "New User"},
             headers=csrf,
         )
 
@@ -218,9 +213,7 @@ class TestUserRoutes:
     async def test_get_user_by_id(self, app: FastAPI, test_client: AsyncClient):
         mock_use_case = MagicMock()
         mock_use_case.execute = AsyncMock(
-            return_value=_mock_user(
-                id=_MOCK_USER_ID, email="test@test.com", name="Test User"
-            )
+            return_value=_mock_user(id=_MOCK_USER_ID, email="test@test.com", name="Test User")
         )
         app.dependency_overrides[get_get_user_use_case] = lambda: mock_use_case
 
@@ -246,17 +239,14 @@ class TestUserRoutes:
     async def test_update_user(self, app: FastAPI, test_client: AsyncClient):
         mock_use_case = MagicMock()
         mock_use_case.execute = AsyncMock(
-            return_value=_mock_user(
-                id=_MOCK_USER_ID, email="test@test.com", name="Updated Name"
-            )
+            return_value=_mock_user(id=_MOCK_USER_ID, email="test@test.com", name="Updated Name")
         )
-        app.dependency_overrides[
-            get_update_user_use_case
-        ] = lambda: mock_use_case
+        app.dependency_overrides[get_update_user_use_case] = lambda: mock_use_case
 
         csrf = await self._setup(test_client)
         response = await test_client.patch(
-            f"/api/v1/users/{_MOCK_USER_ID}", json={"name": "Updated Name"},
+            f"/api/v1/users/{_MOCK_USER_ID}",
+            json={"name": "Updated Name"},
             headers=csrf,
         )
 
@@ -272,9 +262,11 @@ class TestOrganizationRoutes:
         import secrets
 
         from app.config import config
+
         secret = config.secret_key
         session_id = secrets.token_urlsafe(16)
         import time
+
         timestamp = int(time.time())
         msg = f"{session_id}:{timestamp}"
         signature = hmac.new(secret.encode(), msg.encode(), hashlib.sha256).hexdigest()[:16]
@@ -283,17 +275,13 @@ class TestOrganizationRoutes:
         return {"X-CSRF-Token": csrf_token}
 
     @pytest.mark.asyncio
-    async def test_create_organization(
-        self, app: FastAPI, test_client: AsyncClient
-    ):
+    async def test_create_organization(self, app: FastAPI, test_client: AsyncClient):
         org_id = uuid4()
         mock_use_case = MagicMock()
         mock_use_case.execute = AsyncMock(
             return_value=_mock_org(id=org_id, name="Test Org", slug="test-org")
         )
-        app.dependency_overrides[
-            get_create_org_use_case
-        ] = lambda: mock_use_case
+        app.dependency_overrides[get_create_org_use_case] = lambda: mock_use_case
 
         csrf = await self._setup(test_client)
         response = await test_client.post(
@@ -307,18 +295,12 @@ class TestOrganizationRoutes:
         assert data["data"]["name"] == "Test Org"
 
     @pytest.mark.asyncio
-    async def test_get_my_organizations(
-        self, app: FastAPI, test_client: AsyncClient
-    ):
+    async def test_get_my_organizations(self, app: FastAPI, test_client: AsyncClient):
         mock_use_case = MagicMock()
         mock_use_case.execute = AsyncMock(
-            return_value=[
-                _mock_org(id=uuid4(), name="Org 1", slug="org-1")
-            ]
+            return_value=[_mock_org(id=uuid4(), name="Org 1", slug="org-1")]
         )
-        app.dependency_overrides[
-            get_list_orgs_use_case
-        ] = lambda: mock_use_case
+        app.dependency_overrides[get_list_orgs_use_case] = lambda: mock_use_case
 
         response = await test_client.get("/api/v1/organizations/my")
 
@@ -327,17 +309,13 @@ class TestOrganizationRoutes:
         assert len(data["data"]) == 1
 
     @pytest.mark.asyncio
-    async def test_get_organization_by_id(
-        self, app: FastAPI, test_client: AsyncClient
-    ):
+    async def test_get_organization_by_id(self, app: FastAPI, test_client: AsyncClient):
         org_id = uuid4()
         mock_use_case = MagicMock()
         mock_use_case.execute = AsyncMock(
             return_value=_mock_org(id=org_id, name="Test Org", slug="test-org")
         )
-        app.dependency_overrides[
-            get_get_org_use_case
-        ] = lambda: mock_use_case
+        app.dependency_overrides[get_get_org_use_case] = lambda: mock_use_case
 
         response = await test_client.get(f"/api/v1/organizations/{org_id}")
 
@@ -346,19 +324,13 @@ class TestOrganizationRoutes:
         assert data["data"]["id"] == str(org_id)
 
     @pytest.mark.asyncio
-    async def test_update_organization(
-        self, app: FastAPI, test_client: AsyncClient
-    ):
+    async def test_update_organization(self, app: FastAPI, test_client: AsyncClient):
         org_id = uuid4()
         mock_use_case = MagicMock()
         mock_use_case.execute = AsyncMock(
-            return_value=_mock_org(
-                id=org_id, name="Updated Org", slug="updated-org"
-            )
+            return_value=_mock_org(id=org_id, name="Updated Org", slug="updated-org")
         )
-        app.dependency_overrides[
-            get_update_org_use_case
-        ] = lambda: mock_use_case
+        app.dependency_overrides[get_update_org_use_case] = lambda: mock_use_case
 
         csrf = await self._setup(test_client)
         response = await test_client.patch(

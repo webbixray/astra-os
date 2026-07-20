@@ -14,6 +14,7 @@ import uuid
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+
 from astra_agent_orchestrator.agent import (
     AgentContext,
     AgentMessage,
@@ -21,9 +22,7 @@ from astra_agent_orchestrator.agent import (
     AgentResult,
     AgentType,
 )
-from astra_agent_orchestrator.agents import CEOAgent
-from astra_agent_orchestrator.agents import DirectorAgent
-from astra_agent_orchestrator.agents import SpecialistAgent
+from astra_agent_orchestrator.agents import CEOAgent, DirectorAgent, SpecialistAgent
 from astra_agent_orchestrator.comms import (
     AgentAuditTrail,
     AgentTraceEntry,
@@ -53,7 +52,9 @@ from astra_agent_orchestrator.tools import (
 # ---------------------------------------------------------------------------
 
 
-def _make_mock_router(response_text: str = '{"thought":"test","action":null,"action_input":null,"final_answer":"done"}') -> ModelRouterFacade:
+def _make_mock_router(
+    response_text: str = '{"thought":"test","action":null,"action_input":null,"final_answer":"done"}',
+) -> ModelRouterFacade:
     """Create a ModelRouterFacade that returns a canned response."""
     facade = MagicMock(spec=ModelRouterFacade)
     facade.generate = AsyncMock(
@@ -202,18 +203,22 @@ class TestReActLoop:
         """CEO executes a tool call then returns final answer."""
         # First response: tool call; second: final answer
         responses = [
-            json.dumps({
-                "thought": "I need to search for market data",
-                "action": "web_search",
-                "action_input": {"query": "Q3 marketing trends"},
-                "final_answer": None,
-            }),
-            json.dumps({
-                "thought": "Got the data, now decomposing",
-                "action": None,
-                "action_input": None,
-                "final_answer": "Campaign plan ready",
-            }),
+            json.dumps(
+                {
+                    "thought": "I need to search for market data",
+                    "action": "web_search",
+                    "action_input": {"query": "Q3 marketing trends"},
+                    "final_answer": None,
+                }
+            ),
+            json.dumps(
+                {
+                    "thought": "Got the data, now decomposing",
+                    "action": None,
+                    "action_input": None,
+                    "final_answer": "Campaign plan ready",
+                }
+            ),
         ]
         call_count = 0
 
@@ -221,7 +226,8 @@ class TestReActLoop:
             nonlocal call_count
             resp = ModelResponse(
                 content=responses[min(call_count, len(responses) - 1)],
-                model_id="test-model-id", model_name="test-model",
+                model_id="test-model-id",
+                model_name="test-model",
                 provider=ModelProvider.OPENAI,
                 usage={"prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30},
                 cost_usd=0.001,
@@ -241,7 +247,11 @@ class TestReActLoop:
                     definition=ToolDefinition(
                         name="web_search",
                         description="Search the web",
-                        parameters=[ToolParameter(name="query", type="string", description="q", required=True)],
+                        parameters=[
+                            ToolParameter(
+                                name="query", type="string", description="q", required=True
+                            )
+                        ],
                     )
                 )
 
@@ -298,17 +308,20 @@ class TestReActLoop:
     async def test_max_iterations_stops(self):
         """Agent stops after max_iterations even without final answer."""
         # Always return an action (never final_answer)
-        action_response = json.dumps({
-            "thought": "Keep going",
-            "action": "web_search",
-            "action_input": {"query": "test"},
-            "final_answer": None,
-        })
+        action_response = json.dumps(
+            {
+                "thought": "Keep going",
+                "action": "web_search",
+                "action_input": {"query": "test"},
+                "final_answer": None,
+            }
+        )
 
         async def mock_generate(request):
             return ModelResponse(
                 content=action_response,
-                model_id="test-model-id", model_name="test-model",
+                model_id="test-model-id",
+                model_name="test-model",
                 provider=ModelProvider.OPENAI,
                 usage={"prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30},
                 cost_usd=0.001,
@@ -327,7 +340,11 @@ class TestReActLoop:
                     definition=ToolDefinition(
                         name="web_search",
                         description="Search",
-                        parameters=[ToolParameter(name="query", type="string", description="q", required=True)],
+                        parameters=[
+                            ToolParameter(
+                                name="query", type="string", description="q", required=True
+                            )
+                        ],
                     )
                 )
 
@@ -373,8 +390,12 @@ class TestEventBusIntegration:
         await bus.subscribe("agent.completed", handler)
 
         # Publish lifecycle events
-        await bus.publish(Event(event_type="agent.started", source="test-agent", payload={"task": "test"}))
-        await bus.publish(Event(event_type="agent.completed", source="test-agent", payload={"result": "done"}))
+        await bus.publish(
+            Event(event_type="agent.started", source="test-agent", payload={"task": "test"})
+        )
+        await bus.publish(
+            Event(event_type="agent.completed", source="test-agent", payload={"result": "done"})
+        )
 
         assert len(received_events) == 2
         assert received_events[0].event_type == "agent.started"
@@ -731,7 +752,8 @@ class TestCoordinatorExecution:
             call_count += 1
             return ModelResponse(
                 content=text,
-                model_id="test-id", model_name="test",
+                model_id="test-id",
+                model_name="test",
                 provider=ModelProvider.OPENAI,
                 usage={"prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30},
                 cost_usd=0.001,
@@ -776,12 +798,15 @@ class TestCoordinatorExecution:
             _make_specialist_agent(AgentType.SOCIAL_SPECIALIST),
         ]
 
-        response = '{"thought":"done","action":null,"action_input":null,"final_answer":"Task complete"}'
+        response = (
+            '{"thought":"done","action":null,"action_input":null,"final_answer":"Task complete"}'
+        )
 
         async def mock_generate(request):
             return ModelResponse(
                 content=response,
-                model_id="test-id", model_name="test",
+                model_id="test-id",
+                model_name="test",
                 provider=ModelProvider.OPENAI,
                 usage={"prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30},
                 cost_usd=0.001,

@@ -58,10 +58,16 @@ def upgrade() -> None:
     )
 
     # Enhance notifications table
-    op.add_column("notifications", sa.Column("channel", sa.String(20), server_default="in_app", nullable=False))
+    op.add_column(
+        "notifications",
+        sa.Column("channel", sa.String(20), server_default="in_app", nullable=False),
+    )
     op.add_column("notifications", sa.Column("template_id", UUID(as_uuid=True), nullable=True))
     op.add_column("notifications", sa.Column("read_at", sa.DateTime(timezone=True), nullable=True))
-    op.add_column("notifications", sa.Column("archived", sa.Boolean, server_default="false", nullable=False, index=True))
+    op.add_column(
+        "notifications",
+        sa.Column("archived", sa.Boolean, server_default="false", nullable=False, index=True),
+    )
 
 
 def downgrade() -> None:

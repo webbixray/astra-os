@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 # Value objects
 # ---------------------------------------------------------------------------
 
+
 class OptimizationType(str, Enum):
     BUDGET_REALLOCATION = "budget_reallocation"
     CREATIVE_FATIGUE = "creative_fatigue"
@@ -232,23 +233,31 @@ class PredictiveOptimizer:
             # Determine rationale
             roas = float(campaign.get("roas", 0))
             if roas >= _ROAS_HIGH_THRESHOLD:
-                rationale = f"Strong ROAS ({roas:.1f}x) — increase budget to capture more conversions."
+                rationale = (
+                    f"Strong ROAS ({roas:.1f}x) — increase budget to capture more conversions."
+                )
                 confidence = min(0.7 + (roas - _ROAS_HIGH_THRESHOLD) * 0.05, 0.95)
             elif roas <= _ROAS_LOW_THRESHOLD and roas > 0:
-                rationale = f"Low ROAS ({roas:.1f}x) — reduce spend and reallocate to top performers."
+                rationale = (
+                    f"Low ROAS ({roas:.1f}x) — reduce spend and reallocate to top performers."
+                )
                 confidence = min(0.6 + (_ROAS_LOW_THRESHOLD - roas) * 0.05, 0.9)
             else:
-                rationale = f"Moderate performance (score {score:.2f}) — maintain or adjust slightly."
+                rationale = (
+                    f"Moderate performance (score {score:.2f}) — maintain or adjust slightly."
+                )
                 confidence = 0.5
 
-            allocations.append(BudgetAllocation(
-                campaign_id=cid,
-                campaign_name=name,
-                current_daily_budget=current,
-                suggested_daily_budget=suggested,
-                rationale=rationale,
-                confidence=round(confidence, 2),
-            ))
+            allocations.append(
+                BudgetAllocation(
+                    campaign_id=cid,
+                    campaign_name=name,
+                    current_daily_budget=current,
+                    suggested_daily_budget=suggested,
+                    rationale=rationale,
+                    confidence=round(confidence, 2),
+                )
+            )
 
         # Enforce total budget cap if provided
         if total_budget is not None:
@@ -282,16 +291,18 @@ class PredictiveOptimizer:
             peak_ctr = float(creative.get("peak_ctr", 0))
 
             if not ctr_history or peak_ctr == 0:
-                results.append(CreativeFatigueResult(
-                    creative_id=cid,
-                    creative_name=name,
-                    is_fatigued=False,
-                    decline_rate=0.0,
-                    days_since_peak=0,
-                    current_ctr=current_ctr,
-                    peak_ctr=peak_ctr,
-                    recommendation="Insufficient data for fatigue analysis.",
-                ))
+                results.append(
+                    CreativeFatigueResult(
+                        creative_id=cid,
+                        creative_name=name,
+                        is_fatigued=False,
+                        decline_rate=0.0,
+                        days_since_peak=0,
+                        current_ctr=current_ctr,
+                        peak_ctr=peak_ctr,
+                        recommendation="Insufficient data for fatigue analysis.",
+                    )
+                )
                 continue
 
             # Find peak and calculate decline rate
@@ -321,16 +332,18 @@ class PredictiveOptimizer:
             else:
                 recommendation = "Creative performing within normal range."
 
-            results.append(CreativeFatigueResult(
-                creative_id=cid,
-                creative_name=name,
-                is_fatigued=is_fatigued,
-                decline_rate=decline_per_day,
-                days_since_peak=days_since_peak,
-                current_ctr=current_ctr,
-                peak_ctr=peak_ctr,
-                recommendation=recommendation,
-            ))
+            results.append(
+                CreativeFatigueResult(
+                    creative_id=cid,
+                    creative_name=name,
+                    is_fatigued=is_fatigued,
+                    decline_rate=decline_per_day,
+                    days_since_peak=days_since_peak,
+                    current_ctr=current_ctr,
+                    peak_ctr=peak_ctr,
+                    recommendation=recommendation,
+                )
+            )
 
         return results
 
@@ -375,19 +388,21 @@ class PredictiveOptimizer:
 
                 confidence = min(0.5 + similarity * 0.3, 0.9)
 
-                suggestions.append(AudienceExpansionSuggestion(
-                    source_audience=source_audience,
-                    suggested_audience=node_name,
-                    overlap_estimate=overlap_estimate,
-                    rationale=(
-                        f"Related audience '{node_name}' shares ~{overlap_estimate:.0%} "
-                        f"characteristics with '{source_audience}'. Expanding to this "
-                        f"audience can reach adjacent segments with similar conversion "
-                        f"potential."
-                    ),
-                    confidence=round(confidence, 2),
-                    related_node_ids=[node.get("id", "")],
-                ))
+                suggestions.append(
+                    AudienceExpansionSuggestion(
+                        source_audience=source_audience,
+                        suggested_audience=node_name,
+                        overlap_estimate=overlap_estimate,
+                        rationale=(
+                            f"Related audience '{node_name}' shares ~{overlap_estimate:.0%} "
+                            f"characteristics with '{source_audience}'. Expanding to this "
+                            f"audience can reach adjacent segments with similar conversion "
+                            f"potential."
+                        ),
+                        confidence=round(confidence, 2),
+                        related_node_ids=[node.get("id", "")],
+                    )
+                )
 
         except Exception:
             logger.exception("Audience expansion suggestion failed")
@@ -408,17 +423,19 @@ class PredictiveOptimizer:
                 ):
                     similarity = node.get("similarity", 0.3)
                     if similarity >= _AUDIENCE_CONFIDENCE_MIN:
-                        suggestions.append(AudienceExpansionSuggestion(
-                            source_audience=source_audience,
-                            suggested_audience=node_name,
-                            overlap_estimate=similarity * 0.8,
-                            rationale=(
-                                f"Knowledge graph link suggests '{node_name}' is "
-                                f"adjacent to '{source_audience}'."
-                            ),
-                            confidence=round(similarity * 0.6, 2),
-                            related_node_ids=[node.get("id", "")],
-                        ))
+                        suggestions.append(
+                            AudienceExpansionSuggestion(
+                                source_audience=source_audience,
+                                suggested_audience=node_name,
+                                overlap_estimate=similarity * 0.8,
+                                rationale=(
+                                    f"Knowledge graph link suggests '{node_name}' is "
+                                    f"adjacent to '{source_audience}'."
+                                ),
+                                confidence=round(similarity * 0.6, 2),
+                                related_node_ids=[node.get("id", "")],
+                            )
+                        )
         except Exception:
             pass
 
@@ -444,20 +461,21 @@ class PredictiveOptimizer:
                     if change_pct > 0
                     else OptimizationType.BUDGET_DECREASE
                 )
-                suggestions.append(OptimizationSuggestion(
-                    suggestion_type=opt_type,
-                    title=f"{'Increase' if change_pct > 0 else 'Decrease'} budget for {alloc.campaign_name}",
-                    description=alloc.rationale,
-                    urgency=(
-                        UrgencyLevel.HIGH if abs(change_pct) >= 15
-                        else UrgencyLevel.MEDIUM
-                    ),
-                    campaign_id=alloc.campaign_id,
-                    confidence=alloc.confidence,
-                    estimated_impact=f"{change_pct:+.1f}% budget change",
-                    action_items=[
-                        f"Adjust daily budget from ${alloc.current_daily_budget} to ${alloc.suggested_daily_budget}"
-                    ],
-                ))
+                suggestions.append(
+                    OptimizationSuggestion(
+                        suggestion_type=opt_type,
+                        title=f"{'Increase' if change_pct > 0 else 'Decrease'} budget for {alloc.campaign_name}",
+                        description=alloc.rationale,
+                        urgency=(
+                            UrgencyLevel.HIGH if abs(change_pct) >= 15 else UrgencyLevel.MEDIUM
+                        ),
+                        campaign_id=alloc.campaign_id,
+                        confidence=alloc.confidence,
+                        estimated_impact=f"{change_pct:+.1f}% budget change",
+                        action_items=[
+                            f"Adjust daily budget from ${alloc.current_daily_budget} to ${alloc.suggested_daily_budget}"
+                        ],
+                    )
+                )
 
         return suggestions

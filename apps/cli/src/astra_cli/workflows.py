@@ -60,6 +60,7 @@ def list_workflows(ctx: click.Context, status: str, org: str, limit: int, output
             return
         if output == "yaml":
             import yaml
+
             click.echo(yaml.dump(workflows, default_flow_style=False))
             return
 
@@ -115,6 +116,7 @@ def get_workflow(ctx: click.Context, workflow_id: str, output: str):
             click.echo(json.dumps(workflow, indent=2))
         else:
             import yaml
+
             click.echo(yaml.dump(workflow, default_flow_style=False))
 
     except requests.exceptions.HTTPError as e:
@@ -141,6 +143,7 @@ def create_workflow(ctx: click.Context, name: str, description: str, definition:
     definition_data = {}
     if definition:
         import yaml
+
         with open(definition) as f:
             if definition.endswith((".yaml", ".yml")):
                 definition_data = yaml.safe_load(f)
@@ -162,7 +165,12 @@ def create_workflow(ctx: click.Context, name: str, description: str, definition:
         response = requests.post(
             f"{api_url}/api/v1/workflows",
             headers=_get_headers(ctx.obj.get("config", {})),
-            json={"name": name, "description": description, "definition": definition_data, "organization_id": org},
+            json={
+                "name": name,
+                "description": description,
+                "definition": definition_data,
+                "organization_id": org,
+            },
             timeout=30,
         )
         response.raise_for_status()
@@ -189,13 +197,16 @@ def create_workflow(ctx: click.Context, name: str, description: str, definition:
 @click.option("--async", "async_mode", is_flag=True, help="Run asynchronously")
 @click.option("--follow", "-w", is_flag=True, help="Follow execution")
 @click.pass_context
-def run_workflow(ctx: click.Context, workflow_id: str, input: str, file, async_mode: bool, follow: bool):
+def run_workflow(
+    ctx: click.Context, workflow_id: str, input: str, file, async_mode: bool, follow: bool
+):
     """Run a workflow"""
     console = Console()
 
     input_data = {}
     if file:
         import yaml
+
         if file.name.endswith((".yaml", ".yml")):
             input_data = yaml.safe_load(file)
         else:
@@ -279,7 +290,7 @@ def workflow_executions(ctx: click.Context, workflow_id: str, status: str, limit
                 exec.get("status", "unknown"),
                 exec.get("started_at", "N/A")[:19],
                 exec.get("completed_at", "N/A")[:19],
-                f"{exec.get('duration_ms', 0)/1000:.1f}s",
+                f"{exec.get('duration_ms', 0) / 1000:.1f}s",
             )
 
         console.print(table)

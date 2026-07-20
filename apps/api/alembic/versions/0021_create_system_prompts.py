@@ -21,7 +21,12 @@ depends_on: str | Sequence[str] | None = None
 def upgrade() -> None:
     op.create_table(
         "system_prompts",
-        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
+        sa.Column(
+            "id",
+            postgresql.UUID(as_uuid=True),
+            primary_key=True,
+            server_default=sa.text("gen_random_uuid()"),
+        ),
         sa.Column("org_id", postgresql.UUID(as_uuid=True), nullable=True, index=True),
         sa.Column("name", sa.String(100), nullable=False),
         sa.Column("description", sa.Text, nullable=False, server_default=""),
@@ -32,8 +37,18 @@ def upgrade() -> None:
         sa.Column("status", sa.String(20), nullable=False, server_default="active", index=True),
         sa.Column("is_builtin", sa.Boolean, nullable=False, server_default=sa.text("false")),
         sa.Column("created_by", postgresql.UUID(as_uuid=True), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
-        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("now()"),
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("now()"),
+        ),
     )
     op.create_index(
         "idx_system_prompts_name_org",

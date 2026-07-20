@@ -12,6 +12,7 @@ from app.infrastructure.external_adapters.ai.router import (
 @pytest.fixture(autouse=True)
 def clear_config():
     import app.config as cfg
+
     original_nvidia = cfg.config.nvidia_nim_base_url
     original_openai = cfg.config.openai_api_key
     yield
@@ -38,9 +39,9 @@ class TestNvidiaNIMProvider:
     async def test_chat_returns_content(self):
         mock_response = MagicMock()
         mock_response.raise_for_status = MagicMock()
-        mock_response.json = MagicMock(return_value={
-            "choices": [{"message": {"content": "Hello from NVIDIA"}}]
-        })
+        mock_response.json = MagicMock(
+            return_value={"choices": [{"message": {"content": "Hello from NVIDIA"}}]}
+        )
 
         mock_client = AsyncMock()
         mock_client.__aenter__.return_value.post = AsyncMock(return_value=mock_response)
@@ -124,6 +125,7 @@ class TestOpenAIProvider:
     @pytest.mark.asyncio
     async def test_chat_no_api_key_returns_empty(self):
         import app.config as cfg
+
         cfg.config.openai_api_key = ""
 
         provider = OpenAIProvider()
@@ -133,6 +135,7 @@ class TestOpenAIProvider:
     @pytest.mark.asyncio
     async def test_stream_chat_no_api_key_returns_nothing(self):
         import app.config as cfg
+
         cfg.config.openai_api_key = ""
 
         provider = OpenAIProvider()
@@ -145,9 +148,9 @@ class TestOpenAIProvider:
     async def test_chat_returns_content(self):
         mock_response = MagicMock()
         mock_response.raise_for_status = MagicMock()
-        mock_response.json = MagicMock(return_value={
-            "choices": [{"message": {"content": "Hello from OpenAI"}}]
-        })
+        mock_response.json = MagicMock(
+            return_value={"choices": [{"message": {"content": "Hello from OpenAI"}}]}
+        )
 
         mock_client = AsyncMock()
         mock_client.__aenter__.return_value.post = AsyncMock(return_value=mock_response)
@@ -197,6 +200,7 @@ class TestOpenAIProvider:
 class TestAIRouter:
     def test_init_no_providers_when_disabled(self):
         import app.config as cfg
+
         cfg.config.nvidia_nim_base_url = ""
         cfg.config.openai_api_key = ""
         router = AIRouter()
@@ -204,6 +208,7 @@ class TestAIRouter:
 
     def test_init_with_nvidia_only(self):
         import app.config as cfg
+
         cfg.config.nvidia_nim_base_url = "https://nvidia.example.com"
         cfg.config.openai_api_key = ""
         router = AIRouter()
@@ -212,6 +217,7 @@ class TestAIRouter:
 
     def test_init_with_openai_only(self):
         import app.config as cfg
+
         cfg.config.nvidia_nim_base_url = ""
         cfg.config.openai_api_key = "sk-xxx"
         router = AIRouter()
@@ -220,6 +226,7 @@ class TestAIRouter:
 
     def test_init_with_both_providers(self):
         import app.config as cfg
+
         cfg.config.nvidia_nim_base_url = "https://nvidia.example.com"
         cfg.config.openai_api_key = "sk-xxx"
         router = AIRouter()
@@ -228,6 +235,7 @@ class TestAIRouter:
     @pytest.mark.asyncio
     async def test_chat_no_providers_returns_fallback(self):
         import app.config as cfg
+
         cfg.config.nvidia_nim_base_url = ""
         cfg.config.openai_api_key = ""
         router = AIRouter()
@@ -237,6 +245,7 @@ class TestAIRouter:
     @pytest.mark.asyncio
     async def test_chat_uses_first_provider(self):
         import app.config as cfg
+
         cfg.config.nvidia_nim_base_url = "https://nvidia.example.com"
         cfg.config.openai_api_key = ""
 
@@ -249,6 +258,7 @@ class TestAIRouter:
     @pytest.mark.asyncio
     async def test_chat_falls_back_to_next_provider(self):
         import app.config as cfg
+
         cfg.config.nvidia_nim_base_url = "https://nvidia.example.com"
         cfg.config.openai_api_key = "sk-xxx"
 
@@ -261,6 +271,7 @@ class TestAIRouter:
     @pytest.mark.asyncio
     async def test_chat_all_fail_returns_fallback(self):
         import app.config as cfg
+
         cfg.config.nvidia_nim_base_url = "https://nvidia.example.com"
         cfg.config.openai_api_key = "sk-xxx"
 
@@ -273,6 +284,7 @@ class TestAIRouter:
     @pytest.mark.asyncio
     async def test_stream_chat_falls_back_to_next_provider(self):
         import app.config as cfg
+
         cfg.config.nvidia_nim_base_url = "https://nvidia.example.com"
         cfg.config.openai_api_key = "sk-xxx"
 

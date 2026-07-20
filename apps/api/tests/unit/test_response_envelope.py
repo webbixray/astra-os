@@ -15,7 +15,12 @@ class TestIsEnveloped:
         assert _is_enveloped({"success": False, "code": "err", "message": "oops"}) is True
 
     def test_enveloped_paginated(self) -> None:
-        assert _is_enveloped({"success": True, "data": [], "total": 0, "page": 1, "limit": 10, "pages": 0}) is True
+        assert (
+            _is_enveloped(
+                {"success": True, "data": [], "total": 0, "page": 1, "limit": 10, "pages": 0}
+            )
+            is True
+        )
 
     def test_plain_dict(self) -> None:
         assert _is_enveloped({"key": "val"}) is False

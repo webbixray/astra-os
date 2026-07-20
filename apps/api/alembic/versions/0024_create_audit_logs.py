@@ -64,17 +64,23 @@ def upgrade() -> None:
         op.create_index("ix_audit_logs_entity_id", "audit_logs", ["entity_id"])
 
     if "organization_id" in columns:
-        org_col = next((c for c in inspector.get_columns("audit_logs") if c["name"] == "organization_id"), None)
+        org_col = next(
+            (c for c in inspector.get_columns("audit_logs") if c["name"] == "organization_id"), None
+        )
         if org_col and not org_col["nullable"]:
             op.alter_column("audit_logs", "organization_id", nullable=True)
 
     if "details" in columns:
-        details_col = next((c for c in inspector.get_columns("audit_logs") if c["name"] == "details"), None)
+        details_col = next(
+            (c for c in inspector.get_columns("audit_logs") if c["name"] == "details"), None
+        )
         if details_col and details_col["nullable"] is False:
             op.alter_column("audit_logs", "details", nullable=True)
 
     if "ip_address" in columns:
-        ip_col = next((c for c in inspector.get_columns("audit_logs") if c["name"] == "ip_address"), None)
+        ip_col = next(
+            (c for c in inspector.get_columns("audit_logs") if c["name"] == "ip_address"), None
+        )
         if ip_col and not ip_col["nullable"]:
             op.alter_column("audit_logs", "ip_address", nullable=True)
 
@@ -96,7 +102,9 @@ def downgrade() -> None:
 
     op.add_column("audit_logs", sa.Column("action", sa.String(50), nullable=False, index=True))
     op.add_column("audit_logs", sa.Column("resource_type", sa.String(50), nullable=False))
-    op.add_column("audit_logs", sa.Column("resource_id", sa.String(255), server_default="", nullable=False))
+    op.add_column(
+        "audit_logs", sa.Column("resource_id", sa.String(255), server_default="", nullable=False)
+    )
 
     op.alter_column("audit_logs", "organization_id", nullable=False)
     op.alter_column("audit_logs", "ip_address", nullable=False, server_default="")

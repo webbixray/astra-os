@@ -4,6 +4,7 @@ import asyncio
 from unittest.mock import AsyncMock
 
 import pytest
+
 from astra_agent_orchestrator.resilience import (
     CircuitBreaker,
     CircuitBreakerConfig,
@@ -153,8 +154,7 @@ class TestCircuitBreaker:
 
         # Fire 20 concurrent calls
         results = await asyncio.gather(
-            *[cb.call(slow_fail) for _ in range(20)],
-            return_exceptions=True
+            *[cb.call(slow_fail) for _ in range(20)], return_exceptions=True
         )
 
         # All should be RuntimeError (not CircuitOpenError mid-flight)

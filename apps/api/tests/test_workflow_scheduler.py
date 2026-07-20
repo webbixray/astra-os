@@ -18,6 +18,7 @@ from app.domain.services.workflow_scheduler import (
 # CronExpression tests
 # ---------------------------------------------------------------------------
 
+
 class TestCronExpression:
     def test_parse_valid_cron(self):
         cron = CronExpression.from_string("0 9 * * *")
@@ -104,6 +105,7 @@ class TestCronExpression:
 # WorkflowSchedule tests
 # ---------------------------------------------------------------------------
 
+
 class TestWorkflowSchedule:
     def test_schedule_creation(self):
         schedule = WorkflowSchedule(
@@ -138,6 +140,7 @@ class TestWorkflowSchedule:
 # ---------------------------------------------------------------------------
 # WorkflowScheduler tests
 # ---------------------------------------------------------------------------
+
 
 class TestWorkflowScheduler:
     def setup_method(self):
@@ -314,6 +317,7 @@ class TestWorkflowScheduler:
 # Trigger execution tests
 # ---------------------------------------------------------------------------
 
+
 class TestWorkflowSchedulerExecution:
     def setup_method(self):
         self.scheduler = WorkflowScheduler()
@@ -396,6 +400,7 @@ class TestWorkflowSchedulerExecution:
 # Webhook trigger tests
 # ---------------------------------------------------------------------------
 
+
 class TestWebhookTrigger:
     def setup_method(self):
         self.scheduler = WorkflowScheduler()
@@ -428,9 +433,7 @@ class TestWebhookTrigger:
         )
         self.scheduler.register_handler(schedule.id, handler)
 
-        result = await self.scheduler.trigger_webhook(
-            schedule.id, {}, secret="wrong_secret"
-        )
+        result = await self.scheduler.trigger_webhook(schedule.id, {}, secret="wrong_secret")
         assert result is False
         handler.assert_not_called()
 
@@ -485,6 +488,7 @@ class TestWebhookTrigger:
 # ---------------------------------------------------------------------------
 # Cron evaluation tests
 # ---------------------------------------------------------------------------
+
 
 class TestCronEvaluation:
     def setup_method(self):
@@ -554,6 +558,7 @@ class TestCronEvaluation:
 # Event-driven trigger tests
 # ---------------------------------------------------------------------------
 
+
 class TestEventDrivenTrigger:
     def setup_method(self):
         EventBus.reset()
@@ -609,6 +614,7 @@ class TestEventDrivenTrigger:
 # Scheduler lifecycle tests
 # ---------------------------------------------------------------------------
 
+
 class TestSchedulerLifecycle:
     @pytest.mark.asyncio
     async def test_start_and_stop(self):
@@ -639,6 +645,7 @@ class TestSchedulerLifecycle:
 # Stats tests
 # ---------------------------------------------------------------------------
 
+
 class TestSchedulerStats:
     def test_stats_empty(self):
         scheduler = WorkflowScheduler()
@@ -650,19 +657,24 @@ class TestSchedulerStats:
     def test_stats_with_schedules(self):
         scheduler = WorkflowScheduler()
         scheduler.create_schedule(
-            workflow_id=uuid4(), organization_id=uuid4(),
-            trigger_type=TriggerType.CRON, cron_expression="0 9 * * *",
+            workflow_id=uuid4(),
+            organization_id=uuid4(),
+            trigger_type=TriggerType.CRON,
+            cron_expression="0 9 * * *",
         )
         scheduler.create_schedule(
-            workflow_id=uuid4(), organization_id=uuid4(),
+            workflow_id=uuid4(),
+            organization_id=uuid4(),
             trigger_type=TriggerType.EVENT,
         )
         scheduler.create_schedule(
-            workflow_id=uuid4(), organization_id=uuid4(),
+            workflow_id=uuid4(),
+            organization_id=uuid4(),
             trigger_type=TriggerType.WEBHOOK,
         )
         scheduler.create_schedule(
-            workflow_id=uuid4(), organization_id=uuid4(),
+            workflow_id=uuid4(),
+            organization_id=uuid4(),
             trigger_type=TriggerType.MANUAL,
         )
         stats = scheduler.get_stats()
@@ -675,7 +687,8 @@ class TestSchedulerStats:
     def test_stats_reflect_paused(self):
         scheduler = WorkflowScheduler()
         s = scheduler.create_schedule(
-            workflow_id=uuid4(), organization_id=uuid4(),
+            workflow_id=uuid4(),
+            organization_id=uuid4(),
             trigger_type=TriggerType.MANUAL,
         )
         scheduler.pause_schedule(s.id)

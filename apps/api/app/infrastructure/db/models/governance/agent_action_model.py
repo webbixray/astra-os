@@ -43,7 +43,9 @@ class AgentActionModel(Base):
     def to_domain(self) -> AgentAction:
         return AgentAction(
             id=self.id if isinstance(self.id, str) else str(self.id),
-            organization_id=self.organization_id if isinstance(self.organization_id, str) else str(self.organization_id),
+            organization_id=self.organization_id
+            if isinstance(self.organization_id, str)
+            else str(self.organization_id),
             agent_id=self.agent_id,
             agent_type=self.agent_type,
             action=self.action,
@@ -78,7 +80,9 @@ class AgentActionModel(Base):
             reasoning_trace=action.reasoning_trace,
             autonomy_level=action.autonomy_level.value,
             was_auto_executed=action.was_auto_executed,
-            approval_request_id=str(action.approval_request_id) if action.approval_request_id else None,
+            approval_request_id=str(action.approval_request_id)
+            if action.approval_request_id
+            else None,
             success=action.success,
             error_message=action.error_message,
             result=action.result,

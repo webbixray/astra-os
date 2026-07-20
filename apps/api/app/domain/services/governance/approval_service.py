@@ -91,10 +91,13 @@ class ApprovalEvaluationService:
         audience_name: str = "",
     ) -> ApprovalEvaluationResult:
         """Convenience method to evaluate audience-related rules."""
-        return self.evaluate(rules, {
-            "is_new_audience": is_new_audience,
-            "audience_name": audience_name,
-        })
+        return self.evaluate(
+            rules,
+            {
+                "is_new_audience": is_new_audience,
+                "audience_name": audience_name,
+            },
+        )
 
     def evaluate_channel(
         self,

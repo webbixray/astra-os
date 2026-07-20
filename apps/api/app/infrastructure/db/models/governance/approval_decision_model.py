@@ -27,12 +27,18 @@ class ApprovalDecisionModel(Base):
     def to_domain(self) -> ApprovalDecision:
         return ApprovalDecision(
             id=self.id if isinstance(self.id, str) else str(self.id),
-            request_id=self.request_id if isinstance(self.request_id, str) else str(self.request_id),
-            organization_id=self.organization_id if isinstance(self.organization_id, str) else str(self.organization_id),
+            request_id=self.request_id
+            if isinstance(self.request_id, str)
+            else str(self.request_id),
+            organization_id=self.organization_id
+            if isinstance(self.organization_id, str)
+            else str(self.organization_id),
             action=DecisionAction(self.action),
             reason=self.reason or "",
             conditions=self.conditions or {},
-            decided_by=self.decided_by if isinstance(self.decided_by, str) else str(self.decided_by),
+            decided_by=self.decided_by
+            if isinstance(self.decided_by, str)
+            else str(self.decided_by),
         )
 
     @classmethod

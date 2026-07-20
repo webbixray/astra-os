@@ -24,7 +24,13 @@ def upgrade() -> None:
     op.create_table(
         "knowledge_nodes",
         sa.Column("id", UUID(as_uuid=True), primary_key=True),
-        sa.Column("organization_id", UUID(as_uuid=True), sa.ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True),
+        sa.Column(
+            "organization_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("organizations.id", ondelete="CASCADE"),
+            nullable=False,
+            index=True,
+        ),
         sa.Column("type", sa.String(50), nullable=False, index=True),
         sa.Column("name", sa.String(500), nullable=False),
         sa.Column("description", sa.Text(), server_default=""),
@@ -37,8 +43,20 @@ def upgrade() -> None:
     op.create_table(
         "knowledge_relations",
         sa.Column("id", UUID(as_uuid=True), primary_key=True),
-        sa.Column("source_id", UUID(as_uuid=True), sa.ForeignKey("knowledge_nodes.id", ondelete="CASCADE"), nullable=False, index=True),
-        sa.Column("target_id", UUID(as_uuid=True), sa.ForeignKey("knowledge_nodes.id", ondelete="CASCADE"), nullable=False, index=True),
+        sa.Column(
+            "source_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("knowledge_nodes.id", ondelete="CASCADE"),
+            nullable=False,
+            index=True,
+        ),
+        sa.Column(
+            "target_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("knowledge_nodes.id", ondelete="CASCADE"),
+            nullable=False,
+            index=True,
+        ),
         sa.Column("relation_type", sa.String(50), nullable=False, index=True),
         sa.Column("weight", sa.Float(), server_default="1.0"),
         sa.Column("properties", sa.JSON(), server_default="{}"),
@@ -48,7 +66,12 @@ def upgrade() -> None:
     op.create_table(
         "memories",
         sa.Column("id", UUID(as_uuid=True), primary_key=True),
-        sa.Column("organization_id", UUID(as_uuid=True), sa.ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "organization_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("organizations.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("user_id", UUID(as_uuid=True), nullable=False),
         sa.Column("type", sa.String(50), nullable=False, index=True),
         sa.Column("importance", sa.String(20), server_default="medium"),

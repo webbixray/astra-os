@@ -64,6 +64,7 @@ class TestCampaignDomain:
     def test_dates_validation(self):
         with pytest.raises(ValidationError, match="Start date must be before end date"):
             from datetime import date
+
             Campaign.create(
                 organization_id=uuid4(),
                 name="Test",

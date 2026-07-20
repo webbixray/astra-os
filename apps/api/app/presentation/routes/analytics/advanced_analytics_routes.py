@@ -106,7 +106,9 @@ class AnalyticsConnectionManager:
             self._connections[organization_id].pop(client_id, None)
             if not self._connections[organization_id]:
                 del self._connections[organization_id]
-        logger.info("Analytics WebSocket disconnected: org=%s client=%s", organization_id, client_id)
+        logger.info(
+            "Analytics WebSocket disconnected: org=%s client=%s", organization_id, client_id
+        )
 
     async def send_to_organization(self, organization_id: str, data: dict):
         if organization_id in self._connections:
@@ -183,7 +185,9 @@ async def _handle_analytics_ws_message(
         organization_id = payload.get("organization_id")
 
         if not organization_id:
-            await manager.send_json(client_id, {"type": "error", "message": "organization_id required"})
+            await manager.send_json(
+                client_id, {"type": "error", "message": "organization_id required"}
+            )
             return
 
         try:
@@ -198,22 +202,29 @@ async def _handle_analytics_ws_message(
 
         if metric == "overview":
             overview = await service.get_overview(org_uuid)
-            await manager.send_json(client_id, {
-                "type": "timeseries_data",
-                "metric": "overview",
-                "data": overview,
-                "period_start": start_date.isoformat(),
-                "period_end": end_date.isoformat(),
-            })
+            await manager.send_json(
+                client_id,
+                {
+                    "type": "timeseries_data",
+                    "metric": "overview",
+                    "data": overview,
+                    "period_start": start_date.isoformat(),
+                    "period_end": end_date.isoformat(),
+                },
+            )
 
-        asyncio.create_task(_stream_timeseries_updates(client_id, org_uuid, metric, granularity, session))
+        asyncio.create_task(
+            _stream_timeseries_updates(client_id, org_uuid, metric, granularity, session)
+        )
 
     elif action == "subscribe_funnel":
         campaign_id = payload.get("campaign_id")
         organization_id = payload.get("organization_id")
 
         if not campaign_id or not organization_id:
-            await manager.send_json(client_id, {"type": "error", "message": "campaign_id and organization_id required"})
+            await manager.send_json(
+                client_id, {"type": "error", "message": "campaign_id and organization_id required"}
+            )
             return
 
         try:
@@ -224,18 +235,23 @@ async def _handle_analytics_ws_message(
             return
 
         funnel = await service.get_campaign_funnel(UUID(campaign_id))
-        await manager.send_json(client_id, {
-            "type": "funnel_data",
-            "campaign_id": campaign_id,
-            "data": funnel,
-        })
+        await manager.send_json(
+            client_id,
+            {
+                "type": "funnel_data",
+                "campaign_id": campaign_id,
+                "data": funnel,
+            },
+        )
 
     elif action == "subscribe_comparative":
         period_type = payload.get("period_type", "week")
         organization_id = payload.get("organization_id")
 
         if not organization_id:
-            await manager.send_json(client_id, {"type": "error", "message": "organization_id required"})
+            await manager.send_json(
+                client_id, {"type": "error", "message": "organization_id required"}
+            )
             return
 
         try:
@@ -246,18 +262,23 @@ async def _handle_analytics_ws_message(
             return
 
         comparative = await service.get_comparative_metrics(org_uuid, period_type)
-        await manager.send_json(client_id, {
-            "type": "comparative_data",
-            "period_type": period_type,
-            "data": comparative,
-        })
+        await manager.send_json(
+            client_id,
+            {
+                "type": "comparative_data",
+                "period_type": period_type,
+                "data": comparative,
+            },
+        )
 
     elif action == "subscribe_revenue":
         organization_id = payload.get("organization_id")
         days = payload.get("days", 30)
 
         if not organization_id:
-            await manager.send_json(client_id, {"type": "error", "message": "organization_id required"})
+            await manager.send_json(
+                client_id, {"type": "error", "message": "organization_id required"}
+            )
             return
 
         try:
@@ -268,13 +289,18 @@ async def _handle_analytics_ws_message(
             return
 
         revenue = await service.get_revenue_attribution(org_uuid, days)
-        await manager.send_json(client_id, {
-            "type": "revenue_attribution_data",
-            "data": revenue,
-        })
+        await manager.send_json(
+            client_id,
+            {
+                "type": "revenue_attribution_data",
+                "data": revenue,
+            },
+        )
 
     elif action == "ping":
-        await manager.send_json(client_id, {"type": "pong", "timestamp": datetime.utcnow().isoformat()})
+        await manager.send_json(
+            client_id, {"type": "pong", "timestamp": datetime.utcnow().isoformat()}
+        )
 
 
 async def _stream_timeseries_updates(
@@ -291,12 +317,15 @@ async def _stream_timeseries_updates(
             await asyncio.sleep(30)  # Update every 30 seconds
             if metric == "overview":
                 data = await service.get_overview(organization_id)
-                await manager.send_json(client_id, {
-                    "type": "timeseries_update",
-                    "metric": metric,
-                    "data": data,
-                    "timestamp": datetime.utcnow().isoformat(),
-                })
+                await manager.send_json(
+                    client_id,
+                    {
+                        "type": "timeseries_update",
+                        "metric": metric,
+                        "data": data,
+                        "timestamp": datetime.utcnow().isoformat(),
+                    },
+                )
     except asyncio.CancelledError:
         pass
     except Exception:
@@ -336,19 +365,24 @@ async def websocket_analytics(
         await manager.connect(websocket, client_id, str(organization_id))
 
         try:
-            await manager.send_json(client_id, {
-                "type": "connected",
-                "client_id": client_id,
-                "organization_id": str(organization_id),
-                "message": "Connected to Astra OS Analytics streaming",
-            })
+            await manager.send_json(
+                client_id,
+                {
+                    "type": "connected",
+                    "client_id": client_id,
+                    "organization_id": str(organization_id),
+                    "message": "Connected to Astra OS Analytics streaming",
+                },
+            )
 
             while True:
                 raw = await websocket.receive_text()
                 try:
                     payload = json.loads(raw)
                 except json.JSONDecodeError:
-                    await manager.send_json(client_id, {"type": "error", "message": "Invalid JSON payload"})
+                    await manager.send_json(
+                        client_id, {"type": "error", "message": "Invalid JSON payload"}
+                    )
                     continue
 
                 await _handle_analytics_ws_message(
@@ -369,7 +403,9 @@ async def get_timeseries(
     metric: str = Query(default="overview", pattern="^(overview|campaigns|content|spend|revenue)$"),
     granularity: str = Query(default="day", pattern="^(hour|day|week|month)$"),
     days: int = Query(default=30, ge=1, le=365),
-    service: AdvancedAnalyticsService = Depends(lambda db=Depends(get_db): _build_advanced_analytics_service(db)),
+    service: AdvancedAnalyticsService = Depends(
+        lambda db=Depends(get_db): _build_advanced_analytics_service(db)
+    ),
     user_id: UUID = Depends(require_user_id),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
@@ -378,7 +414,9 @@ async def get_timeseries(
     end_date = datetime.utcnow()
     start_date = end_date - timedelta(days=days)
 
-    points = await service.get_timeseries(organization_id, metric, granularity, start_date, end_date)
+    points = await service.get_timeseries(
+        organization_id, metric, granularity, start_date, end_date
+    )
 
     return {
         "metric": metric,
@@ -393,7 +431,9 @@ async def get_timeseries(
 async def get_campaign_funnel(
     campaign_id: UUID,
     organization_id: UUID,
-    service: AdvancedAnalyticsService = Depends(lambda db=Depends(get_db): _build_advanced_analytics_service(db)),
+    service: AdvancedAnalyticsService = Depends(
+        lambda db=Depends(get_db): _build_advanced_analytics_service(db)
+    ),
     user_id: UUID = Depends(require_user_id),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
@@ -406,7 +446,9 @@ async def get_campaign_funnel(
 async def get_comparative_metrics(
     organization_id: UUID,
     period_type: str = Query(default="week", pattern="^(day|week|month|quarter)$"),
-    service: AdvancedAnalyticsService = Depends(lambda db=Depends(get_db): _build_advanced_analytics_service(db)),
+    service: AdvancedAnalyticsService = Depends(
+        lambda db=Depends(get_db): _build_advanced_analytics_service(db)
+    ),
     user_id: UUID = Depends(require_user_id),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
@@ -419,7 +461,9 @@ async def get_comparative_metrics(
 async def get_revenue_attribution(
     organization_id: UUID,
     days: int = Query(default=30, ge=1, le=365),
-    service: AdvancedAnalyticsService = Depends(lambda db=Depends(get_db): _build_advanced_analytics_service(db)),
+    service: AdvancedAnalyticsService = Depends(
+        lambda db=Depends(get_db): _build_advanced_analytics_service(db)
+    ),
     user_id: UUID = Depends(require_user_id),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
@@ -431,7 +475,9 @@ async def get_revenue_attribution(
 @router.get("/analytics/realtime")
 async def get_realtime_metrics(
     organization_id: UUID,
-    service: AdvancedAnalyticsService = Depends(lambda db=Depends(get_db): _build_advanced_analytics_service(db)),
+    service: AdvancedAnalyticsService = Depends(
+        lambda db=Depends(get_db): _build_advanced_analytics_service(db)
+    ),
     user_id: UUID = Depends(require_user_id),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
@@ -443,6 +489,7 @@ async def get_realtime_metrics(
     from app.infrastructure.db.repositories.campaigns.campaign_repository import (
         CampaignRepositoryImpl,
     )
+
     campaign_repo = CampaignRepositoryImpl(db)
     campaigns = await campaign_repo.find_by_organization(organization_id)
 

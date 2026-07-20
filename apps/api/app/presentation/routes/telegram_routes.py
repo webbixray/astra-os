@@ -1,23 +1,19 @@
-"""
-Telegram Webhook Routes for Astra OS API
-"""
+"""Telegram Webhook Routes for Astra OS API"""
 
-from fastapi import APIRouter, Request, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, HTTPException, Request
 
-from app.infrastructure.external_adapters.telegram.bot import get_telegram_bot, shutdown_telegram_bot
+from app.infrastructure.external_adapters.telegram.bot import (
+    get_telegram_bot,
+    shutdown_telegram_bot,
+)
 from app.infrastructure.external_adapters.telegram.config import get_telegram_config
-from app.infrastructure.db.session import get_session_factory
-from app.presentation.dependencies import get_db
-from app.config import config
 
 router = APIRouter(prefix="/telegram", tags=["telegram"])
 
 
 @router.post("/webhook")
 async def telegram_webhook(request: Request):
-    """
-    Telegram webhook endpoint.
+    """Telegram webhook endpoint.
     This receives updates from Telegram and processes them through the bot.
     """
     bot = await get_telegram_bot()
@@ -30,6 +26,7 @@ async def telegram_webhook(request: Request):
 
     # Process the update through aiogram
     from aiogram.types import Update
+
     update = Update.model_validate(update_data, context={"bot": bot.bot})
 
     await bot.dp.feed_update(bot.bot, update)
@@ -45,18 +42,14 @@ async def telegram_webhook_get():
 
 @router.post("/setup-webhook")
 async def setup_telegram_webhook():
-    """
-    Set up the Telegram webhook.
+    """Set up the Telegram webhook.
     Call this after deploying to production to register the webhook URL.
     """
     bot = await get_telegram_bot()
     telegram_config = get_telegram_config()
 
     if not telegram_config.webhook_url:
-        raise HTTPException(
-            status_code=400,
-            detail="TELEGRAM_WEBHOOK_URL not configured"
-        )
+        raise HTTPException(status_code=400, detail="TELEGRAM_WEBHOOK_URL not configured")
 
     webhook_url = f"{telegram_config.webhook_url.rstrip('/')}{telegram_config.webhook_path}"
 
@@ -69,7 +62,7 @@ async def setup_telegram_webhook():
     return {
         "status": "ok",
         "webhook_url": webhook_url,
-        "message": "Webhook configured successfully"
+        "message": "Webhook configured successfully",
     }
 
 
@@ -105,14 +98,14 @@ async def start_telegram_polling():
 
     if not telegram_config.use_polling:
         raise HTTPException(
-            status_code=400,
-            detail="Polling mode not enabled. Set TELEGRAM_USE_POLLING=true"
+            status_code=400, detail="Polling mode not enabled. Set TELEGRAM_USE_POLLING=true"
         )
 
     bot = await get_telegram_bot()
 
     # Start polling in background
     import asyncio
+
     asyncio.create_task(bot.start_polling())
 
     return {"status": "started", "message": "Bot started in polling mode"}

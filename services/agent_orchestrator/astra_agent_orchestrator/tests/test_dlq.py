@@ -6,6 +6,7 @@ from dataclasses import asdict
 from unittest.mock import AsyncMock
 
 import pytest
+
 from astra_agent_orchestrator.dlq import (
     DeadLetter,
     DeadLetterQueue,
@@ -61,6 +62,7 @@ class TestDeadLetterQueue:
     async def test_get_pending_count_stream_not_exists(self, dlq, mock_redis):
         """get_pending_count should return 0 if stream doesn't exist."""
         from redis import ResponseError
+
         mock_redis.xinfo_stream.side_effect = ResponseError("no such key")
 
         count = await dlq.get_pending_count()
@@ -165,7 +167,10 @@ class TestDLQConsumer:
     async def test_start_handles_busygroup(self, consumer, mock_redis):
         """start() should handle BUSYGROUP error gracefully."""
         from redis import ResponseError
-        mock_redis.xgroup_create.side_effect = ResponseError("BUSYGROUP Consumer Group name already exists")
+
+        mock_redis.xgroup_create.side_effect = ResponseError(
+            "BUSYGROUP Consumer Group name already exists"
+        )
 
         await consumer.start()  # Should not raise
 

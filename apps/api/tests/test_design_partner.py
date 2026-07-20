@@ -49,7 +49,7 @@ class MockDesignPartnerRepo(DesignPartnerRepository):
             results = [p for p in results if p.status == status]
         if tier:
             results = [p for p in results if p.tier == tier]
-        return results[offset:offset + limit]
+        return results[offset : offset + limit]
 
     async def count(self, status: DesignPartnerStatus | None = None) -> int:
         results = list(self.partners.values())
@@ -156,10 +156,12 @@ def ticket_repo():
 @pytest.fixture
 def service(partner_repo, feedback_repo):
     from app.domain.services.design_partner_service import DesignPartnerService
+
     return DesignPartnerService(partner_repo, feedback_repo)
 
 
 # --- DesignPartner Entity Tests ---
+
 
 class TestDesignPartner:
     def test_create_partner(self):
@@ -239,6 +241,7 @@ class TestDesignPartner:
 
 # --- DesignPartnerFeedback Entity Tests ---
 
+
 class TestDesignPartnerFeedback:
     def test_create_feedback(self):
         fb = DesignPartnerFeedback(
@@ -300,6 +303,7 @@ class TestDesignPartnerFeedback:
 
 # --- SupportTicket Entity Tests ---
 
+
 class TestSupportTicket:
     def test_create_ticket(self):
         ticket = SupportTicket(
@@ -345,6 +349,7 @@ class TestSupportTicket:
 
 
 # --- DesignPartnerService Tests ---
+
 
 class TestDesignPartnerService:
     @pytest.mark.asyncio
@@ -537,6 +542,7 @@ class TestDesignPartnerService:
 
 # --- Feedback Repository Tests ---
 
+
 class TestFeedbackRepository:
     @pytest.mark.asyncio
     async def test_save_and_find(self, feedback_repo):
@@ -557,16 +563,28 @@ class TestFeedbackRepository:
     async def test_find_by_partner(self, feedback_repo):
         partner_id = uuid4()
         fb1 = DesignPartnerFeedback(
-            design_partner_id=partner_id, organization_id=uuid4(), user_id=uuid4(),
-            type=FeedbackType.FEATURE_REQUEST, title="A", description="A"
+            design_partner_id=partner_id,
+            organization_id=uuid4(),
+            user_id=uuid4(),
+            type=FeedbackType.FEATURE_REQUEST,
+            title="A",
+            description="A",
         )
         fb2 = DesignPartnerFeedback(
-            design_partner_id=partner_id, organization_id=uuid4(), user_id=uuid4(),
-            type=FeedbackType.BUG_REPORT, title="B", description="B"
+            design_partner_id=partner_id,
+            organization_id=uuid4(),
+            user_id=uuid4(),
+            type=FeedbackType.BUG_REPORT,
+            title="B",
+            description="B",
         )
         fb3 = DesignPartnerFeedback(
-            design_partner_id=uuid4(), organization_id=uuid4(), user_id=uuid4(),
-            type=FeedbackType.FEATURE_REQUEST, title="C", description="C"
+            design_partner_id=uuid4(),
+            organization_id=uuid4(),
+            user_id=uuid4(),
+            type=FeedbackType.FEATURE_REQUEST,
+            title="C",
+            description="C",
         )
         await feedback_repo.save(fb1)
         await feedback_repo.save(fb2)
@@ -579,12 +597,22 @@ class TestFeedbackRepository:
     async def test_find_by_partner_filtered(self, feedback_repo):
         partner_id = uuid4()
         fb1 = DesignPartnerFeedback(
-            design_partner_id=partner_id, organization_id=uuid4(), user_id=uuid4(),
-            type=FeedbackType.FEATURE_REQUEST, status=FeedbackStatus.RESOLVED, title="A", description="A"
+            design_partner_id=partner_id,
+            organization_id=uuid4(),
+            user_id=uuid4(),
+            type=FeedbackType.FEATURE_REQUEST,
+            status=FeedbackStatus.RESOLVED,
+            title="A",
+            description="A",
         )
         fb2 = DesignPartnerFeedback(
-            design_partner_id=partner_id, organization_id=uuid4(), user_id=uuid4(),
-            type=FeedbackType.BUG_REPORT, status=FeedbackStatus.OPEN, title="B", description="B"
+            design_partner_id=partner_id,
+            organization_id=uuid4(),
+            user_id=uuid4(),
+            type=FeedbackType.BUG_REPORT,
+            status=FeedbackStatus.OPEN,
+            title="B",
+            description="B",
         )
         await feedback_repo.save(fb1)
         await feedback_repo.save(fb2)
@@ -599,6 +627,7 @@ class TestFeedbackRepository:
 
 
 # --- DesignPartnerRepository Tests ---
+
 
 class TestDesignPartnerRepository:
     @pytest.mark.asyncio

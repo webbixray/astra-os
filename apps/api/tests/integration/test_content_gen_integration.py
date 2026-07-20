@@ -48,7 +48,9 @@ class TestContentGenIntegration:
         return resp.json()
 
     async def _create_org_with_owner(
-        self, integration_session_factory, user_id: UUID,
+        self,
+        integration_session_factory,
+        user_id: UUID,
     ) -> UUID:
         async with integration_session_factory() as session:
             org_repo = OrganizationRepositoryImpl(session)
@@ -56,7 +58,9 @@ class TestContentGenIntegration:
             org = Organization.create(name="CG Org", slug="cg-org")
             org = await org_repo.save(org)
             member = TeamMember.create(
-                organization_id=org.id, user_id=user_id, role="owner",
+                organization_id=org.id,
+                user_id=user_id,
+                role="owner",
             )
             await member_repo.save(member)
             await session.commit()

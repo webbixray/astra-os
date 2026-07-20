@@ -206,7 +206,12 @@ class TestPublishingAdapters:
 
     def test_registry_contains_all(self):
         assert set(ADAPTER_REGISTRY.keys()) == {
-            "website", "twitter", "linkedin", "facebook", "instagram", "email"
+            "website",
+            "twitter",
+            "linkedin",
+            "facebook",
+            "instagram",
+            "email",
         }
 
     def test_get_adapter(self):
@@ -224,7 +229,9 @@ class TestReportDeliveryAdapters:
     @pytest.mark.asyncio
     async def test_email_delivery(self, caplog):
         caplog.set_level("INFO")
-        result = await ReportEmailDeliveryAdapter().deliver("user@example.com", "content body", "csv", "Weekly Report")
+        result = await ReportEmailDeliveryAdapter().deliver(
+            "user@example.com", "content body", "csv", "Weekly Report"
+        )
         assert result is True
         assert "Sending 'Weekly Report' (csv) to user@example.com" in caplog.text
         assert "Content preview:" in caplog.text
@@ -245,7 +252,9 @@ class TestReportDeliveryAdapters:
     @pytest.mark.asyncio
     async def test_webhook_delivery(self, caplog):
         caplog.set_level("INFO")
-        result = await WebhookDeliveryAdapter().deliver("https://hook.site/abc", "content", "json", "Webhook")
+        result = await WebhookDeliveryAdapter().deliver(
+            "https://hook.site/abc", "content", "json", "Webhook"
+        )
         assert result is True
         assert "POST 'Webhook' to https://hook.site/abc" in caplog.text
 

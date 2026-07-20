@@ -87,7 +87,9 @@ class ModelResponse(BaseModel):
     model_id: str
     content: str
     finish_reason: str = "stop"
-    usage: dict[str, int] = Field(default_factory=dict)  # prompt_tokens, completion_tokens, total_tokens
+    usage: dict[str, int] = Field(
+        default_factory=dict
+    )  # prompt_tokens, completion_tokens, total_tokens
     latency_ms: int = 0
     cost_usd: float = 0.0
     model_name: str
@@ -166,10 +168,13 @@ class ModelProviderBase(ABC):
                     return response
                 if response.status_code == 429:
                     # Rate limited - wait and retry
-                    wait_time = (2 ** attempt) + 0.1
+                    wait_time = (2**attempt) + 0.1
                     logger.warning(
                         "Rate limited by %s, waiting %.1fs (attempt %d/%d)",
-                        self.config.provider.value, wait_time, attempt + 1, self.config.max_retries + 1
+                        self.config.provider.value,
+                        wait_time,
+                        attempt + 1,
+                        self.config.max_retries + 1,
                     )
                     await asyncio.sleep(wait_time)
                     continue
@@ -183,10 +188,12 @@ class ModelProviderBase(ABC):
             except (httpx.TimeoutException, httpx.ConnectError) as e:
                 last_error = e
                 if attempt < self.config.max_retries:
-                    wait_time = (2 ** attempt) + 0.1
+                    wait_time = (2**attempt) + 0.1
                     logger.warning(
                         "Request to %s failed: %s, retrying in %.1fs",
-                        self.config.provider.value, e, wait_time
+                        self.config.provider.value,
+                        e,
+                        wait_time,
                     )
                     await asyncio.sleep(wait_time)
                 else:
@@ -204,8 +211,7 @@ class ModelProviderBase(ABC):
             "requests": self._request_count,
             "errors": self._error_count,
             "avg_latency_ms": (
-                self._total_latency / self._request_count * 1000
-                if self._request_count > 0 else 0
+                self._total_latency / self._request_count * 1000 if self._request_count > 0 else 0
             ),
         }
 
@@ -224,7 +230,9 @@ class NVIDIANIMProvider(ModelProviderBase):
         self.base_url = config.base_url or "https://integrate.api.nvidia.com/v1"
 
     async def generate(self, request: ModelRequest) -> ModelResponse:
-        api_key = self.config.metadata.get("api_key", "") or os.environ.get("NVIDIA_NIM_API_KEY", "")
+        api_key = self.config.metadata.get("api_key", "") or os.environ.get(
+            "NVIDIA_NIM_API_KEY", ""
+        )
         headers = {
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
@@ -272,7 +280,9 @@ class NVIDIANIMProvider(ModelProviderBase):
         )
 
     async def stream_generate(self, request: ModelRequest):
-        api_key = self.config.metadata.get("api_key", "") or os.environ.get("NVIDIA_NIM_API_KEY", "")
+        api_key = self.config.metadata.get("api_key", "") or os.environ.get(
+            "NVIDIA_NIM_API_KEY", ""
+        )
         headers = {
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
@@ -317,7 +327,9 @@ class NVIDIANIMProvider(ModelProviderBase):
                         continue
 
     async def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
-        api_key = self.config.metadata.get("api_key", "") or os.environ.get("NVIDIA_NIM_API_KEY", "")
+        api_key = self.config.metadata.get("api_key", "") or os.environ.get(
+            "NVIDIA_NIM_API_KEY", ""
+        )
         headers = {
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
@@ -340,7 +352,9 @@ class NVIDIANIMProvider(ModelProviderBase):
 
     async def health_check(self) -> bool:
         try:
-            api_key = self.config.metadata.get("api_key", "") or os.environ.get("NVIDIA_NIM_API_KEY", "")
+            api_key = self.config.metadata.get("api_key", "") or os.environ.get(
+                "NVIDIA_NIM_API_KEY", ""
+            )
             headers = {"Authorization": f"Bearer {api_key}"}
             response = await self._make_request("GET", f"{self.base_url}/models", headers)
             return response.is_success
@@ -359,7 +373,10 @@ class NVIDIANIMProvider(ModelProviderBase):
     def _calculate_cost(self, usage: dict[str, int]) -> float:
         prompt_tokens = usage.get("prompt_tokens", 0)
         completion_tokens = usage.get("completion_tokens", 0)
-        return (prompt_tokens * self.config.cost_per_1k_input + completion_tokens * self.config.cost_per_1k_output) / 1000
+        return (
+            prompt_tokens * self.config.cost_per_1k_input
+            + completion_tokens * self.config.cost_per_1k_output
+        ) / 1000
 
 
 class OpenAIProvider(ModelProviderBase):
@@ -398,7 +415,10 @@ class OpenAIProvider(ModelProviderBase):
         response = await self._make_request(
             "POST",
             f"{self.base_url}/chat/completions",
-            headers={"Authorization": f"Bearer {self.config.metadata.get('api_key', '')}", "Content-Type": "application/json"},
+            headers={
+                "Authorization": f"Bearer {self.config.metadata.get('api_key', '')}",
+                "Content-Type": "application/json",
+            },
             json_data=payload,
         )
         latency_ms = int((time.time() - start) * 1000)
@@ -474,7 +494,10 @@ class OpenAIProvider(ModelProviderBase):
         response = await self._make_request(
             "POST",
             f"{self.base_url}/embeddings",
-            headers={"Authorization": f"Bearer {self.config.metadata.get('api_key', '')}", "Content-Type": "application/json"},
+            headers={
+                "Authorization": f"Bearer {self.config.metadata.get('api_key', '')}",
+                "Content-Type": "application/json",
+            },
             json_data=payload,
         )
 
@@ -483,7 +506,9 @@ class OpenAIProvider(ModelProviderBase):
 
     async def health_check(self) -> bool:
         try:
-            api_key = self.config.metadata.get("api_key", "") or os.environ.get("OPENAI_API_KEY", "")
+            api_key = self.config.metadata.get("api_key", "") or os.environ.get(
+                "OPENAI_API_KEY", ""
+            )
             headers = {"Authorization": f"Bearer {api_key}"}
             response = await self._make_request("GET", f"{self.base_url}/models", headers)
             return response.is_success
@@ -502,7 +527,10 @@ class OpenAIProvider(ModelProviderBase):
     def _calculate_cost(self, usage: dict[str, int]) -> float:
         prompt_tokens = usage.get("prompt_tokens", 0)
         completion_tokens = usage.get("completion_tokens", 0)
-        return (prompt_tokens * self.config.cost_per_1k_input + completion_tokens * self.config.cost_per_1k_output) / 1000
+        return (
+            prompt_tokens * self.config.cost_per_1k_input
+            + completion_tokens * self.config.cost_per_1k_output
+        ) / 1000
 
 
 class AnthropicProvider(ModelProviderBase):
@@ -627,7 +655,9 @@ class AnthropicProvider(ModelProviderBase):
 
     async def health_check(self) -> bool:
         try:
-            api_key = self.config.metadata.get("api_key", "") or os.environ.get("ANTHROPIC_API_KEY", "")
+            api_key = self.config.metadata.get("api_key", "") or os.environ.get(
+                "ANTHROPIC_API_KEY", ""
+            )
             headers = {"x-api-key": api_key}
             response = await self._make_request("GET", f"{self.base_url}/models", headers)
             return response.is_success
@@ -637,7 +667,10 @@ class AnthropicProvider(ModelProviderBase):
     def _calculate_cost(self, usage: dict[str, int]) -> float:
         prompt_tokens = usage.get("input_tokens", 0)
         completion_tokens = usage.get("output_tokens", 0)
-        return (prompt_tokens * self.config.cost_per_1k_input + completion_tokens * self.config.cost_per_1k_output) / 1000
+        return (
+            prompt_tokens * self.config.cost_per_1k_input
+            + completion_tokens * self.config.cost_per_1k_output
+        ) / 1000
 
 
 class ModelRouter:
@@ -664,7 +697,11 @@ class ModelRouter:
         self.providers[provider.config.provider] = provider
         if provider.config.provider not in self._provider_order:
             self._provider_order.append(provider.config.provider)
-        logger.info("Registered model provider: %s (%s)", provider.config.provider.value, provider.config.model_name)
+        logger.info(
+            "Registered model provider: %s (%s)",
+            provider.config.provider.value,
+            provider.config.model_name,
+        )
 
     def unregister_provider(self, provider: ModelProvider) -> bool:
         """Unregister a provider."""
@@ -680,7 +717,11 @@ class ModelRouter:
 
     def get_available_providers(self) -> list[ModelProvider]:
         """Get list of available (enabled) providers in priority order."""
-        return [p for p in self._provider_order if p in self.providers and self.providers[p].config.enabled]
+        return [
+            p
+            for p in self._provider_order
+            if p in self.providers and self.providers[p].config.enabled
+        ]
 
     async def generate(
         self,
@@ -705,13 +746,23 @@ class ModelRouter:
         last_error = None
         for provider in providers_to_try:
             try:
-                logger.info("Attempting generation with %s (%s)", provider.config.provider.value, provider.config.model_name)
+                logger.info(
+                    "Attempting generation with %s (%s)",
+                    provider.config.provider.value,
+                    provider.config.model_name,
+                )
                 response = await provider.generate(request)
-                logger.info("Successfully generated with %s (latency: %dms)", provider.config.provider.value, response.latency_ms)
+                logger.info(
+                    "Successfully generated with %s (latency: %dms)",
+                    provider.config.provider.value,
+                    response.latency_ms,
+                )
                 return response
             except Exception as e:
                 last_error = e
-                logger.warning("Provider %s failed: %s, trying next", provider.config.provider.value, e)
+                logger.warning(
+                    "Provider %s failed: %s, trying next", provider.config.provider.value, e
+                )
                 continue
 
         raise RuntimeError(f"All providers failed. Last error: {last_error}")

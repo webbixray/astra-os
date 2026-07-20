@@ -206,7 +206,9 @@ class ContentScheduleService:
         await self.repo.delete(schedule_id)
         return True
 
-    async def get_due_schedules(self, current_time: datetime | None = None) -> list[ContentSchedule]:
+    async def get_due_schedules(
+        self, current_time: datetime | None = None
+    ) -> list[ContentSchedule]:
         """Get all schedules that are due to run."""
         return await self.repo.find_due_schedules(current_time)
 
@@ -239,9 +241,11 @@ class ContentScheduleService:
                 schedule.mark_error(str(e))
                 await self.repo.save(schedule)
                 results["failed"] += 1
-                results["errors"].append({
-                    "schedule_id": str(schedule.id),
-                    "error": str(e),
-                })
+                results["errors"].append(
+                    {
+                        "schedule_id": str(schedule.id),
+                        "error": str(e),
+                    }
+                )
 
         return results

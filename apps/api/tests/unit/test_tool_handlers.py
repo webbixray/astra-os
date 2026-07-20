@@ -20,9 +20,16 @@ class TestCreateCampaignHandler:
         mock_use_case = MagicMock()
         mock_use_case.execute = AsyncMock(return_value=campaign)
 
-        with patch("app.infrastructure.external_adapters.agents.tool_handlers.CreateCampaignUseCase", return_value=mock_use_case):
-            with patch("app.infrastructure.external_adapters.agents.tool_handlers.CampaignRepositoryImpl"):
-                result = await create_campaign_handler(db_session, organization_id=str(uuid4()), query="Test Campaign")
+        with patch(
+            "app.infrastructure.external_adapters.agents.tool_handlers.CreateCampaignUseCase",
+            return_value=mock_use_case,
+        ):
+            with patch(
+                "app.infrastructure.external_adapters.agents.tool_handlers.CampaignRepositoryImpl"
+            ):
+                result = await create_campaign_handler(
+                    db_session, organization_id=str(uuid4()), query="Test Campaign"
+                )
 
         assert "Created campaign" in result["response"]
         assert "campaign_id" in result
@@ -32,9 +39,16 @@ class TestCreateCampaignHandler:
         mock_use_case = MagicMock()
         mock_use_case.execute = AsyncMock(side_effect=ValueError("Budget too low"))
 
-        with patch("app.infrastructure.external_adapters.agents.tool_handlers.CreateCampaignUseCase", return_value=mock_use_case):
-            with patch("app.infrastructure.external_adapters.agents.tool_handlers.CampaignRepositoryImpl"):
-                result = await create_campaign_handler(db_session, organization_id=str(uuid4()), query="Test")
+        with patch(
+            "app.infrastructure.external_adapters.agents.tool_handlers.CreateCampaignUseCase",
+            return_value=mock_use_case,
+        ):
+            with patch(
+                "app.infrastructure.external_adapters.agents.tool_handlers.CampaignRepositoryImpl"
+            ):
+                result = await create_campaign_handler(
+                    db_session, organization_id=str(uuid4()), query="Test"
+                )
 
         assert "error" in result
         assert "Budget too low" in result["error"]
@@ -53,8 +67,13 @@ class TestListCampaignsHandler:
         mock_use_case = MagicMock()
         mock_use_case.execute = AsyncMock(return_value=[c1, c2])
 
-        with patch("app.infrastructure.external_adapters.agents.tool_handlers.ListCampaignsUseCase", return_value=mock_use_case):
-            with patch("app.infrastructure.external_adapters.agents.tool_handlers.CampaignRepositoryImpl"):
+        with patch(
+            "app.infrastructure.external_adapters.agents.tool_handlers.ListCampaignsUseCase",
+            return_value=mock_use_case,
+        ):
+            with patch(
+                "app.infrastructure.external_adapters.agents.tool_handlers.CampaignRepositoryImpl"
+            ):
                 result = await list_campaigns_handler(db_session, organization_id=str(uuid4()))
 
         assert "2 campaigns" in result["response"]
@@ -64,8 +83,13 @@ class TestListCampaignsHandler:
         mock_use_case = MagicMock()
         mock_use_case.execute = AsyncMock(return_value=[])
 
-        with patch("app.infrastructure.external_adapters.agents.tool_handlers.ListCampaignsUseCase", return_value=mock_use_case):
-            with patch("app.infrastructure.external_adapters.agents.tool_handlers.CampaignRepositoryImpl"):
+        with patch(
+            "app.infrastructure.external_adapters.agents.tool_handlers.ListCampaignsUseCase",
+            return_value=mock_use_case,
+        ):
+            with patch(
+                "app.infrastructure.external_adapters.agents.tool_handlers.CampaignRepositoryImpl"
+            ):
                 result = await list_campaigns_handler(db_session, organization_id=str(uuid4()))
 
         assert "0 campaigns" in result["response"]
@@ -82,9 +106,16 @@ class TestCreateContentHandler:
         mock_use_case = MagicMock()
         mock_use_case.execute = AsyncMock(return_value=content)
 
-        with patch("app.infrastructure.external_adapters.agents.tool_handlers.CreateContentUseCase", return_value=mock_use_case):
-            with patch("app.infrastructure.external_adapters.agents.tool_handlers.ContentRepositoryImpl"):
-                result = await create_content_handler(db_session, organization_id=str(uuid4()), query="Test Content")
+        with patch(
+            "app.infrastructure.external_adapters.agents.tool_handlers.CreateContentUseCase",
+            return_value=mock_use_case,
+        ):
+            with patch(
+                "app.infrastructure.external_adapters.agents.tool_handlers.ContentRepositoryImpl"
+            ):
+                result = await create_content_handler(
+                    db_session, organization_id=str(uuid4()), query="Test Content"
+                )
 
         assert "Created content" in result["response"]
         assert "content_id" in result
@@ -94,9 +125,16 @@ class TestCreateContentHandler:
         mock_use_case = MagicMock()
         mock_use_case.execute = AsyncMock(side_effect=ValueError("Title too long"))
 
-        with patch("app.infrastructure.external_adapters.agents.tool_handlers.CreateContentUseCase", return_value=mock_use_case):
-            with patch("app.infrastructure.external_adapters.agents.tool_handlers.ContentRepositoryImpl"):
-                result = await create_content_handler(db_session, organization_id=str(uuid4()), query="Test")
+        with patch(
+            "app.infrastructure.external_adapters.agents.tool_handlers.CreateContentUseCase",
+            return_value=mock_use_case,
+        ):
+            with patch(
+                "app.infrastructure.external_adapters.agents.tool_handlers.ContentRepositoryImpl"
+            ):
+                result = await create_content_handler(
+                    db_session, organization_id=str(uuid4()), query="Test"
+                )
 
         assert "error" in result
         assert "Title too long" in result["error"]

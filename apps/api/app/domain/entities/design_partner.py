@@ -25,12 +25,12 @@ class DesignPartnerTier(str, Enum):
 
 
 class DesignPartnerStatus(str, Enum):
-    PENDING = "pending"           # Applied, awaiting approval
-    APPROVED = "approved"         # Approved, ready for onboarding
-    ONBOARDING = "onboarding"     # Active onboarding process
-    ACTIVE = "active"             # Fully onboarded, using platform
-    PAUSED = "paused"             # Temporarily paused
-    CHURNED = "churned"           # Left the program
+    PENDING = "pending"  # Applied, awaiting approval
+    APPROVED = "approved"  # Approved, ready for onboarding
+    ONBOARDING = "onboarding"  # Active onboarding process
+    ACTIVE = "active"  # Fully onboarded, using platform
+    PAUSED = "paused"  # Temporarily paused
+    CHURNED = "churned"  # Left the program
 
 
 class FeedbackType(str, Enum):
@@ -259,15 +259,25 @@ class DesignPartner:
             "tier": self.tier.value,
             "status": self.status.value,
             "dedicated_csm_id": str(self.dedicated_csm_id) if self.dedicated_csm_id else None,
-            "contract_signed_at": self.contract_signed_at.isoformat() if self.contract_signed_at else None,
-            "contract_expires_at": self.contract_expires_at.isoformat() if self.contract_expires_at else None,
-            "onboarding_started_at": self.onboarding_started_at.isoformat() if self.onboarding_started_at else None,
-            "onboarding_completed_at": self.onboarding_completed_at.isoformat() if self.onboarding_completed_at else None,
+            "contract_signed_at": self.contract_signed_at.isoformat()
+            if self.contract_signed_at
+            else None,
+            "contract_expires_at": self.contract_expires_at.isoformat()
+            if self.contract_expires_at
+            else None,
+            "onboarding_started_at": self.onboarding_started_at.isoformat()
+            if self.onboarding_started_at
+            else None,
+            "onboarding_completed_at": self.onboarding_completed_at.isoformat()
+            if self.onboarding_completed_at
+            else None,
             "onboarding_milestones": self.onboarding_milestones,
             "weekly_active_users": self.weekly_active_users,
             "campaigns_run": self.campaigns_run,
             "ai_interactions": self.ai_interactions,
-            "last_engagement_at": self.last_engagement_at.isoformat() if self.last_engagement_at else None,
+            "last_engagement_at": self.last_engagement_at.isoformat()
+            if self.last_engagement_at
+            else None,
             "nps_score": self.nps_score,
             "feedback_count": self.feedback_count,
             "support_tier": self.support_tier,
@@ -421,7 +431,9 @@ class SupportTicket:
             "channel": self.channel,
             "sla_tier": self.sla_tier,
             "assigned_csm_id": str(self.assigned_csm_id) if self.assigned_csm_id else None,
-            "first_responded_at": self.first_responded_at.isoformat() if self.first_responded_at else None,
+            "first_responded_at": self.first_responded_at.isoformat()
+            if self.first_responded_at
+            else None,
             "resolved_at": self.resolved_at.isoformat() if self.resolved_at else None,
             "resolution_summary": self.resolution_summary,
             "customer_satisfaction": self.customer_satisfaction,

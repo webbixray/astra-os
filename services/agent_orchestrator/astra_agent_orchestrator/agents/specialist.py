@@ -252,8 +252,7 @@ class SpecialistAgent(ReActAgent):
 
     def get_system_prompt(self) -> str:
         return self.config.system_prompt or (
-            f"You are {self.config.name}, a specialist in "
-            f"{', '.join(self.config.capabilities)}."
+            f"You are {self.config.name}, a specialist in {', '.join(self.config.capabilities)}."
         )
 
     def prepare_input(self, input_data: Any) -> str:

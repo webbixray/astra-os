@@ -26,6 +26,7 @@ router = APIRouter()
 # Request / Response models
 # ---------------------------------------------------------------------------
 
+
 class CreateVersionRequest(BaseModel):
     change_summary: str = ""
 
@@ -92,6 +93,7 @@ class ReplayResponse(BaseModel):
 # Dependencies
 # ---------------------------------------------------------------------------
 
+
 def _get_repo(db: AsyncSession = Depends(get_db)) -> WorkflowRepository:
     return WorkflowRepository(db)
 
@@ -111,6 +113,7 @@ def _get_replay_service(
 # Routes
 # ---------------------------------------------------------------------------
 
+
 @router.post(
     "/workflows/{workflow_id}/versions",
     response_model=VersionDetailResponse,
@@ -126,7 +129,9 @@ async def create_version(
     version_service: WorkflowVersionService = Depends(_get_version_service),
 ) -> dict:
     await require_org_role(request_organization_id(workflow_id, repo, db), "member", user_id, db)
-    await require_feature("workflow_automation", request_organization_id(workflow_id, repo, db), "auto", db)
+    await require_feature(
+        "workflow_automation", request_organization_id(workflow_id, repo, db), "auto", db
+    )
 
     workflow = await repo.find_by_id(workflow_id)
     if not workflow:
@@ -135,7 +140,8 @@ async def create_version(
     version = await version_service.create_version(
         workflow=workflow,
         created_by=user_id,
-        change_summary=request.change_summary or f"Manual version {len(await version_service.list_versions(workflow_id)) + 1}",
+        change_summary=request.change_summary
+        or f"Manual version {len(await version_service.list_versions(workflow_id)) + 1}",
     )
     return version.to_dict()
 
@@ -161,7 +167,9 @@ async def list_versions(
     version_service: WorkflowVersionService = Depends(_get_version_service),
 ) -> list[dict]:
     await require_org_role(request_organization_id(workflow_id, repo, db), "viewer", user_id, db)
-    await require_feature("workflow_automation", request_organization_id(workflow_id, repo, db), "auto", db)
+    await require_feature(
+        "workflow_automation", request_organization_id(workflow_id, repo, db), "auto", db
+    )
 
     versions = await version_service.list_versions(workflow_id)
     return [v.to_dict() for v in versions[:limit]]
@@ -181,7 +189,9 @@ async def get_version(
     version_service: WorkflowVersionService = Depends(_get_version_service),
 ) -> dict:
     await require_org_role(request_organization_id(workflow_id, repo, db), "viewer", user_id, db)
-    await require_feature("workflow_automation", request_organization_id(workflow_id, repo, db), "auto", db)
+    await require_feature(
+        "workflow_automation", request_organization_id(workflow_id, repo, db), "auto", db
+    )
 
     version = await version_service.get_version(workflow_id, version_number)
     if not version:
@@ -204,7 +214,9 @@ async def restore_version(
     version_service: WorkflowVersionService = Depends(_get_version_service),
 ) -> dict:
     await require_org_role(request_organization_id(workflow_id, repo, db), "member", user_id, db)
-    await require_feature("workflow_automation", request_organization_id(workflow_id, repo, db), "auto", db)
+    await require_feature(
+        "workflow_automation", request_organization_id(workflow_id, repo, db), "auto", db
+    )
 
     workflow = await version_service.restore_version(
         workflow_id=workflow_id,
@@ -233,7 +245,9 @@ async def compare_versions(
     version_service: WorkflowVersionService = Depends(_get_version_service),
 ) -> dict:
     await require_org_role(request_organization_id(workflow_id, repo, db), "viewer", user_id, db)
-    await require_feature("workflow_automation", request_organization_id(workflow_id, repo, db), "auto", db)
+    await require_feature(
+        "workflow_automation", request_organization_id(workflow_id, repo, db), "auto", db
+    )
 
     comparison = await version_service.compare_versions(
         workflow_id, request.version_a, request.version_b
@@ -271,7 +285,9 @@ async def replay_execution(
     replay_service: WorkflowReplayService = Depends(_get_replay_service),
 ) -> dict:
     await require_org_role(request_organization_id(workflow_id, repo, db), "member", user_id, db)
-    await require_feature("workflow_automation", request_organization_id(workflow_id, repo, db), "auto", db)
+    await require_feature(
+        "workflow_automation", request_organization_id(workflow_id, repo, db), "auto", db
+    )
 
     # Import runner here to avoid circular import
     from app.domain.services.workflow_runner import WorkflowRunner
@@ -301,7 +317,9 @@ async def get_execution_replay(
     replay_service: WorkflowReplayService = Depends(_get_replay_service),
 ) -> dict:
     await require_org_role(request_organization_id(workflow_id, repo, db), "viewer", user_id, db)
-    await require_feature("workflow_automation", request_organization_id(workflow_id, repo, db), "auto", db)
+    await require_feature(
+        "workflow_automation", request_organization_id(workflow_id, repo, db), "auto", db
+    )
 
     replay = await replay_service.get_replay(execution_id)
     if not replay:
@@ -323,7 +341,9 @@ async def get_execution_steps(
     replay_service: WorkflowReplayService = Depends(_get_replay_service),
 ) -> list[dict]:
     await require_org_role(request_organization_id(workflow_id, repo, db), "viewer", user_id, db)
-    await require_feature("workflow_automation", request_organization_id(workflow_id, repo, db), "auto", db)
+    await require_feature(
+        "workflow_automation", request_organization_id(workflow_id, repo, db), "auto", db
+    )
 
     steps = await replay_service.step_through_execution(execution_id)
     return [s.__dict__ for s in steps]

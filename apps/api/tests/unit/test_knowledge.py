@@ -107,9 +107,17 @@ class TestKnowledgeRelation:
 class TestNodeTypeEnum:
     def test_all_types_present(self):
         expected = [
-            "campaign", "content", "brand", "audience", "topic",
-            "channel", "user", "organization", "ad_account",
-            "asset", "concept",
+            "campaign",
+            "content",
+            "brand",
+            "audience",
+            "topic",
+            "channel",
+            "user",
+            "organization",
+            "ad_account",
+            "asset",
+            "concept",
         ]
         for e in expected:
             assert hasattr(NodeType, e.upper())

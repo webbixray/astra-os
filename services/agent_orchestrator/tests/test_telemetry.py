@@ -3,6 +3,7 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
+
 from astra_agent_orchestrator.telemetry import (
     get_tracer,
     init_tracing,
@@ -16,6 +17,7 @@ class TestTelemetry:
     def setup_method(self):
         """Reset global state before each test."""
         from astra_agent_orchestrator import telemetry as telemetry_module
+
         telemetry_module._TRACER = None
         telemetry_module._TRACER_PROVIDER = None
 
@@ -87,11 +89,14 @@ class TestTelemetry:
 
             # Force re-initialization
             from astra_agent_orchestrator import telemetry as telemetry_module
+
             telemetry_module._TRACER = None
 
             get_tracer()
 
-            mock_init.assert_called_once_with(service_name="astra-agent-orchestrator", otlp_endpoint=None)
+            mock_init.assert_called_once_with(
+                service_name="astra-agent-orchestrator", otlp_endpoint=None
+            )
 
     def test_shutdown_tracing_calls_provider_shutdown(self):
         """shutdown_tracing should call shutdown on provider."""
@@ -110,6 +115,7 @@ class TestTelemetry:
     def test_shutdown_tracing_handles_none_provider(self):
         """shutdown_tracing should handle None provider gracefully."""
         from astra_agent_orchestrator import telemetry as telemetry_module
+
         telemetry_module._TRACER_PROVIDER = None
 
         # Should not raise

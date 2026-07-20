@@ -63,7 +63,9 @@ class TestAdInsight:
         assert insight.roas == 0
 
     def test_computed_properties_rounded(self):
-        insight = AdInsight(impressions=1000, clicks=33, spend=100.00, conversions=7, revenue=333.33)
+        insight = AdInsight(
+            impressions=1000, clicks=33, spend=100.00, conversions=7, revenue=333.33
+        )
         assert insight.ctr == 3.3
         assert insight.cpc == 3.03
         assert insight.conversion_rate == 21.21

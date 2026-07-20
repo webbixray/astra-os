@@ -96,9 +96,7 @@ class AuthService:
                     str(now + LOCKOUT_DURATION_SECONDS),
                     ex=LOCKOUT_DURATION_SECONDS,
                 )
-                logger.warning(
-                    "Account locked due to %d failed attempts: %s", count, email
-                )
+                logger.warning("Account locked due to %d failed attempts: %s", count, email)
         else:
             attempts = _failed_attempts.get(email, [])
             attempts = [t for t in attempts if now - t < LOCKOUT_DURATION_SECONDS]
@@ -106,9 +104,7 @@ class AuthService:
             _failed_attempts[email] = attempts
             if len(attempts) >= MAX_FAILED_ATTEMPTS:
                 _locked_accounts[email] = now + LOCKOUT_DURATION_SECONDS
-                logger.warning(
-                    "Account locked due to %d failed attempts: %s", len(attempts), email
-                )
+                logger.warning("Account locked due to %d failed attempts: %s", len(attempts), email)
 
     async def _clear_failed_attempts(self, email: str) -> None:
         if self._redis:

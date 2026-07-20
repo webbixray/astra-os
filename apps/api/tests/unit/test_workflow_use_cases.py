@@ -92,7 +92,9 @@ class TestUpdateWorkflowUseCase:
         repo.save = AsyncMock(return_value=workflow)
 
         use_case = UpdateWorkflowUseCase(repo)
-        result = await use_case.execute(uuid4(), name="Updated", description="New desc", status="active")
+        result = await use_case.execute(
+            uuid4(), name="Updated", description="New desc", status="active"
+        )
 
         assert result.name == "Updated"
 
@@ -137,7 +139,9 @@ class TestExecuteWorkflowUseCase:
 
         use_case = ExecuteWorkflowUseCase(repo)
         use_case.temporal = MagicMock()
-        use_case.temporal.execute_workflow = AsyncMock(return_value={"status": "completed", "steps": []})
+        use_case.temporal.execute_workflow = AsyncMock(
+            return_value={"status": "completed", "steps": []}
+        )
 
         result = await use_case.execute(uuid4(), uuid4(), uuid4())
 

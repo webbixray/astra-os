@@ -15,24 +15,26 @@ from app.domain.common import now
 
 # --- Enums ---
 
+
 class SocialPlatform(str, Enum):
-    META = "meta"           # Facebook/Instagram
+    META = "meta"  # Facebook/Instagram
+
     class SocialPlatform(str, Enum):
-        META = "meta"           # Facebook/Instagram
+        META = "meta"  # Facebook/Instagram
         LINKEDIN = "linkedin"
-        TWITTER = "twitter"       # X
+        TWITTER = "twitter"  # X
         TIKTOK = "tiktok"
         YOUTUBE = "youtube"
-        GOOGLE = "google"         # Google Ads/Reviews
+        GOOGLE = "google"  # Google Ads/Reviews
 
 
 class CommentType(str, Enum):
-    ORGANIC = "organic"       # Regular post comment
-    AD_COMMENT = "ad_comment" # Paid ad comment
-    DM = "dm"                 # Direct message
-    MENTION = "mention"       # @mention
-    REPLY = "reply"           # Reply to our comment
-    REVIEW = "review"         # Google/Facebook review
+    ORGANIC = "organic"  # Regular post comment
+    AD_COMMENT = "ad_comment"  # Paid ad comment
+    DM = "dm"  # Direct message
+    MENTION = "mention"  # @mention
+    REPLY = "reply"  # Reply to our comment
+    REVIEW = "review"  # Google/Facebook review
 
 
 class CommentSentiment(str, Enum):
@@ -44,38 +46,39 @@ class CommentSentiment(str, Enum):
 
 
 class CommentIntent(str, Enum):
-    QUESTION = "question"           # Asking about product/service
-    COMPLAINT = "complaint"         # Expressing dissatisfaction
-    PRAISE = "praise"              # Positive feedback
-    SPAM = "spam"                  # Irrelevant/promotional
-    LEAD = "lead"                  # Interested in purchasing
-    SUPPORT = "support"            # Technical support request
-    PRICING = "pricing"            # Asking about price
+    QUESTION = "question"  # Asking about product/service
+    COMPLAINT = "complaint"  # Expressing dissatisfaction
+    PRAISE = "praise"  # Positive feedback
+    SPAM = "spam"  # Irrelevant/promotional
+    LEAD = "lead"  # Interested in purchasing
+    SUPPORT = "support"  # Technical support request
+    PRICING = "pricing"  # Asking about price
     FEATURE_REQUEST = "feature_request"
     COMPETITOR_MENTION = "competitor_mention"
-    INAPPROPRIATE = "inappropriate" # Toxic/harmful content
+    INAPPROPRIATE = "inappropriate"  # Toxic/harmful content
     OTHER = "other"
 
 
 class ReplyStatus(str, Enum):
-    PENDING = "pending"           # AI generated, awaiting review
-    APPROVED = "approved"         # Ready to send
-    SENT = "sent"                 # Successfully posted
-    REJECTED = "rejected"         # Human rejected
-    FAILED = "failed"             # API error
-    SKIPPED = "skipped"           # Auto-skipped (low confidence)
+    PENDING = "pending"  # AI generated, awaiting review
+    APPROVED = "approved"  # Ready to send
+    SENT = "sent"  # Successfully posted
+    REJECTED = "rejected"  # Human rejected
+    FAILED = "failed"  # API error
+    SKIPPED = "skipped"  # Auto-skipped (low confidence)
 
 
 class ModerationAction(str, Enum):
     NONE = "none"
-    HIDE = "hide"                 # Hide comment
-    DELETE = "delete"             # Delete comment
-    BLOCK_USER = "block_user"     # Block user
-    REPORT = "report"             # Report to platform
-    FLAG_REVIEW = "flag_review"   # Flag for human review
+    HIDE = "hide"  # Hide comment
+    DELETE = "delete"  # Delete comment
+    BLOCK_USER = "block_user"  # Block user
+    REPORT = "report"  # Report to platform
+    FLAG_REVIEW = "flag_review"  # Flag for human review
 
 
 # --- Entities ---
+
 
 @dataclass
 class SocialComment:
@@ -364,6 +367,7 @@ class ReplyTemplate:
 
 
 # --- Analytics Entities ---
+
 
 @dataclass
 class CommentAnalytics:

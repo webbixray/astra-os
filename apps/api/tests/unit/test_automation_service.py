@@ -34,9 +34,12 @@ def service(repo):
 
 class TestBudgetRules:
     async def test_create_budget_rule(self, service):
-        service.budget_repo.save = AsyncMock(return_value=BudgetAllocationRule(
-            id=uuid4(), name="Budget Rule",
-        ))
+        service.budget_repo.save = AsyncMock(
+            return_value=BudgetAllocationRule(
+                id=uuid4(),
+                name="Budget Rule",
+            )
+        )
 
         result = await service.create_budget_rule(uuid4(), uuid4(), "Budget Rule")
 
@@ -95,7 +98,9 @@ class TestBudgetRules:
         rule.allocations = {"social": 100, "search": 200}
         service.budget_repo.find_by_id = AsyncMock(return_value=rule)
 
-        with patch("app.application.use_cases.campaigns.automation_service.random.uniform", return_value=0):
+        with patch(
+            "app.application.use_cases.campaigns.automation_service.random.uniform", return_value=0
+        ):
             result = await service.calculate_allocation(uuid4())
 
         assert len(result) == 2
@@ -121,9 +126,12 @@ class TestBudgetRules:
 
 class TestBidRules:
     async def test_create_bid_rule(self, service):
-        service.bid_repo.save = AsyncMock(return_value=BidOptimizationRule(
-            id=uuid4(), name="Bid Rule",
-        ))
+        service.bid_repo.save = AsyncMock(
+            return_value=BidOptimizationRule(
+                id=uuid4(),
+                name="Bid Rule",
+            )
+        )
 
         result = await service.create_bid_rule(uuid4(), uuid4(), "Bid Rule")
 
@@ -155,7 +163,10 @@ class TestBidRules:
         rule.max_bid = 10.0
         service.bid_repo.find_by_id = AsyncMock(return_value=rule)
 
-        with patch("app.application.use_cases.campaigns.automation_service.random.uniform", return_value=1.0):
+        with patch(
+            "app.application.use_cases.campaigns.automation_service.random.uniform",
+            return_value=1.0,
+        ):
             result = await service.optimize_bid(uuid4())
 
         assert result["suggested_bid"] == 5.0
@@ -177,9 +188,12 @@ class TestBidRules:
 
 class TestAudienceSegments:
     async def test_create_audience_segment(self, service):
-        service.audience_repo.save = AsyncMock(return_value=AudienceSegment(
-            id=uuid4(), name="Segment",
-        ))
+        service.audience_repo.save = AsyncMock(
+            return_value=AudienceSegment(
+                id=uuid4(),
+                name="Segment",
+            )
+        )
 
         result = await service.create_audience_segment(uuid4(), "Segment")
 
@@ -277,9 +291,12 @@ class TestContentRecommendations:
 
 class TestAutomationRules:
     async def test_create_rule(self, service):
-        service.rule_repo.save = AsyncMock(return_value=AutomationRule(
-            id=uuid4(), name="Rule",
-        ))
+        service.rule_repo.save = AsyncMock(
+            return_value=AutomationRule(
+                id=uuid4(),
+                name="Rule",
+            )
+        )
 
         result = await service.create_rule(uuid4(), "Rule", "schedule", "adjust_budget")
 
@@ -331,7 +348,9 @@ class TestAutomationRules:
         service.rule_repo.find_enabled = AsyncMock(return_value=[rule])
         service.rule_repo.save_all = AsyncMock()
 
-        with patch("app.application.use_cases.campaigns.automation_service.random.random", return_value=0.1):
+        with patch(
+            "app.application.use_cases.campaigns.automation_service.random.random", return_value=0.1
+        ):
             result = await service.evaluate_rules(uuid4())
 
         assert len(result) == 1
@@ -346,7 +365,9 @@ class TestAutomationRules:
         rule.action_type = "email"
         service.rule_repo.find_enabled = AsyncMock(return_value=[rule])
 
-        with patch("app.application.use_cases.campaigns.automation_service.random.random", return_value=0.9):
+        with patch(
+            "app.application.use_cases.campaigns.automation_service.random.random", return_value=0.9
+        ):
             result = await service.evaluate_rules(uuid4())
 
         assert result[0]["triggered"] is False

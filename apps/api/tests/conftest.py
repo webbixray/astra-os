@@ -1,12 +1,10 @@
 """Shared test fixtures and helpers for ASTRA OS API tests."""
 
-from collections.abc import AsyncGenerator
-from typing import Any
-
 import hashlib
 import hmac
 import secrets
 import time
+from collections.abc import AsyncGenerator
 
 import pytest
 import pytest_asyncio

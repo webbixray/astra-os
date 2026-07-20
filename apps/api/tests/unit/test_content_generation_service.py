@@ -44,7 +44,9 @@ class TestContentGenerationService:
             style_guide="Use short sentences",
         )
         template = BUILTIN_TEMPLATES[1]
-        result = await service.generate(template, {"topic": "Tech", "platform": "LinkedIn"}, brand_voice=bv)
+        result = await service.generate(
+            template, {"topic": "Tech", "platform": "LinkedIn"}, brand_voice=bv
+        )
         assert result["content"] == "Mocked content response"
         mock_router.chat.assert_awaited_once()
 
@@ -60,7 +62,9 @@ class TestContentGenerationService:
 
     async def test_rewrite_with_brand_voice(self, service, mock_router):
         bv = BrandVoice(name="MyBrand", tone="friendly", vocabulary=["awesome"])
-        result = await service.rewrite("Original content", brand_voice=bv, instructions="Make it shorter")
+        result = await service.rewrite(
+            "Original content", brand_voice=bv, instructions="Make it shorter"
+        )
         assert result == "Mocked content response"
         mock_router.chat.assert_awaited_once()
 
@@ -77,7 +81,8 @@ class TestContentGenerationService:
 
     async def test_build_system_prompt_without_brand_voice(self, service):
         template = ContentTemplate(
-            name="Test", content_type="blog",
+            name="Test",
+            content_type="blog",
             sections=[{"name": "title", "prompt": "Write a title"}],
         )
         prompt = await service._build_system_prompt(template)
@@ -94,7 +99,9 @@ class TestContentGenerationService:
 
     async def test_build_system_prompt_with_instructions(self, service):
         template = BUILTIN_TEMPLATES[0]
-        prompt = await service._build_system_prompt(template, instructions="Keep it under 100 words")
+        prompt = await service._build_system_prompt(
+            template, instructions="Keep it under 100 words"
+        )
         assert "Keep it under 100 words" in prompt
 
     def test_build_user_prompt(self, service, blog_template):

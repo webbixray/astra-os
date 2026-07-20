@@ -64,6 +64,7 @@ def mock_user_id():
 def override_auth(app: FastAPI, mock_user_id):
     async def _override():
         return mock_user_id
+
     app.dependency_overrides[require_user_id] = _override
     yield
     app.dependency_overrides.clear()
@@ -73,6 +74,7 @@ def override_auth(app: FastAPI, mock_user_id):
 def override_rbac(app: FastAPI):
     async def _override(org_id, minimum_role="viewer", user_id=None, db=None):
         return MagicMock()
+
     app.dependency_overrides[require_org_role] = _override
     yield
     app.dependency_overrides.clear()
@@ -81,8 +83,10 @@ def override_rbac(app: FastAPI):
 @pytest.fixture
 def override_db(app: FastAPI):
     mock_db = AsyncMock()
+
     async def _override():
         yield mock_db
+
     app.dependency_overrides[get_db] = _override
     yield mock_db
     app.dependency_overrides.pop(get_db, None)
@@ -101,6 +105,7 @@ def _setup_csrf(client: AsyncClient) -> dict[str, str]:
     import time
 
     from app.config import config
+
     secret = config.secret_key
     session_id = secrets.token_urlsafe(16)
     timestamp = int(time.time())
@@ -116,29 +121,36 @@ class TestAuthSignupSignin:
     async def test_signup_success(self, client: AsyncClient, app: FastAPI):
         user = make_mock_user()
         mock_service = AsyncMock()
-        mock_service.sign_up = AsyncMock(return_value={
-            "access_token": "token123",
-            "refresh_token": "refresh123",
-            "user": {
-                "id": str(user.id),
-                "email": user.email,
-                "name": user.name,
-                "avatar_url": user.avatar_url,
-                "created_at": user.created_at.isoformat(),
-                "updated_at": user.updated_at.isoformat(),
-            },
-        })
+        mock_service.sign_up = AsyncMock(
+            return_value={
+                "access_token": "token123",
+                "refresh_token": "refresh123",
+                "user": {
+                    "id": str(user.id),
+                    "email": user.email,
+                    "name": user.name,
+                    "avatar_url": user.avatar_url,
+                    "created_at": user.created_at.isoformat(),
+                    "updated_at": user.updated_at.isoformat(),
+                },
+            }
+        )
 
         async def _override():
             return mock_service
+
         app.dependency_overrides[get_auth_service] = _override
 
         csrf = _setup_csrf(client)
-        response = await client.post("/api/v1/auth/signup", json={
-            "email": "test@test.com",
-            "password": "P@ssword123!",
-            "name": "Test User",
-        }, headers=csrf)
+        response = await client.post(
+            "/api/v1/auth/signup",
+            json={
+                "email": "test@test.com",
+                "password": "P@ssword123!",
+                "name": "Test User",
+            },
+            headers=csrf,
+        )
         assert response.status_code == 201
         data = response.json()
         assert data["data"]["access_token"] == "token123"
@@ -149,18 +161,25 @@ class TestAuthSignupSignin:
     @pytest.mark.asyncio
     async def test_signup_duplicate_email(self, client: AsyncClient, app: FastAPI):
         mock_service = AsyncMock()
-        mock_service.sign_up = AsyncMock(side_effect=HTTPException(status_code=409, detail="Email already registered"))
+        mock_service.sign_up = AsyncMock(
+            side_effect=HTTPException(status_code=409, detail="Email already registered")
+        )
 
         async def _override():
             return mock_service
+
         app.dependency_overrides[get_auth_service] = _override
 
         csrf = _setup_csrf(client)
-        response = await client.post("/api/v1/auth/signup", json={
-            "email": "existing@test.com",
-            "password": "P@ssword123!",
-            "name": "Test User",
-        }, headers=csrf)
+        response = await client.post(
+            "/api/v1/auth/signup",
+            json={
+                "email": "existing@test.com",
+                "password": "P@ssword123!",
+                "name": "Test User",
+            },
+            headers=csrf,
+        )
         assert response.status_code == 409
         app.dependency_overrides.clear()
 
@@ -168,28 +187,35 @@ class TestAuthSignupSignin:
     async def test_signin_success(self, client: AsyncClient, app: FastAPI):
         user = make_mock_user()
         mock_service = AsyncMock()
-        mock_service.sign_in = AsyncMock(return_value={
-            "access_token": "token123",
-            "refresh_token": "refresh123",
-            "user": {
-                "id": str(user.id),
-                "email": user.email,
-                "name": user.name,
-                "avatar_url": user.avatar_url,
-                "created_at": user.created_at.isoformat(),
-                "updated_at": user.updated_at.isoformat(),
-            },
-        })
+        mock_service.sign_in = AsyncMock(
+            return_value={
+                "access_token": "token123",
+                "refresh_token": "refresh123",
+                "user": {
+                    "id": str(user.id),
+                    "email": user.email,
+                    "name": user.name,
+                    "avatar_url": user.avatar_url,
+                    "created_at": user.created_at.isoformat(),
+                    "updated_at": user.updated_at.isoformat(),
+                },
+            }
+        )
 
         async def _override():
             return mock_service
+
         app.dependency_overrides[get_auth_service] = _override
 
         csrf = _setup_csrf(client)
-        response = await client.post("/api/v1/auth/signin", json={
-            "email": "test@test.com",
-            "password": "P@ssword123!",
-        }, headers=csrf)
+        response = await client.post(
+            "/api/v1/auth/signin",
+            json={
+                "email": "test@test.com",
+                "password": "P@ssword123!",
+            },
+            headers=csrf,
+        )
         assert response.status_code == 200
         data = response.json()
         assert data["data"]["access_token"] == "token123"
@@ -198,17 +224,24 @@ class TestAuthSignupSignin:
     @pytest.mark.asyncio
     async def test_signin_invalid_credentials(self, client: AsyncClient, app: FastAPI):
         mock_service = AsyncMock()
-        mock_service.sign_in = AsyncMock(side_effect=HTTPException(status_code=401, detail="Invalid email or password"))
+        mock_service.sign_in = AsyncMock(
+            side_effect=HTTPException(status_code=401, detail="Invalid email or password")
+        )
 
         async def _override():
             return mock_service
+
         app.dependency_overrides[get_auth_service] = _override
 
         csrf = _setup_csrf(client)
-        response = await client.post("/api/v1/auth/signin", json={
-            "email": "test@test.com",
-            "password": "wrong",
-        }, headers=csrf)
+        response = await client.post(
+            "/api/v1/auth/signin",
+            json={
+                "email": "test@test.com",
+                "password": "wrong",
+            },
+            headers=csrf,
+        )
         assert response.status_code == 401
         app.dependency_overrides.clear()
 
@@ -220,10 +253,12 @@ class TestAuthSignupSignin:
 
         async def _override():
             return mock_user_id
+
         app.dependency_overrides[require_user_id] = _override
 
         async def _override_service():
             return mock_service
+
         app.dependency_overrides[get_auth_service] = _override_service
 
         response = await client.get("/api/v1/auth/me")
@@ -235,19 +270,27 @@ class TestAuthSignupSignin:
 
 class TestUserRoutes:
     @pytest.mark.asyncio
-    async def test_create_user(self, client: AsyncClient, app: FastAPI, mock_user_id, override_auth, override_db):
+    async def test_create_user(
+        self, client: AsyncClient, app: FastAPI, mock_user_id, override_auth, override_db
+    ):
         user = make_mock_user(email="new@test.com", name="New User")
         mock_uc = AsyncMock()
         mock_uc.execute = AsyncMock(return_value=user)
+
         async def _override():
             return mock_uc
+
         app.dependency_overrides[get_create_user_use_case] = _override
 
         csrf = _setup_csrf(client)
-        response = await client.post("/api/v1/users", json={
-            "email": "new@test.com",
-            "name": "New User",
-        }, headers=csrf)
+        response = await client.post(
+            "/api/v1/users",
+            json={
+                "email": "new@test.com",
+                "name": "New User",
+            },
+            headers=csrf,
+        )
         assert response.status_code == 201
         data = response.json()
         assert data["data"]["email"] == "new@test.com"
@@ -259,8 +302,10 @@ class TestUserRoutes:
         user = make_mock_user(user_id=mock_user_id)
         mock_uc = AsyncMock()
         mock_uc.execute = AsyncMock(return_value=user)
+
         async def _override():
             return mock_uc
+
         app.dependency_overrides[get_get_user_use_case] = _override
 
         response = await client.get(f"/api/v1/users/{mock_user_id}")
@@ -268,84 +313,122 @@ class TestUserRoutes:
         assert response.json()["data"]["email"] == user.email
 
     @pytest.mark.asyncio
-    async def test_get_user_not_found(self, client: AsyncClient, app: FastAPI, mock_user_id, override_auth):
+    async def test_get_user_not_found(
+        self, client: AsyncClient, app: FastAPI, mock_user_id, override_auth
+    ):
         mock_uc = AsyncMock()
         mock_uc.execute = AsyncMock(side_effect=EntityNotFoundError("User", str(mock_user_id)))
+
         async def _override():
             return mock_uc
+
         app.dependency_overrides[get_get_user_use_case] = _override
 
         response = await client.get(f"/api/v1/users/{mock_user_id}")
         assert response.status_code == 404
 
     @pytest.mark.asyncio
-    async def test_update_user(self, client: AsyncClient, app: FastAPI, mock_user_id, override_auth):
+    async def test_update_user(
+        self, client: AsyncClient, app: FastAPI, mock_user_id, override_auth
+    ):
         user = make_mock_user(user_id=mock_user_id, name="Updated Name")
         mock_uc = AsyncMock()
         mock_uc.execute = AsyncMock(return_value=user)
+
         async def _override():
             return mock_uc
+
         app.dependency_overrides[get_update_user_use_case] = _override
 
         csrf = _setup_csrf(client)
-        response = await client.patch(f"/api/v1/users/{mock_user_id}", json={"name": "Updated Name"}, headers=csrf)
+        response = await client.patch(
+            f"/api/v1/users/{mock_user_id}", json={"name": "Updated Name"}, headers=csrf
+        )
         assert response.status_code == 200
         assert response.json()["data"]["name"] == "Updated Name"
 
     @pytest.mark.asyncio
-    async def test_update_user_not_found(self, client: AsyncClient, app: FastAPI, mock_user_id, override_auth):
+    async def test_update_user_not_found(
+        self, client: AsyncClient, app: FastAPI, mock_user_id, override_auth
+    ):
         mock_uc = AsyncMock()
         mock_uc.execute = AsyncMock(side_effect=EntityNotFoundError("User", str(mock_user_id)))
+
         async def _override():
             return mock_uc
+
         app.dependency_overrides[get_update_user_use_case] = _override
 
         csrf = _setup_csrf(client)
-        response = await client.patch(f"/api/v1/users/{mock_user_id}", json={"name": "X"}, headers=csrf)
+        response = await client.patch(
+            f"/api/v1/users/{mock_user_id}", json={"name": "X"}, headers=csrf
+        )
         assert response.status_code == 404
 
 
 class TestOrganizationRoutes:
     @pytest.mark.asyncio
-    async def test_create_organization(self, client: AsyncClient, app: FastAPI, mock_user_id, override_auth):
+    async def test_create_organization(
+        self, client: AsyncClient, app: FastAPI, mock_user_id, override_auth
+    ):
         org = make_mock_org()
         mock_uc = AsyncMock()
         mock_uc.execute = AsyncMock(return_value=org)
+
         async def _override():
             return mock_uc
+
         app.dependency_overrides[get_create_org_use_case] = _override
 
         csrf = _setup_csrf(client)
-        response = await client.post("/api/v1/organizations", json={
-            "name": "Test Org",
-            "slug": "test-org",
-        }, headers=csrf)
+        response = await client.post(
+            "/api/v1/organizations",
+            json={
+                "name": "Test Org",
+                "slug": "test-org",
+            },
+            headers=csrf,
+        )
         assert response.status_code == 201
         assert response.json()["data"]["name"] == "Test Org"
 
     @pytest.mark.asyncio
-    async def test_create_organization_duplicate_slug(self, client: AsyncClient, app: FastAPI, mock_user_id, override_auth):
+    async def test_create_organization_duplicate_slug(
+        self, client: AsyncClient, app: FastAPI, mock_user_id, override_auth
+    ):
         mock_uc = AsyncMock()
-        mock_uc.execute = AsyncMock(side_effect=HTTPException(status_code=409, detail="already exists"))
+        mock_uc.execute = AsyncMock(
+            side_effect=HTTPException(status_code=409, detail="already exists")
+        )
+
         async def _override():
             return mock_uc
+
         app.dependency_overrides[get_create_org_use_case] = _override
 
         csrf = _setup_csrf(client)
-        response = await client.post("/api/v1/organizations", json={
-            "name": "Test Org",
-            "slug": "existing-slug",
-        }, headers=csrf)
+        response = await client.post(
+            "/api/v1/organizations",
+            json={
+                "name": "Test Org",
+                "slug": "existing-slug",
+            },
+            headers=csrf,
+        )
         assert response.status_code == 409
 
     @pytest.mark.asyncio
-    async def test_list_my_organizations(self, client: AsyncClient, app: FastAPI, mock_user_id, override_auth):
+    async def test_list_my_organizations(
+        self, client: AsyncClient, app: FastAPI, mock_user_id, override_auth
+    ):
         org1 = make_mock_org(name="Org 1", slug="org-1")
         org2 = make_mock_org(name="Org 2", slug="org-2")
         mock_uc = AsyncMock()
         mock_uc.execute = AsyncMock(return_value=[org1, org2])
+
         async def _override():
             return mock_uc
+
         app.dependency_overrides[get_list_orgs_use_case] = _override
 
         response = await client.get("/api/v1/organizations/my")
@@ -354,12 +437,22 @@ class TestOrganizationRoutes:
         assert len(data["data"]) == 2
 
     @pytest.mark.asyncio
-    async def test_get_organization(self, client: AsyncClient, app: FastAPI, mock_user_id, override_auth, override_rbac, override_db):
+    async def test_get_organization(
+        self,
+        client: AsyncClient,
+        app: FastAPI,
+        mock_user_id,
+        override_auth,
+        override_rbac,
+        override_db,
+    ):
         org = make_mock_org()
         mock_uc = AsyncMock()
         mock_uc.execute = AsyncMock(return_value=org)
+
         async def _override():
             return mock_uc
+
         app.dependency_overrides[get_get_org_use_case] = _override
 
         member = MagicMock()
@@ -373,11 +466,21 @@ class TestOrganizationRoutes:
         assert response.json()["data"]["name"] == org.name
 
     @pytest.mark.asyncio
-    async def test_get_organization_not_found(self, client: AsyncClient, app: FastAPI, mock_user_id, override_auth, override_rbac, override_db):
+    async def test_get_organization_not_found(
+        self,
+        client: AsyncClient,
+        app: FastAPI,
+        mock_user_id,
+        override_auth,
+        override_rbac,
+        override_db,
+    ):
         mock_uc = AsyncMock()
         mock_uc.execute = AsyncMock(side_effect=EntityNotFoundError("Organization", str(uuid4())))
+
         async def _override():
             return mock_uc
+
         app.dependency_overrides[get_get_org_use_case] = _override
 
         member = MagicMock()
@@ -390,11 +493,21 @@ class TestOrganizationRoutes:
         assert response.status_code == 404
 
     @pytest.mark.asyncio
-    async def test_get_organization_forbidden(self, client: AsyncClient, app: FastAPI, mock_user_id, override_auth, override_rbac, override_db):
+    async def test_get_organization_forbidden(
+        self,
+        client: AsyncClient,
+        app: FastAPI,
+        mock_user_id,
+        override_auth,
+        override_rbac,
+        override_db,
+    ):
         mock_uc = AsyncMock()
         mock_uc.execute = AsyncMock(side_effect=ForbiddenError("Access denied"))
+
         async def _override():
             return mock_uc
+
         app.dependency_overrides[get_get_org_use_case] = _override
 
         member = MagicMock()
@@ -407,12 +520,22 @@ class TestOrganizationRoutes:
         assert response.status_code == 403
 
     @pytest.mark.asyncio
-    async def test_update_organization(self, client: AsyncClient, app: FastAPI, mock_user_id, override_auth, override_rbac, override_db):
+    async def test_update_organization(
+        self,
+        client: AsyncClient,
+        app: FastAPI,
+        mock_user_id,
+        override_auth,
+        override_rbac,
+        override_db,
+    ):
         org = make_mock_org(name="Updated Org")
         mock_uc = AsyncMock()
         mock_uc.execute = AsyncMock(return_value=org)
+
         async def _override():
             return mock_uc
+
         app.dependency_overrides[get_update_org_use_case] = _override
 
         member = MagicMock()
@@ -422,17 +545,23 @@ class TestOrganizationRoutes:
         override_db.execute = AsyncMock(return_value=mock_result)
 
         csrf = _setup_csrf(client)
-        response = await client.patch(f"/api/v1/organizations/{org.id}", json={"name": "Updated Org"}, headers=csrf)
+        response = await client.patch(
+            f"/api/v1/organizations/{org.id}", json={"name": "Updated Org"}, headers=csrf
+        )
         assert response.status_code == 200
         assert response.json()["data"]["name"] == "Updated Org"
 
     @pytest.mark.asyncio
-    async def test_list_organizations(self, client: AsyncClient, app: FastAPI, mock_user_id, override_auth):
+    async def test_list_organizations(
+        self, client: AsyncClient, app: FastAPI, mock_user_id, override_auth
+    ):
         org1 = make_mock_org(name="Org 1", slug="org-1")
         mock_uc = AsyncMock()
         mock_uc.execute = AsyncMock(return_value=[org1])
+
         async def _override():
             return mock_uc
+
         app.dependency_overrides[get_list_orgs_use_case] = _override
 
         response = await client.get("/api/v1/organizations/my")
@@ -445,6 +574,7 @@ class TestAuthUseCases:
     @pytest.mark.asyncio
     async def test_auth_service_sign_up(self):
         from app.application.use_cases.auth_use_cases import AuthService
+
         mock_repo = AsyncMock()
         mock_repo.find_by_email = AsyncMock(return_value=None)
         mock_repo.save = AsyncMock(return_value=make_mock_user())
@@ -458,6 +588,7 @@ class TestAuthUseCases:
     async def test_auth_service_sign_up_duplicate(self):
         from app.application.use_cases.auth_use_cases import AuthService
         from app.domain.exceptions.domain_exceptions import ValidationError
+
         mock_repo = AsyncMock()
         mock_repo.find_by_email = AsyncMock(return_value=make_mock_user())
         svc = AuthService(mock_repo)
@@ -468,6 +599,7 @@ class TestAuthUseCases:
     async def test_auth_service_sign_in_success(self):
         from app.application.use_cases.auth_use_cases import AuthService
         from app.infrastructure.auth.password import hash_password
+
         user = make_mock_user(password_hash=hash_password("P@ssword123!"))
         mock_repo = AsyncMock()
         mock_repo.find_by_email = AsyncMock(return_value=user)
@@ -479,6 +611,7 @@ class TestAuthUseCases:
     async def test_auth_service_sign_in_user_not_found(self):
         from app.application.use_cases.auth_use_cases import AuthService
         from app.domain.exceptions.domain_exceptions import ValidationError
+
         mock_repo = AsyncMock()
         mock_repo.find_by_email = AsyncMock(return_value=None)
         svc = AuthService(mock_repo)
@@ -490,6 +623,7 @@ class TestAuthUseCases:
         from app.application.use_cases.auth_use_cases import AuthService
         from app.domain.exceptions.domain_exceptions import ValidationError
         from app.infrastructure.auth.password import hash_password
+
         user = make_mock_user(password_hash=hash_password("correct_password"))
         mock_repo = AsyncMock()
         mock_repo.find_by_email = AsyncMock(return_value=user)
@@ -502,6 +636,7 @@ class TestAuthUseCases:
         from app.application.use_cases.auth_use_cases import AuthService
         from app.domain.exceptions.domain_exceptions import ValidationError
         from app.infrastructure.auth.password import hash_password
+
         user = make_mock_user(password_hash=hash_password("P@ssword123!"))
         user.is_active = False
         mock_repo = AsyncMock()
@@ -513,6 +648,7 @@ class TestAuthUseCases:
     @pytest.mark.asyncio
     async def test_auth_service_get_current_user(self):
         from app.application.use_cases.auth_use_cases import AuthService
+
         user = make_mock_user()
         mock_repo = AsyncMock()
         mock_repo.find_by_id = AsyncMock(return_value=user)
@@ -524,6 +660,7 @@ class TestAuthUseCases:
     async def test_auth_service_get_current_user_not_found(self):
         from app.application.use_cases.auth_use_cases import AuthService
         from app.domain.exceptions.domain_exceptions import EntityNotFoundError
+
         mock_repo = AsyncMock()
         mock_repo.find_by_id = AsyncMock(return_value=None)
         svc = AuthService(mock_repo)
@@ -535,6 +672,7 @@ class TestUserUseCases:
     @pytest.mark.asyncio
     async def test_create_user_new(self):
         from app.application.use_cases.users import CreateUserUseCase
+
         mock_repo = AsyncMock()
         mock_repo.find_by_email = AsyncMock(return_value=None)
         mock_repo.save = AsyncMock(return_value=make_mock_user())
@@ -545,6 +683,7 @@ class TestUserUseCases:
     @pytest.mark.asyncio
     async def test_create_user_existing(self):
         from app.application.use_cases.users import CreateUserUseCase
+
         existing = make_mock_user()
         mock_repo = AsyncMock()
         mock_repo.find_by_email = AsyncMock(return_value=existing)
@@ -555,6 +694,7 @@ class TestUserUseCases:
     @pytest.mark.asyncio
     async def test_get_user_found(self):
         from app.application.use_cases.users import GetUserUseCase
+
         user = make_mock_user()
         mock_repo = AsyncMock()
         mock_repo.find_by_id = AsyncMock(return_value=user)
@@ -566,6 +706,7 @@ class TestUserUseCases:
     async def test_get_user_not_found(self):
         from app.application.use_cases.users import GetUserUseCase
         from app.domain.exceptions.domain_exceptions import EntityNotFoundError
+
         mock_repo = AsyncMock()
         mock_repo.find_by_id = AsyncMock(return_value=None)
         uc = GetUserUseCase(mock_repo)
@@ -575,6 +716,7 @@ class TestUserUseCases:
     @pytest.mark.asyncio
     async def test_update_user(self):
         from app.application.use_cases.users import UpdateUserUseCase
+
         user = make_mock_user()
         mock_repo = AsyncMock()
         mock_repo.find_by_id = AsyncMock(return_value=user)
@@ -587,6 +729,7 @@ class TestUserUseCases:
     async def test_update_user_not_found(self):
         from app.application.use_cases.users import UpdateUserUseCase
         from app.domain.exceptions.domain_exceptions import EntityNotFoundError
+
         mock_repo = AsyncMock()
         mock_repo.find_by_id = AsyncMock(return_value=None)
         uc = UpdateUserUseCase(mock_repo)
@@ -598,6 +741,7 @@ class TestOrganizationUseCases:
     @pytest.mark.asyncio
     async def test_create_org(self):
         from app.application.use_cases.organizations import CreateOrganizationUseCase
+
         org = make_mock_org()
         mock_org_repo = AsyncMock()
         mock_org_repo.find_by_slug = AsyncMock(return_value=None)
@@ -610,6 +754,7 @@ class TestOrganizationUseCases:
     @pytest.mark.asyncio
     async def test_create_org_duplicate_slug(self):
         from app.application.use_cases.organizations import CreateOrganizationUseCase
+
         mock_org_repo = AsyncMock()
         mock_org_repo.find_by_slug = AsyncMock(return_value=make_mock_org())
         mock_member_repo = AsyncMock()
@@ -620,6 +765,7 @@ class TestOrganizationUseCases:
     @pytest.mark.asyncio
     async def test_get_org(self):
         from app.application.use_cases.organizations import GetOrganizationUseCase
+
         org = make_mock_org()
         member = MagicMock()
         mock_org_repo = AsyncMock()
@@ -634,6 +780,7 @@ class TestOrganizationUseCases:
     async def test_get_org_not_found(self):
         from app.application.use_cases.organizations import GetOrganizationUseCase
         from app.domain.exceptions.domain_exceptions import EntityNotFoundError
+
         mock_org_repo = AsyncMock()
         mock_org_repo.find_by_id = AsyncMock(return_value=None)
         mock_member_repo = AsyncMock()
@@ -645,6 +792,7 @@ class TestOrganizationUseCases:
     async def test_get_org_forbidden(self):
         from app.application.use_cases.organizations import GetOrganizationUseCase
         from app.domain.exceptions.domain_exceptions import ForbiddenError
+
         org = make_mock_org()
         mock_org_repo = AsyncMock()
         mock_org_repo.find_by_id = AsyncMock(return_value=org)
@@ -657,6 +805,7 @@ class TestOrganizationUseCases:
     @pytest.mark.asyncio
     async def test_list_user_organizations(self):
         from app.application.use_cases.organizations import ListUserOrganizationsUseCase
+
         org = make_mock_org()
         member = MagicMock(organization_id=org.id)
         mock_org_repo = AsyncMock()
@@ -671,6 +820,7 @@ class TestOrganizationUseCases:
     @pytest.mark.asyncio
     async def test_update_org(self):
         from app.application.use_cases.organizations import UpdateOrganizationUseCase
+
         org = make_mock_org()
         member = MagicMock(role="owner")
         mock_org_repo = AsyncMock()
@@ -686,6 +836,7 @@ class TestOrganizationUseCases:
     async def test_update_org_not_found(self):
         from app.application.use_cases.organizations import UpdateOrganizationUseCase
         from app.domain.exceptions.domain_exceptions import EntityNotFoundError
+
         mock_org_repo = AsyncMock()
         mock_org_repo.find_by_id = AsyncMock(return_value=None)
         mock_member_repo = AsyncMock()
@@ -700,6 +851,7 @@ class TestOrganizationUseCases:
     async def test_update_org_forbidden_not_member(self):
         from app.application.use_cases.organizations import UpdateOrganizationUseCase
         from app.domain.exceptions.domain_exceptions import ForbiddenError
+
         org = make_mock_org()
         mock_org_repo = AsyncMock()
         mock_org_repo.find_by_id = AsyncMock(return_value=org)
@@ -713,6 +865,7 @@ class TestOrganizationUseCases:
     async def test_update_org_forbidden_low_role(self):
         from app.application.use_cases.organizations import UpdateOrganizationUseCase
         from app.domain.exceptions.domain_exceptions import ForbiddenError
+
         org = make_mock_org()
         member = MagicMock(role="viewer")
         mock_org_repo = AsyncMock()
@@ -728,12 +881,14 @@ class TestDependencies:
     @pytest.mark.asyncio
     async def test_pagination_params(self):
         from app.presentation.dependencies import pagination_params
+
         result = await pagination_params(page=2, limit=10)
         assert result == {"page": 2, "limit": 10}
 
     @pytest.mark.asyncio
     async def test_pagination_defaults(self):
         from app.presentation.dependencies import pagination_params
+
         result = await pagination_params()
         assert result["page"].default == 1
         assert result["limit"].default == 50

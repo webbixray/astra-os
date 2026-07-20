@@ -22,7 +22,9 @@ from sqlalchemy import select
 from app.infrastructure.auth.password import hash_password
 from app.infrastructure.db.models.campaigns.campaign_model import CampaignModel
 from app.infrastructure.db.models.content.content_model import ContentModel
-from app.infrastructure.db.models.notifications.notification_model import NotificationModel
+from app.infrastructure.db.models.notifications.notification_model import (
+    NotificationModel,
+)
 from app.infrastructure.db.models.organization import OrganizationModel
 from app.infrastructure.db.models.team_member import TeamMemberModel
 from app.infrastructure.db.models.user import UserModel
@@ -72,7 +74,12 @@ ORGANIZATIONS_DATA = [
 # team_members_data references users/orgs by index – filled at seed time
 TEAM_MEMBERS_DATA = [
     # (user_index, org_index, role, permissions)
-    (0, 0, "owner", ["campaigns:manage", "content:manage", "workflows:manage", "team:manage"]),
+    (
+        0,
+        0,
+        "owner",
+        ["campaigns:manage", "content:manage", "workflows:manage", "team:manage"],
+    ),
     (1, 1, "admin", ["campaigns:manage", "content:manage", "workflows:manage"]),
     (2, 1, "operator", ["campaigns:view", "content:edit"]),
 ]
@@ -184,97 +191,276 @@ CAMPAIGNS_DATA = [
 
 CONTENT_DATA = [
     # (campaign_index | None, org_index, title, content_type, body, status, generated_by_ai)
-    (0, 0, "Introducing Astra 2.0 — What's New", "blog_post",
-     "We're thrilled to announce Astra 2.0, featuring a completely redesigned dashboard, "
-     "AI-powered campaign suggestions, and real-time analytics. Here's everything you need to know...",
-     "published", False),
-    (5, 1, "Spring Sale: Up to 40% Off All Plans", "email",
-     "Hi {{first_name}}, Spring is here and so are the savings! For a limited time, enjoy up to "
-     "40% off all Acme Corp plans. Don't miss out — this offer ends March 31.",
-     "published", False),
-    (6, 1, "5 AI Trends Marketers Can't Ignore in 2026", "blog_post",
-     "Artificial intelligence continues to reshape digital marketing. From predictive audience "
-     "segmentation to generative ad creative, here are the top five trends shaping the industry...",
-     "review", True),
-    (1, 0, "Behind the Scenes: Building Our Brand Voice", "social_media",
-     "Authenticity wins. 🎯 Here's how our team crafted a brand voice that resonates with "
-     "over 100K followers. Thread 🧵 #BrandStrategy #MarketingTips",
-     "draft", True),
-    (3, 0, "Holiday Recap: Record-Breaking Results", "email",
-     "Dear {{first_name}}, The numbers are in! Our holiday campaign exceeded every benchmark. "
-     "Revenue up 47%, engagement up 62%, and new customer acquisition up 31%.",
-     "published", False),
+    (
+        0,
+        0,
+        "Introducing Astra 2.0 — What's New",
+        "blog_post",
+        "We're thrilled to announce Astra 2.0, featuring a completely redesigned dashboard, "
+        "AI-powered campaign suggestions, and real-time analytics. Here's everything you need to know...",
+        "published",
+        False,
+    ),
+    (
+        5,
+        1,
+        "Spring Sale: Up to 40% Off All Plans",
+        "email",
+        "Hi {{first_name}}, Spring is here and so are the savings! For a limited time, enjoy up to "
+        "40% off all Acme Corp plans. Don't miss out — this offer ends March 31.",
+        "published",
+        False,
+    ),
+    (
+        6,
+        1,
+        "5 AI Trends Marketers Can't Ignore in 2026",
+        "blog_post",
+        "Artificial intelligence continues to reshape digital marketing. From predictive audience "
+        "segmentation to generative ad creative, here are the top five trends shaping the industry...",
+        "review",
+        True,
+    ),
+    (
+        1,
+        0,
+        "Behind the Scenes: Building Our Brand Voice",
+        "social_media",
+        "Authenticity wins. 🎯 Here's how our team crafted a brand voice that resonates with "
+        "over 100K followers. Thread 🧵 #BrandStrategy #MarketingTips",
+        "draft",
+        True,
+    ),
+    (
+        3,
+        0,
+        "Holiday Recap: Record-Breaking Results",
+        "email",
+        "Dear {{first_name}}, The numbers are in! Our holiday campaign exceeded every benchmark. "
+        "Revenue up 47%, engagement up 62%, and new customer acquisition up 31%.",
+        "published",
+        False,
+    ),
 ]
 
 WORKFLOWS_DATA = [
     # (org_index, name, description, status, nodes, edges)
-    (0, "Campaign Launch Pipeline",
-     "Automated workflow for launching new campaigns with approval gates",
-     "active",
-     [
-         {"id": "node-1", "type": "trigger", "label": "Campaign Created", "config": {"event": "campaign.created"}},
-         {"id": "node-2", "type": "condition", "label": "Budget Check", "config": {"field": "budget_amount", "operator": "gt", "value": 10000}},
-         {"id": "node-3", "type": "action", "label": "Request Approval", "config": {"assignee_role": "admin"}},
-         {"id": "node-4", "type": "action", "label": "Activate Campaign", "config": {"status": "active"}},
-     ],
-     [
-         {"source": "node-1", "target": "node-2"},
-         {"source": "node-2", "target": "node-3", "label": "high budget"},
-         {"source": "node-2", "target": "node-4", "label": "low budget"},
-         {"source": "node-3", "target": "node-4"},
-     ]),
-    (1, "Content Approval Flow",
-     "Routes content through review stages before publishing",
-     "active",
-     [
-         {"id": "node-1", "type": "trigger", "label": "Content Submitted", "config": {"event": "content.submitted"}},
-         {"id": "node-2", "type": "action", "label": "AI Quality Check", "config": {"service": "ai_review"}},
-         {"id": "node-3", "type": "action", "label": "Editor Review", "config": {"assignee_role": "admin"}},
-         {"id": "node-4", "type": "action", "label": "Publish", "config": {"status": "published"}},
-     ],
-     [
-         {"source": "node-1", "target": "node-2"},
-         {"source": "node-2", "target": "node-3"},
-         {"source": "node-3", "target": "node-4"},
-     ]),
-    (1, "Weekly Reporting",
-     "Generates and distributes weekly performance reports",
-     "draft",
-     [
-         {"id": "node-1", "type": "trigger", "label": "Schedule", "config": {"cron": "0 9 * * 1"}},
-         {"id": "node-2", "type": "action", "label": "Collect Metrics", "config": {"sources": ["campaigns", "content", "analytics"]}},
-         {"id": "node-3", "type": "action", "label": "Generate Report", "config": {"format": "pdf"}},
-         {"id": "node-4", "type": "action", "label": "Email Report", "config": {"recipients": "team"}},
-     ],
-     [
-         {"source": "node-1", "target": "node-2"},
-         {"source": "node-2", "target": "node-3"},
-         {"source": "node-3", "target": "node-4"},
-     ]),
+    (
+        0,
+        "Campaign Launch Pipeline",
+        "Automated workflow for launching new campaigns with approval gates",
+        "active",
+        [
+            {
+                "id": "node-1",
+                "type": "trigger",
+                "label": "Campaign Created",
+                "config": {"event": "campaign.created"},
+            },
+            {
+                "id": "node-2",
+                "type": "condition",
+                "label": "Budget Check",
+                "config": {"field": "budget_amount", "operator": "gt", "value": 10000},
+            },
+            {
+                "id": "node-3",
+                "type": "action",
+                "label": "Request Approval",
+                "config": {"assignee_role": "admin"},
+            },
+            {
+                "id": "node-4",
+                "type": "action",
+                "label": "Activate Campaign",
+                "config": {"status": "active"},
+            },
+        ],
+        [
+            {"source": "node-1", "target": "node-2"},
+            {"source": "node-2", "target": "node-3", "label": "high budget"},
+            {"source": "node-2", "target": "node-4", "label": "low budget"},
+            {"source": "node-3", "target": "node-4"},
+        ],
+    ),
+    (
+        1,
+        "Content Approval Flow",
+        "Routes content through review stages before publishing",
+        "active",
+        [
+            {
+                "id": "node-1",
+                "type": "trigger",
+                "label": "Content Submitted",
+                "config": {"event": "content.submitted"},
+            },
+            {
+                "id": "node-2",
+                "type": "action",
+                "label": "AI Quality Check",
+                "config": {"service": "ai_review"},
+            },
+            {
+                "id": "node-3",
+                "type": "action",
+                "label": "Editor Review",
+                "config": {"assignee_role": "admin"},
+            },
+            {
+                "id": "node-4",
+                "type": "action",
+                "label": "Publish",
+                "config": {"status": "published"},
+            },
+        ],
+        [
+            {"source": "node-1", "target": "node-2"},
+            {"source": "node-2", "target": "node-3"},
+            {"source": "node-3", "target": "node-4"},
+        ],
+    ),
+    (
+        1,
+        "Weekly Reporting",
+        "Generates and distributes weekly performance reports",
+        "draft",
+        [
+            {
+                "id": "node-1",
+                "type": "trigger",
+                "label": "Schedule",
+                "config": {"cron": "0 9 * * 1"},
+            },
+            {
+                "id": "node-2",
+                "type": "action",
+                "label": "Collect Metrics",
+                "config": {"sources": ["campaigns", "content", "analytics"]},
+            },
+            {
+                "id": "node-3",
+                "type": "action",
+                "label": "Generate Report",
+                "config": {"format": "pdf"},
+            },
+            {
+                "id": "node-4",
+                "type": "action",
+                "label": "Email Report",
+                "config": {"recipients": "team"},
+            },
+        ],
+        [
+            {"source": "node-1", "target": "node-2"},
+            {"source": "node-2", "target": "node-3"},
+            {"source": "node-3", "target": "node-4"},
+        ],
+    ),
 ]
 
 NOTIFICATIONS_DATA = [
     # (user_index, org_index, type, title, body, resource_type, channel, is_read)
-    (0, 0, "campaign.status_changed", "Campaign Activated",
-     "Q1 Product Launch has been moved to active status.", "campaign", "in_app", False),
-    (0, 0, "content.published", "Content Published",
-     "Your blog post 'Introducing Astra 2.0' has been published successfully.", "content", "in_app", True),
-    (0, 0, "workflow.completed", "Workflow Completed",
-     "Campaign Launch Pipeline finished executing for Holiday Retargeting.", "workflow", "in_app", False),
-    (1, 1, "team.member_joined", "New Team Member",
-     "Mike Johnson has joined Acme Corp as an operator.", "team_member", "in_app", True),
-    (1, 1, "campaign.status_changed", "Campaign Paused",
-     "App Onboarding Flow has been paused by the system.", "campaign", "email", False),
-    (1, 1, "content.review_requested", "Review Requested",
-     "5 AI Trends Marketers Can't Ignore in 2026 is ready for editorial review.", "content", "in_app", False),
-    (2, 1, "campaign.assigned", "Campaign Assigned",
-     "You've been assigned to Spring Sale Blitz.", "campaign", "in_app", False),
-    (2, 1, "content.comment", "New Comment",
-     "Sarah Chen commented on 'Spring Sale: Up to 40% Off All Plans'.", "content", "in_app", True),
-    (0, 0, "system.maintenance", "Scheduled Maintenance",
-     "Platform maintenance is scheduled for Sunday 2 AM–4 AM UTC.", "system", "email", False),
-    (2, 1, "workflow.failed", "Workflow Error",
-     "Weekly Reporting failed: missing data source configuration.", "workflow", "in_app", False),
+    (
+        0,
+        0,
+        "campaign.status_changed",
+        "Campaign Activated",
+        "Q1 Product Launch has been moved to active status.",
+        "campaign",
+        "in_app",
+        False,
+    ),
+    (
+        0,
+        0,
+        "content.published",
+        "Content Published",
+        "Your blog post 'Introducing Astra 2.0' has been published successfully.",
+        "content",
+        "in_app",
+        True,
+    ),
+    (
+        0,
+        0,
+        "workflow.completed",
+        "Workflow Completed",
+        "Campaign Launch Pipeline finished executing for Holiday Retargeting.",
+        "workflow",
+        "in_app",
+        False,
+    ),
+    (
+        1,
+        1,
+        "team.member_joined",
+        "New Team Member",
+        "Mike Johnson has joined Acme Corp as an operator.",
+        "team_member",
+        "in_app",
+        True,
+    ),
+    (
+        1,
+        1,
+        "campaign.status_changed",
+        "Campaign Paused",
+        "App Onboarding Flow has been paused by the system.",
+        "campaign",
+        "email",
+        False,
+    ),
+    (
+        1,
+        1,
+        "content.review_requested",
+        "Review Requested",
+        "5 AI Trends Marketers Can't Ignore in 2026 is ready for editorial review.",
+        "content",
+        "in_app",
+        False,
+    ),
+    (
+        2,
+        1,
+        "campaign.assigned",
+        "Campaign Assigned",
+        "You've been assigned to Spring Sale Blitz.",
+        "campaign",
+        "in_app",
+        False,
+    ),
+    (
+        2,
+        1,
+        "content.comment",
+        "New Comment",
+        "Sarah Chen commented on 'Spring Sale: Up to 40% Off All Plans'.",
+        "content",
+        "in_app",
+        True,
+    ),
+    (
+        0,
+        0,
+        "system.maintenance",
+        "Scheduled Maintenance",
+        "Platform maintenance is scheduled for Sunday 2 AM–4 AM UTC.",
+        "system",
+        "email",
+        False,
+    ),
+    (
+        2,
+        1,
+        "workflow.failed",
+        "Workflow Error",
+        "Weekly Reporting failed: missing data source configuration.",
+        "workflow",
+        "in_app",
+        False,
+    ),
 ]
 
 
@@ -359,7 +545,15 @@ async def seed() -> None:
 
         # --- Content Items -----------------------------------------------
         contents: list[ContentModel] = []
-        for camp_idx, org_idx, title, content_type, body, status, gen_ai in CONTENT_DATA:
+        for (
+            camp_idx,
+            org_idx,
+            title,
+            content_type,
+            body,
+            status,
+            gen_ai,
+        ) in CONTENT_DATA:
             campaign_id = campaigns[camp_idx].id if camp_idx is not None else None
             created_by = users[0 if org_idx == 0 else 1].id
 
@@ -402,7 +596,16 @@ async def seed() -> None:
 
         # --- Notifications -----------------------------------------------
         notifications: list[NotificationModel] = []
-        for user_idx, org_idx, ntype, title, body, resource_type, channel, is_read in NOTIFICATIONS_DATA:
+        for (
+            user_idx,
+            org_idx,
+            ntype,
+            title,
+            body,
+            resource_type,
+            channel,
+            is_read,
+        ) in NOTIFICATIONS_DATA:
             read_at = now if is_read else None
 
             notification = NotificationModel(

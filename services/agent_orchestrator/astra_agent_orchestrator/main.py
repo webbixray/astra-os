@@ -13,6 +13,7 @@ import time
 import asyncpg
 import redis.asyncio as redis
 from pydantic_settings import BaseSettings
+
 from astra_agent_orchestrator.dlq import create_dlq_consumer
 from astra_agent_orchestrator.memory import MemoryManager
 from astra_agent_orchestrator.supervisor import Supervisor, SupervisorConfig
@@ -239,11 +240,13 @@ class AgentOrchestrator:
         async def health_live(request):
             """Liveness probe - always returns ok if process is alive."""
             uptime = time.monotonic() - _START_MONOTONIC
-            return web.json_response({
-                "status": "ok",
-                "uptime_seconds": uptime,
-                "version": "0.1.0",
-            })
+            return web.json_response(
+                {
+                    "status": "ok",
+                    "uptime_seconds": uptime,
+                    "version": "0.1.0",
+                }
+            )
 
         async def health_ready(request):
             """Readiness probe - checks dependencies."""
@@ -276,10 +279,13 @@ class AgentOrchestrator:
                 all_healthy = False
 
             status = 200 if all_healthy else 503
-            return web.json_response({
-                "ready": all_healthy,
-                "checks": checks,
-            }, status=status)
+            return web.json_response(
+                {
+                    "ready": all_healthy,
+                    "checks": checks,
+                },
+                status=status,
+            )
 
         async def metrics_endpoint(request):
             """Prometheus metrics endpoint."""
@@ -313,10 +319,12 @@ async def main() -> None:
     otlp_endpoint = os.getenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT")
     if otlp_endpoint:
         from astra_agent_orchestrator.telemetry import init_tracing
+
         init_tracing("astra-agent-orchestrator", otlp_endpoint)
         logger.info("OpenTelemetry tracing initialized with endpoint: %s", otlp_endpoint)
     else:
         from astra_agent_orchestrator.telemetry import get_tracer
+
         get_tracer()  # Initialize noop tracer
         logger.info("OpenTelemetry tracing initialized (noop - no OTLP endpoint)")
 
@@ -324,13 +332,15 @@ async def main() -> None:
     orchestrator = AgentOrchestrator(settings)
 
     # Create supervisor with config
-    supervisor = Supervisor(SupervisorConfig(
-        max_restarts=10,
-        restart_window_seconds=600,
-        base_backoff_seconds=1.0,
-        max_backoff_seconds=60.0,
-        backoff_multiplier=2.0,
-    ))
+    supervisor = Supervisor(
+        SupervisorConfig(
+            max_restarts=10,
+            restart_window_seconds=600,
+            base_backoff_seconds=1.0,
+            max_backoff_seconds=60.0,
+            backoff_multiplier=2.0,
+        )
+    )
 
     async def run_orchestrator():
         await orchestrator.run()
@@ -349,6 +359,7 @@ async def main() -> None:
     finally:
         # Shutdown OpenTelemetry
         from astra_agent_orchestrator.telemetry import shutdown_tracing
+
         shutdown_tracing()
         logger.info("OpenTelemetry tracing shutdown complete")
 

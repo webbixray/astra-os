@@ -172,8 +172,7 @@ class DeadLetterQueue:
 
         if filter_original_stream:
             dead_letters = [
-                dl for dl in dead_letters
-                if dl.original_stream == filter_original_stream
+                dl for dl in dead_letters if dl.original_stream == filter_original_stream
             ]
 
         count = 0
@@ -304,7 +303,7 @@ class DLQConsumer:
                 await self.redis.xack(self.stream, self.group_name, msg_id)
 
                 # Wait before retry with exponential backoff
-                await asyncio.sleep(min(2 ** retry_count, 30))
+                await asyncio.sleep(min(2**retry_count, 30))
 
     async def _claim_stale_messages(self) -> None:
         """Claim messages that have been pending too long."""

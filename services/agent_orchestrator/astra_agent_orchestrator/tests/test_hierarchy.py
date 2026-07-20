@@ -3,6 +3,7 @@
 import uuid
 
 import pytest
+
 from astra_agent_orchestrator.agent import (
     AgentMessage,
     AgentRegistry,
@@ -162,9 +163,7 @@ class TestHandoffManager:
     """Tests for handoff management."""
 
     @pytest.mark.asyncio
-    async def test_handle_handoff_request_accept(
-        self, handoff_manager: HandoffManager
-    ) -> None:
+    async def test_handle_handoff_request_accept(self, handoff_manager: HandoffManager) -> None:
 
         registry = AgentRegistry()
         agent = registry.create_agent(AgentType.CONTENT_SPECIALIST, uuid.uuid4())
@@ -180,9 +179,7 @@ class TestHandoffManager:
         assert response.accepted is True
 
     @pytest.mark.asyncio
-    async def test_handle_handoff_request_reject(
-        self, handoff_manager: HandoffManager
-    ) -> None:
+    async def test_handle_handoff_request_reject(self, handoff_manager: HandoffManager) -> None:
 
         registry = AgentRegistry()
         agent = registry.create_agent(AgentType.CONTENT_SPECIALIST, uuid.uuid4())

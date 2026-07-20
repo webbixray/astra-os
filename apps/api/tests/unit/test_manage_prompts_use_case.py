@@ -34,7 +34,10 @@ def use_case(mock_manager):
 
 class TestManagePromptsUseCase:
     async def test_list_prompts_delegates_to_repo(self, use_case, mock_repo):
-        expected = [SystemPrompt.create(name="a", content="a"), SystemPrompt.create(name="b", content="b")]
+        expected = [
+            SystemPrompt.create(name="a", content="a"),
+            SystemPrompt.create(name="b", content="b"),
+        ]
         mock_repo.list_all.return_value = expected
         result = await use_case.list_prompts()
         assert result == expected

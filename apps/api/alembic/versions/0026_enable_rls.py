@@ -81,7 +81,8 @@ def upgrade() -> None:
         # Check if table has tenant_id or organization_id column
         # Use a safe approach with parameterized queries
         safe_table = table.replace("-", "_").replace(";", "")  # Basic sanitization
-        op.execute(sa.text("""
+        op.execute(
+            sa.text("""
             DO $$
             BEGIN
                 -- Check for tenant_id column
@@ -113,19 +114,27 @@ def upgrade() -> None:
                     );
                 END IF;
             END $$;
-        """), {"table_name": safe_table})
+        """),
+            {"table_name": safe_table},
+        )
 
     # Special handling for audit_logs (partitioned table)
     op.execute("ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY")
-    op.execute("CREATE POLICY audit_logs_tenant_isolation ON audit_logs USING (tenant_id = current_tenant_id())")
+    op.execute(
+        "CREATE POLICY audit_logs_tenant_isolation ON audit_logs USING (tenant_id = current_tenant_id())"
+    )
 
     # Special handling for outbox table
     op.execute("ALTER TABLE outbox ENABLE ROW LEVEL SECURITY")
-    op.execute("CREATE POLICY outbox_tenant_isolation ON outbox USING (true)")  # Outbox is tenant-agnostic; access controlled at app layer
+    op.execute(
+        "CREATE POLICY outbox_tenant_isolation ON outbox USING (true)"
+    )  # Outbox is tenant-agnostic; access controlled at app layer
 
     # Special handling for embeddings table
     op.execute("ALTER TABLE embeddings ENABLE ROW LEVEL SECURITY")
-    op.execute("CREATE POLICY embeddings_tenant_isolation ON embeddings USING (tenant_id = current_tenant_id())")
+    op.execute(
+        "CREATE POLICY embeddings_tenant_isolation ON embeddings USING (tenant_id = current_tenant_id())"
+    )
 
 
 def downgrade() -> None:

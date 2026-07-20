@@ -133,18 +133,14 @@ class WorkflowVersionService:
 
         return version
 
-    async def list_versions(
-        self, workflow_id: UUID, limit: int = 50
-    ) -> list[WorkflowVersion]:
+    async def list_versions(self, workflow_id: UUID, limit: int = 50) -> list[WorkflowVersion]:
         """List all versions for a workflow."""
         versions = await self.repo.find_versions_by_workflow(workflow_id)
         # Sort by version number descending (newest first)
         versions.sort(key=lambda v: v.version_number, reverse=True)
         return versions[:limit]
 
-    async def get_version(
-        self, workflow_id: UUID, version_number: int
-    ) -> WorkflowVersion | None:
+    async def get_version(self, workflow_id: UUID, version_number: int) -> WorkflowVersion | None:
         """Get a specific version by number."""
         versions = await self.repo.find_versions_by_workflow(workflow_id)
         for v in versions:
@@ -183,8 +179,7 @@ class WorkflowVersionService:
         await self.create_version(
             workflow=saved_workflow,
             created_by=restored_by,
-            change_summary=change_summary
-            or f"Restored from version {version_number}",
+            change_summary=change_summary or f"Restored from version {version_number}",
         )
 
         return saved_workflow
@@ -361,7 +356,9 @@ class WorkflowReplayService:
             workflow_id=execution.workflow_id,
             workflow_name=execution.workflow_name if hasattr(execution, "workflow_name") else "",
             workflow_version=workflow_version,
-            status=execution.status.value if hasattr(execution.status, "value") else execution.status,
+            status=execution.status.value
+            if hasattr(execution.status, "value")
+            else execution.status,
             started_at=started_at.isoformat() if started_at else "",
             completed_at=completed_at.isoformat() if completed_at else None,
             total_duration_ms=total_duration,
@@ -398,7 +395,9 @@ class WorkflowReplayService:
         # Re-run with same context
         replay_context = {**(execution.metadata.get("context", {})), **(context or {})}
 
-        new_execution = await runner.execute(workflow, execution.organization_id, execution.triggered_by)
+        new_execution = await runner.execute(
+            workflow, execution.organization_id, execution.triggered_by
+        )
         new_execution.metadata = {
             **new_execution.metadata,
             "replay_of": str(execution_id),
@@ -408,9 +407,7 @@ class WorkflowReplayService:
 
         return await self.get_replay(new_execution.id)
 
-    async def step_through_execution(
-        self, execution_id: UUID
-    ) -> list[ExecutionReplayStep]:
+    async def step_through_execution(self, execution_id: UUID) -> list[ExecutionReplayStep]:
         """Get steps for step-through debugging."""
         replay = await self.get_replay(execution_id)
         if not replay:
@@ -488,7 +485,7 @@ class WorkflowExecutionReplayedEvent(DomainEvent):
             data={
                 "original_execution_id": str(original_execution_id),
                 "new_execution_id": str(new_execution_id),
-                                "workflow_id": str(workflow_id),
-                            },
-                            **kwargs,
-                        )
+                "workflow_id": str(workflow_id),
+            },
+            **kwargs,
+        )

@@ -75,6 +75,7 @@ DELEGATIONS = Counter(
 # Recording Functions
 # ============================================================================
 
+
 def record_agent_run(
     agent_type: str,
     success: bool,
@@ -148,6 +149,7 @@ def record_delegation(
 # ============================================================================
 # Context Managers for Automatic Metrics
 # ============================================================================
+
 
 @dataclass
 class RunTracker:
@@ -248,6 +250,7 @@ def track_agent_run(
 # ============================================================================
 # Prometheus Exposition
 # ============================================================================
+
 
 def get_metrics_response() -> tuple[bytes, str]:
     """Get Prometheus metrics in exposition format.

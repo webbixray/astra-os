@@ -11,7 +11,6 @@ if TYPE_CHECKING:
     from app.infrastructure.db.repositories.content.content_repository import ContentRepositoryImpl
 
 
-
 class AnalyticsService:
     def __init__(
         self,
@@ -223,16 +222,18 @@ class AnalyticsService:
         # Mock attribution data - in production this would come from actual tracking
         items = []
         for c in campaigns:
-            items.append({
-                "source": "organic",
-                "channel": c.channels[0] if c.channels else "unknown",
-                "campaign_id": str(c.id),
-                "campaign_name": c.name,
-                "attributed_revenue": float(c.budget_amount or 0) * 0.1,  # Mock 10% revenue
-                "attributed_conversions": 0,
-                "touchpoint_count": 1,
-                "confidence": 0.7,
-            })
+            items.append(
+                {
+                    "source": "organic",
+                    "channel": c.channels[0] if c.channels else "unknown",
+                    "campaign_id": str(c.id),
+                    "campaign_name": c.name,
+                    "attributed_revenue": float(c.budget_amount or 0) * 0.1,  # Mock 10% revenue
+                    "attributed_conversions": 0,
+                    "touchpoint_count": 1,
+                    "confidence": 0.7,
+                }
+            )
 
         total_attributed = sum(i["attributed_revenue"] for i in items)
 
@@ -274,17 +275,27 @@ class AnalyticsService:
         while current <= end_date:
             # Mock data for demonstration
             if metric == "campaigns":
-                value = len(await self.campaign_repo.find_by_organization_and_date_range(organization_id, current, current + interval))
+                value = len(
+                    await self.campaign_repo.find_by_organization_and_date_range(
+                        organization_id, current, current + interval
+                    )
+                )
             elif metric == "content":
-                value = len(await self.content_repo.find_by_organization_and_date_range(organization_id, current, current + interval))
+                value = len(
+                    await self.content_repo.find_by_organization_and_date_range(
+                        organization_id, current, current + interval
+                    )
+                )
             else:
                 value = 0
 
-            points.append({
-                "timestamp": current.isoformat(),
-                "value": float(value),
-                "label": current.strftime(fmt),
-            })
+            points.append(
+                {
+                    "timestamp": current.isoformat(),
+                    "value": float(value),
+                    "label": current.strftime(fmt),
+                }
+            )
             current += interval
 
         return {

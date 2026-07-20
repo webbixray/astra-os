@@ -24,9 +24,9 @@ from app.domain.exceptions.domain_exceptions import ValidationError
 class AutonomyLevel(int, Enum):
     """How much independence an agent has."""
 
-    ADVISORY = 0     # Suggestions only — human approves everything
-    SEMI_AUTO = 1    # Low-risk auto, high-risk needs approval
-    FULL_AUTO = 2    # Full automation — audit log only
+    ADVISORY = 0  # Suggestions only — human approves everything
+    SEMI_AUTO = 1  # Low-risk auto, high-risk needs approval
+    FULL_AUTO = 2  # Full automation — audit log only
 
 
 # Risk classification for common agent actions
@@ -40,7 +40,6 @@ ACTION_RISK_LEVELS: dict[str, int] = {
     "research.competitors": 1,
     "research.trends": 1,
     "workflow.status": 1,
-
     # Medium risk (needs approval at ADVISORY)
     "campaign.create": 1,
     "campaign.update": 1,
@@ -50,7 +49,6 @@ ACTION_RISK_LEVELS: dict[str, int] = {
     "bid.update": 1,
     "audience.target": 1,
     "schedule.update": 1,
-
     # High risk (needs approval even at SEMI_AUTO)
     "campaign.launch": 2,
     "campaign.pause": 2,
@@ -137,7 +135,9 @@ class AutonomyConfig:
             return self.agent_levels[agent_type]
         return self.default_level
 
-    def can_auto_execute(self, action: str, amount: float = 0.0, agent_type: str | None = None) -> bool:
+    def can_auto_execute(
+        self, action: str, amount: float = 0.0, agent_type: str | None = None
+    ) -> bool:
         """Determine if an action can be auto-executed without approval.
 
         Returns True if the action is within the autonomy level and spend limits.
@@ -252,12 +252,14 @@ class AgentAction:
         result: str = "",
     ) -> None:
         """Add a step to the reasoning trace."""
-        self.reasoning_trace.append({
-            "step": step,
-            "thought": thought,
-            "action": action_taken,
-            "result": result,
-        })
+        self.reasoning_trace.append(
+            {
+                "step": step,
+                "thought": thought,
+                "action": action_taken,
+                "result": result,
+            }
+        )
 
     def to_explanation(self) -> str:
         """Generate a natural language explanation of this action."""

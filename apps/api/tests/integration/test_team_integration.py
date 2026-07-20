@@ -50,7 +50,10 @@ class TestTeamIntegration:
         return resp.json()
 
     async def _create_org_with_owner(
-        self, integration_session_factory, user_id: UUID, name: str = "Team Org",
+        self,
+        integration_session_factory,
+        user_id: UUID,
+        name: str = "Team Org",
         slug: str = "team-org",
     ) -> UUID:
         async with integration_session_factory() as session:
@@ -59,7 +62,9 @@ class TestTeamIntegration:
             org = Organization.create(name=name, slug=slug)
             org = await org_repo.save(org)
             member = TeamMember.create(
-                organization_id=org.id, user_id=user_id, role="owner",
+                organization_id=org.id,
+                user_id=user_id,
+                role="owner",
             )
             await member_repo.save(member)
             await session.commit()
@@ -69,7 +74,8 @@ class TestTeamIntegration:
         owner = await self._signup(test_client, "teamowner@test.com")
         owner_id = UUID(owner["user"]["id"])
         org_id = await self._create_org_with_owner(
-            integration_session_factory, owner_id,
+            integration_session_factory,
+            owner_id,
         )
         test_client.headers["Authorization"] = f"Bearer {owner['access_token']}"
 
@@ -92,7 +98,8 @@ class TestTeamIntegration:
         owner = await self._signup(test_client, "listteams@test.com")
         owner_id = UUID(owner["user"]["id"])
         org_id = await self._create_org_with_owner(
-            integration_session_factory, owner_id,
+            integration_session_factory,
+            owner_id,
         )
         test_client.headers["Authorization"] = f"Bearer {owner['access_token']}"
 
@@ -101,7 +108,9 @@ class TestTeamIntegration:
         async with integration_session_factory() as session:
             member_repo = TeamMemberRepositoryImpl(session)
             member = TeamMember.create(
-                organization_id=org_id, user_id=second_id, role="member",
+                organization_id=org_id,
+                user_id=second_id,
+                role="member",
             )
             await member_repo.save(member)
             await session.commit()
@@ -121,7 +130,8 @@ class TestTeamIntegration:
         owner = await self._signup(test_client, "updaterole@test.com")
         owner_id = UUID(owner["user"]["id"])
         org_id = await self._create_org_with_owner(
-            integration_session_factory, owner_id,
+            integration_session_factory,
+            owner_id,
         )
         test_client.headers["Authorization"] = f"Bearer {owner['access_token']}"
 
@@ -130,7 +140,9 @@ class TestTeamIntegration:
         async with integration_session_factory() as session:
             member_repo = TeamMemberRepositoryImpl(session)
             member = TeamMember.create(
-                organization_id=org_id, user_id=target_id, role="member",
+                organization_id=org_id,
+                user_id=target_id,
+                role="member",
             )
             member = await member_repo.save(member)
             member_id = member.id
@@ -154,7 +166,8 @@ class TestTeamIntegration:
         owner = await self._signup(test_client, "removeteam@test.com")
         owner_id = UUID(owner["user"]["id"])
         org_id = await self._create_org_with_owner(
-            integration_session_factory, owner_id,
+            integration_session_factory,
+            owner_id,
         )
         test_client.headers["Authorization"] = f"Bearer {owner['access_token']}"
 
@@ -163,7 +176,9 @@ class TestTeamIntegration:
         async with integration_session_factory() as session:
             member_repo = TeamMemberRepositoryImpl(session)
             member = TeamMember.create(
-                organization_id=org_id, user_id=target_id, role="member",
+                organization_id=org_id,
+                user_id=target_id,
+                role="member",
             )
             member = await member_repo.save(member)
             member_id = member.id
@@ -182,7 +197,8 @@ class TestTeamIntegration:
         owner = await self._signup(test_client, "invitenonexist@test.com")
         owner_id = UUID(owner["user"]["id"])
         org_id = await self._create_org_with_owner(
-            integration_session_factory, owner_id,
+            integration_session_factory,
+            owner_id,
         )
         test_client.headers["Authorization"] = f"Bearer {owner['access_token']}"
 
@@ -200,7 +216,8 @@ class TestTeamIntegration:
         owner = await self._signup(test_client, "invitedupe@test.com")
         owner_id = UUID(owner["user"]["id"])
         org_id = await self._create_org_with_owner(
-            integration_session_factory, owner_id,
+            integration_session_factory,
+            owner_id,
         )
         test_client.headers["Authorization"] = f"Bearer {owner['access_token']}"
 
@@ -209,7 +226,9 @@ class TestTeamIntegration:
         async with integration_session_factory() as session:
             member_repo = TeamMemberRepositoryImpl(session)
             member = TeamMember.create(
-                organization_id=org_id, user_id=target_id, role="member",
+                organization_id=org_id,
+                user_id=target_id,
+                role="member",
             )
             await member_repo.save(member)
             await session.commit()
@@ -235,7 +254,8 @@ class TestTeamIntegration:
         owner = await self._signup(test_client, "removeself@test.com")
         owner_id = UUID(owner["user"]["id"])
         org_id = await self._create_org_with_owner(
-            integration_session_factory, owner_id,
+            integration_session_factory,
+            owner_id,
         )
         test_client.headers["Authorization"] = f"Bearer {owner['access_token']}"
 

@@ -752,7 +752,11 @@ def downgrade() -> None:
 
     # Drop unique constraints
     op.drop_constraint("uq_report_templates_org_name", "report_templates", type_="unique")
-    op.drop_constraint("uq_notification_preferences_user_type_channel", "user_notification_preferences", type_="unique")
+    op.drop_constraint(
+        "uq_notification_preferences_user_type_channel",
+        "user_notification_preferences",
+        type_="unique",
+    )
     op.drop_constraint("uq_campaign_budget_campaign", "campaign_budgets", type_="unique")
     op.drop_constraint("uq_feature_flags_org_key", "org_feature_flags", type_="unique")
 

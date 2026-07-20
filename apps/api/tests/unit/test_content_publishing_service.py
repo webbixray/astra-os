@@ -89,7 +89,10 @@ class TestPublish:
 
     async def test_publish_immediate_no_adapter(self, service):
         service.repo.save = AsyncMock(side_effect=lambda p: p)
-        with patch("app.application.use_cases.content.content_publishing_service.get_adapter", return_value=None):
+        with patch(
+            "app.application.use_cases.content.content_publishing_service.get_adapter",
+            return_value=None,
+        ):
             with pytest.raises(ValidationError, match="No adapter found for platform"):
                 await service.publish(content_id=uuid4(), platform=VALID_PLATFORM)
 
@@ -104,7 +107,10 @@ class TestPublish:
         content.id = uuid4()
         service._content_repo.find_by_id = AsyncMock(return_value=content)
 
-        with patch("app.application.use_cases.content.content_publishing_service.get_adapter", return_value=adapter):
+        with patch(
+            "app.application.use_cases.content.content_publishing_service.get_adapter",
+            return_value=adapter,
+        ):
             result = await service.publish(content_id=uuid4(), platform=VALID_PLATFORM)
 
         assert result == saved_pub
@@ -124,7 +130,10 @@ class TestPublish:
         content.id = uuid4()
         service._content_repo.find_by_id = AsyncMock(return_value=content)
 
-        with patch("app.application.use_cases.content.content_publishing_service.get_adapter", return_value=adapter):
+        with patch(
+            "app.application.use_cases.content.content_publishing_service.get_adapter",
+            return_value=adapter,
+        ):
             await service.publish(content_id=uuid4(), platform=VALID_PLATFORM)
 
         saved_pub.mark_failed.assert_called_once_with("API timeout")
@@ -139,7 +148,10 @@ class TestPublish:
 
         service._content_repo.find_by_id = AsyncMock(return_value=None)
 
-        with patch("app.application.use_cases.content.content_publishing_service.get_adapter", return_value=adapter):
+        with patch(
+            "app.application.use_cases.content.content_publishing_service.get_adapter",
+            return_value=adapter,
+        ):
             with pytest.raises(EntityNotFoundError):
                 await service.publish(content_id=uuid4(), platform=VALID_PLATFORM)
 
@@ -150,7 +162,10 @@ class TestPublish:
         adapter = MagicMock()
         adapter.publish = AsyncMock()
 
-        with patch("app.application.use_cases.content.content_publishing_service.get_adapter", return_value=adapter):
+        with patch(
+            "app.application.use_cases.content.content_publishing_service.get_adapter",
+            return_value=adapter,
+        ):
             with pytest.raises(ValidationError, match="Content repository not available"):
                 await service_no_repo.publish(content_id=uuid4(), platform=VALID_PLATFORM)
 
@@ -254,7 +269,10 @@ class TestRetry:
         content.id = uuid4()
         service._content_repo.find_by_id = AsyncMock(return_value=content)
 
-        with patch("app.application.use_cases.content.content_publishing_service.get_adapter", return_value=adapter):
+        with patch(
+            "app.application.use_cases.content.content_publishing_service.get_adapter",
+            return_value=adapter,
+        ):
             result = await service.retry(uuid4())
 
         assert result == p
@@ -273,7 +291,10 @@ class TestRetry:
         content.id = uuid4()
         service._content_repo.find_by_id = AsyncMock(return_value=content)
 
-        with patch("app.application.use_cases.content.content_publishing_service.get_adapter", return_value=adapter):
+        with patch(
+            "app.application.use_cases.content.content_publishing_service.get_adapter",
+            return_value=adapter,
+        ):
             await service.retry(uuid4())
 
         p.mark_failed.assert_called_once_with("Network error")
@@ -295,6 +316,9 @@ class TestRetry:
         p = make_publish(status="failed", platform="unknown")
         service.repo.find_by_id = AsyncMock(return_value=p)
 
-        with patch("app.application.use_cases.content.content_publishing_service.get_adapter", return_value=None):
+        with patch(
+            "app.application.use_cases.content.content_publishing_service.get_adapter",
+            return_value=None,
+        ):
             with pytest.raises(ValidationError, match="No adapter found"):
                 await service.retry(uuid4())

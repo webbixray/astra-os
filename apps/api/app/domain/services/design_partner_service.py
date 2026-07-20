@@ -339,12 +339,16 @@ class DesignPartnerService:
                 "weekly_active_users": partner.weekly_active_users,
                 "campaigns_run": partner.campaigns_run,
                 "ai_interactions": partner.ai_interactions,
-                "last_engagement": partner.last_engagement_at.isoformat() if partner.last_engagement_at else None,
+                "last_engagement": partner.last_engagement_at.isoformat()
+                if partner.last_engagement_at
+                else None,
             },
             "nps": {
                 "score": partner.nps_score,
                 "reason": partner.nps_reason,
-                "responded_at": partner.nps_responded_at.isoformat() if partner.nps_responded_at else None,
+                "responded_at": partner.nps_responded_at.isoformat()
+                if partner.nps_responded_at
+                else None,
             },
             "support": {
                 "open_tickets": partner.open_tickets,
@@ -371,7 +375,10 @@ class DesignPartnerService:
             "by_status": by_status,
             "by_tier": by_tier,
             "active_partners": len(active),
-            "avg_nps": sum(p.nps_score for p in active if p.nps_score) / len([p for p in active if p.nps_score]) if active else 0,
+            "avg_nps": sum(p.nps_score for p in active if p.nps_score)
+            / len([p for p in active if p.nps_score])
+            if active
+            else 0,
             "total_feedback": sum(p.feedback_count for p in all_partners),
             "total_campaigns": sum(p.campaigns_run for p in all_partners),
             "total_ai_interactions": sum(p.ai_interactions for p in all_partners),

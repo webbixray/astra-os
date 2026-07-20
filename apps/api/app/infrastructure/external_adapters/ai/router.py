@@ -330,9 +330,10 @@ class GeminiProvider:
             "generationConfig": {"temperature": 0.7},
         }
 
-        async with httpx.AsyncClient(timeout=60.0) as client, client.stream(
-            "POST", url, params=params, headers=headers, json=json_data
-        ) as response:
+        async with (
+            httpx.AsyncClient(timeout=60.0) as client,
+            client.stream("POST", url, params=params, headers=headers, json=json_data) as response,
+        ):
             response.raise_for_status()
             async for line in response.aiter_lines():
                 if line.startswith("data: "):
@@ -419,36 +420,32 @@ class AIRouter:
         return "unknown"
 
     async def _call_with_circuit_breaker(
-            self,
-            provider: AIProvider,
-            method: str,
-            *args,
-            **kwargs
-        ) -> Any:
-            """Execute a provider method with circuit breaker protection."""
-            provider_name = self._get_provider_name(provider)
-            circuit_breaker = self._circuit_breakers.get(provider_name)
+        self, provider: AIProvider, method: str, *args, **kwargs
+    ) -> Any:
+        """Execute a provider method with circuit breaker protection."""
+        provider_name = self._get_provider_name(provider)
+        circuit_breaker = self._circuit_breakers.get(provider_name)
 
-            # stream_chat returns an async generator, circuit breaker not compatible
-            # Skip circuit breaker for streaming methods
-            if method == "stream_chat":
-                func = getattr(provider, method)
-                return func(*args, **kwargs)
+        # stream_chat returns an async generator, circuit breaker not compatible
+        # Skip circuit breaker for streaming methods
+        if method == "stream_chat":
+            func = getattr(provider, method)
+            return func(*args, **kwargs)
 
-            if circuit_breaker is None:
-                # No circuit breaker, call directly
-                func = getattr(provider, method)
-                return await func(*args, **kwargs)
+        if circuit_breaker is None:
+            # No circuit breaker, call directly
+            func = getattr(provider, method)
+            return await func(*args, **kwargs)
 
-            async def _call():
-                func = getattr(provider, method)
-                return await func(*args, **kwargs)
+        async def _call():
+            func = getattr(provider, method)
+            return await func(*args, **kwargs)
 
-            try:
-                return await circuit_breaker.call(_call)
-            except CircuitOpenError as e:
-                logger.warning("Circuit open for %s, skipping provider: %s", provider_name, e)
-                raise  # Re-raise to trigger fallback
+        try:
+            return await circuit_breaker.call(_call)
+        except CircuitOpenError as e:
+            logger.warning("Circuit open for %s, skipping provider: %s", provider_name, e)
+            raise  # Re-raise to trigger fallback
 
     async def stream_chat(
         self,

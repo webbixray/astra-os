@@ -47,6 +47,7 @@ router = APIRouter()
 
 # ── Request schemas ──────────────────────────────────────────────────
 
+
 class CreateCreativeRequest(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
     type: str = Field(default="image", description="image|video|carousel|text|html")
@@ -70,11 +71,13 @@ class RejectCreativeRequest(BaseModel):
 
 # ── Dependency injection ─────────────────────────────────────────────
 
+
 async def get_creative_repo(db: AsyncSession = Depends(get_db)) -> CreativeRepositoryImpl:
     return CreativeRepositoryImpl(db)
 
 
 # ── Endpoints ────────────────────────────────────────────────────────
+
 
 @router.post("/", status_code=status.HTTP_201_CREATED, summary="Create a creative asset")
 async def create_creative(

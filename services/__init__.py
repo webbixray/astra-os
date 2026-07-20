@@ -19,17 +19,26 @@ class _ServicesModule(ModuleType):
         if not self._loaded:
             try:
                 import astra_agent_orchestrator as _delegated
+
                 self._delegated_module = _delegated
 
                 # Import all public attributes
                 for attr in dir(_delegated):
-                    if not attr.startswith('_'):
+                    if not attr.startswith("_"):
                         setattr(self, attr, getattr(_delegated, attr))
 
                 # Import submodules
                 from astra_agent_orchestrator import (
-                    agent, comms, events, hierarchy, memory, router, resilience, tools
+                    agent,
+                    comms,
+                    events,
+                    hierarchy,
+                    memory,
+                    router,
+                    resilience,
+                    tools,
                 )
+
                 self.agent = agent
                 self.comms = comms
                 self.events = events
@@ -42,6 +51,7 @@ class _ServicesModule(ModuleType):
                 # Try to import agents
                 try:
                     from astra_agent_orchestrator import agents
+
                     self.agents = agents
                 except ImportError:
                     pass
@@ -79,10 +89,11 @@ class _LazySubModule(ModuleType):
     def _ensure_loaded(self):
         if self._target is None:
             import astra_agent_orchestrator
+
             self._target = getattr(astra_agent_orchestrator, self._target_name)
             # Copy all public attributes
             for attr in dir(self._target):
-                if not attr.startswith('_'):
+                if not attr.startswith("_"):
                     setattr(self, attr, getattr(self._target, attr))
 
     def __getattr__(self, name):
@@ -100,31 +111,32 @@ class _LazySubModule(ModuleType):
 
 # Create lazy submodules
 for _submod, _target in [
-    ('agent', 'agent'),
-    ('agents', 'agents'),
-    ('comms', 'comms'),
-    ('events', 'events'),
-    ('hierarchy', 'hierarchy'),
-    ('memory', 'memory'),
-    ('router', 'router'),
-    ('resilience', 'resilience'),
-    ('tools', 'tools'),
-    ('governance', 'governance'),
-    ('telemetry', 'telemetry'),
-    ('tests', 'tests'),
-    ('base', 'agents.base'),
-    ('dlq', 'dlq'),
-    ('metrics', 'metrics'),
-    ('supervisor', 'supervisor'),
+    ("agent", "agent"),
+    ("agents", "agents"),
+    ("comms", "comms"),
+    ("events", "events"),
+    ("hierarchy", "hierarchy"),
+    ("memory", "memory"),
+    ("router", "router"),
+    ("resilience", "resilience"),
+    ("tools", "tools"),
+    ("governance", "governance"),
+    ("telemetry", "telemetry"),
+    ("tests", "tests"),
+    ("base", "agents.base"),
+    ("dlq", "dlq"),
+    ("metrics", "metrics"),
+    ("supervisor", "supervisor"),
 ]:
-    sys.modules[f'services.{_submod}'] = _LazySubModule(f'services.{_submod}', _target)
+    sys.modules[f"services.{_submod}"] = _LazySubModule(f"services.{_submod}", _target)
 
 # agent_orchestrator is the main package - alias it directly
 import astra_agent_orchestrator
-sys.modules['services.agent_orchestrator'] = astra_agent_orchestrator
+
+sys.modules["services.agent_orchestrator"] = astra_agent_orchestrator
 
 # Also ensure agent_orchestrator.tests is available
-tests_module = types.ModuleType('services.agent_orchestrator.tests')
+tests_module = types.ModuleType("services.agent_orchestrator.tests")
 # Import all test modules into the tests namespace
 try:
     from astra_agent_orchestrator.tests import (
@@ -149,6 +161,7 @@ try:
         test_telemetry,
         test_tools,
     )
+
     # Export them
     tests_module.test_agent = test_agent
     tests_module.test_agent_governance = test_agent_governance
@@ -174,7 +187,7 @@ except ImportError:
     # Fallback - create empty module
     pass
 
-sys.modules['services.agent_orchestrator.tests'] = tests_module
+sys.modules["services.agent_orchestrator.tests"] = tests_module
 
 # Also ensure agent_orchestrator is available as attribute of services
 _ServicesModule.agent_orchestrator = astra_agent_orchestrator

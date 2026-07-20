@@ -158,7 +158,9 @@ class TestVerifyToken:
             mock_cfg.supabase_anon_key = "key"
 
             verifier = SupabaseJWTVerifier()
-            verifier._fetch_jwks = AsyncMock(return_value={"keys": [{"kid": "abc", "n": "n", "e": "e"}]})
+            verifier._fetch_jwks = AsyncMock(
+                return_value={"keys": [{"kid": "abc", "n": "n", "e": "e"}]}
+            )
 
             with patch("jose.jwt.get_unverified_header", return_value={"kid": "abc"}):
                 with patch("app.infrastructure.auth.supabase_jwt.RSAKey"):
@@ -173,7 +175,9 @@ class TestVerifyToken:
             mock_cfg.supabase_anon_key = "key"
 
             verifier = SupabaseJWTVerifier()
-            verifier._fetch_jwks = AsyncMock(return_value={"keys": [{"kid": "abc", "n": "n", "e": "e"}]})
+            verifier._fetch_jwks = AsyncMock(
+                return_value={"keys": [{"kid": "abc", "n": "n", "e": "e"}]}
+            )
 
             with patch("jose.jwt.get_unverified_header", return_value={"kid": "abc"}):
                 with patch("app.infrastructure.auth.supabase_jwt.RSAKey"):

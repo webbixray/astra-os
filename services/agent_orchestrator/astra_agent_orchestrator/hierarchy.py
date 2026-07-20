@@ -72,11 +72,15 @@ class CommunicationProtocol:
             await self._message_queues[message.to_agent].put(message)
             logger.debug(
                 "Message sent from %s to %s: %s",
-                message.from_agent, message.to_agent, message.message_type
+                message.from_agent,
+                message.to_agent,
+                message.message_type,
             )
             return True
 
-    async def receive_message(self, agent_id: UUID, timeout: float | None = None) -> AgentMessage | None:
+    async def receive_message(
+        self, agent_id: UUID, timeout: float | None = None
+    ) -> AgentMessage | None:
         """Receive a message for an agent."""
         async with self._lock:
             if agent_id not in self._message_queues:
@@ -84,9 +88,7 @@ class CommunicationProtocol:
 
         try:
             if timeout:
-                return await asyncio.wait_for(
-                    self._message_queues[agent_id].get(), timeout=timeout
-                )
+                return await asyncio.wait_for(self._message_queues[agent_id].get(), timeout=timeout)
             return await self._message_queues[agent_id].get()
         except TimeoutError:
             return None
@@ -211,7 +213,9 @@ class HandoffManager:
             # Check if agent has required capabilities
             if all(cap in config.capabilities for cap in request.required_capabilities):
                 # Score by number of matching capabilities (higher is better)
-                matching = sum(1 for cap in request.required_capabilities if cap in config.capabilities)
+                matching = sum(
+                    1 for cap in request.required_capabilities if cap in config.capabilities
+                )
                 if matching > best_score:
                     best_score = matching
                     best_match = agent_type
@@ -401,6 +405,7 @@ class AgentCoordinator:
         context: AgentContext,
     ) -> list[AgentResult]:
         """Execute multiple agents in parallel."""
+
         async def run_agent(agent: Agent, input_data: Any) -> AgentResult:
             sub_context = AgentContext(
                 agent_id=agent.agent_id,

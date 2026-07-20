@@ -15,6 +15,7 @@ from app.domain.common import now
 
 # --- Enums ---
 
+
 class AlertSeverity(str, Enum):
     INFO = "info"
     WARNING = "warning"
@@ -37,10 +38,10 @@ class AlertSource(str, Enum):
 
 
 class MetricType(str, Enum):
-    GAUGE = "gauge"          # Point-in-time value
-    COUNTER = "counter"      # Monotonically increasing
+    GAUGE = "gauge"  # Point-in-time value
+    COUNTER = "counter"  # Monotonically increasing
     HISTOGRAM = "histogram"  # Distribution of values
-    SUMMARY = "summary"      # Quantile summaries
+    SUMMARY = "summary"  # Quantile summaries
 
 
 class CostCategory(str, Enum):
@@ -74,6 +75,7 @@ class DashboardWidgetType(str, Enum):
 
 # --- Entities ---
 
+
 @dataclass
 class MetricDefinition:
     """Definition of a metric that can be collected and queried."""
@@ -94,7 +96,9 @@ class MetricDefinition:
     retention_days: int = 30
 
     # Alerting
-    alert_thresholds: dict[str, Any] = field(default_factory=dict)  # e.g., {"warning": 100, "critical": 500}
+    alert_thresholds: dict[str, Any] = field(
+        default_factory=dict
+    )  # e.g., {"warning": 100, "critical": 500}
 
     # Metadata
     tags: list[str] = field(default_factory=list)
@@ -171,7 +175,9 @@ class AlertRule:
     label_matchers: dict[str, str] = field(default_factory=dict)
 
     # Notification
-    notification_channels: list[str] = field(default_factory=list)  # email, slack, pagerduty, webhook
+    notification_channels: list[str] = field(
+        default_factory=list
+    )  # email, slack, pagerduty, webhook
     notification_template: str = ""
 
     # Behavior
@@ -180,7 +186,9 @@ class AlertRule:
     group_by: list[str] = field(default_factory=list)  # Group alerts by these labels
 
     # Scheduling
-    active_hours: dict[str, Any] | None = None  # e.g., {"start": "09:00", "end": "17:00", "days": [1,2,3,4,5]}
+    active_hours: dict[str, Any] | None = (
+        None  # e.g., {"start": "09:00", "end": "17:00", "days": [1,2,3,4,5]}
+    )
 
     # Metadata
     tags: list[str] = field(default_factory=list)
@@ -294,7 +302,7 @@ class CostRecord:
 
     # Attribution
     resource_type: str = ""  # e.g., "compute", "api", "storage"
-    resource_id: str = ""    # Specific resource identifier
+    resource_id: str = ""  # Specific resource identifier
     project_id: UUID | None = None
     campaign_id: UUID | None = None
 
@@ -621,6 +629,7 @@ class DashboardWidget:
 
 
 # --- Analytics ---
+
 
 @dataclass
 class SystemHealthReport:
