@@ -12,4 +12,3 @@ export type OverviewResponse = {
     total_budget: number;
     status_breakdown: Record<string, any>;
 };
-

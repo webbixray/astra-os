@@ -50,11 +50,11 @@ def mock_context():
 async def test_agent_run_span_has_semantic_attributes(agent_config, mock_context):
     """Agent run span should have standard semantic conventions."""
     agent = Agent(agent_config, agent_config.tenant_id)
-    
+
     with patch("services.agent_orchestrator.agent.TRACER") as mock_tracer:
         mock_span = MagicMock()
         mock_tracer.start_as_current_span.return_value.__enter__.return_value = mock_span
-        
+
         agent.execute = AsyncMock(return_value=AgentResult(
             agent_id=agent_config.agent_id,
             success=True,
@@ -63,9 +63,9 @@ async def test_agent_run_span_has_semantic_attributes(agent_config, mock_context
             cost_usd=0.001,
             iterations=1,
         ))
-        
+
         await agent.run(mock_context, {"task": "test"})
-        
+
         # Check semantic conventions
         mock_span.set_attribute.assert_any_call("service.name", "astra-agent-orchestrator")
         mock_span.set_attribute.assert_any_call("agent.astra.type", "CEO")
@@ -77,18 +77,18 @@ async def test_agent_run_span_has_semantic_attributes(agent_config, mock_context
 async def test_tool_call_span_has_semantic_attributes(agent_config, mock_context):
     """Tool call span should have standard semantic conventions."""
     agent = Agent(agent_config, agent_config.tenant_id)
-    
+
     with patch("services.agent_orchestrator.agent.TRACER") as mock_tracer:
         mock_span = MagicMock()
         mock_tracer.start_as_current_span.return_value.__enter__.return_value = mock_span
-        
+
         agent.tool_registry.execute_tool = AsyncMock(return_value={
             "success": True,
             "result": "output",
         })
-        
+
         await agent.call_tool("web_search", {"query": "test"}, mock_context)
-        
+
         # Check semantic conventions
         mock_span.set_attribute.assert_any_call("service.name", "astra-agent-orchestrator")
         mock_span.set_attribute.assert_any_call("tool.name", "web_search")
@@ -99,11 +99,11 @@ async def test_tool_call_span_has_semantic_attributes(agent_config, mock_context
 async def test_delegation_span_has_semantic_attributes(agent_config, mock_context):
     """Delegation span should have standard semantic conventions."""
     agent = Agent(agent_config, agent_config.tenant_id)
-    
+
     with patch("services.agent_orchestrator.agent.TRACER") as mock_tracer:
         mock_span = MagicMock()
         mock_tracer.start_as_current_span.return_value.__enter__.return_value = mock_span
-        
+
         # Mock subagent
         with patch("services.agent_orchestrator.agent.get_agent_registry") as mock_registry:
             mock_subagent = AsyncMock()
@@ -115,9 +115,9 @@ async def test_delegation_span_has_semantic_attributes(agent_config, mock_contex
                 duration_ms=100,
             ))
             mock_registry.return_value.create_agent.return_value = mock_subagent
-            
+
             await agent.delegate_to_subagent(AgentType.CONTENT_SPECIALIST, {"task": "write"}, mock_context)
-            
+
             # Check semantic conventions
             mock_span.set_attribute.assert_any_call("service.name", "astra-agent-orchestrator")
             mock_span.set_attribute.assert_any_call("agent.astra.delegation.target_type", "CONTENT_SPECIALIST")
@@ -323,7 +323,7 @@ groups:
       slo: agent_availability
     annotations:
       summary: "Agent availability burn rate 2x budget"
-      
+
   # Fast burn rate (1h window, 2% budget)
   - alert: AgentAvailabilityFastBurn
     expr: |

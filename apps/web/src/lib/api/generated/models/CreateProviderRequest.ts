@@ -11,4 +11,3 @@ export type CreateProviderRequest = {
     from_name?: string;
     config?: Record<string, any>;
 };
-

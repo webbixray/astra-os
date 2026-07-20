@@ -1,8 +1,8 @@
 # ASTRA OS — Product Vision
 
-**Version**: 1.0  
-**Status**: Ratified  
-**Owner**: Chief Product Officer  
+**Version**: 1.0
+**Status**: Ratified
+**Owner**: Chief Product Officer
 **Last Updated**: 2026-07-11
 
 ---
@@ -10,7 +10,7 @@
 ## 1. Vision Statement
 
 > **ASTRA OS is the operating system for the autonomous marketing enterprise.**
-> 
+>
 > We enable organizations to deploy hierarchical AI agent workforces that plan, execute, and optimize multi-channel marketing campaigns end-to-end — with human governance, auditability, and continuous learning.
 
 ---
@@ -197,7 +197,7 @@ CEO Agent (Strategic Orchestration)
 
 ---
 
-**Ratified by**: CPO, CTO, CEO  
+**Ratified by**: CPO, CTO, CEO
 **Next Review**: 2026-10-11 (Quarterly)
 
 *This vision is the north star. Every architectural decision, every feature, every line of code must trace back to enabling autonomous marketing enterprises with human governance.*

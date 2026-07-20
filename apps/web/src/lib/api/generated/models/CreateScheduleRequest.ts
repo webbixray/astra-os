@@ -10,4 +10,3 @@ export type CreateScheduleRequest = {
     recipients?: Array<string>;
     config?: Record<string, any>;
 };
-

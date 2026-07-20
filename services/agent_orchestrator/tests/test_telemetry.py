@@ -28,7 +28,7 @@ class TestTelemetry:
         with patch("astra_agent_orchestrator.telemetry.TracerProvider") as mock_tracer_provider:
             mock_provider = MagicMock()
             mock_tracer_provider.return_value = mock_provider
-            
+
             with patch("astra_agent_orchestrator.telemetry.trace") as mock_trace:
                 mock_trace.get_tracer.return_value = MagicMock()
 
@@ -43,7 +43,7 @@ class TestTelemetry:
         with patch("astra_agent_orchestrator.telemetry.TracerProvider") as mock_tracer_provider:
             mock_provider = MagicMock()
             mock_tracer_provider.return_value = mock_provider
-            
+
             with patch("astra_agent_orchestrator.telemetry.trace") as mock_trace:
                 mock_trace.get_tracer.return_value = MagicMock()
 
@@ -59,7 +59,7 @@ class TestTelemetry:
         with patch("astra_agent_orchestrator.telemetry.TracerProvider") as mock_tracer_provider:
             mock_provider = MagicMock()
             mock_tracer_provider.return_value = mock_provider
-            
+
             with patch("astra_agent_orchestrator.telemetry.trace") as mock_trace:
                 mock_trace.get_tracer.return_value = MagicMock()
 
@@ -98,7 +98,7 @@ class TestTelemetry:
         with patch("astra_agent_orchestrator.telemetry.TracerProvider") as mock_tracer_provider:
             mock_provider = MagicMock()
             mock_tracer_provider.return_value = mock_provider
-            
+
             with patch("astra_agent_orchestrator.telemetry.trace") as mock_trace:
                 mock_trace.get_tracer.return_value = MagicMock()
 

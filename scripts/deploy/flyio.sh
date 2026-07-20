@@ -28,7 +28,7 @@ fi
 if [ ! -f "fly.toml" ]; then
     echo "Launching new app..."
     flyctl launch --no-deploy
-    
+
     echo "Setting up secrets..."
     echo "Please set your secrets:"
     echo "  flyctl secrets set SECRET_KEY=your-secret-key"

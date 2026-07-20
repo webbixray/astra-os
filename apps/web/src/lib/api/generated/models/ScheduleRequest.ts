@@ -7,4 +7,3 @@ export type ScheduleRequest = {
     scheduled_at: string;
     metadata?: Record<string, any>;
 };
-

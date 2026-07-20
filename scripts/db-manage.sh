@@ -67,22 +67,22 @@ log_info "Total backups: $BACKUP_COUNT ($TOTAL_SIZE)"
 # Restore function
 restore_backup() {
     local backup_file="$1"
-    
+
     if [ ! -f "$backup_file" ]; then
         log_error "Backup file not found: $backup_file"
         exit 1
     fi
-    
+
     log_warning "This will OVERWRITE the current database!"
     read -p "Are you sure? (yes/no): " confirm
-    
+
     if [ "$confirm" != "yes" ]; then
         log_info "Restore cancelled."
         exit 0
     fi
-    
+
     log_info "Restoring from: $backup_file"
-    
+
     if command -v psql &> /dev/null; then
         gunzip -c "$backup_file" | psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME"
     elif command -v docker &> /dev/null; then
@@ -91,7 +91,7 @@ restore_backup() {
         log_error "Neither psql nor docker found. Cannot restore database."
         exit 1
     fi
-    
+
     log_info "Restore completed!"
 }
 

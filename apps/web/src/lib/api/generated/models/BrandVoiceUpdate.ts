@@ -1,7 +1,7 @@
 /* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
- 
+
 export type BrandVoiceUpdate = {
     name?: (string | null);
     tone?: (string | null);
@@ -10,4 +10,3 @@ export type BrandVoiceUpdate = {
     target_audience?: (string | null);
     is_active?: (boolean | null);
 };
-

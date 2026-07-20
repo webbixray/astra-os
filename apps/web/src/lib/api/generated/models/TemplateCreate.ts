@@ -11,4 +11,3 @@ export type TemplateCreate = {
     variables?: Array<string>;
     system_prompt?: string;
 };
-

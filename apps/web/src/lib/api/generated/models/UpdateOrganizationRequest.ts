@@ -6,4 +6,3 @@ export type UpdateOrganizationRequest = {
     name?: (string | null);
     settings?: (Record<string, any> | null);
 };
-

@@ -221,19 +221,19 @@ echo ""
 # ==========================================
 if [[ "${TEST_MONITORING:-false}" == "true" ]]; then
     log_info "Testing monitoring stack (TEST_MONITORING=true)..."
-    
+
     run_test_verbose "Start monitoring" \
         "docker compose -f docker/monitoring/docker-compose.full.yml up -d" \
         120
-    
+
     sleep 20
-    
+
     run_test "Prometheus accessible" "curl -f -s http://localhost:9090/-/healthy"
     run_test "Grafana accessible" "curl -f -s http://localhost:3000/api/health"
     run_test "Alertmanager accessible" "curl -f -s http://localhost:9093/-/healthy"
     run_test "Loki accessible" "curl -f -s http://localhost:3100/ready"
     run_test "Tempo accessible" "curl -f -s http://localhost:3200/ready"
-    
+
     echo ""
 fi
 

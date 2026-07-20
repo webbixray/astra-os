@@ -7,4 +7,3 @@ export type PublishRequest = {
     scheduled_at?: (string | null);
     metadata?: Record<string, any>;
 };
-

@@ -1,7 +1,7 @@
 /* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
- 
+
 export type UserResponse = {
     id: string;
     email: string;
@@ -10,4 +10,3 @@ export type UserResponse = {
     created_at: string;
     updated_at: string;
 };
-

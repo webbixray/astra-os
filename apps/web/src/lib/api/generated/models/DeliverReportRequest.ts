@@ -1,7 +1,7 @@
 /* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
- 
+
 export type DeliverReportRequest = {
     report_type?: string;
     channel?: string;
@@ -11,4 +11,3 @@ export type DeliverReportRequest = {
     template_id?: (string | null);
     schedule_id?: (string | null);
 };
-

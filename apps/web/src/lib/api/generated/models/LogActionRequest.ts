@@ -9,4 +9,3 @@ export type LogActionRequest = {
     details?: Record<string, any>;
     ip_address?: string;
 };
-

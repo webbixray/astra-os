@@ -10,4 +10,3 @@ export type CreateRuleRequest = {
     action_config?: Record<string, any>;
     description?: string;
 };
-

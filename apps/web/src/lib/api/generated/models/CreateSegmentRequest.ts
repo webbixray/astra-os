@@ -7,4 +7,3 @@ export type CreateSegmentRequest = {
     source?: string;
     criteria?: Record<string, any>;
 };
-

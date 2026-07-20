@@ -120,16 +120,16 @@ if check_command docker && docker info &> /dev/null; then
     cd "$ROOT_DIR"
     docker compose up -d postgres redis temporal
     log_success "Infrastructure services started"
-    
+
     log_info "Waiting for services to be ready..."
     sleep 10
-    
+
     # Run database migrations
     log_info "Running database migrations..."
     cd "$ROOT_DIR/apps/api"
     alembic upgrade head
     log_success "Database migrations applied"
-    
+
     # Seed database
     log_info "Seeding database..."
     python -m scripts.seed_db 2>/dev/null || log_warning "Database seeding skipped (may already be seeded)"

@@ -38,7 +38,7 @@ class SupervisorConfig:
 @dataclass
 class Supervisor:
     """In-process supervisor with bounded auto-restart and crash-loop protection.
-    
+
     Rules:
     - Clean exit (SystemExit(0), KeyboardInterrupt/SIGINT) -> stop, no restart
     - Non-zero SystemExit -> deterministic failure, no restart
@@ -72,14 +72,14 @@ class Supervisor:
 
     async def run(self, coro_factory: Callable[[], Awaitable[Any]] | None = None) -> Any:
         """Run the orchestrator with supervision.
-        
+
         Args:
             coro_factory: Optional async callable to run. If not provided,
                          uses self._orchestrator.run()
-        
+
         Returns:
             Result from the successful run, or None on clean exit.
-        
+
         """
         if not self._supervise:
             return await self._run_once(coro_factory)

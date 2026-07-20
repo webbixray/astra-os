@@ -8,4 +8,3 @@ export type CreateBudgetRuleRequest = {
     strategy?: string;
     allocations?: Record<string, any>;
 };
-

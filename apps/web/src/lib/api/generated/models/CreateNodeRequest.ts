@@ -9,4 +9,3 @@ export type CreateNodeRequest = {
     description?: string;
     properties?: Record<string, any>;
 };
-

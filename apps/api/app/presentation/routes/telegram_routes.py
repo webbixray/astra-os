@@ -21,19 +21,19 @@ async def telegram_webhook(request: Request):
     This receives updates from Telegram and processes them through the bot.
     """
     bot = await get_telegram_bot()
-    
+
     if not bot.dp:
         raise HTTPException(status_code=503, detail="Bot not initialized")
-    
+
     # Get the update data
     update_data = await request.json()
-    
+
     # Process the update through aiogram
     from aiogram.types import Update
     update = Update.model_validate(update_data, context={"bot": bot.bot})
-    
+
     await bot.dp.feed_update(bot.bot, update)
-    
+
     return {"status": "ok"}
 
 
@@ -51,21 +51,21 @@ async def setup_telegram_webhook():
     """
     bot = await get_telegram_bot()
     telegram_config = get_telegram_config()
-    
+
     if not telegram_config.webhook_url:
         raise HTTPException(
             status_code=400,
             detail="TELEGRAM_WEBHOOK_URL not configured"
         )
-    
+
     webhook_url = f"{telegram_config.webhook_url.rstrip('/')}{telegram_config.webhook_path}"
-    
+
     await bot.bot.set_webhook(
         url=webhook_url,
         allowed_updates=bot.dp.resolve_used_update_types(),
         drop_pending_updates=True,
     )
-    
+
     return {
         "status": "ok",
         "webhook_url": webhook_url,
@@ -77,9 +77,9 @@ async def setup_telegram_webhook():
 async def delete_telegram_webhook():
     """Delete the Telegram webhook."""
     bot = await get_telegram_bot()
-    
+
     await bot.bot.delete_webhook()
-    
+
     return {"status": "ok", "message": "Webhook deleted"}
 
 
@@ -88,7 +88,7 @@ async def telegram_bot_status():
     """Get Telegram bot status."""
     bot = await get_telegram_bot()
     telegram_config = get_telegram_config()
-    
+
     return {
         "bot_initialized": bot.bot is not None,
         "running": bot._running,
@@ -102,19 +102,19 @@ async def telegram_bot_status():
 async def start_telegram_polling():
     """Start the bot in polling mode (development only)."""
     telegram_config = get_telegram_config()
-    
+
     if not telegram_config.use_polling:
         raise HTTPException(
             status_code=400,
             detail="Polling mode not enabled. Set TELEGRAM_USE_POLLING=true"
         )
-    
+
     bot = await get_telegram_bot()
-    
+
     # Start polling in background
     import asyncio
     asyncio.create_task(bot.start_polling())
-    
+
     return {"status": "started", "message": "Bot started in polling mode"}
 
 
@@ -130,7 +130,7 @@ async def stop_telegram_bot():
 async def telegram_health():
     """Telegram bot health check."""
     bot = await get_telegram_bot()
-    
+
     try:
         me = await bot.bot.get_me()
         return {

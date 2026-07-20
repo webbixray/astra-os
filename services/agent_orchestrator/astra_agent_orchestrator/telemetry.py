@@ -17,12 +17,12 @@ def init_tracing(
     otlp_endpoint: str | None = None,
 ) -> trace.Tracer:
     """Initialize OpenTelemetry tracing with optional OTLP exporter.
-    
+
     Args:
         service_name: Name of the service for resource attributes
         otlp_endpoint: Optional OTLP HTTP endpoint (e.g., http://otel:4318/v1/traces)
                        If None, no exporter is configured (no-op tracing)
-    
+
     Returns:
         Configured tracer instance
 
@@ -55,7 +55,7 @@ def init_tracing(
 
 def get_tracer() -> trace.Tracer:
     """Get the configured tracer, initializing with defaults if needed.
-    
+
     Returns:
         Configured tracer instance
 

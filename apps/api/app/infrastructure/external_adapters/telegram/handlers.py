@@ -46,7 +46,7 @@ async def cmd_start(message: Message, state: FSMContext, bot: "TelegramBot"):
     ctx = bot.get_user_context(message.from_user.id)
     ctx.chat_id = message.chat.id
     ctx.clear()
-    
+
     welcome_text = (
         "🚀 <b>Welcome to Astra OS - Your AI Advertising Agency!</b>\n\n"
         "I'm your AI assistant that can control the entire marketing department:\n\n"
@@ -57,20 +57,20 @@ async def cmd_start(message: Message, state: FSMContext, bot: "TelegramBot"):
         "🧠 <b>Knowledge Base</b> - Market research and competitor analysis\n\n"
         "To get started, please select your organization:"
     )
-    
+
     # Get organizations
     try:
         async with bot._session_factory() as session:
             org_service = OrgService(session)
             orgs = await org_service.list_organizations()
-            
+
             if not orgs:
                 await message.answer(
                     "⚠️ No organizations found. Please contact admin to set up your organization first.",
                     parse_mode=ParseMode.HTML
                 )
                 return
-            
+
             keyboard = bot.create_org_selection_keyboard(orgs)
             await message.answer(welcome_text, reply_markup=keyboard, parse_mode=ParseMode.HTML)
             await state.set_state(BotStates.SELECTING_ORG)
@@ -117,7 +117,7 @@ async def cmd_cancel(message: Message, state: FSMContext, bot: "TelegramBot"):
     await state.clear()
     ctx = bot.get_user_context(message.from_user.id)
     ctx.clear()
-    
+
     await message.answer(
         "❌ <b>Operation cancelled.</b> You're back to the main menu.",
         reply_markup=bot.create_main_keyboard(),
@@ -136,10 +136,10 @@ async def callback_org_select(callback: CallbackQuery, state: FSMContext, bot: "
     except ValueError:
         await callback.answer("❌ Invalid organization ID", show_alert=True)
         return
-    
+
     ctx = bot.get_user_context(callback.from_user.id)
     ctx.organization_id = org_id
-    
+
     # Get org name
     try:
         async with bot._session_factory() as session:
@@ -149,9 +149,9 @@ async def callback_org_select(callback: CallbackQuery, state: FSMContext, bot: "
     except Exception as e:
         logger.error(f"Error fetching org: {e}")
         ctx.organization_name = "Selected Organization"
-    
+
     await state.clear()
-    
+
     await bot.safe_edit_message(
         callback.message,
         f"✅ <b>Organization selected:</b> {ctx.organization_name}\n\n"
@@ -166,16 +166,16 @@ async def cmd_org(message: Message, state: FSMContext, bot: "TelegramBot"):
     await state.clear()
     ctx = bot.get_user_context(message.from_user.id)
     ctx.clear()
-    
+
     try:
         async with bot._session_factory() as session:
             org_service = OrgService(session)
             orgs = await org_service.list_organizations()
-            
+
             if not orgs:
                 await message.answer("⚠️ No organizations found.")
                 return
-            
+
             keyboard = bot.create_org_selection_keyboard(orgs)
             await message.answer(
                 "🏢 <b>Select Organization:</b>",
@@ -196,9 +196,9 @@ async def callback_main_menu(callback: CallbackQuery, state: FSMContext, bot: "T
     await state.clear()
     ctx = bot.get_user_context(callback.from_user.id)
     ctx.clear()
-    
+
     org_name = ctx.organization_name or "Not selected"
-    
+
     await bot.safe_edit_message(
         callback.message,
         f"🏠 <b>Main Menu</b>\n\n"
@@ -215,7 +215,7 @@ async def callback_menu_campaigns(callback: CallbackQuery, bot: "TelegramBot"):
     if not ctx.organization_id:
         await callback.answer("⚠️ Please select an organization first", show_alert=True)
         return
-    
+
     await bot.safe_edit_message(
         callback.message,
         "📊 <b>Campaign Management</b>\n\nSelect an action:",
@@ -230,7 +230,7 @@ async def callback_menu_content(callback: CallbackQuery, bot: "TelegramBot"):
     if not ctx.organization_id:
         await callback.answer("⚠️ Please select an organization first", show_alert=True)
         return
-    
+
     await bot.safe_edit_message(
         callback.message,
         "✍️ <b>Content Generation</b>\n\nWhat type of content would you like to create?",
@@ -245,7 +245,7 @@ async def callback_menu_analytics(callback: CallbackQuery, bot: "TelegramBot"):
     if not ctx.organization_id:
         await callback.answer("⚠️ Please select an organization first", show_alert=True)
         return
-    
+
     await bot.safe_edit_message(
         callback.message,
         "📈 <b>Analytics & Reports</b>\n\nSelect a report type:",
@@ -260,7 +260,7 @@ async def callback_menu_ads(callback: CallbackQuery, bot: "TelegramBot"):
     if not ctx.organization_id:
         await callback.answer("⚠️ Please select an organization first", show_alert=True)
         return
-    
+
     await bot.safe_edit_message(
         callback.message,
         "📢 <b>Ad Campaign Management</b>\n\nSelect an action:",
@@ -275,9 +275,9 @@ async def callback_menu_knowledge(callback: CallbackQuery, state: FSMContext, bo
     if not ctx.organization_id:
         await callback.answer("⚠️ Please select an organization first", show_alert=True)
         return
-    
+
     await state.set_state(BotStates.QUERYING_KNOWLEDGE)
-    
+
     await bot.safe_edit_message(
         callback.message,
         "🧠 <b>Knowledge Base</b>\n\n"
@@ -304,15 +304,15 @@ async def callback_campaign_list(callback: CallbackQuery, bot: "TelegramBot"):
     if not ctx.organization_id:
         await callback.answer("⚠️ Please select an organization first", show_alert=True)
         return
-    
+
     await bot.send_typing(callback.message.chat.id)
-    
+
     try:
         async with bot._session_factory() as session:
             campaign_repo = CampaignRepositoryImpl(session)
             use_case = ListCampaignsUseCase(campaign_repo)
             campaigns = await use_case.execute(ctx.organization_id)
-            
+
             if not campaigns:
                 text = "📭 No campaigns found. Create your first campaign!"
             else:
@@ -321,10 +321,10 @@ async def callback_campaign_list(callback: CallbackQuery, bot: "TelegramBot"):
                     status_emoji = "🟢" if c.status == "active" else "🔴" if c.status == "paused" else "⚪"
                     text += f"{status_emoji} <b>{c.name}</b>\n"
                     text += f"   Status: {c.status} | Budget: ${c.budget_amount or 0:,.2f}\n\n"
-                
+
                 if len(campaigns) > 10:
                     text += f"... and {len(campaigns) - 10} more"
-            
+
             await bot.safe_edit_message(
                 callback.message,
                 text,
@@ -346,10 +346,10 @@ async def callback_campaign_create(callback: CallbackQuery, state: FSMContext, b
     if not ctx.organization_id:
         await callback.answer("⚠️ Please select an organization first", show_alert=True)
         return
-    
+
     await state.set_state(BotStates.CREATING_CAMPAIGN_NAME)
     ctx.temp_data = {"step": "name"}
-    
+
     await bot.safe_edit_message(
         callback.message,
         "➕ <b>Create New Campaign</b>\n\n"
@@ -366,9 +366,9 @@ async def process_campaign_name(message: Message, state: FSMContext, bot: "Teleg
     ctx = bot.get_user_context(message.from_user.id)
     ctx.temp_data["name"] = message.text.strip()
     ctx.temp_data["step"] = "budget"
-    
+
     await state.set_state(BotStates.CREATING_CAMPAIGN_BUDGET)
-    
+
     await message.answer(
         f"✅ Name: <b>{message.text}</b>\n\n"
         "Step 2/3: Enter budget (USD):",
@@ -387,13 +387,13 @@ async def process_campaign_budget(message: Message, state: FSMContext, bot: "Tel
     except ValueError:
         await message.answer("❌ Please enter a valid number (e.g., 1000 or 1,000)")
         return
-    
+
     ctx = bot.get_user_context(message.from_user.id)
     ctx.temp_data["budget"] = budget
     ctx.temp_data["step"] = "goal"
-    
+
     await state.set_state(BotStates.CREATING_CAMPAIGN_GOAL)
-    
+
     await message.answer(
         f"✅ Budget: <b>${budget:,.2f}</b>\n\n"
         "Step 3/3: Enter campaign goal/objective:\n"
@@ -410,14 +410,14 @@ async def process_campaign_goal(message: Message, state: FSMContext, bot: "Teleg
     """Process campaign goal and create campaign."""
     ctx = bot.get_user_context(message.from_user.id)
     goal = message.text.strip()
-    
+
     await bot.send_typing(message.chat.id)
-    
+
     try:
         async with bot._session_factory() as session:
             campaign_repo = CampaignRepositoryImpl(session)
             use_case = CreateCampaignUseCase(campaign_repo)
-            
+
             # Need a user ID - using a system user for bot
             from app.domain.entities.users.user import User
             # For bot, we'll use a system user or the first member
@@ -425,11 +425,11 @@ async def process_campaign_goal(message: Message, state: FSMContext, bot: "Teleg
             org_repo = OrganizationRepositoryImpl(session)
             members = await org_repo.get_members(ctx.organization_id)
             creator_id = members[0].user_id if members else None
-            
+
             if not creator_id:
                 await message.answer("❌ No organization members found. Cannot create campaign.")
                 return
-            
+
             campaign = await use_case.execute(
                 organization_id=ctx.organization_id,
                 name=ctx.temp_data["name"],
@@ -439,10 +439,10 @@ async def process_campaign_goal(message: Message, state: FSMContext, bot: "Teleg
                 budget_currency="USD",
                 objective=goal,
             )
-        
+
         await state.clear()
         ctx.clear()
-        
+
         await message.answer(
             f"🎉 <b>Campaign Created Successfully!</b>\n\n"
             f"📋 <b>Name:</b> {campaign.name}\n"
@@ -471,7 +471,7 @@ async def callback_content_type(callback: CallbackQuery, state: FSMContext, bot:
     if not ctx.organization_id:
         await callback.answer("⚠️ Please select an organization first", show_alert=True)
         return
-    
+
     content_type_map = {
         "content_blog": "blog_post",
         "content_social": "social_post",
@@ -479,12 +479,12 @@ async def callback_content_type(callback: CallbackQuery, state: FSMContext, bot:
         "content_video": "video_script",
         "content_ad": "ad_copy",
     }
-    
+
     content_type = content_type_map.get(callback.data, "blog_post")
     ctx.temp_data["content_type"] = content_type
-    
+
     await state.set_state(BotStates.GENERATING_CONTENT_TOPIC)
-    
+
     type_names = {
         "blog_post": "Blog Post",
         "social_post": "Social Media Post",
@@ -492,7 +492,7 @@ async def callback_content_type(callback: CallbackQuery, state: FSMContext, bot:
         "video_script": "Video Script",
         "ad_copy": "Ad Creative",
     }
-    
+
     await bot.safe_edit_message(
         callback.message,
         f"✍️ <b>Generate {type_names.get(content_type, 'Content')}</b>\n\n"
@@ -511,20 +511,20 @@ async def process_content_topic(message: Message, state: FSMContext, bot: "Teleg
     ctx = bot.get_user_context(message.from_user.id)
     topic = message.text.strip()
     content_type = ctx.temp_data.get("content_type", "blog_post")
-    
+
     await bot.send_typing(message.chat.id)
-    
+
     try:
         async with bot._session_factory() as session:
             # Get content generation service
             prompt_repo = SystemPromptRepositoryImpl(session)
             prompt_manager = PromptManager(repository=prompt_repo)
             content_service = ContentGenerationService(prompt_manager=prompt_manager)
-            
+
             # Get template for content type
             template_repo = ContentTemplateRepository(session)
             voice_repo = BrandVoiceRepository(session)
-            
+
             # Map content types to template names
             template_map = {
                 "blog_post": "Blog Post",
@@ -535,12 +535,12 @@ async def process_content_topic(message: Message, state: FSMContext, bot: "Teleg
             }
             template_name = template_map.get(content_type, "Blog Post")
             template = await template_repo.find_by_name(template_name)
-            
+
             if not template:
                 # Use built-in templates
                 from app.application.use_cases.ai.content_generation_service import BUILTIN_TEMPLATES
                 template = next((t for t in BUILTIN_TEMPLATES if t.content_type == content_type), BUILTIN_TEMPLATES[0])
-            
+
             # Get brand voice if available
             brand_voice = None
             # Check if user has a default brand voice
@@ -554,17 +554,17 @@ async def process_content_topic(message: Message, state: FSMContext, bot: "Teleg
                     vocabulary=voice.vocabulary,
                     target_audience=voice.target_audience,
                 )
-            
+
             # Generate content
             result = await content_service.generate(
                 template=template,
                 variables={"topic": topic},
                 brand_voice=brand_voice,
             )
-            
+
             generated_content = result.get("content", "")
             sections = result.get("sections", {})
-            
+
             # Save content to workspace
             content_repo = ContentRepositoryImpl(session)
             # Get creator ID (first member of org)
@@ -572,7 +572,7 @@ async def process_content_topic(message: Message, state: FSMContext, bot: "Teleg
             org_repo = OrganizationRepositoryImpl(session)
             members = await org_repo.get_members(ctx.organization_id)
             creator_id = members[0].user_id if members else None
-            
+
             if creator_id:
                 content_obj = Content.create(
                     organization_id=ctx.organization_id,
@@ -583,7 +583,7 @@ async def process_content_topic(message: Message, state: FSMContext, bot: "Teleg
                     generated_by_ai=True,
                 )
                 await content_repo.save(content_obj)
-        
+
         type_names = {
             "blog_post": "Blog Post",
             "social_post": "Social Media Post",
@@ -591,22 +591,22 @@ async def process_content_topic(message: Message, state: FSMContext, bot: "Teleg
             "video_script": "Video Script",
             "ad_copy": "Ad Creative",
         }
-        
+
         await state.clear()
         ctx.clear()
-        
+
         # Format response with sections
         response_text = f"✨ <b>Content Generated: {type_names.get(content_type, 'Content')}</b>\n\n"
         response_text += f"📝 <b>Topic:</b> {topic}\n\n"
         response_text += f"{generated_content}\n\n"
-        
+
         if sections:
             response_text += "📑 <b>Sections:</b>\n"
             for name, content in sections.items():
                 response_text += f"• <b>{name.title()}:</b> {content[:200]}{'...' if len(content) > 200 else ''}\n"
-        
+
         response_text += "\n💾 Content has been saved to your workspace."
-        
+
         await message.answer(
             response_text,
             reply_markup=bot.create_content_keyboard(),
@@ -630,17 +630,17 @@ async def callback_analytics(callback: CallbackQuery, bot: "TelegramBot"):
     if not ctx.organization_id:
         await callback.answer("⚠️ Please select an organization first", show_alert=True)
         return
-    
+
     await bot.send_typing(callback.message.chat.id)
-    
+
     report_type = callback.data.replace("analytics_", "")
-    
+
     try:
         async with bot._session_factory() as session:
             campaign_repo = CampaignRepositoryImpl(session)
             content_repo = ContentRepositoryImpl(session)
             service = AnalyticsService(campaign_repo, content_repo)
-            
+
             if report_type == "overview":
                 data = await service.get_overview(ctx.organization_id)
             elif report_type == "campaign":
@@ -655,12 +655,12 @@ async def callback_analytics(callback: CallbackQuery, bot: "TelegramBot"):
                 data = await service.get_channel_performance(ctx.organization_id)
             else:
                 data = {"error": "Unknown report type"}
-        
+
         if "error" in data:
             text = f"❌ {data['error']}"
         else:
             text = format_analytics_report(report_type, data)
-        
+
         await bot.safe_edit_message(
             callback.message,
             text,
@@ -730,9 +730,9 @@ async def callback_ads(callback: CallbackQuery, bot: "TelegramBot"):
     if not ctx.organization_id:
         await callback.answer("⚠️ Please select an organization first", show_alert=True)
         return
-    
+
     action = callback.data.replace("ads_", "")
-    
+
     if action == "accounts":
         await bot.safe_edit_message(
             callback.message,
@@ -772,9 +772,9 @@ async def process_knowledge_query(message: Message, state: FSMContext, bot: "Tel
     """Process knowledge base query."""
     ctx = bot.get_user_context(message.from_user.id)
     query = message.text.strip()
-    
+
     await bot.send_typing(message.chat.id)
-    
+
     try:
         async with bot._session_factory() as session:
             graph_store = GraphStore()
@@ -783,21 +783,21 @@ async def process_knowledge_query(message: Message, state: FSMContext, bot: "Tel
                 organization_id=ctx.organization_id,
                 query=query,
             )
-        
+
         await state.clear()
-        
+
         answer = result.get("answer", "No answer found")
         sources = result.get("sources", [])
-        
+
         text = f"🧠 <b>Knowledge Base Answer</b>\n\n"
         text += f"❓ <b>Question:</b> {query}\n\n"
         text += f"💡 <b>Answer:</b>\n{answer}\n\n"
-        
+
         if sources:
             text += f"📚 <b>Sources:</b>\n"
             for s in sources[:3]:
                 text += f"• {s}\n"
-        
+
         await message.answer(
             text,
             reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
@@ -824,7 +824,7 @@ async def process_knowledge_query(message: Message, state: FSMContext, bot: "Tel
 async def cmd_status(message: Message, bot: "TelegramBot"):
     """Show current bot status."""
     ctx = bot.get_user_context(message.from_user.id)
-    
+
     status_text = (
         f"📋 <b>Current Status</b>\n\n"
         f"👤 User: {message.from_user.first_name} (ID: {message.from_user.id})\n"
@@ -834,7 +834,7 @@ async def cmd_status(message: Message, bot: "TelegramBot"):
         f"🤖 Bot: Running\n"
         f"🔧 Mode: {'Polling' if bot.config.use_polling else 'Webhook'}\n"
     )
-    
+
     await message.answer(status_text, parse_mode=ParseMode.HTML)
 
 
@@ -846,12 +846,12 @@ async def cmd_admin(message: Message, bot: "TelegramBot"):
     if not bot.config.admin_user_ids:
         await message.answer("❌ Admin panel not configured.")
         return
-    
+
     admin_ids = [int(uid.strip()) for uid in bot.config.admin_user_ids.split(",") if uid.strip()]
     if message.from_user.id not in admin_ids:
         await message.answer("❌ Unauthorized. Admin access required.")
         return
-    
+
     await message.answer(
         "⚙️ <b>Admin Panel</b>\n\nSelect an action:",
         reply_markup=InlineKeyboardMarkup(inline_keyboard=[
@@ -871,14 +871,14 @@ async def callback_admin(callback: CallbackQuery, bot: "TelegramBot"):
     if not bot.config.admin_user_ids:
         await callback.answer("❌ Admin not configured", show_alert=True)
         return
-    
+
     admin_ids = [int(uid.strip()) for uid in bot.config.admin_user_ids.split(",") if uid.strip()]
     if callback.from_user.id not in admin_ids:
         await callback.answer("❌ Unauthorized", show_alert=True)
         return
-    
+
     action = callback.data.replace("admin_", "")
-    
+
     if action == "users":
         await bot.safe_edit_message(
             callback.message,

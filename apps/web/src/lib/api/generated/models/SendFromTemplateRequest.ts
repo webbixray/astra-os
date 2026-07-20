@@ -10,4 +10,3 @@ export type SendFromTemplateRequest = {
     resource_type?: string;
     resource_id?: string;
 };
-

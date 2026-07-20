@@ -7,4 +7,3 @@ export type UpdateJobStatusRequest = {
     result?: (Record<string, any> | null);
     error_message?: string;
 };
-

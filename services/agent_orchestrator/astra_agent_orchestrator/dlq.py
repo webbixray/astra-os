@@ -27,7 +27,7 @@ class DeadLetter:
 
 class DeadLetterQueue:
     """Dead Letter Queue using Redis Streams.
-    
+
     Failed messages from consumer groups are moved here after max retries.
     Provides observability, replay capability, and alerting.
     """
@@ -53,7 +53,7 @@ class DeadLetterQueue:
         consumer_name: str,
     ) -> str:
         """Add a dead letter to the queue.
-        
+
         Returns:
             The message ID in the DLQ stream.
 
@@ -127,7 +127,7 @@ class DeadLetterQueue:
         target_stream: str | None = None,
     ) -> bool:
         """Replay a dead letter back to its original stream (or target).
-        
+
         Returns:
             True if replayed successfully, False if not found.
 
@@ -163,7 +163,7 @@ class DeadLetterQueue:
         filter_original_stream: str | None = None,
     ) -> int:
         """Replay all dead letters (or filtered subset).
-        
+
         Returns:
             Number of messages replayed.
 
@@ -193,7 +193,7 @@ class DeadLetterQueue:
 
 class DLQConsumer:
     """Consumer that processes messages with automatic retry and DLQ on max retries.
-    
+
     Uses Redis Streams consumer groups for exactly-once delivery semantics.
     """
 

@@ -73,7 +73,7 @@ ignore = [
     "PLC0415",
     # Pre-existing codebase style issues - not CI-blocking
     # Can be enabled incrementally
-    "FAST002", "E501", "TRY003", "EM101", "EM102", "B904",
+    "E501", "TRY003", "EM101", "EM102", "B904",
     "ARG001", "ARG002", "INP001", "A002", "BLE001",
     "UP042", "D400", "FBT001", "FBT002", "S311", "B011", "PT015",
     "SLF001", "SIM102", "S105", "S106",

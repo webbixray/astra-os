@@ -10,4 +10,3 @@ export type UpdateWidgetRequest = {
     height?: (number | null);
     config?: (Record<string, any> | null);
 };
-

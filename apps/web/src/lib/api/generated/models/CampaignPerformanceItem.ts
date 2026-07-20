@@ -1,7 +1,7 @@
 /* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
- 
+
 export type CampaignPerformanceItem = {
     id: string;
     name: string;
@@ -15,4 +15,3 @@ export type CampaignPerformanceItem = {
     revenue: number;
     roi: number;
 };
-

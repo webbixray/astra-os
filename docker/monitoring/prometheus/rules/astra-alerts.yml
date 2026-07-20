@@ -5,8 +5,8 @@ groups:
     rules:
       - alert: APIHighErrorRate
         expr: |
-          sum(rate(http_requests_total{job="astra-api",status=~"5.."}[5m])) 
-          / 
+          sum(rate(http_requests_total{job="astra-api",status=~"5.."}[5m]))
+          /
           sum(rate(http_requests_total{job="astra-api"}[5m])) > 0.05
         for: 2m
         labels:
@@ -19,7 +19,7 @@ groups:
 
       - alert: APIHighLatency
         expr: |
-          histogram_quantile(0.95, 
+          histogram_quantile(0.95,
             sum(rate(http_request_duration_seconds_bucket{job="astra-api"}[5m])) by (le)
           ) > 1
         for: 5m

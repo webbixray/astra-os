@@ -1,6 +1,6 @@
 # ASTRA OS — Architecture Documentation
 
-**Version**: 1.0  
+**Version**: 1.0
 **Last Updated**: 2024
 
 ---

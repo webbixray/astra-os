@@ -14,7 +14,7 @@ from astra_agent_orchestrator.resilience import (
 
 __all__ = [
     "CircuitBreaker",
-    "CircuitBreakerConfig", 
+    "CircuitBreakerConfig",
     "CircuitBreakerState",
     "RetryPolicy",
     "RetryConfig",

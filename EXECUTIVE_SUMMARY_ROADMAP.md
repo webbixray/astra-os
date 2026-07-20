@@ -211,6 +211,6 @@ Astra OS is now a **production-grade, enterprise-ready AI-Native Marketing & Bus
 
 ---
 
-**Next Review:** 2025-02-14 (30 days)  
-**Owner:** VP Engineering + Head of Sales  
+**Next Review:** 2025-02-14 (30 days)
+**Owner:** VP Engineering + Head of Sales
 **Status:** **READY FOR EXECUTION**

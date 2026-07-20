@@ -1,6 +1,6 @@
 # ASTRA OS — Session Bootstrap Protocol
 
-**Version**: 1.0  
+**Version**: 1.0
 **Purpose**: Standardized process for starting each development session
 
 ---

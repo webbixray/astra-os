@@ -7,4 +7,3 @@ export type RecordEventRequest = {
     recipient_email: string;
     metadata?: Record<string, any>;
 };
-

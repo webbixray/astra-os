@@ -59,6 +59,3 @@ class TestConfigValidation:
             assert cfg.openai_api_key == "sk-test"
             assert cfg.supabase_url == "https://test.supabase.co"
             assert cfg.supabase_anon_key == "test-anon-key"
-
-
-

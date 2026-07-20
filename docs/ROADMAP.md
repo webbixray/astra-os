@@ -1,9 +1,9 @@
 # ASTRA OS — Roadmap
 
-**Version**: 1.0  
-**Status**: Active  
-**Owner**: Program Manager  
-**Last Updated**: 2026-07-11  
+**Version**: 1.0
+**Status**: Active
+**Owner**: Program Manager
+**Last Updated**: 2026-07-11
 **Next Review**: 2026-08-11 (Monthly)
 
 ---
@@ -26,8 +26,8 @@
 
 ## 2. M0: Foundation (Current Sprint)
 
-**Target**: 2026-07-31  
-**Owner**: Platform Team  
+**Target**: 2026-07-31
+**Owner**: Platform Team
 **Dependencies**: None
 
 ### 2.1 Epics
@@ -59,8 +59,8 @@
 
 ## 3. M1: Agent Core
 
-**Target**: 2026-08-31  
-**Owner**: AI Platform Team  
+**Target**: 2026-08-31
+**Owner**: AI Platform Team
 **Dependencies**: M0 complete
 
 ### 3.1 Epics
@@ -90,8 +90,8 @@
 
 ## 4. M2: Campaign Execution
 
-**Target**: 2026-09-30  
-**Owner**: Backend + Integration Teams  
+**Target**: 2026-09-30
+**Owner**: Backend + Integration Teams
 **Dependencies**: M1 (Agent Core for optimization suggestions)
 
 ### 4.1 Epics
@@ -119,8 +119,8 @@
 
 ## 5. M3: Governance
 
-**Target**: 2026-10-31  
-**Owner**: Security + AI Platform Teams  
+**Target**: 2026-10-31
+**Owner**: Security + AI Platform Teams
 **Dependencies**: M1, M2
 
 ### 5.1 Epics
@@ -145,8 +145,8 @@
 
 ## 6. M4: Intelligence
 
-**Target**: 2026-12-15  
-**Owner**: AI Platform + Data Teams  
+**Target**: 2026-12-15
+**Owner**: AI Platform + Data Teams
 **Dependencies**: M1, M3
 
 ### 6.1 Epics
@@ -163,8 +163,8 @@
 
 ## 7. M5: Workflow Engine
 
-**Target**: 2027-01-31  
-**Owner**: Workflow Team  
+**Target**: 2027-01-31
+**Owner**: Workflow Team
 **Dependencies**: M2, M3
 
 ### 7.1 Epics
@@ -181,8 +181,8 @@
 
 ## 8. M6: Beta Launch
 
-**Target**: 2027-03-15  
-**Owner**: All Teams  
+**Target**: 2027-03-15
+**Owner**: All Teams
 **Dependencies**: M1-M5
 
 ### 8.1 Epics
@@ -199,8 +199,8 @@
 
 ## 9. M7: GA Release
 
-**Target**: 2027-06-30  
-**Owner**: All Teams  
+**Target**: 2027-06-30
+**Owner**: All Teams
 **Dependencies**: M6
 
 ### 9.1 Epics
@@ -286,8 +286,8 @@ M0 (Foundation)
 
 ---
 
-**Next Milestone Review**: 2026-08-11  
-**Roadmap Owner**: Program Manager  
+**Next Milestone Review**: 2026-08-11
+**Roadmap Owner**: Program Manager
 **Escalation**: CTO for resource conflicts, CPO for scope changes
 
 *This roadmap is a living document. Updated monthly. Changes require Program Manager + CTO approval.*

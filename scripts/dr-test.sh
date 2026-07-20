@@ -90,7 +90,7 @@ DB_POD=$(kubectl get pods -n "$DR_NAMESPACE" -l app=postgres --no-headers | head
 if [ -n "$DB_POD" ]; then
     TABLE_COUNT=$(kubectl exec -n "$DR_NAMESPACE" "$DB_POD" -- psql -U postgres -d astra_prod -t -c "SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public';" | xargs)
     run_test "Database tables restored" "[ $TABLE_COUNT -gt 20 ]"
-    
+
     USER_COUNT=$(kubectl exec -n "$DR_NAMESPACE" "$DB_POD" -- psql -U postgres -d astra_prod -t -c "SELECT count(*) FROM users;" | xargs)
     run_test "User data restored" "[ $USER_COUNT -gt 0 ]"
 fi

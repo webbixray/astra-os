@@ -42,7 +42,7 @@ All 6 sprints of the hardening plan have been executed. The codebase now meets e
 ```yaml
 # 15 ClusterPolicies across security, governance, supply-chain
 - require-non-root-user                    # PSS Restricted
-- drop-all-capabilities                    # PSS Restricted  
+- drop-all-capabilities                    # PSS Restricted
 - require-readonly-root-fs                 # PSS Restricted
 - require-resource-limits                  # Resource mgmt
 - require-liveness-and-readiness-probes    # Reliability
@@ -67,7 +67,7 @@ All 6 sprints of the hardening plan have been executed. The codebase now meets e
 # Model Router: NVIDIA NIM → OpenAI → Anthropic → Gemini
 CircuitBreakerConfig(
     failure_threshold=5,
-    success_threshold=2, 
+    success_threshold=2,
     timeout=30.0,
     excluded_exceptions=[httpx.TimeoutException]
 )
@@ -425,5 +425,5 @@ argocd app sync astra-production
 
 **Sign-off**: ✅ Platform Team | ✅ Security Team | ✅ Engineering Lead
 
-*Report generated: 2025-07-14*  
+*Report generated: 2025-07-14*
 *Next review: 2025-08-14*

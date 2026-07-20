@@ -39,7 +39,7 @@
 | **Trivy (Container)** | 0 | 0 | 0 | 0 |
 | **Kyverno Policies** | **15 ClusterPolicies Enforced** | | | |
 
-*\* 6 MEDIUM SQL injection warnings in dynamic query builders (parameterized, false positives)*  
+*\* 6 MEDIUM SQL injection warnings in dynamic query builders (parameterized, false positives)*
 *\*\* ecdsa 0.19.2 - CVE-2024-23342 (timing attack on P-256, no fix available, ECDSA verification unaffected)*
 
 ---
@@ -115,7 +115,7 @@ Lint → Security Scan → Container Scan → SBOM → Tests → K8s Policy → 
 ### 🏷️ **Version Info**
 
 - **Release**: v1.0.2 (Production Ready)
-- **Git Tag**: `v1.0.2` 
+- **Git Tag**: `v1.0.2`
 - **Commit**: `5a5eb02`
 - **Generated**: 2025-07-16
 - **Next Review**: 2025-08-16

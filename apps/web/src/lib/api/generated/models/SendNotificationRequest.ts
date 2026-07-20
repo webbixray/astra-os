@@ -1,7 +1,7 @@
 /* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
- 
+
 export type SendNotificationRequest = {
     organization_id: string;
     user_id: string;
@@ -12,4 +12,3 @@ export type SendNotificationRequest = {
     resource_id?: string;
     channel?: string;
 };
-

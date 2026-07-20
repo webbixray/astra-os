@@ -1,7 +1,7 @@
 /* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
- 
+
 export type PromptResponse = {
     id: string;
     org_id?: (string | null);
@@ -17,4 +17,3 @@ export type PromptResponse = {
     created_at: string;
     updated_at: string;
 };
-

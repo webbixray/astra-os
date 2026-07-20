@@ -1,7 +1,7 @@
 /* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
- 
+
 export type BulkGenerateRequest = {
     organization_id: string;
     template_id: string;
@@ -9,4 +9,3 @@ export type BulkGenerateRequest = {
     brand_voice_id?: (string | null);
     tone?: (string | null);
 };
-

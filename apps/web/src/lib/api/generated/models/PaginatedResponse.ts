@@ -10,4 +10,3 @@ export type PaginatedResponse = {
     limit: number;
     pages: number;
 };
-

@@ -1,7 +1,7 @@
 /* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
- 
+
 export type GenerateRequest = {
     organization_id: string;
     template_id: string;
@@ -10,4 +10,3 @@ export type GenerateRequest = {
     tone?: (string | null);
     instructions?: string;
 };
-

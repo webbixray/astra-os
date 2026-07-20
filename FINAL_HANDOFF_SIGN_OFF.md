@@ -1,8 +1,8 @@
 # Astra OS — Final Handoff & Deployment Sign-Off
 
-**Version:** 1.0.2  
-**Date:** July 19, 2025  
-**Prepared by:** Hermes Agency — Enterprise Software Delivery  
+**Version:** 1.0.2
+**Date:** July 19, 2025
+**Prepared by:** Hermes Agency — Enterprise Software Delivery
 **Classification:** CONFIDENTIAL — Production Handoff Package
 
 ---
@@ -246,7 +246,7 @@ kubectl get nodes -o custom-columns=NAME:.metadata.name,CPU:.status.capacity.cpu
 
 ---
 
-**Hermes Agency — Enterprise Software Delivery**  
+**Hermes Agency — Enterprise Software Delivery**
 *Delivering production-grade software that works.*
 
 **Handoff Complete:** ✅ **READY FOR STAGING DEPLOYMENT**

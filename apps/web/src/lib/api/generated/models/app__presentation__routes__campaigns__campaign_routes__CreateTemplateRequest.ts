@@ -13,4 +13,3 @@ export type app__presentation__routes__campaigns__campaign_routes__CreateTemplat
     config?: Record<string, any>;
     organization_id: string;
 };
-

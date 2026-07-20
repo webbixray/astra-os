@@ -1,7 +1,7 @@
 /* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
- 
+
 export type ContentResponse = {
     id: string;
     campaign_id?: (string | null);
@@ -19,4 +19,3 @@ export type ContentResponse = {
     created_at: string;
     updated_at: string;
 };
-

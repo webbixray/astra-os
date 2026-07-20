@@ -1,6 +1,6 @@
 # ASTRA OS — Development Guide
 
-**Version**: 1.0  
+**Version**: 1.0
 **Purpose**: Complete guide for developing, testing, and contributing to ASTRA OS
 
 ---
@@ -251,7 +251,7 @@ class YourEntity:
     organization_id: UUID = field(default_factory=uuid4)
     name: str = ""
     created_at: datetime = field(default_factory=now)
-    
+
     def to_dict(self) -> dict:
         return {
             "id": str(self.id),
@@ -272,7 +272,7 @@ from uuid import UUID
 class YourService:
     def __init__(self, repo: YourRepository):
         self.repo = repo
-    
+
     async def do_something(self, org_id: UUID, data: dict) -> Any:
         # Business logic here
         pass
@@ -290,7 +290,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 class YourRepositoryImpl:
     def __init__(self, db: AsyncSession):
         self.db = db
-    
+
     async def save(self, entity: YourEntity) -> YourEntity:
         # Save logic
         pass
@@ -306,7 +306,7 @@ from uuid import UUID
 class YourUseCase:
     def __init__(self, repo: YourRepository):
         self.repo = repo
-    
+
     async def execute(self, org_id: UUID, data: dict) -> Any:
         # Orchestration logic
         pass
@@ -454,7 +454,7 @@ class TestYourEntity:
             name="Test"
         )
         assert entity.name == "Test"
-    
+
     def test_to_dict(self):
         entity = YourEntity(name="Test")
         d = entity.to_dict()
@@ -681,28 +681,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      
+
       - name: Install dependencies
         run: |
           cd apps/api
           pip install -e ".[dev]"
-      
+
       - name: Run tests
         run: |
           cd apps/api
           PYTHONPATH=. pytest tests/ -v --cov=app --cov-fail-under=80
-      
+
       - name: Lint
         run: |
           cd apps/api
           ruff check .
           ruff format --check .
-      
+
       - name: Type check
         run: |
           cd apps/api
@@ -712,29 +712,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
-      
+
       - name: Install dependencies
         run: |
           cd apps/web
           pnpm install
-      
+
       - name: Run tests
         run: |
           cd apps/web
           pnpm test --run
-      
+
       - name: Lint
         run: |
           cd apps/web
           pnpm lint
           pnpm format --check
-      
+
       - name: Type check
         run: |
           cd apps/web

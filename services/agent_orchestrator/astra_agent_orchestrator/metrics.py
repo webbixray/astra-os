@@ -83,7 +83,7 @@ def record_agent_run(
     cost_usd: float = 0.0,
 ) -> None:
     """Record metrics for an agent run.
-    
+
     Args:
         agent_type: Type of agent (e.g., "CEO", "CONTENT_SPECIALIST")
         success: Whether the run succeeded
@@ -109,7 +109,7 @@ def record_tool_call(
     duration_seconds: float,
 ) -> None:
     """Record metrics for a tool call.
-    
+
     Args:
         agent_type: Type of agent that made the call
         tool_name: Name of the tool called
@@ -131,7 +131,7 @@ def record_delegation(
     success: bool,
 ) -> None:
     """Record metrics for a delegation to a sub-agent.
-    
+
     Args:
         agent_type: Type of parent agent
         subagent_type: Type of sub-agent
@@ -169,12 +169,12 @@ class RunTracker:
 @dataclass
 class AgentMetricsContext:
     """Context manager for automatic agent run metrics.
-    
+
     Usage:
         with AgentMetricsContext("CEO") as tracker:
             # run agent
             tracker.set_success(True, tokens=100, cost=0.001)
-        
+
     On exit, automatically records run metrics and decrements active gauge.
     """
 
@@ -218,7 +218,7 @@ def track_agent_run(
     cost_usd: float = 0.0,
 ):
     """Convenience context manager for tracking agent runs.
-    
+
     Usage:
         with track_agent_run("CEO", tokens=100, cost_usd=0.001):
             result = await agent.run(...)
@@ -251,7 +251,7 @@ def track_agent_run(
 
 def get_metrics_response() -> tuple[bytes, str]:
     """Get Prometheus metrics in exposition format.
-    
+
     Returns:
         Tuple of (metrics_bytes, content_type)
 

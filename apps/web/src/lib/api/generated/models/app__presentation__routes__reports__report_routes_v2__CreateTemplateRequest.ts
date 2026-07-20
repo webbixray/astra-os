@@ -8,4 +8,3 @@ export type app__presentation__routes__reports__report_routes_v2__CreateTemplate
     config?: Record<string, any>;
     description?: string;
 };
-

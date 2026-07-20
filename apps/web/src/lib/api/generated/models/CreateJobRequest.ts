@@ -7,4 +7,3 @@ export type CreateJobRequest = {
     payload?: Record<string, any>;
     max_retries?: number;
 };
-

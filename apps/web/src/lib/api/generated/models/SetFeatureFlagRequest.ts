@@ -7,4 +7,3 @@ export type SetFeatureFlagRequest = {
     enabled?: boolean;
     config?: Record<string, any>;
 };
-

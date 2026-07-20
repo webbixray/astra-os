@@ -213,7 +213,7 @@ class TestCampaignCreate:
         user_id = app.dependency_overrides.get(require_user_id)
         if callable(user_id):
             user_id = user_id()
-        
+
         mock_campaign = _mock_campaign(
             name="New Campaign",
             organization_id=uuid4(),
@@ -225,7 +225,7 @@ class TestCampaignCreate:
         app.dependency_overrides[get_create_use_case] = lambda: mock_use_case
 
         org_id = uuid4()
-        
+
         # Setup CSRF
         from app.config import config
         secret = config.secret_key

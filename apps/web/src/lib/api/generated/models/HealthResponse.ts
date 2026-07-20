@@ -1,7 +1,7 @@
 /* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
- 
+
 export type HealthResponse = {
     status: string;
     version: string;
@@ -10,4 +10,3 @@ export type HealthResponse = {
     details?: (Record<string, string> | null);
     duration_ms?: (string | null);
 };
-

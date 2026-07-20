@@ -7,4 +7,3 @@ export type UpdateTemplateRequest = {
     description?: (string | null);
     config?: (Record<string, any> | null);
 };
-

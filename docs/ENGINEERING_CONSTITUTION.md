@@ -1,9 +1,9 @@
 # ASTRA OS — Engineering Constitution
 
-**Version**: 1.0  
-**Status**: Binding  
-**Authority**: CTO + Engineering Leads  
-**Review**: Quarterly  
+**Version**: 1.0
+**Status**: Binding
+**Authority**: CTO + Engineering Leads
+**Review**: Quarterly
 
 ---
 
@@ -316,12 +316,12 @@ Push → Lint → TypeCheck → UnitTests → IntegrationTests → Build → Sec
 
 ## Ratification
 
-**Signed**: _________________________  
-**CTO**: _________________________  
-**Date**: _________________________  
+**Signed**: _________________________
+**CTO**: _________________________
+**Date**: _________________________
 
-**Engineering Leads**: _________________________  
-**Date**: _________________________  
+**Engineering Leads**: _________________________
+**Date**: _________________________
 
 ---
 

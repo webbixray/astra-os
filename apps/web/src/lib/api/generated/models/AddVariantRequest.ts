@@ -8,4 +8,3 @@ export type AddVariantRequest = {
     config?: Record<string, any>;
     traffic_percent?: number;
 };
-

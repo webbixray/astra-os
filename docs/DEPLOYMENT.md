@@ -1,6 +1,6 @@
 # ASTRA OS — Deployment Guide
 
-**Version**: 1.0  
+**Version**: 1.0
 **Purpose**: Production deployment instructions for ASTRA OS
 
 ---
@@ -66,7 +66,7 @@
 
 - **Domain**: `astra-os.com` (or your domain)
 - **Wildcard Cert**: `*.astra-os.com` (Let's Encrypt / ACM / Cert-Manager)
-- **DNS Records**: 
+- **DNS Records**:
   - `api.astra-os.com` → ALB/Load Balancer
   - `app.astra-os.com` → CloudFront/CDN
   - `*.astra-os.com` → Wildcard

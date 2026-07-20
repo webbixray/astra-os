@@ -34,9 +34,9 @@ def test_init_tracing_creates_tracer_provider():
         mock_provider = MagicMock()
         mock_trace.TracerProvider.return_value = mock_provider
         mock_trace.get_tracer.return_value = MagicMock()
-        
+
         tracer = init_tracing("test-service", "http://otel:4318/v1/traces")
-        
+
         assert tracer is not None
         mock_trace.TracerProvider.assert_called_once()
         mock_provider.add_span_processor.assert_called_once()
@@ -44,9 +44,9 @@ def test_init_tracing_creates_tracer_provider():
 def test_init_tracing_without_endpoint_creates_noop():
     with patch("services.agent_orchestrator.telemetry.trace") as mock_trace:
         mock_trace.get_tracer.return_value = MagicMock()
-        
+
         tracer = init_tracing("test-service", None)
-        
+
         assert tracer is not None
         mock_trace.TracerProvider.assert_called_once()
         # No span processor added when no endpoint
@@ -80,32 +80,32 @@ _TRACER_PROVIDER = None
 def init_tracing(service_name: str, otlp_endpoint: str | None = None) -> trace.Tracer:
     """
     Initialize OpenTelemetry tracing.
-    
+
     Args:
         service_name: Service name for resource attributes
         otlp_endpoint: OTLP HTTP endpoint (e.g., http://otel-collector:4318/v1/traces)
                       If None, creates noop tracer (no export)
-    
+
     Returns:
         Configured tracer instance
     """
     global _TRACER, _TRACER_PROVIDER
-    
+
     resource = Resource.create({
         SERVICE_NAME: service_name,
         "deployment.environment": os.getenv("ENVIRONMENT", "development"),
     })
-    
+
     provider = TracerProvider(resource=resource)
-    
+
     if otlp_endpoint:
         exporter = OTLPSpanExporter(endpoint=otlp_endpoint)
         provider.add_span_processor(BatchSpanProcessor(exporter))
-    
+
     trace.set_tracer_provider(provider)
     _TRACER_PROVIDER = provider
     _TRACER = trace.get_tracer(__name__)
-    
+
     return _TRACER
 
 def get_tracer() -> trace.Tracer:
@@ -166,11 +166,11 @@ def mock_context():
 async def test_agent_run_creates_span_with_attributes(agent_config, mock_context):
     """Agent.run() should create span with agent attributes."""
     agent = Agent(agent_config, agent_config.tenant_id)
-    
+
     with patch("services.agent_orchestrator.agent.TRACER") as mock_tracer:
         mock_span = MagicMock()
         mock_tracer.start_as_current_span.return_value.__enter__.return_value = mock_span
-        
+
         # Mock execute to return success
         agent.execute = AsyncMock(return_value=AgentResult(
             agent_id=agent_config.agent_id,
@@ -180,14 +180,14 @@ async def test_agent_run_creates_span_with_attributes(agent_config, mock_context
             cost_usd=0.001,
             iterations=1,
         ))
-        
+
         result = await agent.run(mock_context, {"task": "test"})
-        
+
         # Verify span created with correct name and attributes
         mock_tracer.start_as_current_span.assert_called_once()
         call_args = mock_tracer.start_as_current_span.call_args
         assert call_args[0][0] == "agent.CEO.run"
-        
+
         # Verify span attributes set
         mock_span.set_attribute.assert_any_call("agent.id", str(agent_config.agent_id))
         mock_span.set_attribute.assert_any_call("agent.type", "CEO")
@@ -202,16 +202,16 @@ async def test_agent_run_creates_span_with_attributes(agent_config, mock_context
 async def test_agent_run_records_exception_on_failure(agent_config, mock_context):
     """Failed agent run should record exception on span."""
     agent = Agent(agent_config, agent_config.tenant_id)
-    
+
     with patch("services.agent_orchestrator.agent.TRACER") as mock_tracer:
         mock_span = MagicMock()
         mock_tracer.start_as_current_span.return_value.__enter__.return_value = mock_span
-        
+
         agent.execute = AsyncMock(side_effect=RuntimeError("Agent failed"))
-        
+
         with pytest.raises(RuntimeError):
             await agent.run(mock_context, {"task": "test"})
-        
+
         mock_span.record_exception.assert_called_once()
         mock_span.set_attribute.assert_any_call("agent.success", False)
 ```
@@ -235,7 +235,7 @@ async def run(self, context: AgentContext, input_data: Any) -> AgentResult:
     self._tool_calls = []
     self._tool_results = []
     self._sub_agent_results = []
-    
+
     with TRACER.start_as_current_span(
         f"agent.{self.agent_type.value}.run",
         attributes={
@@ -248,7 +248,7 @@ async def run(self, context: AgentContext, input_data: Any) -> AgentResult:
             self.state = AgentState.RUNNING
             result = await self.execute(context, input_data)
             self.state = AgentState.COMPLETED
-            
+
             # Record success attributes
             span.set_attribute("agent.success", result.success)
             span.set_attribute("agent.duration_ms", result.duration_ms)
@@ -257,7 +257,7 @@ async def run(self, context: AgentContext, input_data: Any) -> AgentResult:
             span.set_attribute("agent.iterations", result.iterations)
             if result.error:
                 span.set_attribute("agent.error", result.error)
-            
+
             return result
         except Exception as e:
             self.state = AgentState.FAILED
@@ -295,23 +295,23 @@ async def run(self, context: AgentContext, input_data: Any) -> AgentResult:
 async def test_call_tool_creates_span(agent_config, mock_context):
     """call_tool() should create span with tool attributes."""
     agent = Agent(agent_config, agent_config.tenant_id)
-    
+
     with patch("services.agent_orchestrator.agent.TRACER") as mock_tracer:
         mock_span = MagicMock()
         mock_tracer.start_as_current_span.return_value.__enter__.return_value = mock_span
-        
+
         # Mock tool registry
         agent.tool_registry.execute_tool = AsyncMock(return_value={
             "success": True,
             "result": "tool output",
         })
-        
+
         result = await agent.call_tool("test_tool", {"param": "value"}, mock_context)
-        
+
         mock_tracer.start_as_current_span.assert_called_once()
         call_args = mock_tracer.start_as_current_span.call_args
         assert call_args[0][0] == "agent.CEO.call_tool"
-        
+
         mock_span.set_attribute.assert_any_call("tool.name", "test_tool")
         mock_span.set_attribute.assert_any_call("tool.success", True)
         mock_span.set_attribute.assert_any_call("tool.duration_ms", pytest.anything())
@@ -328,7 +328,7 @@ async def call_tool(
 ) -> ToolResult:
     """Execute a tool through the registry, with governance enforcement."""
     self.state = AgentState.WAITING_FOR_TOOL
-    
+
     with TRACER.start_as_current_span(
         f"agent.{self.agent_type.value}.call_tool",
         attributes={
@@ -337,17 +337,17 @@ async def call_tool(
         }
     ) as span:
         # ... existing governance logic ...
-        
+
         call = ToolCall(tool_name=tool_name, parameters=parameters)
         self._tool_calls.append(call)
-        
+
         start = time.time()
         try:
             result_data = await self.tool_registry.execute_tool(
                 tool_name, parameters, context
             )
             duration_ms = int((time.time() - start) * 1000)
-            
+
             result = ToolResult(
                 call_id=call.call_id,
                 tool_name=tool_name,
@@ -356,12 +356,12 @@ async def call_tool(
                 error=result_data.get("error"),
                 duration_ms=duration_ms,
             )
-            
+
             span.set_attribute("tool.success", result.success)
             span.set_attribute("tool.duration_ms", duration_ms)
             if result.error:
                 span.set_attribute("tool.error", result.error)
-            
+
             self._tool_results.append(result)
             self.state = AgentState.RUNNING
             return result
@@ -390,7 +390,7 @@ async def delegate_to_subagent(
 ) -> AgentResult:
     """Delegate a task to a sub-agent."""
     self.state = AgentState.WAITING_FOR_SUBAGENT
-    
+
     with TRACER.start_as_current_span(
         f"agent.{self.agent_type.value}.delegate",
         attributes={
@@ -400,15 +400,15 @@ async def delegate_to_subagent(
     ) as span:
         registry = get_agent_registry()
         subagent = registry.create_agent(subagent_type, self.tenant_id)
-        
+
         sub_context = context.child_context(subagent.agent_id) if context else context
         span.set_attribute("subagent.id", str(subagent.agent_id))
-        
+
         result = await subagent.run(sub_context, input_data)
-        
+
         span.set_attribute("subagent.success", result.success)
         span.set_attribute("subagent.duration_ms", result.duration_ms)
-        
+
         self._sub_agent_results.append(result)
         return result
 ```
@@ -461,10 +461,10 @@ def test_record_agent_run_increments_counters():
     # Use custom registry to isolate test
     from prometheus_client.core import CollectorRegistry
     from prometheus_client import Counter, Histogram
-    
+
     # Direct test of metric functions
     record_agent_run("CEO", True, 1.5, 100, 0.001)
-    
+
     # Verify counters incremented (check via samples)
     samples = list(AGENT_RUNS.collect())
     assert len(samples) > 0
@@ -584,14 +584,14 @@ def record_delegation(
 
 class AgentMetricsContext:
     """Context manager for tracking active agent count."""
-    
+
     def __init__(self, agent_type: str):
         self.agent_type = agent_type
-    
+
     def __enter__(self):
         AGENT_ACTIVE.labels(agent_type=self.agent_type).inc()
         return self
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         AGENT_ACTIVE.labels(agent_type=self.agent_type).dec()
         return False
@@ -603,21 +603,21 @@ def track_agent_run(agent_type: str):
     success = False
     tokens = 0
     cost = 0.0
-    
+
     class RunTracker:
         def __init__(self):
             self.tokens = 0
             self.cost = 0.0
             self.success = False
-        
+
         def set_success(self, success: bool, tokens: int = 0, cost: float = 0.0):
             self.success = success
             self.tokens = tokens
             self.cost = cost
-    
+
     tracker = RunTracker()
     AGENT_ACTIVE.labels(agent_type=agent_type).inc()
-    
+
     try:
         yield tracker
         tracker.set_success(True)

@@ -10,4 +10,3 @@ export type UpdateScheduleRequest = {
     config?: (Record<string, any> | null);
     is_active?: (boolean | null);
 };
-

@@ -1,7 +1,7 @@
 /* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
- 
+
 import type { CampaignResponse } from './CampaignResponse';
 export type PaginatedResponse_CampaignResponse_ = {
     success?: boolean;
@@ -11,4 +11,3 @@ export type PaginatedResponse_CampaignResponse_ = {
     limit: number;
     pages: number;
 };
-

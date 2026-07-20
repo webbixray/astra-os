@@ -10,4 +10,3 @@ export type ChatRequestSchema = {
     page_context?: (Record<string, any> | null);
     messages?: (Array<ChatMessageSchema> | null);
 };
-

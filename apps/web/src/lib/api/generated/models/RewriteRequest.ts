@@ -1,7 +1,7 @@
 /* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
- 
+
 export type RewriteRequest = {
     organization_id: string;
     content: string;
@@ -9,4 +9,3 @@ export type RewriteRequest = {
     brand_voice_id?: (string | null);
     instructions?: string;
 };
-

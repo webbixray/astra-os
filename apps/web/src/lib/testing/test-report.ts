@@ -60,7 +60,7 @@ export function generateHtmlReport(data: TestReportData): string {
   <div class="container">
     <h1>Test Report</h1>
     <p>Generated: ${new Date(data.timestamp).toLocaleString()}</p>
-    
+
     <div class="summary">
       <div class="stat total">
         <div class="stat-value">${data.totalTests}</div>

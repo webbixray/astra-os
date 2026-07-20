@@ -36,7 +36,7 @@ export class VisualTester {
   ): Promise<string> {
     const { container } = render(component);
     const html = container.innerHTML;
-    
+
     // In a real implementation, this would use a headless browser
     // to capture an actual screenshot
     return btoa(html);
@@ -72,24 +72,24 @@ export class VisualTester {
 
   private calculateSimilarity(image1: string, image2: string): number {
     if (image1 === image2) return 1;
-    
+
     // Simplified similarity calculation
     // In real implementation, this would compare actual pixel data
     const len1 = image1.length;
     const len2 = image2.length;
     const maxLen = Math.max(len1, len2);
-    
+
     if (maxLen === 0) return 1;
-    
+
     let matches = 0;
     const minLen = Math.min(len1, len2);
-    
+
     for (let i = 0; i < minLen; i++) {
       if (image1[i] === image2[i]) {
         matches++;
       }
     }
-    
+
     return matches / maxLen;
   }
 
@@ -110,7 +110,7 @@ export class VisualTester {
     const response = await fetch(`${this.config.baseUrl}${url}`);
     const html = await response.text();
     const screenshot = btoa(html);
-    
+
     return this.compareScreenshots(name, screenshot);
   }
 
@@ -144,7 +144,7 @@ export async function testVisualRegression(
 ): Promise<{ passed: boolean; similarity: number }> {
   const tester = new VisualTester({ threshold: _threshold });
   const result = await tester.testComponent(name, component);
-  
+
   return {
     passed: result.passed,
     similarity: result.baseline ? 1 - result.threshold : 1,

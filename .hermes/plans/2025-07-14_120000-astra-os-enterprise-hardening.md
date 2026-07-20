@@ -46,9 +46,9 @@ async def test_clean_exit_does_not_restart(config):
     """SystemExit(0) or KeyboardInterrupt should stop supervisor without restart."""
     supervisor = Supervisor(config)
     mock_run = AsyncMock(side_effect=SystemExit(0))
-    
+
     await supervisor.run(mock_run)
-    
+
     assert mock_run.call_count == 1
     assert supervisor.restart_count == 0
 
@@ -57,10 +57,10 @@ async def test_nonzero_systemexit_does_not_restart(config):
     """SystemExit(non-zero) = deterministic failure, no restart."""
     supervisor = Supervisor(config)
     mock_run = AsyncMock(side_effect=SystemExit(1))
-    
+
     with pytest.raises(SystemExit) as exc:
         await supervisor.run(mock_run)
-    
+
     assert exc.value.code == 1
     assert mock_run.call_count == 1
 
@@ -69,16 +69,16 @@ async def test_unhandled_exception_triggers_restart_with_backoff(config):
     """Any other exception triggers restart with exponential backoff."""
     supervisor = Supervisor(config)
     call_count = 0
-    
+
     async def flaky_run():
         nonlocal call_count
         call_count += 1
         if call_count < 3:
             raise RuntimeError("transient failure")
         return "success"
-    
+
     result = await supervisor.run(flaky_run)
-    
+
     assert result == "success"
     assert call_count == 3
     assert supervisor.restart_count == 2
@@ -89,13 +89,13 @@ async def test_crash_loop_guard_exits_after_max_restarts(config):
     config.max_restarts = 2
     config.restart_window_seconds = 300
     supervisor = Supervisor(config)
-    
+
     async def always_fails():
         raise RuntimeError("permanent failure")
-    
+
     with pytest.raises(SystemExit) as exc:
         await supervisor.run(always_fails)
-    
+
     assert exc.value.code == 1
     assert supervisor.restart_count == 2
 
@@ -108,9 +108,9 @@ async def test_no_supervise_env_var_disables_supervisor(config):
         config = SupervisorConfig()
         supervisor = Supervisor(config)
         mock_run = AsyncMock(return_value="done")
-        
+
         result = await supervisor.run(mock_run)
-        
+
         assert result == "done"
         assert mock_run.call_count == 1
     finally:
@@ -151,18 +151,18 @@ class Supervisor:
     restart_count: int = 0
     restart_timestamps: list[float] = field(default_factory=list)
     _backoff: float = 1.0
-    
+
     def __post_init__(self):
         if os.getenv(self.config.disable_env_var) == "1":
             self._disabled = True
         else:
             self._disabled = False
         self._backoff = self.config.base_backoff_seconds
-    
+
     async def run(self, coro_factory: Callable[[], Awaitable[Any]]) -> Any:
         if self._disabled:
             return await coro_factory()
-        
+
         while True:
             try:
                 return await coro_factory()
@@ -176,23 +176,23 @@ class Supervisor:
                 raise
             except Exception as e:
                 await self._handle_crash(e)
-    
+
     async def _handle_crash(self, error: Exception) -> None:
         now = time.monotonic()
         self.restart_timestamps = [t for t in self.restart_timestamps if now - t < self.config.restart_window_seconds]
         self.restart_timestamps.append(now)
         self.restart_count += 1
-        
+
         if len(self.restart_timestamps) > self.config.max_restarts:
             raise SystemExit(1)
-        
+
         # Sleep in small slices for signal responsiveness
         remaining = self._backoff
         while remaining > 0:
             slice_ms = min(0.25, remaining)
             await asyncio.sleep(slice_ms)
             remaining -= slice_ms
-        
+
         self._backoff = min(self._backoff * self.config.backoff_multiplier, self.config.max_backoff_seconds)
 ```
 
@@ -208,12 +208,12 @@ async def main() -> None:
     logging.basicConfig(...)
     settings = Settings()
     orchestrator = AgentOrchestrator(settings)
-    
+
     supervisor = Supervisor(SupervisorConfig())
-    
+
     async def run_orchestrator():
         await orchestrator.run()
-    
+
     try:
         await supervisor.run(run_orchestrator)
     except KeyboardInterrupt:
@@ -253,11 +253,11 @@ import time
 async def test_liveness_endpoint_returns_ok():
     from services.agent_orchestrator.health import create_health_app
     from services.agent_orchestrator.supervisor import Supervisor, SupervisorConfig
-    
+
     app = create_health_app(Supervisor(SupervisorConfig()))
     async with AsyncClient(app=app, base_url="http://test") as client:
         response = await client.get("/api/health/live")
-    
+
     assert response.status_code == 200
     data = response.json()
     assert data["ok"] is True
@@ -271,11 +271,11 @@ async def test_liveness_endpoint_works_without_auth():
     """No Authorization header required."""
     from services.agent_orchestrator.health import create_health_app
     from services.agent_orchestrator.supervisor import Supervisor, SupervisorConfig
-    
+
     app = create_health_app(Supervisor(SupervisorConfig()))
     async with AsyncClient(app=app, base_url="http://test") as client:
         response = await client.get("/api/health/live")
-    
+
     assert response.status_code == 200
     assert response.json()["ok"] is True
 ```
@@ -307,7 +307,7 @@ async def _lifespan(app: FastAPI):
 
 def create_health_app(supervisor: Supervisor) -> FastAPI:
     app = FastAPI(title="Agent Orchestrator Health", lifespan=_lifespan)
-    
+
     @app.get("/api/health/live", response_model=HealthResponse)
     async def liveness():
         return HealthResponse(
@@ -315,7 +315,7 @@ def create_health_app(supervisor: Supervisor) -> FastAPI:
             uptime_seconds=time.monotonic() - _START_MONOTONIC,
             version=_VERSION,
         )
-    
+
     return app
 ```
 
@@ -401,11 +401,11 @@ from opentelemetry.sdk.resources import Resource, SERVICE_NAME
 def init_tracing(service_name: str, otlp_endpoint: str | None = None):
     resource = Resource.create({SERVICE_NAME: service_name})
     provider = TracerProvider(resource=resource)
-    
+
     if otlp_endpoint:
         exporter = OTLPSpanExporter(endpoint=f"{otlp_endpoint}/v1/traces")
         provider.add_span_processor(BatchSpanProcessor(exporter))
-    
+
     trace.set_tracer_provider(provider)
     return trace.get_tracer(__name__)
 
@@ -498,12 +498,12 @@ class AgentMetricsContext:
     def __init__(self, agent_type: str):
         self.agent_type = agent_type
         self.start = 0
-    
+
     def __enter__(self):
         self.start = time.monotonic()
         AGENT_ACTIVE.labels(agent_type=self.agent_type).inc()
         return self
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         AGENT_ACTIVE.labels(agent_type=self.agent_type).dec()
 ```
@@ -525,7 +525,7 @@ class AgentMetricsContext:
 async def readiness(request: Request):
     orchestrator: AgentOrchestrator = request.app.state.orchestrator
     checks = {}
-    
+
     # DB check
     try:
         async with orchestrator.pg_pool.acquire() as conn:
@@ -533,14 +533,14 @@ async def readiness(request: Request):
         checks["database"] = "ok"
     except Exception as e:
         checks["database"] = f"failed: {e}"
-    
+
     # Redis check
     try:
         await orchestrator.redis_client.ping()
         checks["redis"] = "ok"
     except Exception as e:
         checks["redis"] = f"failed: {e}"
-    
+
     all_ok = all(v == "ok" for v in checks.values())
     return JSONResponse(
         {"ready": all_ok, "checks": checks},
@@ -590,7 +590,7 @@ class CircuitBreaker:
     success_count: int = 0
     last_failure_time: float = 0
     _lock: asyncio.Lock = field(default_factory=asyncio.Lock)
-    
+
     async def call(self, func: Callable[..., Awaitable[Any]], *args, **kwargs) -> Any:
         async with self._lock:
             if self.state == CircuitState.OPEN:
@@ -599,7 +599,7 @@ class CircuitBreaker:
                     self.success_count = 0
                 else:
                     raise CircuitOpenError(f"Circuit {self.name} is OPEN")
-        
+
         try:
             result = await func(*args, **kwargs)
             async with self._lock:
@@ -609,7 +609,7 @@ class CircuitBreaker:
             async with self._lock:
                 self._on_failure()
             raise
-    
+
     def _on_success(self):
         if self.state == CircuitState.HALF_OPEN:
             self.success_count += 1
@@ -618,7 +618,7 @@ class CircuitBreaker:
                 self.failure_count = 0
         else:
             self.failure_count = 0
-    
+
     def _on_failure(self):
         self.failure_count += 1
         self.last_failure_time = time.monotonic()
@@ -666,13 +666,13 @@ class DeadLetterQueue:
     def __init__(self, redis_client, dlq_stream: str = "astra:dlq"):
         self.redis = redis_client
         self.dlq_stream = dlq_stream
-    
+
     async def add(self, dead_letter: DeadLetter) -> str:
         return await self.redis.xadd(
             self.dlq_stream,
             {"data": json.dumps(asdict(dead_letter))}
         )
-    
+
     async def get_pending_count(self) -> int:
         info = await self.redis.xinfo_stream(self.dlq_stream)
         return info["length"]

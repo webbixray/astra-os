@@ -1,7 +1,7 @@
 /* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
- 
+
 export type RecordApiCallRequest = {
     endpoint: string;
     method: string;
@@ -9,4 +9,3 @@ export type RecordApiCallRequest = {
     ip_address?: string;
     response_time_ms?: number;
 };
-

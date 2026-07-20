@@ -1,10 +1,9 @@
 /* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
- 
+
 export type InviteRequest = {
     organization_id: string;
     email: string;
     role?: string;
 };
-

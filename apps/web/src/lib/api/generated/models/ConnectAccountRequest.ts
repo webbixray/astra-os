@@ -9,4 +9,3 @@ export type ConnectAccountRequest = {
     platform_account_id: string;
     credentials?: Record<string, any>;
 };
-

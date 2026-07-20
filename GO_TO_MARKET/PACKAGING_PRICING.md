@@ -156,7 +156,7 @@ async def check_package_limits(org_id: UUID, package: str) -> bool:
     current = await get_monthly_runs(org_id)
     limit = PACKAGE_LIMITS[package]["runs_per_month"]
     hard_cap = PACKAGE_LIMITS[package]["hard_cap"]
-    
+
     if hard_cap and current >= hard_cap:
         raise PackageLimitExceeded("Hard cap reached — upgrade required")
     elif current >= limit:

@@ -67,15 +67,15 @@ export default function () {
   sleep(1);
   readinessCheck();
   sleep(1);
-  
+
   // Public metrics (no auth)
   metricsCheck();
   sleep(1);
-  
+
   // Auth check (expects 401/403)
   authCheck();
   sleep(1);
-  
+
   // API root
   apiRootCheck();
   sleep(1);

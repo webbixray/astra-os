@@ -180,7 +180,7 @@ def agent_run(agent_type, input, file, async_mode):
     """Run an agent"""
     api = AgentAPI()
     input_data = json.load(file) if file else json.loads(input or "{}")
-    
+
     if async_mode:
         task_id = api.run_agent_async(agent_type, input_data)
         click.echo(f"Started async task: {task_id}")
@@ -427,24 +427,24 @@ class SchemaEntry:
 
 class SchemaRegistry:
     """Central registry for all Astra OS JSON schemas"""
-    
+
     def __init__(self, schema_dir: Path):
         self.schema_dir = schema_dir
         self._schemas: Dict[str, SchemaEntry] = {}
         self._validators: Dict[str, Draft202012Validator] = {}
         self._load_all()
-    
+
     def _load_all(self):
         for schema_file in self.schema_dir.rglob("*.json"):
             with open(schema_file) as f:
                 data = json.load(f)
-            
+
             # Extract metadata from schema
             name = data.get("$id", schema_file.stem)
             version = data.get("version", "1.0.0")
             description = data.get("description", "")
             examples = data.get("examples", [])
-            
+
             entry = SchemaEntry(
                 name=name,
                 version=version,
@@ -452,36 +452,36 @@ class SchemaRegistry:
                 description=description,
                 examples=examples,
             )
-            
+
             self._schemas[name] = entry
             self._validators[name] = Draft202012Validator(data)
-    
+
     def get(self, name: str) -> Optional[SchemaEntry]:
         return self._schemas.get(name)
-    
+
     def validate(self, name: str, data: Dict[str, Any]) -> tuple[bool, list]:
         """Validate data against schema. Returns (is_valid, errors)"""
         validator = self._validators.get(name)
         if not validator:
             return False, [f"Schema '{name}' not found"]
-        
+
         errors = list(validator.iter_errors(data))
         return len(errors) == 0, [e.message for e in errors]
-    
+
     def generate_example(self, name: str) -> Optional[Dict[str, Any]]:
         """Generate example data from schema"""
         entry = self._schemas.get(name)
         if entry and entry.examples:
             return entry.examples[0]
         return None
-    
+
     def list_schemas(self) -> list[str]:
         return list(self._schemas.keys())
-    
+
     def get_openapi_components(self) -> Dict[str, Any]:
         """Export all schemas as OpenAPI components"""
         return {
-            name: entry.schema 
+            name: entry.schema
             for name, entry in self._schemas.items()
         }
 ```
@@ -508,14 +508,14 @@ def generate_schema_from_model(model: Type[BaseModel]) -> dict:
         by_alias=True,
         ref_template="#/components/schemas/{model}"
     )
-    
+
     schema = generator.generate(model.model_json_schema())
     return schema
 
 def generate_all_schemas(models_module) -> dict:
     """Generate schemas for all Pydantic models in a module"""
     import inspect
-    
+
     schemas = {}
     for name, obj in inspect.getmembers(models_module):
         if inspect.isclass(obj) and issubclass(obj, BaseModel) and obj != BaseModel:
@@ -526,12 +526,12 @@ def generate_all_schemas(models_module) -> dict:
 def save_schemas(schemas: dict, output_dir: Path):
     """Save schemas to JSON files"""
     output_dir.mkdir(parents=True, exist_ok=True)
-    
+
     for name, schema in schemas.items():
         file_path = output_dir / f"{name}.json"
         with open(file_path, "w") as f:
             json.dump(schema, f, indent=2)
-        
+
         print(f"Generated: {file_path}")
 ```
 
@@ -631,7 +631,7 @@ from pydantic import BaseModel
 
 class AstraClient:
     """Astra OS API Client"""
-    
+
     def __init__(
         self,
         base_url: str = "https://api.astra-os.io",
@@ -645,16 +645,16 @@ class AstraClient:
             timeout=timeout,
             headers={"Authorization": f"Bearer {api_key}"} if api_key else {},
         )
-    
+
     async def close(self):
         await self.client.aclose()
-    
+
     async def __aenter__(self):
         return self
-    
+
     async def __aexit__(self, *args):
         await self.close()
-    
+
     # Agent methods
     async def run_agent(
         self,
@@ -672,12 +672,12 @@ class AstraClient:
         )
         response.raise_for_status()
         return response.json()
-    
+
     async def get_agent_status(self, task_id: str) -> Dict[str, Any]:
         response = await self.client.get(f"/api/v1/self-service/agents/{task_id}/status")
         response.raise_for_status()
         return response.json()
-    
+
     # Workflow methods
     async def create_workflow(self, name: str, definition: Dict, template_id: str = None) -> Dict:
         response = await self.client.post(
@@ -686,13 +686,13 @@ class AstraClient:
         )
         response.raise_for_status()
         return response.json()
-    
+
     # Schema methods
     async def get_schema(self, schema_name: str) -> Dict:
         response = await self.client.get(f"/api/v1/self-service/schemas/{schema_name}")
         response.raise_for_status()
         return response.json()
-    
+
     # Cost methods
     async def get_cost_report(
         self,

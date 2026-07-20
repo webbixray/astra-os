@@ -11,4 +11,3 @@ export type CreateWidgetRequest = {
     height?: number;
     config?: Record<string, any>;
 };
-

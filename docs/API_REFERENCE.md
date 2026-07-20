@@ -1,8 +1,8 @@
 # ASTRA OS — API Reference
 
-**Version**: 1.0  
-**Base URL**: `https://api.astra-os.com/api/v1`  
-**Authentication**: Bearer Token (JWT)  
+**Version**: 1.0
+**Base URL**: `https://api.astra-os.com/api/v1`
+**Authentication**: Bearer Token (JWT)
 **Content-Type**: `application/json`
 
 ---

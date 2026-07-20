@@ -117,14 +117,14 @@ class CircuitBreaker:
 
     async def call(self, func: Callable[..., Awaitable[Any]], *args, **kwargs) -> Any:
         """Execute function with circuit breaker protection.
-        
+
         Args:
             func: Async callable to execute
             *args, **kwargs: Arguments passed to func
-           
+
         Returns:
             Result of func(*args, **kwargs)
-           
+
         Raises:
             CircuitOpenError: If circuit is OPEN
             Exception: Any exception raised by func (after recording failure)
@@ -264,7 +264,7 @@ def create_circuit_breaker(
 @dataclass
 class RetryConfig:
     """Configuration for retry behavior."""
-    
+
     max_attempts: int = 3
     base_delay: float = 1.0
     max_delay: float = 60.0
@@ -275,10 +275,10 @@ class RetryConfig:
 
 class RetryPolicy:
     """Retry policy with exponential backoff and jitter."""
-    
+
     def __init__(self, config: RetryConfig | None = None):
         self.config = config or RetryConfig()
-    
+
     def _calculate_delay(self, attempt: int) -> float:
         delay = min(
             self.config.base_delay * (self.config.exponential_base ** attempt),
@@ -288,7 +288,7 @@ class RetryPolicy:
             import random
             delay = delay * (0.5 + random.random())
         return delay
-    
+
     async def execute(self, func: Callable[..., Awaitable[Any]], *args, **kwargs) -> Any:
         last_exception = None
         for attempt in range(self.config.max_attempts):
@@ -310,7 +310,7 @@ class RetryPolicy:
 @dataclass
 class BulkheadConfig:
     """Configuration for bulkhead isolation."""
-    
+
     max_concurrent: int = 10
     max_queue_size: int = 100
     timeout_seconds: float = 30.0
@@ -318,24 +318,24 @@ class BulkheadConfig:
 
 class Bulkhead:
     """Bulkhead pattern for resource isolation and concurrency limiting."""
-    
+
     def __init__(self, config: BulkheadConfig | None = None):
         self.config = config or BulkheadConfig()
         self._semaphore = asyncio.Semaphore(self.config.max_concurrent)
         self._queue_size = 0
         self._lock = asyncio.Lock()
-    
+
     @property
     def available_slots(self) -> int:
         return self._semaphore._value
-    
+
     async def execute(self, func: Callable[..., Awaitable[Any]], *args, **kwargs) -> Any:
         if self._queue_size >= self.config.max_queue_size:
             raise RuntimeError(f"Bulkhead queue full (max: {self.config.max_queue_size})")
-        
+
         async with self._lock:
             self._queue_size += 1
-        
+
         try:
             async with self._semaphore:
                 try:

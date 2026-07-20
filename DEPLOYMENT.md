@@ -384,4 +384,3 @@ For issues or questions:
 - Review health: `docker compose ps`
 - Inspect containers: `docker inspect <container>`
 - Visit docs: https://docs.docker.com/
-
