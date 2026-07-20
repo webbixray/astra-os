@@ -55,8 +55,8 @@ Thumbs.db
 *.swp
 *.swo
 
-# Docker (production configs generated at deploy time)
-Dockerfile
+# Docker (generated production configs - app-specific ones are tracked)
+apps/api/Dockerfile
 docker-compose.prod*.yml
 
 # Database files

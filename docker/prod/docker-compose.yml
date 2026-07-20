@@ -1,4 +1,37 @@
+# ============================================================
+# ASTRA OS - Production Docker Compose
+# Full production stack with monitoring, reverse proxy, and SSL
+# ============================================================
+
+name: astra-os-prod
+
 services:
+  nginx:
+    image: nginx:1.27-alpine
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - ./public:/var/www/public:ro
+    depends_on:
+      api:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.5"
+
   postgres:
     image: postgres:16-alpine
     restart: always
@@ -17,13 +50,15 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 1G
           cpus: "1.0"
 
   redis:
     image: redis:7-alpine
-    command: redis-server --requirepass ${REDIS_PASSWORD:?must be set}
+    command: redis-server --requirepass ${REDIS_PASSWORD:?must be set} --appendonly yes
     restart: always
+    volumes:
+      - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 10s
@@ -35,10 +70,34 @@ services:
           memory: 256M
           cpus: "0.5"
 
+  temporal:
+    image: temporalio/auto-setup:1.24
+    restart: always
+    environment:
+      DB: postgres12
+      DB_PORT: 5432
+      POSTGRES_SEEDS: postgres
+      POSTGRES_USER: astra
+      POSTGRES_PWD: ${POSTGRES_PASSWORD:?must be set}
+      POSTGRES_DB: astra_temporal
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "temporal operator cluster health --address $$(hostname -i):7233"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+
   api:
     build:
-      context: ../../apps/api
-      dockerfile: Dockerfile
+      context: ../../
+      dockerfile: apps/api/Dockerfile
     restart: always
     depends_on:
       postgres:
@@ -53,28 +112,20 @@ services:
       SECRET_KEY: ${SECRET_KEY:?must be set}
       CORS_ORIGINS: https://${DOMAIN:?must be set}
       SENTRY_DSN: ${SENTRY_DSN:-}
+      OTLP_ENDPOINT: http://otel-collector:4318
       SUPABASE_URL: ${SUPABASE_URL:-}
       SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:-}
       SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     expose:
       - "8000"
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:8000/api/v1/health"]
+      test: ["CMD", "curl", "-sf", "http://localhost:8000/api/v1/health/live"]
       interval: 15s
       timeout: 5s
-      start_period: 15s
+      start_period: 30s
       retries: 3
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-          cpus: "2.0"
-    # Production hardening
     security_opt:
       - no-new-privileges:true
     read_only: true
@@ -83,10 +134,17 @@ services:
       - /var/cache
     user: "65532:65532"
     entrypoint: ["python", "entrypoint.py"]
+    deploy:
+      mode: replicated
+      replicas: 2
+      resources:
+        limits:
+          memory: 1G
+          cpus: "2.0"
 
   web:
     build:
-      context: ../..
+      context: ../../
       dockerfile: apps/web/Dockerfile
     restart: always
     depends_on:
@@ -101,55 +159,171 @@ services:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/health"]
       interval: 15s
       timeout: 5s
-      start_period: 10s
+      start_period: 15s
       retries: 3
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-          cpus: "1.0"
-    # Production hardening
     security_opt:
       - no-new-privileges:true
     read_only: true
     tmpfs:
       - /tmp
-      - /var/cache
-      - /app/.next/cache
+      - /app/apps/web/.next/cache
     user: "1001:1001"
+    deploy:
+      mode: replicated
+      replicas: 2
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
 
-  nginx:
-    image: nginx:1.27-alpine
+  worker:
+    build:
+      context: ../../
+      dockerfile: apps/api/Dockerfile.worker
     restart: always
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./ssl:/etc/nginx/ssl:ro
     depends_on:
-      - api
-      - web
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:80/api/v1/health"]
-      interval: 15s
-      timeout: 5s
-      retries: 3
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      ENVIRONMENT: production
+      DATABASE_URL: postgresql+asyncpg://astra:${POSTGRES_PASSWORD:?}@postgres:5432/astra
+      REDIS_URL: redis://:${REDIS_PASSWORD:?must be set}@redis:6379/0
+      TEMPORAL_HOST: temporal:7233
+      SECRET_KEY: ${SECRET_KEY:?must be set}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+    security_opt:
+      - no-new-privileges:true
+    user: "65532:65532"
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.108.0
+    restart: always
+    volumes:
+      - ./otel-collector/otel-collector-config.yml:/etc/otelcol-contrib/config.yaml:ro
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
     deploy:
       resources:
         limits:
           memory: 256M
           cpus: "0.5"
 
+  prometheus:
+    image: prom/prometheus:v2.54.0
+    restart: always
+    volumes:
+      - prometheus_data:/prometheus
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/rules:/etc/prometheus/rules:ro
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=30d"
+      - "--web.enable-lifecycle"
+    expose:
+      - "9090"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    restart: always
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_INSTALL_PLUGINS: grafana-piechart-panel
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    expose:
+      - "3000"
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
+
+  loki:
+    image: grafana/loki:3.1.0
+    restart: always
+    volumes:
+      - loki_data:/loki
+      - ./loki/loki.yml:/etc/loki/loki.yml:ro
+    command: -config.file=/etc/loki/loki.yml
+    expose:
+      - "3100"
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
+
+  promtail:
+    image: grafana/promtail:3.1.0
+    restart: always
+    volumes:
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./promtail/promtail.yml:/etc/promtail/promtail.yml:ro
+    command: -config.file=/etc/promtail/promtail.yml
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.25"
+
+  tempo:
+    image: grafana/tempo:2.6.0
+    restart: always
+    volumes:
+      - tempo_data:/tmp/tempo
+      - ./tempo/tempo.yml:/etc/tempo/tempo.yml:ro
+    command: -config.file=/etc/tempo/tempo.yml
+    expose:
+      - "3200"
+      - "4317"
+      - "4318"
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    restart: always
+    volumes:
+      - alertmanager_data:/alertmanager
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    command:
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+      - "--storage.path=/alertmanager"
+    expose:
+      - "9093"
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.25"
+
 volumes:
   pgdata:
+  redis_data:
+  prometheus_data:
+  grafana_data:
+  loki_data:
+  tempo_data:
+  alertmanager_data:

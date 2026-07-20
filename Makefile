@@ -1,211 +1,151 @@
-.PHONY: help bootstrap setup setup-docker dev dev-api dev-web stop test test-api test-web test-e2e test-cov lint lint-api lint-web format format-api typecheck db-migrate db-upgrade db-downgrade db-seed db-reset docker-up docker-down docker-build docker-logs docker-ps k8s-deploy k8s-status k8s-logs k8s-delete clean build version check
+SHELL := /bin/bash
 
-# Default target
-help: ## Show this help message
-	@echo "Astra OS - Development Commands"
-	@echo "================================"
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+.PHONY: help bootstrap setup dev dev-api dev-web stop test test-api test-web test-e2e test-cov test-load \
+        lint lint-api lint-web format format-api typecheck security-scan \
+        db-migrate db-upgrade db-downgrade db-seed db-reset db-check \
+        docker-up docker-down docker-build docker-logs docker-ps docker-restart docker-clean \
+        docker-build-prod docker-up-prod docker-down-prod docker-logs-prod docker-ps-prod docker-test-prod docker-sbom \
+        monitoring monitoring-down deploy k8s-deploy k8s-status k8s-logs k8s-delete clean build version check install-hooks
 
-# ============================================
-# Setup & Installation
-# ============================================
+help: ## Show this help
+	@echo "Astra OS Commands"; echo "======================"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-22s\033[0m %s\n", $$1, $$2}'
 
-bootstrap: ## Full setup from clean clone (installs deps, starts infra, migrates, seeds)
-	@make setup
-
-setup: ## Initial project setup (install deps, create .env, start services)
-	@echo "Setting up Astra OS..."
+# Setup
+bootstrap setup: ## Install deps, create .env, start services
 	@cp -n docker/dev/.env .env 2>/dev/null || true
-	@pnpm install
-	@cd apps/api && pip install -e ".[dev]" 2>/dev/null || true
-	@echo "Setup complete! Run 'make dev' to start."
+	@pnpm install; cd apps/api && pip install -e ".[dev]" 2>/dev/null || true
+	@echo "Run 'make dev' to start."
 
-setup-docker: ## Setup with Docker (no local Python/Node needed)
-	@echo "Setting up Astra OS with Docker..."
-	@cp -n docker/dev/.env .env 2>/dev/null || true
-	@docker compose up -d postgres redis temporal
-	@echo "Infrastructure started. Run 'make dev' to start app services."
-
-# ============================================
-# Development
-# ============================================
-
-dev: ## Start all development services
-	@echo "Starting Astra OS development environment..."
-	@docker compose up -d postgres redis temporal
-	@echo "Waiting for infrastructure to be ready..."
-	@sleep 5
-	@pnpm dev
-
-dev-api: ## Start only API server
+# Dev
+dev: ## Start all dev services
+	@docker compose up -d postgres redis temporal; sleep 5; pnpm dev
+dev-api: ## Start API only
 	@cd apps/api && uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-
-dev-web: ## Start only Web frontend
+dev-web: ## Start Web only
 	@cd apps/web && npm run dev
-
-stop: ## Stop all running services
+stop: ## Stop all services
 	@docker compose down
 
-# ============================================
-# Testing
-# ============================================
-
-test: ## Run all tests
+# Tests
+test: ## All tests
 	@pnpm test
-
-test-api: ## Run API tests
+test-api: ## API tests
 	@cd apps/api && python -m pytest -v --tb=short
-
-test-web: ## Run Web tests
+test-web: ## Web tests
 	@cd apps/web && npx vitest run
-
-test-e2e: ## Run E2E tests
+test-e2e: ## E2E tests
 	@cd apps/web && npx playwright test
-
-test-cov: ## Run tests with coverage
+test-cov: ## Coverage report
 	@cd apps/api && python -m pytest -v --cov=app --cov-report=term --cov-report=html
+test-load: ## k6 load tests
+	@k6 run tests/load/k6-load-test.js 2>/dev/null || k6 run tests/load/staging-load-test.js
 
-# ============================================
 # Code Quality
-# ============================================
-
-lint: ## Lint all code
-	@pnpm lint
-
-lint-api: ## Lint Python code
+lint: lint-api lint-web ## Lint all
+lint-api: ## Python lint
 	@cd apps/api && ruff check .
-
-lint-web: ## Lint TypeScript code
+lint-web: ## TypeScript lint
 	@cd apps/web && next lint
-
-format: ## Format all code
+format: ## Format code
 	@pnpm format
-
-format-api: ## Format Python code
+format-api: ## Format Python
 	@cd apps/api && ruff format .
-
-typecheck: ## Type check all code
+typecheck: ## TypeScript checks
 	@pnpm typecheck
+security-scan: ## Bandit SAST
+	@cd apps/api && bandit -r . -f json -o bandit-report.json --skip B101,B601 2>/dev/null || true
 
-# ============================================
 # Database
-# ============================================
-
-db-migrate: ## Create a new database migration
+db-migrate: ## New migration
 	@cd apps/api && alembic revision --autogenerate -m "$(msg)"
-
-db-upgrade: ## Apply database migrations
+db-upgrade: ## Apply migrations
 	@cd apps/api && alembic upgrade head
-
-db-downgrade: ## Rollback last migration
+db-downgrade: ## Rollback last
 	@cd apps/api && alembic downgrade -1
-
-db-seed: ## Seed database with sample data
-	@echo "No seed script found. Create apps/api/scripts/seed_db.py to use this target."
-
-db-reset: ## Reset database (drop and recreate)
+db-seed: ## Seed data
+	@cd apps/api && python scripts/seed_db.py
+db-reset: ## Reset DB
 	@cd apps/api && alembic downgrade base && alembic upgrade head
+db-check: ## Migration status
+	@cd apps/api && alembic current
 
-# ============================================
-# Docker
-# ============================================
-
-docker-up: ## Start all Docker services
+# Docker Dev
+docker-up: ## Start dev stack
 	@docker compose up -d
-
-docker-down: ## Stop all Docker services
+docker-down: ## Stop dev stack
 	@docker compose down
-
-docker-build: ## Build Docker images
+docker-build: ## Build dev images
 	@docker compose build
-
-# ============================================
-# Production Docker
-# ============================================
-
-docker-build-prod: ## Build production Docker images
-	@docker compose -f docker-compose.prod.yml build
-
-docker-up-prod: ## Start production services (requires .env.prod)
-	@docker compose -f docker-compose.prod.yml up -d
-
-docker-down-prod: ## Stop production services
-	@docker compose -f docker-compose.prod.yml down
-
-docker-logs-prod: ## View production logs
-	@docker compose -f docker-compose.prod.yml logs -f
-
-docker-ps-prod: ## Show production containers
-	@docker compose -f docker-compose.prod.yml ps
-
-docker-test-prod: ## Test production Docker build (build + smoke test)
-	@echo "Building production images..."
-	@docker compose -f docker-compose.prod.yml build
-	@echo "Starting services for smoke test..."
-	@docker compose -f docker-compose.prod.yml up -d postgres redis
-	@echo "Waiting for infrastructure..."
-	@sleep 10
-	@docker compose -f docker-compose.prod.yml up -d api
-	@echo "Waiting for API health check..."
-	@for i in $$(seq 1 30); do \
-		if docker compose -f docker-compose.prod.yml exec -T api curl -sf http://localhost:8000/api/v1/health/live >/dev/null 2>&1; then \
-			echo "API is healthy!"; \
-			break; \
-		fi; \
-		echo "Waiting for API... ($$i/30)"; \
-		sleep 2; \
-	done
-	@docker compose -f docker-compose.prod.yml up -d web
-	@echo "Waiting for Web health check..."
-	@for i in $$(seq 1 20); do \
-		if docker compose -f docker-compose.prod.yml exec -T web wget --spider -q http://localhost:3000/api/health >/dev/null 2>&1; then \
-			echo "Web is healthy!"; \
-			break; \
-		fi; \
-		echo "Waiting for Web... ($$i/20)"; \
-		sleep 2; \
-	done
-	@echo "=== Smoke test passed! ==="
-	@docker compose -f docker-compose.prod.yml down
-
-docker-logs: ## View Docker logs
+docker-logs: ## View logs
 	@docker compose logs -f
-
-docker-ps: ## Show running containers
+docker-ps: ## Show containers
 	@docker compose ps
+docker-restart: ## Restart services
+	@docker compose restart
+docker-clean: ## Remove volumes
+	@docker compose down -v
 
-# ============================================
+# Docker Production
+docker-build-prod: ## Build production images
+	@echo "Building API..." && docker build -t astra-api:latest -f apps/api/Dockerfile .
+	@echo "Building Web..." && docker build -t astra-web:latest -f apps/web/Dockerfile .
+	@echo "Building Worker..." && docker build -t astra-worker:latest -f apps/api/Dockerfile.worker .
+	@echo "✅ Production images built"
+docker-up-prod: ## Start production
+	@./deploy.sh up
+docker-down-prod: ## Stop production
+	@./deploy.sh down
+docker-logs-prod: ## Production logs
+	@./deploy.sh logs $(filter-out $@,$(MAKECMDGOALS))
+docker-ps-prod: ## Production status
+	@./deploy.sh status
+docker-test-prod: ## Build + smoke test
+	@echo "=== Production Smoke Test ==="
+	@docker build -t astra-api:test -f apps/api/Dockerfile . || exit 1
+	@docker run -d --name astra-smoke --rm -e ENVIRONMENT=production -e SECRET_KEY=test123 -p 8001:8000 astra-api:test
+	@for i in $$(seq 1 30); do curl -sf http://localhost:8001/api/v1/health/live >/dev/null 2>&1 && echo "✅ Healthy" && break; [ $$i -eq 30 ] && exit 1; sleep 2; done
+	@docker stop astra-smoke 2>/dev/null; echo "✅ Passed"
+docker-sbom: ## Generate SBOM
+	@docker build -t astra-api:sbom -f apps/api/Dockerfile . 2>/dev/null
+	@syft astra-api:sbom -o json > sbom-api.json 2>/dev/null || echo "Install syft: brew install syft"
+	@echo "sbom-api.json generated"
+
+# Monitoring
+monitoring: ## Start Prometheus + Grafana + Loki + Tempo
+	@docker compose -f docker/monitoring/docker-compose.full.yml up -d 2>/dev/null || \
+	 docker compose -f docker/monitoring/docker-compose.yml up -d
+	@echo "Grafana: http://localhost:3001"
+monitoring-down: ## Stop monitoring
+	@docker compose -f docker/monitoring/docker-compose.full.yml down 2>/dev/null || \
+	 docker compose -f docker/monitoring/docker-compose.yml down
+
+# Deploy
+deploy: ## Run deploy.sh
+	@./deploy.sh $(filter-out $@,$(MAKECMDGOALS))
+
 # Kubernetes
-# ============================================
-
-k8s-deploy: ## Deploy to Kubernetes
+k8s-deploy: ## Deploy to K8s
 	@kubectl apply -k k8s/
-
-k8s-status: ## Check Kubernetes deployment status
-	@kubectl get pods -n astra
-	@kubectl get services -n astra
-
-k8s-logs: ## View Kubernetes logs
+k8s-status: ## K8s status
+	@kubectl get pods -n astra; kubectl get services -n astra
+k8s-logs: ## K8s logs
 	@kubectl logs -f deployment/astra-api -n astra
-
-k8s-delete: ## Delete Kubernetes deployment
+k8s-delete: ## Delete K8s deployment
 	@kubectl delete -k k8s/
 
-# ============================================
 # Utilities
-# ============================================
-
-clean: ## Clean build artifacts
-	@pnpm clean
-	@cd apps/api && rm -rf __pycache__ .pytest_cache .mypy_cache .ruff_cache
-
-build: ## Build all packages
+clean: ## Clean artifacts
+	@pnpm clean; cd apps/api && rm -rf __pycache__ .pytest_cache .mypy_cache .ruff_cache *.db coverage htmlcov
+	@find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
+build: ## Build packages
 	@pnpm build
-
-version: ## Show current version
+version: ## Show version
 	@node -e "console.log(require('./package.json').version)"
+check: lint typecheck test ## Full pre-commit check
+install-hooks: ## Install pre-commit
+	@pre-commit install --hook-type commit-msg 2>/dev/null; echo "Hooks installed"
 
-check: ## Run all checks (lint, typecheck, test)
-	@make lint
-	@make typecheck
-	@make test
+# Catch-all for arg targets
+%:
+	@:

@@ -1,65 +1,49 @@
 # ============================================================
-# ASTRA WORKER - Hardened Multi-Stage Dockerfile
-# Security: distroless runtime, non-root, read-only, signed
+# ASTRA OS WORKER - Production Dockerfile
+# Background worker for content scheduling, notifications, etc.
+# NOTE: No EXPOSE/HEALTHCHECK — this is a background process
+# that listens on Redis Pub/Sub, not an HTTP service.
 # ============================================================
 
-# Stage 1: Builder with all build tools
+# Stage 1: Builder
 FROM python:3.12-slim AS builder
 
-# Install build dependencies only
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     libpq-dev \
-    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install uv for fast dependency resolution
-RUN pip install --no-cache-dir uv
-
-# Create virtual environment
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Set working directory
-WORKDIR /app
+WORKDIR /build
 
-# Copy dependency files
-COPY pyproject.toml uv.lock* ./
+COPY apps/api/pyproject.toml ./
+COPY services/agent_orchestrator ./services/agent_orchestrator
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir -e "." temporalio
 
-# Install production dependencies only
-RUN uv pip install --no-cache-dir -r pyproject.toml
+# Stage 2: Runtime
+FROM python:3.12-slim AS runtime
 
-# ============================================================
-# Stage 2: Runtime - Distroless for minimal attack surface
-# ============================================================
-FROM gcr.io/distroless/python3-debian12:nonroot AS runtime
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    tini \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy virtual environment from builder
+RUN groupadd -r astra && useradd -r -g astra -d /app -s /sbin/nologin astra
+
 COPY --from=builder /opt/venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
+ENV PATH="/opt/venv/bin:$PATH" \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
-# Set working directory
 WORKDIR /app
 
-# Copy application code (as nonroot user)
-COPY --chown=nonroot:nonroot app/ ./app/
+COPY --chown=astra:astra apps/api/app ./app
+COPY --chown=astra:astra services/agent_orchestrator ./services/agent_orchestrator
 
-# Use non-root user (distroless provides 'nonroot' UID 65532)
-USER nonroot
+USER astra
 
-# Default command - runs as nonroot
-CMD ["python", "-m", "app.infrastructure.temporal.worker"]
-
-# ============================================================
-# Build metadata labels (for SBOM and provenance)
-# ============================================================
-LABEL org.opencontainers.image.title="Astra Worker" \
-      org.opencontainers.image.description="AI-Native Marketing & Business Growth OS - Temporal Worker" \
-      org.opencontainers.image.vendor="Astra OS" \
-      org.opencontainers.image.licenses="MIT" \
-      org.opencontainers.image.source="https://github.com/astra-os/astra-os" \
-      org.opencontainers.image.documentation="https://docs.astra-os.io" \
-      org.opencontainers.image.base.name="gcr.io/distroless/python3-debian12:nonroot" \
-      org.opencontainers.image.created="${BUILD_DATE}" \
-      org.opencontainers.image.version="${VERSION}" \
-      org.opencontainers.image.revision="${VCS_REF}"
+ENTRYPOINT ["tini", "--"]
+CMD ["python", "-m", "app.application.workers.content_schedule_worker"]

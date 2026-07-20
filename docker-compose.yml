@@ -1,3 +1,7 @@
+# ============================================================
+# ASTRA OS - Development Docker Compose
+# ============================================================
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -7,7 +11,7 @@ services:
     environment:
       POSTGRES_DB: astra
       POSTGRES_USER: astra
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?must be set}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-astra_dev}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -21,11 +25,11 @@ services:
     container_name: astra-redis
     ports:
       - "6379:6379"
-    command: redis-server --requirepass ${REDIS_PASSWORD:?must be set}
+    command: redis-server --requirepass ${REDIS_PASSWORD:-astra_dev}
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:?must be set}", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-astra_dev}", "ping"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -41,13 +45,8 @@ services:
       DB_PORT: 5432
       POSTGRES_SEEDS: postgres
       POSTGRES_USER: astra
-      POSTGRES_PWD: ${POSTGRES_PASSWORD:?must be set}
+      POSTGRES_PWD: ${POSTGRES_PASSWORD:-astra_dev}
       POSTGRES_DB: astra_temporal
-      DB_POSTGRES_HOST: postgres
-      DB_POSTGRES_PORT: 5432
-      DB_POSTGRES_USER: astra
-      DB_POSTGRES_PWD: ${POSTGRES_PASSWORD:?must be set}
-      DB_POSTGRES_DB: astra_temporal
     depends_on:
       postgres:
         condition: service_healthy
@@ -67,8 +66,8 @@ services:
     env_file:
       - docker/dev/.env
     environment:
-      DATABASE_URL: postgresql+asyncpg://astra:${POSTGRES_PASSWORD:?must be set}@postgres:5432/astra
-      REDIS_URL: redis://:${REDIS_PASSWORD:?must be set}@redis:6379/0
+      DATABASE_URL: postgresql+asyncpg://astra:${POSTGRES_PASSWORD:-astra_dev}@postgres:5432/astra
+      REDIS_URL: redis://:${REDIS_PASSWORD:-astra_dev}@redis:6379/0
       TEMPORAL_HOST: temporal:7233
       CORS_ORIGINS: http://localhost:3000
       ENVIRONMENT: development
@@ -91,25 +90,12 @@ services:
       timeout: 5s
       start_period: 15s
       retries: 3
-    command: sh -c "cd /app && env PYTHONPATH=/app /app/.venv/bin/python -m alembic upgrade head && env PYTHONPATH=/app /app/.venv/bin/python -m scripts.seed_db && uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
-
-  web:
-    build:
-      context: .
-      dockerfile: apps/web/Dockerfile.dev
-    container_name: astra-web
-    ports:
-      - "3000:3000"
-    environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
-      NODE_ENV: development
-    depends_on:
-      - api
-    volumes:
-      - ./apps/web:/app/apps/web
-      - /app/apps/web/node_modules
-      - /app/apps/web/.next
-    command: npm run dev
+    command: >
+      sh -c "
+        cd /app &&
+        alembic upgrade head &&
+        uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      "
 
 volumes:
   postgres_data:

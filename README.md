@@ -1,173 +1,71 @@
 # Astra OS
 
 ![CI/CD](https://github.com/webbixray/astra-os/actions/workflows/ci-cd.yaml/badge.svg)
-![Tests](https://img.shields.io/badge/tests-1089%20passed-brightgreen)
-![License](https://img.shields.io/badge/license-proprietary-blue)
+![Docker](https://github.com/webbixray/astra-os/actions/workflows/docker.yml/badge.svg)
+![Tests](https://img.shields.io/badge/tests-1200%2B%20passing-brightgreen)
 ![Python](https://img.shields.io/badge/python-3.12-blue)
-![Node](https://img.shields.io/badge/node-20+-brightgreen)
-![TypeScript](https://img.shields.io/badge/typescript-5.5+-blue)
+![Node](https://img.shields.io/badge/node-20-brightgreen)
+![Security](https://img.shields.io/badge/security-Bandit%2C%20Trivy%2C%20Semgrep-success)
+![Kubernetes](https://img.shields.io/badge/kubernetes-ready-blue)
 
-**AI-Native Marketing & Business Growth Operating System**
-
-Astra OS is a comprehensive platform that replaces your entire marketing department with AI-powered agents, workflow automation, content generation, ad management, analytics, and knowledge management.
-
-## Features
-
-- **AI Content Generation** - Create marketing copy, blog posts, and social media content with AI
-- **Campaign Management** - Plan, execute, and track multi-channel marketing campaigns
-- **Ad Management** - Manage Google Ads, Meta, LinkedIn, and TikTok campaigns
-- **Analytics & Reporting** - Real-time insights and customizable dashboards
-- **Team Collaboration** - Work together with roles, permissions, and approval workflows
-- **Workflow Automation** - Automate repetitive marketing tasks with visual workflows
-- **Email Marketing** - Create and send targeted email campaigns
-- **Content Calendar** - Plan and schedule your content pipeline
+**AI-Native Marketing & Business Growth OS** — AI agents, workflow automation, multi-platform ad management, content generation, analytics.
 
 ## Quick Start
-
-### Prerequisites
-
-- Node.js >= 20.0.0
-- pnpm >= 9.0.0
-- Python >= 3.12
-- Docker (recommended)
-
-### Installation
-
 ```bash
-# Clone the repository
-git clone https://github.com/webbixray/astra-os.git
-cd astra-os
-
-# Run the setup script
-./scripts/setup.sh
-
-# Start development
+git clone https://github.com/webbixray/astra-os.git && cd astra-os
+cp docker/dev/.env.example .env
 make dev
 ```
+After startup: **API** http://localhost:8000/docs | **Web** http://localhost:3000 | **Temporal** http://localhost:8233
 
-### Docker
-
+## Docker Production
 ```bash
-# Start all services
-docker compose up -d
-
-# View logs
-docker compose logs -f
+make docker-build-prod      # Build API + Web + Worker images
+./deploy.sh up              # Deploy full production stack
+./deploy.sh backup          # Database backup
 ```
 
-## Documentation
+**Production Stack:** Nginx → API (×2) + Web (×2) + Worker | Postgres 16 + Redis 7 + Temporal | Prometheus + Grafana + Loki + Tempo + Alertmanager + OTel Collector
 
-- [Development Guide](DEVELOPMENT.md) - Setup, configuration, and development workflow
-- [Contributing](CONTRIBUTING.md) - How to contribute to the project
-- [Architecture](docs/phase-1/) - Technical architecture and design decisions
-- [API Documentation](http://localhost:8000/api/v1/docs) - Interactive API docs (Swagger UI)
+## Architecture
+```
+Web (Next.js) → API (FastAPI) → Postgres + Redis + Temporal
+  └─ Middleware: Auth · CSRF · RateLimit · Audit · OTel · Security Headers
+  └─ Clean Architecture: domain → application → infrastructure → presentation
+  └─ Agents: Hierarchical (CEO → Directors → Specialists), autonomy levels
+```
 
-## Tech Stack
+## Testing
+```bash
+make test       # All tests
+make test-api   # Python API tests (1200+)
+make test-web   # Vitest frontend
+make test-e2e   # Playwright E2E
+make test-load  # k6 load tests
+```
 
-### Backend
-- **Framework**: FastAPI (Python 3.12)
-- **Database**: PostgreSQL 16 with SQLAlchemy 2.0
-- **Cache**: Redis 7
-- **Workflow**: Temporal
-- **AI**: OpenAI, Anthropic, Google Gemini, NVIDIA NIM
+## Security
+```bash
+make security-scan  # Bandit SAST
+```
+15-layer security: JWT auth, RBAC, CSRF HMAC, rate limiting, CSP/HSTS headers, AES-256-GCM encryption, distroless containers, Cosign signatures, SBOM.
 
-### Frontend
-- **Framework**: Next.js 15 with React 19
-- **Styling**: Tailwind CSS 4
-- **State**: TanStack React Query
-- **Components**: Radix UI + shadcn/ui
-
-### Infrastructure
-- **Container**: Docker with multi-stage builds
-- **Orchestration**: Kubernetes with Kustomize
-- **CI/CD**: GitHub Actions
-- **Monitoring**: Sentry, OpenTelemetry, Prometheus
+## CI/CD (11 Stages)
+Lint → Security (Bandit, Semgrep, TruffleHog) → Container Scan (Trivy, Hadolint) → Tests → Build + Push (GHCR, multi-arch) → Cosign Sign → SBOM → Deploy Staging → Deploy Production (canary) → Post-Deploy Validation → Weekly Scheduled Scan
 
 ## Project Structure
-
 ```
-astraos/
-├── apps/
-│   ├── api/              # Python/FastAPI backend
-│   └── web/              # Next.js frontend
-├── packages/
-│   ├── shared/           # Shared TypeScript types
-│   ├── ui/               # Shared UI components
-│   └── config-*/         # Shared configurations
-├── docker/               # Docker configurations
-├── k8s/                  # Kubernetes manifests
-├── scripts/              # Development scripts
-└── docs/                 # Documentation
+apps/api/         FastAPI backend (Clean Architecture, 30+ route modules)
+apps/web/         Next.js 15 frontend (React 19, Turbopack)
+services/         Agent orchestrator (hierarchical AI agents)
+packages/ui/      Shared React components
+docker/           Dev + Prod + Monitoring compose stacks
+k8s/              Kubernetes manifests (Kustomize, ArgoCD, Kyverno)
+docs/             Architecture, ADRs, API reference, deployment guides
+.github/          CI/CD workflows, Dependabot, issue templates
 ```
 
-## Development
+## Docs
+[Architecture](docs/ARCHITECTURE.md) | [API Reference](docs/API_REFERENCE.md) | [Deployment](docs/DEPLOYMENT.md) | [Roadmap](docs/ROADMAP.md) | [Production Checklist](PRODUCTION_READINESS_CHECKLIST.md) | [ADR Index](docs/phase-1/adr/ADR-INDEX.md) | [Security](SECURITY.md)
 
-```bash
-# Start development
-make dev
-
-# Run tests
-make test
-
-# Lint code
-make lint
-
-# Format code
-make format
-```
-
-See [DEVELOPMENT.md](DEVELOPMENT.md) for more details.
-
-## Deployment
-
-### Docker Compose
-
-```bash
-# Production deployment
-docker compose -f docker-compose.prod.yml up -d
-```
-
-### Kubernetes
-
-```bash
-# Deploy to cluster
-kubectl apply -k k8s/
-```
-
-### Cloud Providers
-
-- [Vercel](scripts/deploy/vercel.sh)
-- [Railway](scripts/deploy/railway.sh)
-- [Fly.io](scripts/deploy/flyio.sh)
-
-## Environment Variables
-
-See [docker/dev/.env.example](docker/dev/.env.example) for all configuration options.
-
-### Required
-
-```env
-SECRET_KEY=your-secret-key-min-32-chars
-DATABASE_URL=postgresql+asyncpg://astra:astra_dev@localhost:5432/astra
-```
-
-### AI Providers (at least one)
-
-```env
-OPENAI_API_KEY=sk-...
-ANTHROPIC_API_KEY=sk-ant-...
-GEMINI_API_KEY=AI...
-```
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-## License
-
-Proprietary - See [LICENSE](LICENSE) for details.
-
-## Support
-
-- [GitHub Issues](https://github.com/webbixray/astra-os/issues)
-- [GitHub Discussions](https://github.com/webbixray/astra-os/discussions)
+Built by **Hermes Dev Studio**.
