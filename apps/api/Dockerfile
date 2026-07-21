@@ -6,7 +6,7 @@
 
 # Stage 1: Builder - Install dependencies
 FROM ghcr.io/astral-sh/uv:latest AS uv
-FROM python:3.12-slim AS builder
+FROM python:3.14-slim AS builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
@@ -26,7 +26,7 @@ COPY services/agent_orchestrator/pyproject.toml services/agent_orchestrator/uv.l
 RUN uv sync --frozen --no-dev
 
 # Stage 2: Runtime
-FROM python:3.12-slim AS runtime
+FROM python:3.14-slim AS runtime
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
