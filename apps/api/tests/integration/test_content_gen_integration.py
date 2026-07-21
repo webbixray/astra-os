@@ -84,9 +84,9 @@ class TestContentGenIntegration:
         )
         assert resp.status_code == 201, f"create failed: {resp.text}"
         body = resp.json()
-        voice_id = body["id"]
+        voice_id = body["data"]["id"]
         UUID(voice_id)
-        assert body["name"] == "Professional Voice"
+        assert body["data"]["name"] == "Professional Voice"
 
         resp = await test_client.post(
             "/api/v1/brand-voices",
@@ -123,7 +123,7 @@ class TestContentGenIntegration:
                 "tone": "professional",
             },
         )
-        voice_id = resp.json()["id"]
+        voice_id = resp.json()["data"]["id"]
 
         resp = await test_client.patch(
             f"/api/v1/brand-voices/{voice_id}",
@@ -131,8 +131,8 @@ class TestContentGenIntegration:
             json={"name": "Updated Voice", "is_active": False},
         )
         assert resp.status_code == 200, f"update failed: {resp.text}"
-        assert resp.json()["name"] == "Updated Voice"
-        assert resp.json()["is_active"] is False
+        assert resp.json()["data"]["name"] == "Updated Voice"
+        assert resp.json()["data"]["is_active"] is False
 
     async def test_delete_brand_voice(self, test_client, integration_session_factory):
         auth = await self._signup(test_client, "bvdel@test.com")
@@ -148,7 +148,7 @@ class TestContentGenIntegration:
                 "tone": "casual",
             },
         )
-        voice_id = resp.json()["id"]
+        voice_id = resp.json()["data"]["id"]
 
         resp = await test_client.delete(
             f"/api/v1/brand-voices/{voice_id}",
@@ -182,17 +182,17 @@ class TestContentGenIntegration:
         )
         assert resp.status_code == 201, f"create failed: {resp.text}"
         body = resp.json()
-        template_id = body["id"]
+        template_id = body["data"]["id"]
         UUID(template_id)
-        assert body["name"] == "Blog Post"
-        assert body["content_type"] == "blog"
+        assert body["data"]["name"] == "Blog Post"
+        assert body["data"]["content_type"] == "blog"
 
         resp = await test_client.get(
             f"/api/v1/content/templates/{template_id}",
             params={"organization_id": str(org_id)},
         )
         assert resp.status_code == 200, f"get failed: {resp.text}"
-        assert resp.json()["name"] == "Blog Post"
+        assert resp.json()["data"]["name"] == "Blog Post"
 
     async def test_list_templates(self, test_client, integration_session_factory):
         auth = await self._signup(test_client, "tmpllist@test.com")
@@ -233,7 +233,7 @@ class TestContentGenIntegration:
                 "content_type": "email",
             },
         )
-        tmpl_id = resp.json()["id"]
+        tmpl_id = resp.json()["data"]["id"]
 
         resp = await test_client.patch(
             f"/api/v1/content/templates/{tmpl_id}",
@@ -241,13 +241,13 @@ class TestContentGenIntegration:
             json={"name": "Updated", "description": "New description"},
         )
         assert resp.status_code == 200, f"update failed: {resp.text}"
-        assert resp.json()["name"] == "Updated"
+        assert resp.json()["data"]["name"] == "Updated"
 
         resp = await test_client.get(
             f"/api/v1/content/templates/{tmpl_id}",
             params={"organization_id": str(org_id)},
         )
-        assert resp.json()["description"] == "New description"
+        assert resp.json()["data"]["description"] == "New description"
 
     async def test_delete_template(self, test_client, integration_session_factory):
         auth = await self._signup(test_client, "tmpldel@test.com")
@@ -263,7 +263,7 @@ class TestContentGenIntegration:
                 "content_type": "blog",
             },
         )
-        tmpl_id = resp.json()["id"]
+        tmpl_id = resp.json()["data"]["id"]
 
         resp = await test_client.delete(
             f"/api/v1/content/templates/{tmpl_id}",

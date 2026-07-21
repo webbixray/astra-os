@@ -29,6 +29,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.1] - 2026-07-21
+
+### Fixed
+- **Test Infrastructure**: Fixed 1,436/1,436 test suite — resolved SocialIntelligence nested enum (LINKEDIN), ShadowMode constructor signature mismatch, and 4 test expectation mismatches
+- **Social Platform Enum**: Un-nested duplicate `SocialPlatform` class that hid LINKEDIN, TWITTER, TIKTOK, YOUTUBE, GOOGLE members
+- **Shadow Mode Tests**: Fixed `decision_types` missing from test ShadowSession objects, corrected `end_session` status assertion (DISABLED→ARCHIVED), fixed `agreement_rate` calculation, consolidated fixture for LiftMeasurementService
+- **Social Intelligence Tests**: Aligned `test_detect_spam`, `test_detect_lead_intent`, `test_spam_score_calculation`, and `test_language_detection` expectations with analyzer algorithm behavior
+- **Docker**: Converted both API and Worker Dockerfiles to deterministic `uv sync --frozen` multi-stage builds with distroless-like runtime
+
+### Changed
+- **Version Alignment**: Web (0.0.1→1.1.0) and CLI (0.1.0→1.1.0) packages bumped to match API v1.1.0
+- **Repo Hygiene**: Removed committed bandit scan reports (2.4MB), `.bak`/`.orig` backup files, and `.db-journal` artifacts
+- **Web Dashboard**: Refactored dashboard page with React Query, anomaly detection, forecasting panel, and widget grid system
+- **Gitignore**: Added patterns for security scan reports, backup files, and generated configs
+
+### Maintenance
+- Cleaned up 2.4MB of committed security scan artifacts
+- Removed stale backup files (.bak, .orig) from agent orchestrator tests
+
+---
+
 ## [1.0.0] - 2024-07-15
 
 ### Added

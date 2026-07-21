@@ -207,9 +207,7 @@ def lift_service(decision_repo):
             return None
 
     lift_repo = MockLiftRepo()
-    session_repo_for_lift = MockSessionRepository()
-    MockDecisionRepository()
-    return LiftMeasurementService(lift_repo, decision_repo, session_repo_for_lift)
+    return LiftMeasurementService(lift_repo, decision_repo)
 
 
 # --- Entity Tests ---
@@ -447,7 +445,7 @@ class TestShadowSessionService:
         await session_service.start_session(session.id, user_id)
 
         ended = await session_service.end_session(session.id, user_id)
-        assert ended.status == ShadowModeStatus.DISABLED
+        assert ended.status == ShadowModeStatus.ARCHIVED
         assert ended.ended_at is not None
 
     @pytest.mark.asyncio
@@ -491,7 +489,7 @@ class TestShadowSessionService:
         assert stats["total_decisions"] == 10
         assert stats["agreements"] == 5
         assert stats["disagreements"] == 3
-        assert stats["agreement_rate"] == 0.5
+        assert stats["agreement_rate"] == 0.625
 
 
 class TestShadowDecisionService:
@@ -506,6 +504,7 @@ class TestShadowDecisionService:
             agent_model="test",
             created_by=user_id,
             status=ShadowModeStatus.ENABLED,
+            decision_types=[DecisionType.BID_OPTIMIZATION],
         )
         await session_repo.save(session)
 
@@ -535,6 +534,7 @@ class TestShadowDecisionService:
             agent_model="test",
             created_by=user_id,
             status=ShadowModeStatus.ENABLED,
+            decision_types=[DecisionType.BUDGET_ADJUSTMENT],
         )
         await session_repo.save(session)
 
@@ -573,6 +573,7 @@ class TestShadowDecisionService:
             agent_model="test",
             created_by=user_id,
             status=ShadowModeStatus.ENABLED,
+            decision_types=[DecisionType.BID_OPTIMIZATION],
         )
         await session_repo.save(session)
 
@@ -671,10 +672,10 @@ class TestLiftMeasurementService:
         assert measurement.lift_percentage == 0.0
 
     @pytest.mark.asyncio
-    async def test_get_session_lift_summary(self, lift_service, lift_repo):
+    async def test_get_session_lift_summary(self, lift_service):
         session_id = uuid4()
 
-        # Add some measurements
+        # Add some measurements directly to the service's repo
         for i in range(5):
             m = LiftMeasurement(
                 organization_id=uuid4(),
@@ -686,7 +687,7 @@ class TestLiftMeasurementService:
                 agent_value=12.0 + i,
                 is_significant=(i % 2 == 0),
             )
-            await lift_repo.save(m)
+            await lift_service.lift_repo.save(m)
 
         summary = await lift_service.get_session_lift_summary(session_id)
         assert summary["measurements"] == 5

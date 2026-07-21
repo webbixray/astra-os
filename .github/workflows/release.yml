@@ -31,6 +31,8 @@ jobs:
       issues: write
       pull-requests: write
       id-token: write
+    outputs:
+      new_version: ${{ steps.extract_version.outputs.new_version }}
 
     steps:
       - name: Checkout code
