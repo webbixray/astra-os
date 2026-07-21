@@ -43,7 +43,7 @@
     "@astra/config-typescript": "workspace:*",
     "@eslint/eslintrc": "^3.3.6",
     "@eslint/js": "^10.0.1",
-    "@next/bundle-analyzer": "^15.0.0",
+    "@next/bundle-analyzer": "^16.2.10",
     "@next/eslint-plugin-next": "^16.2.10",
     "@playwright/test": "^1.51.0",
     "@tailwindcss/postcss": "^4.3.3",
