@@ -55,6 +55,20 @@ Thumbs.db
 *.swp
 *.swo
 
+# Security scan reports (never commit these)
+bandit-*.json
+semgrep-*.json
+trufflehog-*.json
+trivy-*.json
+hadolint-*.json
+sbom-*.json
+
+# Temporary/backup files
+*.bak
+*.orig
+*.swp
+*.swo
+
 # Docker (generated production configs - app-specific ones are tracked)
 apps/api/Dockerfile
 docker-compose.prod*.yml

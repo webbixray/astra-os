@@ -1,10 +1,12 @@
 # ============================================================
 # ASTRA OS API - Production Dockerfile
 # Multi-stage build with minimal attack surface
+# Deterministic builds via uv sync --frozen
 # ============================================================
 
 # Stage 1: Builder - Install dependencies
-FROM python:3.12-slim AS builder
+FROM ghcr.io/astral-sh/uv:latest AS uv
+FROM python:3.14-slim AS builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
@@ -12,18 +14,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-RUN python -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
+# Install uv for deterministic dependency resolution
+COPY --from=uv /uv /bin/uv
+RUN chmod +x /bin/uv
 
 WORKDIR /build
 
-COPY apps/api/pyproject.toml ./
-COPY services/agent_orchestrator ./services/agent_orchestrator
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir -e "."
+# Copy dependency manifests first for layer caching
+COPY apps/api/pyproject.toml apps/api/uv.lock ./
+COPY services/agent_orchestrator/pyproject.toml services/agent_orchestrator/uv.lock ./services/agent_orchestrator/
+RUN uv sync --frozen --no-dev
 
 # Stage 2: Runtime
-FROM python:3.12-slim AS runtime
+FROM python:3.14-slim AS runtime
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
@@ -35,7 +38,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN groupadd -r astra && useradd -r -g astra -d /app -s /sbin/nologin astra
 
 # Copy virtual environment from builder
-COPY --from=builder /opt/venv /opt/venv
+COPY --from=builder /build/.venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1

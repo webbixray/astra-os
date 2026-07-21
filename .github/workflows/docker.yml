@@ -32,17 +32,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Lint API Dockerfile
-        uses: hadolint/hadolint-action@v3.1.0
+        uses: hadolint/hadolint-action@v3.3.0
         with:
           dockerfile: apps/api/Dockerfile
           failure-threshold: warning
       - name: Lint Web Dockerfile
-        uses: hadolint/hadolint-action@v3.1.0
+        uses: hadolint/hadolint-action@v3.3.0
         with:
           dockerfile: apps/web/Dockerfile
           failure-threshold: warning
       - name: Lint Worker Dockerfile
-        uses: hadolint/hadolint-action@v3.1.0
+        uses: hadolint/hadolint-action@v3.3.0
         with:
           dockerfile: apps/api/Dockerfile.worker
           failure-threshold: warning

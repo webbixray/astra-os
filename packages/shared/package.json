@@ -19,9 +19,9 @@
     "@astra/config-typescript": "workspace:*",
     "tsup": "^8.2.0",
     "typescript": "^5.5.0",
-    "zod": "^3.23.0"
+    "zod": "^4.4.3"
   },
   "dependencies": {
-    "zod": "^3.23.0"
+    "zod": "^4.4.3"
   }
 }
