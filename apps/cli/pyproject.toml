@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "astra-cli"
-version = "0.1.0"
+version = "1.1.0"
 description = "Astra OS CLI - AI-Native Marketing & Business Growth Operating System"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -21,7 +21,7 @@ classifiers = [
 ]
 dependencies = [
     "click>=8.4.2",
-    "pyyaml>=6.0.1",
+    "pyyaml>=6.0.3",
     "httpx>=0.27.0",
     "rich>=13.7.0",
     "pydantic>=2.8.0",
