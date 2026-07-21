@@ -1,23 +1,19 @@
 'use client'
 
+import { useState } from 'react'
+import Link from 'next/link'
+import { ChevronRight, Zap, Code, ExternalLink, FileText, Search, BookOpen, Mail, Users } from 'lucide-react'
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { ChevronRight, Zap, Code, Shield, ExternalLink, Terminal, AlertCircle, CheckCircle, Zap as ZapIcon, Database, Globe, Users, ArrowRight, Code as CodeIcon, Sparkles, Brain, Settings, FileText, BarChart, Search, BookOpen, Mail } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-
-import { cn } from '@/lib/utils';
-import { useState } from 'react';
-import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils'
+import { Input } from '@/components/ui/input'
 
 interface DocSection {
-  id: string;
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  href: string;
-  category: 'getting-started' | 'guides' | 'api' | 'advanced';
+  id: string
+  title: string
+  description: string
+  icon: React.ReactNode
+  href: string
+  category: 'getting-started' | 'guides' | 'api' | 'advanced'
 }
 
 const AI_CONTENT_SECTIONS: DocSection[] = [
@@ -93,7 +89,7 @@ const AI_CONTENT_SECTIONS: DocSection[] = [
     href: '/docs/ai-content/landing-pages',
     category: 'guides',
   },
-];
+]
 
 const CATEGORIES = [
   { id: 'all', label: 'All' },
@@ -101,26 +97,26 @@ const CATEGORIES = [
   { id: 'guides', label: 'User Guides' },
   { id: 'api', label: 'API Reference' },
   { id: 'advanced', label: 'Advanced' },
-];
+]
 
 export default function AiContentPage() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeCategory, setActiveCategory] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('')
+  const [activeCategory, setActiveCategory] = useState('all')
 
   const filteredSections = AI_CONTENT_SECTIONS.filter((section) => {
     const matchesSearch = section.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      section.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = activeCategory === 'all' || section.category === activeCategory;
-    return matchesSearch && matchesCategory;
-  });
+      section.description.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesCategory = activeCategory === 'all' || section.category === activeCategory
+    return matchesSearch && matchesCategory
+  })
 
   const groupedSections = filteredSections.reduce((acc, section) => {
     if (!acc[section.category]) {
-      acc[section.category] = [];
+      acc[section.category] = []
     }
-    acc[section.category]!.push(section);
-    return acc;
-  }, {} as Record<string, DocSection[]>);
+    acc[section.category]!.push(section)
+    return acc
+  }, {} as Record<string, DocSection[]>)
 
   return (
     <div className="flex h-screen bg-background">
@@ -163,25 +159,24 @@ export default function AiContentPage() {
 
             <div className="space-y-1">
               {Object.entries(groupedSections).filter(([, sections]) => sections.length > 0).map(([category, sections]) => (
-                  <div key={category} className="space-y-1">
-                    <h3 className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                      {CATEGORIES.find(c => c.id === category)?.label}
-                    </h3>
-                    {sections.map((section) => (
-                      <Link
-                        key={section.id}
-                        href={section.href}
-                        className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-                      >
-                        <span className="flex h-5 w-5 items-center justify-center text-muted-foreground">
-                          {section.icon}
-                        </span>
-                        <span className="flex-1 truncate">{section.title}</span>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                      </Link>
-                    ))}
-                  </div>
-                )
+                <div key={category} className="space-y-1">
+                  <h3 className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    {CATEGORIES.find(c => c.id === category)?.label}
+                  </h3>
+                  {sections.map((section) => (
+                    <Link
+                      key={section.id}
+                      href={section.href}
+                      className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                    >
+                      <span className="flex h-5 w-5 items-center justify-center text-muted-foreground">
+                        {section.icon}
+                      </span>
+                      <span className="flex-1 truncate">{section.title}</span>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </Link>
+                  ))}
+                </div>
               ))}
               <div className="border-t p-4 mt-4">
                 <a
@@ -225,42 +220,43 @@ export default function AiContentPage() {
 
           <div className="space-y-8">
             {Object.entries(groupedSections).filter(([, sections]) => sections.length > 0).map(([category, sections]) => (
-                <div key={category}>
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-semibold capitalize">{CATEGORIES.find(c => c.id === category)?.label}</h2>
-                    <span className="text-sm text-muted-foreground">{sections.length} articles</span>
-                  </div>
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {sections.map((section) => (
-                      <Link
-                        key={section.id}
-                        href={section.href}
-                        className="group flex flex-col p-6 bg-card border rounded-xl hover:border-primary/50 hover:shadow-lg transition-all duration-200"
-                      >
-                        <div className="flex items-center gap-3 mb-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary group-hover:bg-primary/20 transition-colors">
-                            {section.icon}
-                          </div>
-                          <span className="text-xs font-medium text-primary uppercase tracking-wider">
-                            {CATEGORIES.find(c => c.id === category)?.label}
-                          </span>
-                        </div>
-                        <h3 className="font-semibold text-lg mb-2 group-hover:text-primary transition-colors">
-                          {section.title}
-                        </h3>
-                        <p className="text-sm text-muted-foreground mb-4 flex-1">
-                          {section.description}
-                        </p>
-                        <div className="flex items-center justify-between pt-4 border-t">
-                          <span className="text-sm font-medium text-primary group-hover:text-primary/80 transition-colors">
-                            Read more
-                          </span>
-                          <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
+              <div key={category}>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-semibold capitalize">{CATEGORIES.find(c => c.id === category)?.label}</h2>
+                  <span className="text-sm text-muted-foreground">{sections.length} articles</span>
                 </div>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {sections.map((section) => (
+                    <Link
+                      key={section.id}
+                      href={section.href}
+                      className="group flex flex-col p-6 bg-card border rounded-xl hover:border-primary/50 hover:shadow-lg transition-all duration-200"
+                    >
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary group-hover:bg-primary/20 transition-colors">
+                          {section.icon}
+                        </div>
+                        <span className="text-xs font-medium text-primary uppercase tracking-wider">
+                          {CATEGORIES.find(c => c.id === category)?.label}
+                        </span>
+                      </div>
+                      <h3 className="font-semibold text-lg mb-2 group-hover:text-primary transition-colors">
+                        {section.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground mb-4 flex-1">
+                        {section.description}
+                      </p>
+                      <div className="flex items-center justify-between pt-4 border-t">
+                        <span className="text-sm font-medium text-primary group-hover:text-primary/80 transition-colors">
+                          Read more
+                        </span>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ))}
 
             {/* Quick Links */}
             <div className="mt-12 rounded-xl border bg-muted/30 p-6">
@@ -297,7 +293,8 @@ export default function AiContentPage() {
               </div>
             </div>
           </div>
+        </div>
       </main>
     </div>
-  );
+  )
 }

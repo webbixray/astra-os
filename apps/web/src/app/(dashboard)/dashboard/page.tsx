@@ -1,7 +1,6 @@
-'use client';
+'use client'
 
-
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react'
 import {
   LayoutDashboard,
   Plus,
@@ -11,115 +10,88 @@ import {
   X,
   GripVertical,
   BarChart3,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
-import { useOrg } from "@/hooks/use-org";
+} from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
+import { useOrg } from '@/lib/org'
 import {
-  Dashboard,
-  DashboardWidget,
-  DashboardWidgetCreate,
-  WidgetTypeOption,
   METRIC_OPTIONS,
   WIDGET_TYPE_OPTIONS,
-} from "@/types/dashboard";
-import { api } from "@/lib/api";
-import { ErrorBoundary } from "@/components/ui/error-boundary";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { KpiCardWidget } from "@/components/widgets/kpi-card";
-import { ChartWidget } from "@/components/widgets/chart";
-import { PieChartWidget } from "@/components/widgets/pie-chart";
-import { DataTableWidget } from "@/components/widgets/data-table";
-import { TrendWidget } from "@/components/widgets/trend";
+} from '@/types/dashboard'
+import {
+  useDashboards,
+  useDashboard,
+  useCreateDashboard,
+  useDeleteDashboard,
+  useWidgets,
+  useCreateWidget,
+  useDeleteWidget,
+  useAnomalies,
+  usePredictions,
+} from '@/lib/api/react-query-client'
+import { ErrorBoundary } from '@/components/ui/error-boundary'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { KpiCardWidget } from '@/components/widgets/kpi-card'
+import { ChartWidget } from '@/components/widgets/chart'
+import { PieChartWidget } from '@/components/widgets/pie-chart'
+import { DataTableWidget } from '@/components/widgets/data-table'
+import { TrendWidget } from '@/components/widgets/trend'
 
 export default function DashboardPage() {
-  const { orgId } = useOrg();
-  const [dashboards, setDashboards] = useState<Dashboard[]>([]);
-  const [selectedDashId, setSelectedDashId] = useState<string | null>(null);
-  const [detail, setDetail] = useState<Dashboard | null>(null);
-  const [widgetData, setWidgetData] = useState<DashboardWidget[]>([]);
-  const [anomalies, setAnomalies] = useState<{ date: string; direction: "up" | "down"; value: number; severity: "high" | "medium"; z_score: number }[]>([]);
-  const [predictions, setPredictions] = useState<{ date: string; predicted_value: number }[]>([]);
-  const [showAnomalies, setShowAnomalies] = useState(false);
-  const [showPredictions, setShowPredictions] = useState(false);
-  const [showCreate, setShowCreate] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [showWidgetPicker, setShowWidgetPicker] = useState(false);
-  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const { orgId } = useOrg()
 
-  const { mutate: createDash, isPending: createPending } = api.dashboards.create.useMutation({
-    onSuccess: () => {
-      setShowCreate(false);
-      setNewName("");
-      refreshDashboards();
-    },
-  });
-  const { mutate: deleteDash } = api.dashboards.delete.useMutation({
-    onSuccess: () => refreshDashboards(),
-  });
-  const { mutate: createWidget, isPending: widgetPending } = api.widgets.create.useMutation({
-    onSuccess: () => {
-      setShowWidgetPicker(false);
-      refreshWidgetData();
-    },
-  });
-  const { mutate: deleteWidget } = api.widgets.delete.useMutation({
-    onSuccess: () => refreshWidgetData(),
-  });
+  // UI State - must be declared before useEffect
+  const [selectedDashId, setSelectedDashId] = useState<string | null>(null)
+  const [showAnomalies, setShowAnomalies] = useState(false)
+  const [showPredictions, setShowPredictions] = useState(false)
+  const [showCreate, setShowCreate] = useState(false)
+  const [newName, setNewName] = useState('')
+  const [showWidgetPicker, setShowWidgetPicker] = useState(false)
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
 
-  const refreshDashboards = async () => {
-    try {
-      const data = await api.dashboards.list({ orgId });
-      setDashboards(data);
-      if (!selectedDashId && data.length > 0) {
-        setSelectedDashId(data[0].id);
-      }
-    } catch (e) {
-      console.error("Failed to load dashboards:", e);
-    }
-  };
+  // Dashboard queries/mutations
+  const { data: dashboards = [] } = useDashboards(orgId)
+  const { data: detail } = useDashboard(selectedDashId || '', orgId)
+  const { mutate: createDash, isPending: createPending } = useCreateDashboard()
+  const { mutate: deleteDash, isPending: deletePending } = useDeleteDashboard()
 
-  const refreshWidgetData = async () => {
-    if (!selectedDashId) return;
-    try {
-      const [widgets, anomalyData, predictionData] = await Promise.all([
-        api.widgets.list({ dashboardId: selectedDashId, orgId }),
-        api.analytics.anomalies({ orgId, metric: "campaigns_total" }).catch(() => []),
-        api.analytics.predict({ orgId, metric: "campaigns_total", horizon: 7 }).catch(() => []),
-      ]);
-      setWidgetData(widgets);
-      setAnomalies(anomalyData || []);
-      setPredictions(predictionData || []);
-    } catch (e) {
-      console.error("Failed to load widget data:", e);
-    }
-  };
+  // Widget mutations
+  const { mutate: createWidget } = useCreateWidget()
+  const { mutate: deleteWidget } = useDeleteWidget()
 
+  // Analytics queries
+  const { data: anomalies = [] } = useAnomalies(orgId, 'campaigns_total')
+  const { data: predictions = [] } = usePredictions(orgId, 'campaigns_total', 7)
+
+  // Widget data query
+  const { data: widgetData = [] } = useWidgets(selectedDashId || '', orgId)
+
+  // Auto-select first dashboard
   useEffect(() => {
-    refreshDashboards();
-  }, [orgId]);
-
-  useEffect(() => {
-    if (selectedDashId) {
-      refreshWidgetData();
-      api.dashboards.get({ id: selectedDashId, orgId }).then(setDetail).catch(() => setDetail(null));
-    } else {
-      setDetail(null);
-      setWidgetData([]);
+    if (!selectedDashId && dashboards.length > 0) {
+      setSelectedDashId(dashboards[0]?.id ?? null)
     }
-  }, [selectedDashId, orgId]);
+  }, [dashboards, selectedDashId])
+
+  // Derived values
+  const anomalyCount = anomalies?.length || 0
+  const predictionCount = predictions?.length || 0
+  const activeDash = dashboards?.find((d) => d.id === selectedDashId)
+  const canvasWidgets = detail?.widgets || []
+  const cols = activeDash?.layout_columns || 12
 
   const handleCreate = () => {
-    if (!newName.trim()) return;
-    createDash({ orgId, name: newName.trim() });
-  };
+    if (!newName.trim()) return
+    createDash({ organization_id: orgId, name: newName.trim() })
+    setShowCreate(false)
+    setNewName('')
+  }
 
   const handleAddWidget = (widgetType: string, defaultW: number, defaultH: number) => {
-    if (!selectedDashId) return;
-    const canvasWidgets = detail?.widgets || [];
-    const maxY = canvasWidgets.length > 0 ? Math.max(...canvasWidgets.map((w) => w.pos_y + w.height)) : 0;
-    addWidget.mutate({
+    if (!selectedDashId) return
+    const maxY = canvasWidgets.length > 0 ? Math.max(...canvasWidgets.map((w) => w.pos_y + w.height)) : 0
+    createWidget({
       dashboard_id: selectedDashId,
       organization_id: orgId,
       widget_type: widgetType,
@@ -128,23 +100,10 @@ export default function DashboardPage() {
       pos_y: maxY,
       width: defaultW,
       height: defaultH,
-    });
-
-      widget_type: widgetType,
-      title: WIDGET_TYPE_OPTIONS.find((o) => o.type === widgetType)?.label || widgetType,
-      pos_x: 0,
-      pos_y: maxY,
-      width: defaultW,
-      height: defaultH,
-      config: { metric: "campaigns_total" },
-    });
-  };
-
-  const activeDash = dashboards?.find((d) => d.id === selectedDashId);
-  const canvasWidgets = detail?.widgets || [];
-  const cols = activeDash?.layout_columns || 12;
-  const anomalyCount = anomalies?.length || 0;
-  const predictionCount = predictions?.length || 0;
+      config: { metric: 'campaigns_total' },
+    })
+    setShowWidgetPicker(false)
+  }
 
   return (
     <ErrorBoundary>
@@ -186,13 +145,12 @@ export default function DashboardPage() {
                 <div
                   key={d.id}
                   className={cn(
-                    "group flex items-center justify-between rounded-md px-3 py-2 text-sm cursor-pointer transition-colors",
+                    'group flex items-center justify-between rounded-md px-3 py-2 text-sm cursor-pointer transition-colors',
                     selectedDashId === d.id
-                      ? "bg-accent text-accent-foreground"
-                      : "hover:bg-accent/50 text-muted-foreground hover:text-foreground"
+                      ? 'bg-accent text-accent-foreground'
+                      : 'hover:bg-accent/50 text-muted-foreground hover:text-foreground'
                   )}
-                  onClick={() => handleAddWidget(opt.type, opt.defaultW, opt.defaultH)}
-
+                  onClick={() => setSelectedDashId(d.id)}
                 >
                   <span className="truncate">
                     {d.name}
@@ -204,8 +162,8 @@ export default function DashboardPage() {
                     aria-label="Delete dashboard"
                     className="hidden group-hover:block text-muted-foreground hover:text-red-500"
                     onClick={(e) => {
-                      e.stopPropagation();
-                      setDeleteTargetId(d.id);
+                      e.stopPropagation()
+                      setDeleteTargetId(d.id)
                     }}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -227,14 +185,14 @@ export default function DashboardPage() {
                   placeholder="Dashboard name"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+                  onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
                   autoFocus
                 />
                 <div className="flex gap-2">
                   <Button size="sm" className="flex-1" onClick={handleCreate} disabled={!newName.trim() || createPending}>
                     Create
                   </Button>
-                  <Button size="sm" variant="ghost" onClick={() => { setShowCreate(false); setNewName(""); }}>
+                  <Button size="sm" variant="ghost" onClick={() => { setShowCreate(false); setNewName('') }}>
                     Cancel
                   </Button>
                 </div>
@@ -286,13 +244,13 @@ export default function DashboardPage() {
                       {anomalies.slice(0, 10).map((a, i) => (
                         <div key={i} className="flex items-center gap-3 text-sm">
                           <span className={cn(
-                            "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
-                            a.severity === "high" ? "bg-red-500/10 text-red-500" : "bg-yellow-500/10 text-yellow-500"
+                            'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium',
+                            a.severity === 'high' ? 'bg-red-500/10 text-red-500' : 'bg-yellow-500/10 text-yellow-500'
                           )}>
                             {a.severity}
                           </span>
                           <span className="text-muted-foreground">{a.date}</span>
-                          <span className="font-medium">{a.direction === "up" ? "↑" : "↓"} {a.value.toFixed(2)}</span>
+                          <span className="font-medium">{a.direction === 'up' ? '↑' : '↓'} {a.value.toFixed(2)}</span>
                           <span className="text-xs text-muted-foreground">z={a.z_score.toFixed(2)}</span>
                         </div>
                       ))}
@@ -328,75 +286,77 @@ export default function DashboardPage() {
                   className="grid gap-4"
                   style={{
                     gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
-                    gridAutoRows: "minmax(100px, auto)",
+                    gridAutoRows: 'minmax(100px, auto)',
                   }}
                 >
-                  {canvasWidgets.length > 0 ? (canvasWidgets.map((w) => {
-                    const spanX = Math.min(w.width, cols);
-                    const dataItem = widgetData?.find((wd) => wd.widget_id === w.id);
-                    const rawValue = dataItem?.data?.value;
-                    const metricLabel = METRIC_OPTIONS.find((m) => m.value === dataItem?.config?.metric)?.label || String(w.config?.metric ?? "") || "—";
+                  {canvasWidgets.length > 0 ? (
+                    canvasWidgets.map((w) => {
+                      const spanX = Math.min(w.width, cols)
+                      const dataItem = widgetData?.find((wd) => wd.id === w.id)
+                      const rawValue = dataItem?.data?.value
+                      const metricLabel = METRIC_OPTIONS.find((m) => m.value === dataItem?.config?.metric)?.label || String(w.config?.metric ?? '') || '—'
 
-                    return (
-                      <div
-                        key={w.id}
-                        className="group relative rounded-lg border bg-card shadow-sm transition-shadow hover:shadow-md"
-                        style={{
-                          gridColumn: `span ${spanX}`,
-                          gridRow: `span ${w.height}`,
-                        }}
-                      >
-                        {/* Widget header */}
-                        <div className="flex items-center justify-between border-b px-3 py-2">
-                          <div className="flex items-center gap-2">
-                            <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
-                            <span className="text-xs font-medium text-muted-foreground">{w.title}</span>
+                      return (
+                        <div
+                          key={w.id}
+                          className="group relative rounded-lg border bg-card shadow-sm transition-shadow hover:shadow-md"
+                          style={{
+                            gridColumn: `span ${spanX}`,
+                            gridRow: `span ${w.height}`,
+                          }}
+                        >
+                          {/* Widget header */}
+                          <div className="flex items-center justify-between border-b px-3 py-2">
+                            <div className="flex items-center gap-2">
+                              <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                              <span className="text-xs font-medium text-muted-foreground">{w.title}</span>
+                            </div>
+                            <button
+                              aria-label="Delete widget"
+                              className="hidden group-hover:block text-muted-foreground hover:text-red-500"
+                              onClick={() => deleteWidget({ widgetId: w.id, orgId })}
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
                           </div>
-                          <button
-                            aria-label="Delete widget"
-                            className="hidden group-hover:block text-muted-foreground hover:text-red-500"
-                            onClick={() => deleteWidget.mutate({ widgetId: w.id, orgId })}
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </div>
 
-                        {/* Widget body */}
-                        <div className="p-4">
-                          {dataItem ? (
-                            <>
-                              {w.widget_type === "kpi_card" && (
-                                <KpiCardWidget value={rawValue} label={metricLabel} />
-                              )}
-                              {(w.widget_type === "line_chart" || w.widget_type === "bar_chart") && (
-                                <ChartWidget type={w.widget_type} data={dataItem?.data} />
-                              )}
-                              {w.widget_type === "pie_chart" && (
-                                <PieChartWidget data={dataItem?.data} />
-                              )}
-                              {w.widget_type === "data_table" && (
-                                <DataTableWidget data={dataItem?.data} />
-                              )}
-                              {w.widget_type === "trend_indicator" && (
-                                <TrendWidget value={rawValue} label={metricLabel} />
-                              )}
-                            </>
-                          ) : (
-                            [1, 2, 3].map((i) => (
-                              <div
-                                key={i}
-                                className="rounded-lg border bg-card p-4"
-                                style={{ gridColumn: `span ${Math.min(4, cols)}` }}
-                              >
-                                <div className="h-3 w-20 animate-pulse rounded bg-muted" />
-                                <div className="mt-3 h-12 animate-pulse rounded bg-muted" />
-                              </div>
-                            ))
-                          )}
+                          {/* Widget body */}
+                          <div className="p-4">
+                            {dataItem ? (
+                              <>
+                                {w.widget_type === 'kpi_card' && (
+                                  <KpiCardWidget value={rawValue} label={metricLabel} />
+                                )}
+                                {(w.widget_type === 'line_chart' || w.widget_type === 'bar_chart') && (
+                                  <ChartWidget type={w.widget_type} data={dataItem?.data} />
+                                )}
+                                {w.widget_type === 'pie_chart' && (
+                                  <PieChartWidget data={dataItem?.data} />
+                                )}
+                                {w.widget_type === 'data_table' && (
+                                  <DataTableWidget data={dataItem?.data} />
+                                )}
+                                {w.widget_type === 'trend_indicator' && (
+                                  <TrendWidget value={rawValue} label={metricLabel} />
+                                )}
+                              </>
+                            ) : (
+                              [1, 2, 3].map((i) => (
+                                <div
+                                  key={i}
+                                  className="rounded-lg border bg-card p-4"
+                                  style={{ gridColumn: `span ${Math.min(4, cols)}` }}
+                                >
+                                  <div className="h-3 w-20 animate-pulse rounded bg-muted" />
+                                  <div className="mt-3 h-12 animate-pulse rounded bg-muted" />
+                                </div>
+                              ))
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  : (
+                      )
+                    })
+                  ) : (
                     <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
                       <BarChart3 className="mb-3 h-10 w-10 opacity-20" />
                       <p className="font-medium">Empty dashboard</p>
@@ -411,7 +371,7 @@ export default function DashboardPage() {
                     <div className="w-full max-w-lg rounded-lg border bg-card p-6 shadow-lg" onClick={(e) => e.stopPropagation()}>
                       <div className="mb-4 flex items-center justify-between">
                         <h3 className="font-semibold">Add Widget</h3>
-                        <button aria-label="Close widget picker" onClick={() => setShowWidgetPicker(false)}}>
+                        <button aria-label="Close widget picker" onClick={() => setShowWidgetPicker(false)}>
                           <X className="h-4 w-4" />
                         </button>
                       </div>
@@ -422,7 +382,7 @@ export default function DashboardPage() {
                             className="flex flex-col items-center gap-2 rounded-lg border p-4 text-sm hover:bg-accent transition-colors"
                             onClick={() => handleAddWidget(opt.type, opt.defaultW, opt.defaultH)}
                           >
-                            <opt.icon className="h-6 w-6" />
+                            {opt.icon}
                             <span className="font-medium">{opt.label}</span>
                             <span className="text-[10px] text-muted-foreground">{opt.defaultW}x{opt.defaultH}</span>
                           </button>
@@ -444,11 +404,11 @@ export default function DashboardPage() {
           confirmLabel="Delete"
           variant="destructive"
           onConfirm={() => {
-            if (deleteTargetId) deleteDash({ dashboardId: deleteTargetId, orgId });
+            if (deleteTargetId) deleteDash({ dashboardId: deleteTargetId, orgId })
           }}
-          loading={deleteDash.isPending}
+          loading={deletePending}
         />
       </div>
     </ErrorBoundary>
-  );
+  )
 }

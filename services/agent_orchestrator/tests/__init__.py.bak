@@ -1,6 +1,0 @@
-"""Agent Orchestrator Tests Package."""
-import sys
-import os
-
-# Make this a proper package
-__path__ = [os.path.dirname(__file__)]
