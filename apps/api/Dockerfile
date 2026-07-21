@@ -24,6 +24,8 @@ WORKDIR /build
 COPY apps/api/pyproject.toml apps/api/uv.lock ./
 COPY services/agent_orchestrator/pyproject.toml services/agent_orchestrator/uv.lock ./services/agent_orchestrator/
 RUN uv sync --frozen --no-dev
+# Install local packages into the same virtual environment
+RUN uv pip install --python /build/.venv/bin/python --no-deps -e ./services/agent_orchestrator
 
 # Stage 2: Runtime
 FROM python:3.14-slim AS runtime
