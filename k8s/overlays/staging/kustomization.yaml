@@ -28,7 +28,7 @@ patches:
         template:
           spec:
             containers:
-              - name: astra-api
+              - name: api
                 env:
                   - name: ENVIRONMENT
                     value: "staging"
@@ -52,7 +52,7 @@ patches:
         template:
           spec:
             containers:
-              - name: astra-web
+              - name: web
                 env:
                   - name: NODE_ENV
                     value: "production"
@@ -76,7 +76,7 @@ patches:
         template:
           spec:
             containers:
-              - name: astra-worker
+              - name: worker
                 env:
                   - name: ENVIRONMENT
                     value: "staging"
@@ -101,10 +101,13 @@ configMapGenerator:
 
 images:
   - name: astra-api
-    newName: astraos/api
+    newName: ghcr.io/webbixray/astra-os/api
     newTag: staging
   - name: astra-web
-    newName: astraos/web
+    newName: ghcr.io/webbixray/astra-os/web
+    newTag: staging
+  - name: astra-worker
+    newName: ghcr.io/webbixray/astra-os/worker
     newTag: staging
 
 replacements:

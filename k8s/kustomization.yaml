@@ -35,8 +35,11 @@ secretGenerator:
 
 images:
   - name: astra-api
-    newName: astraos/api
+    newName: ghcr.io/webbixray/astra-os/api
     newTag: latest
   - name: astra-web
-    newName: astraos/web
+    newName: ghcr.io/webbixray/astra-os/web
+    newTag: latest
+  - name: astra-worker
+    newName: ghcr.io/webbixray/astra-os/worker
     newTag: latest

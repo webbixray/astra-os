@@ -424,8 +424,8 @@ jobs:
       - name: Deploy with Kustomize
         run: |
           cd k8s/overlays/staging
-          kustomize edit set image api=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/api@${{ env.API_IMAGE_DIGEST }}
-          kustomize edit set image worker=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/worker@${{ env.WORKER_IMAGE_DIGEST }}
+          kustomize edit set image astra-api=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/api@${{ env.API_IMAGE_DIGEST }}
+          kustomize edit set image astra-worker=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/worker@${{ env.WORKER_IMAGE_DIGEST }}
           kustomize build . | kubectl apply -f -
 
       - name: Wait for rollout
@@ -469,8 +469,8 @@ jobs:
         run: |
           cd k8s/overlays/production
           # Canary deployment: 10% traffic to new version
-          kustomize edit set image api=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/api@${{ env.API_IMAGE_DIGEST }}
-          kustomize edit set image worker=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/worker@${{ env.WORKER_IMAGE_DIGEST }}
+          kustomize edit set image astra-api=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/api@${{ env.API_IMAGE_DIGEST }}
+          kustomize edit set image astra-worker=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/worker@${{ env.WORKER_IMAGE_DIGEST }}
           kustomize build . | kubectl apply -f -
 
       - name: Wait for rollout
