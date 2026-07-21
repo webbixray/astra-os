@@ -17,7 +17,7 @@ class User:
     updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     @classmethod
-    def create(cls, email: str, name: str, password_hash: str = "") -> "User":
+    def create(cls, email: str, name: str, password_hash: str = "") -> "User":  # nosec B107
         if not email or not email.strip():
             raise ValidationError("Email is required")
         if "@" not in email:

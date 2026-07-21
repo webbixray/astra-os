@@ -427,6 +427,7 @@ class CrossCampaignLearner:
                             )
                         )
             except Exception:
+                logger.debug("Pattern mining iteration failed, skipping", exc_info=True)
                 continue
 
         return patterns
@@ -470,7 +471,7 @@ class CrossCampaignLearner:
                             )
                         )
         except Exception:
-            pass
+            logger.debug("Channel pattern mining failed, skipping", exc_info=True)
 
         return patterns
 

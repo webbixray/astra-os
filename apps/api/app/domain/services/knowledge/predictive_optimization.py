@@ -437,7 +437,7 @@ class PredictiveOptimizer:
                             )
                         )
         except Exception:
-            pass
+            logger.debug("Predictive optimization iteration failed, skipping", exc_info=True)
 
         # Sort by confidence
         suggestions.sort(key=lambda s: s.confidence, reverse=True)
