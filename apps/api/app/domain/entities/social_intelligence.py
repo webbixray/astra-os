@@ -18,14 +18,11 @@ from app.domain.common import now
 
 class SocialPlatform(str, Enum):
     META = "meta"  # Facebook/Instagram
-
-    class SocialPlatform(str, Enum):
-        META = "meta"  # Facebook/Instagram
-        LINKEDIN = "linkedin"
-        TWITTER = "twitter"  # X
-        TIKTOK = "tiktok"
-        YOUTUBE = "youtube"
-        GOOGLE = "google"  # Google Ads/Reviews
+    LINKEDIN = "linkedin"
+    TWITTER = "twitter"  # X
+    TIKTOK = "tiktok"
+    YOUTUBE = "youtube"
+    GOOGLE = "google"  # Google Ads/Reviews
 
 
 class CommentType(str, Enum):
