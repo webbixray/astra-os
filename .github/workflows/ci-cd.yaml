@@ -340,6 +340,7 @@ jobs:
             type=sha
 
       - name: Build and push API image
+        id: build-api
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -366,6 +367,7 @@ jobs:
             type=sha
 
       - name: Build and push Worker image
+        id: build-worker
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -381,8 +383,8 @@ jobs:
 
       - name: Generate image digests
         run: |
-          echo "API_IMAGE_DIGEST=${{ steps.meta-api.outputs.digest }}" >> $GITHUB_ENV
-          echo "WORKER_IMAGE_DIGEST=${{ steps.meta-worker.outputs.digest }}" >> $GITHUB_ENV
+          echo "API_IMAGE_DIGEST=${{ steps.build-api.outputs.digest }}" >> $GITHUB_ENV
+          echo "WORKER_IMAGE_DIGEST=${{ steps.build-worker.outputs.digest }}" >> $GITHUB_ENV
 
       # --- Sign images with Cosign ---
       - name: Install Cosign
