@@ -1,5 +1,11 @@
+"""ASTRA OS API - Main Application Entry Point.
+
+FastAPI application with Clean Architecture, multi-tenancy, and AI agent orchestration.
+"""
+
 import asyncio
 import logging
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -54,17 +60,24 @@ from app.presentation.routes.campaigns.sync_routes import router as sync_router
 from app.presentation.routes.content import content_routes, gen_routes, schedule_routes
 from app.presentation.routes.content.publishing import publishing_routes
 from app.presentation.routes.dashboards.dashboard_routes import router as dashboard_router
+from app.presentation.routes.design_partner_routes import router as design_partner_router
 from app.presentation.routes.email import email_routes
 from app.presentation.routes.knowledge import knowledge_routes
 from app.presentation.routes.monitoring.monitor_routes import router as monitor_router
 from app.presentation.routes.notifications.notification_hub_routes import (
     router as notification_hub_router,
 )
+from app.presentation.routes.observability import observability_routes
 from app.presentation.routes.organizations_v2 import router as org_v2_router
 from app.presentation.routes.reports import report_routes
 from app.presentation.routes.reports.report_routes_v2 import router as report_v2_router
+from app.presentation.routes.shadow.shadow_routes import router as shadow_router
 from app.presentation.routes.team import router as team_router
+from app.presentation.routes.telegram import telegram_routes
+from app.presentation.routes.telegram_routes import router as telegram_router
 from app.presentation.routes.workflows import workflow_routes
+from app.presentation.routes.onboarding.routes import router as onboarding_router
+from app.presentation.routes.observability.routes import router as observability_router
 
 logger = logging.getLogger(__name__)
 
@@ -301,6 +314,13 @@ def create_app() -> FastAPI:
     app.include_router(monitor_router, prefix="/api/v1", tags=["monitoring"])
     app.include_router(prompt_routes.router, prefix="/api/v1", tags=["prompts"])
     app.include_router(ws_chat_router, tags=["websocket"])
+    app.include_router(design_partner_router, prefix="/api/v1", tags=["design-partners"])
+    app.include_router(shadow_router, prefix="/api/v1", tags=["shadow"])
+    app.include_router(onboarding_router, prefix="/api/v1/onboarding", tags=["onboarding"])
+    app.include_router(observability_router, prefix="/api/v1/observability", tags=["observability"])
+    app.include_router(telegram_routes.router, prefix="/api/v1", tags=["telegram"])
+    app.include_router(telegram_router, prefix="/api/v1", tags=["telegram"])
+    app.include_router(observability_routes.router, prefix="/api/v1", tags=["observability"])
 
     register_error_handlers(app)
     _init_opentelemetry(app)
