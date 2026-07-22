@@ -59,10 +59,11 @@ jobs:
 
       - name: Run Tests
         run: |
+          pip install uv
           cd apps/api
-          pip install -e ".[dev]"
-          pip install -e ../../services/agent_orchestrator
-          pytest -x -q --tb=line
+          uv sync --frozen
+          uv pip install --no-deps -e ../../services/agent_orchestrator
+          uv run pytest -x -q --tb=line
 
       - name: Run Linting
         run: |

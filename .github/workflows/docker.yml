@@ -15,9 +15,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  API_IMAGE: ${{ github.repository }}-api
-  WEB_IMAGE: ${{ github.repository }}-web
-  WORKER_IMAGE: ${{ github.repository }}-worker
+  IMAGE_NAME: ${{ github.repository }}
 
 permissions:
   contents: read
@@ -65,7 +63,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.API_IMAGE }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/api
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
@@ -73,6 +71,7 @@ jobs:
             type=sha,format=short
             type=raw,value=latest,enable={{is_default_branch}}
       - name: Build and push
+        id: build-api
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -88,7 +87,7 @@ jobs:
       - name: Scan image with Trivy
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.API_IMAGE }}:${{ steps.meta.outputs.version || github.sha }}
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/api:${{ steps.meta.outputs.version || github.sha }}
           format: sarif
           output: trivy-api.sarif
           severity: CRITICAL,HIGH
@@ -105,7 +104,7 @@ jobs:
       - name: Cosign API image
         if: github.event_name != 'pull_request'
         run: |
-          cosign sign --yes ${{ env.REGISTRY }}/${{ env.API_IMAGE }}@${{ steps.meta.outputs.digest }}
+          cosign sign --yes ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/api@${{ steps.build-api.outputs.digest }}
 
   build-web:
     name: Build & Scan Web
@@ -125,7 +124,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.WEB_IMAGE }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/web
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
@@ -133,6 +132,7 @@ jobs:
             type=sha,format=short
             type=raw,value=latest,enable={{is_default_branch}}
       - name: Build and push
+        id: build-web
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -146,7 +146,7 @@ jobs:
       - name: Scan image with Trivy
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.WEB_IMAGE }}:${{ steps.meta.outputs.version || github.sha }}
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/web:${{ steps.meta.outputs.version || github.sha }}
           format: sarif
           output: trivy-web.sarif
           severity: CRITICAL,HIGH
@@ -174,7 +174,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.WORKER_IMAGE }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/worker
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
@@ -182,6 +182,7 @@ jobs:
             type=sha,format=short
             type=raw,value=latest,enable={{is_default_branch}}
       - name: Build and push
+        id: build-worker
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -195,7 +196,7 @@ jobs:
       - name: Scan image with Trivy
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.WORKER_IMAGE }}:${{ steps.meta.outputs.version || github.sha }}
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/worker:${{ steps.meta.outputs.version || github.sha }}
           format: sarif
           output: trivy-worker.sarif
           severity: CRITICAL,HIGH

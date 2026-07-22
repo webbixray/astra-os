@@ -456,6 +456,7 @@ class RagPipeline:
                         )
                     )
             except Exception:
+                logger.debug("RAG result processing failed, skipping", exc_info=True)
                 continue
 
         return results
@@ -516,7 +517,7 @@ class RagPipeline:
                 boost = min(len(relations) * 0.02, 0.1)
                 r.score = min(r.score + boost, 1.0)
             except Exception:
-                pass
+                logger.debug("RAG result boost failed, skipping", exc_info=True)
         return results
 
     async def _get_brand_guidelines(
@@ -534,5 +535,5 @@ class RagPipeline:
             if raw:
                 return raw[0].get("description", "")
         except Exception:
-            pass
+            logger.debug("Brand guidelines fetch failed, skipping", exc_info=True)
         return None

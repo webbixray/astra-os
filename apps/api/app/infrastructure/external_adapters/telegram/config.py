@@ -90,6 +90,12 @@ class TelegramConfig(BaseSettings):
         description="Secret token for webhook validation (set in BotFather)",
     )
 
+    # Webhook bind host
+    webhook_host: str = Field(
+        default="0.0.0.0",  # nosec B104 - required for containerized webhook server
+        description="Host to bind the webhook server (default: all interfaces)",
+    )
+
     # Redis URL for FSM storage and session persistence
     redis_url: str = Field(
         default="",

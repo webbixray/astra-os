@@ -17,7 +17,7 @@ _jwt_service = JWTService()
 
 class AuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        token = ""
+        token = ""  # nosec B105
         auth_header = request.headers.get("Authorization", "")
         if auth_header.startswith("Bearer "):
             token = auth_header.removeprefix("Bearer ").strip()

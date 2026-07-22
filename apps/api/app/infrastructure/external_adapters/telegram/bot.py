@@ -310,13 +310,15 @@ class TelegramBot:
         finally:
             self._running = False
 
-    async def start_webhook(self, host: str = "0.0.0.0", port: int = 8080):
+    async def start_webhook(self, host: str | None = None, port: int = 8080):
         """Start the bot in webhook mode (production)."""
         if not self.bot or not self.dp:
             await self.initialize()
 
         if not self.config.webhook_url:
             raise ValueError("TELEGRAM_WEBHOOK_URL is required for webhook mode")
+
+        host = host or self.config.webhook_host
 
         # Create aiohttp app
         self._webhook_app = web.Application()
