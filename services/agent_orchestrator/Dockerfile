@@ -27,7 +27,7 @@ WORKDIR /app
 COPY services/agent_orchestrator/pyproject.toml services/agent_orchestrator/uv.lock* ./
 
 # Install production dependencies only
-RUN uv pip install --no-cache-dir -r pyproject.toml
+RUN uv pip install --no-cache-dir .
 
 # ============================================================
 # Stage 2: Runtime - Distroless for minimal attack surface
@@ -44,7 +44,6 @@ WORKDIR /app
 # Copy application code (as nonroot user)
 COPY --from=builder --chown=nonroot:nonroot /app /app
 COPY --chown=nonroot:nonroot services/agent_orchestrator/astra_agent_orchestrator/ ./astra_agent_orchestrator/
-COPY --chown=nonroot:nonroot services/agent_orchestrator/main.py ./
 
 # Use non-root user (distroless provides 'nonroot' UID 65532)
 USER nonroot
@@ -53,7 +52,7 @@ USER nonroot
 EXPOSE 8081
 
 # Default command - runs as nonroot
-CMD ["python", "main.py"]
+CMD ["python", "-m", "astra_agent_orchestrator.main"]
 
 # ============================================================
 # Build metadata labels (for SBOM and provenance)
