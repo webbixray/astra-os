@@ -19,6 +19,7 @@ dependencies = [
     "python-json-logger>=2.0.0",
     "structlog>=23.2.0",
     "aiohttp>=3.9.0",
+    "astra-api @ file:///root/astra-os/apps/api",
 ]
 
 [project.optional-dependencies]

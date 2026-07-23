@@ -1,0 +1,52 @@
+from dataclasses import dataclass, field
+from datetime import datetime
+from uuid import UUID, uuid4
+
+from app.domain.common import now
+from app.domain.exceptions.domain_exceptions import ValidationError
+
+
+@dataclass
+class CampaignTemplate:
+    id: UUID = field(default_factory=uuid4)
+    organization_id: UUID = field(default_factory=uuid4)
+    name: str = ""
+    description: str = ""
+    channels: list[str] = field(default_factory=list)
+    objective: str | None = None
+    budget_amount: float | None = None
+    budget_currency: str = "USD"
+    default_duration_days: int = 30
+    config: dict = field(default_factory=dict)
+    created_by: UUID = field(default_factory=uuid4)
+    created_at: datetime = field(default_factory=now)
+    updated_at: datetime = field(default_factory=now)
+
+    @classmethod
+    def create(
+        cls,
+        organization_id: UUID,
+        name: str,
+        created_by: UUID,
+        description: str = "",
+        channels: list[str] | None = None,
+        objective: str | None = None,
+        budget_amount: float | None = None,
+        budget_currency: str = "USD",
+        default_duration_days: int = 30,
+        config: dict | None = None,
+    ) -> "CampaignTemplate":
+        if not name or not name.strip():
+            raise ValidationError("Template name is required")
+        return cls(
+            organization_id=organization_id,
+            name=name,
+            created_by=created_by,
+            description=description,
+            channels=channels or [],
+            objective=objective,
+            budget_amount=budget_amount,
+            budget_currency=budget_currency,
+            default_duration_days=default_duration_days,
+            config=config or {},
+        )

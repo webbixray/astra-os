@@ -2,7 +2,6 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useOnboardingStore, onboardingSteps } from '@/stores/onboardingStore';
 import { Check, ChevronRight, Sparkles, Users, Megaphone, BarChart2, Gift, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,7 +11,6 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const stepIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   welcome: Sparkles,
@@ -28,7 +26,6 @@ export default function OnboardingPage() {
   const router = useRouter();
   const {
     currentStep,
-    completedSteps,
     setCurrentStep,
     completeStep,
     organization,
@@ -100,13 +97,17 @@ export default function OnboardingPage() {
   const handleBack = () => {
     const currentIndex = onboardingSteps.findIndex((s) => s.id === currentStep);
     if (currentIndex > 0) {
-      setCurrentStep(onboardingSteps[currentIndex - 1].id);
+      const prevStep = onboardingSteps[currentIndex - 1];
+      if (prevStep) {
+        setCurrentStep(prevStep.id);
+      }
     }
   };
 
   const currentStepData = onboardingSteps.find((s) => s.id === currentStep);
 
   if (!mounted) return null;
+  if (!currentStepData) return null;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-muted/30 to-background">
@@ -140,10 +141,14 @@ export default function OnboardingPage() {
         {/* Step Indicator */}
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-4">
-            <stepIcons[currentStep] className="h-10 w-10 text-primary" />
+            {(() => {
+              const Icon = stepIcons[currentStep];
+              if (!Icon) return null;
+              return <Icon className="h-10 w-10 text-primary" />;
+            })()}
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">{currentStepData?.title}</h1>
-              <p className="text-muted-foreground">{currentStepData?.description}</p>
+              <h1 className="text-3xl font-bold tracking-tight">{currentStepData.title}</h1>
+              <p className="text-muted-foreground">{currentStepData.description}</p>
             </div>
           </div>
         </div>
@@ -295,7 +300,7 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
   );
 }
 
-function FeatureCard({ icon: Icon, title, description }: { icon: React.ComponentType; title: string; description: string }) {
+function FeatureCard({ icon: Icon, title, description }: { icon: React.ComponentType<{ className?: string }>; title: string; description: string }) {
   return (
     <Card className="h-full">
       <CardContent className="pt-6 text-center">
@@ -665,8 +670,8 @@ function TeamStep({
   invites: any[];
   newInviteEmail: string;
   setNewInviteEmail: (email: string) => void;
-  newInviteRole: string;
-  setNewInviteRole: (role: string) => void;
+  newInviteRole: 'admin' | 'member' | 'viewer';
+  setNewInviteRole: (role: 'admin' | 'member' | 'viewer') => void;
   onAddInvite: (invite: any) => void;
   onRemoveInvite: (email: string) => void;
   onNext: () => void;
@@ -704,7 +709,7 @@ function TeamStep({
             </div>
             <div className="space-y-2">
               <Label htmlFor="invite_role">Role</Label>
-              <Select value={newInviteRole} onValueChange={setNewInviteRole}>
+              <Select value={newInviteRole} onValueChange={(value) => setNewInviteRole(value as 'admin' | 'member' | 'viewer')}>
                 <SelectTrigger id="invite_role">
                   <SelectValue />
                 </SelectTrigger>

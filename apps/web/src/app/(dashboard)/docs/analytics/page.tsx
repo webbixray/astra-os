@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ChevronRight, Zap, Code, Shield, ExternalLink, BookOpen, Target, ArrowUpRight, BarChart, LineChart, Activity, TrendingUp, Download, FileText, ChevronRight as ChevronRightIcon } from 'lucide-react'
+import { Zap, Code, ExternalLink, BookOpen, Target, BarChart, LineChart, Activity, TrendingUp, Download, FileText, ChevronRight as ChevronRightIcon } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 

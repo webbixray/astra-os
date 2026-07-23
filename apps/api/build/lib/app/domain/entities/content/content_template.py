@@ -1,0 +1,47 @@
+from dataclasses import dataclass, field
+from datetime import datetime
+from uuid import UUID, uuid4
+
+from app.domain.common import now
+from app.domain.exceptions.domain_exceptions import ValidationError
+
+
+@dataclass
+class ContentTemplate:
+    id: UUID = field(default_factory=uuid4)
+    organization_id: UUID = field(default_factory=uuid4)
+    name: str = ""
+    content_type: str = "blog"
+    description: str = ""
+    sections: list[dict] = field(default_factory=list)
+    variables: list[str] = field(default_factory=list)
+    system_prompt: str = ""
+    is_builtin: bool = False
+    created_by: UUID | None = None
+    created_at: datetime = field(default_factory=now)
+    updated_at: datetime = field(default_factory=now)
+
+    @classmethod
+    def create(
+        cls,
+        organization_id: UUID,
+        name: str,
+        content_type: str = "blog",
+        description: str = "",
+        sections: list[dict] | None = None,
+        variables: list[str] | None = None,
+        system_prompt: str = "",
+        created_by: UUID | None = None,
+    ) -> "ContentTemplate":
+        if not name or not name.strip():
+            raise ValidationError("Template name is required")
+        return cls(
+            organization_id=organization_id,
+            name=name.strip(),
+            content_type=content_type,
+            description=description,
+            sections=sections or [],
+            variables=variables or [],
+            system_prompt=system_prompt,
+            created_by=created_by,
+        )

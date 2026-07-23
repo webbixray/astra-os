@@ -62,7 +62,7 @@ export const mockOrganization = {
 };
 
 export function createMockFetch(responses: Record<string, unknown>) {
-  return vi.fn().mockImplementation((url: string) => {
+  const mockFn = vi.fn((url: string): Promise<{ ok: boolean; json: () => Promise<unknown> }> => {
     const key = Object.keys(responses).find((k) => url.includes(k));
     if (key) {
       return Promise.resolve({
@@ -75,6 +75,7 @@ export function createMockFetch(responses: Record<string, unknown>) {
       json: () => Promise.resolve({ error: 'Not found' }),
     });
   });
+  return mockFn;
 }
 
 export function setupIntersectionObserverMock() {

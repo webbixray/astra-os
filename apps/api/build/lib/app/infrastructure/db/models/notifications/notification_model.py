@@ -1,0 +1,79 @@
+import uuid
+from datetime import UTC, datetime
+
+from sqlalchemy import Boolean, DateTime, Index, String, Text
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column
+
+from app.domain.entities.notifications.notification import Notification
+from app.infrastructure.db.base import Base
+
+
+class NotificationModel(Base):
+    __tablename__ = "notifications"
+    __table_args__ = (
+        Index(
+            "idx_notifications_user_org_channel_read_archived",
+            "user_id",
+            "organization_id",
+            "channel",
+            "archived",
+            "is_read",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), nullable=False, index=True
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    type: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    body: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    resource_type: Mapped[str] = mapped_column(String(50), default="", nullable=False)
+    resource_id: Mapped[str] = mapped_column(String(255), default="", nullable=False)
+    channel: Mapped[str] = mapped_column(String(20), default="in_app", nullable=False)
+    template_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    is_read: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, index=True)
+    read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    archived: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
+    )
+
+    def to_domain(self) -> Notification:
+        return Notification(
+            id=self.id,
+            organization_id=self.organization_id,
+            user_id=self.user_id,
+            type=self.type,
+            title=self.title,
+            body=self.body,
+            resource_type=self.resource_type,
+            resource_id=self.resource_id,
+            channel=self.channel,
+            template_id=self.template_id,
+            is_read=self.is_read,
+            read_at=self.read_at.replace(tzinfo=None) if self.read_at else None,
+            archived=self.archived,
+            created_at=self.created_at.replace(tzinfo=None),
+        )
+
+    @classmethod
+    def from_domain(cls, notification: Notification) -> "NotificationModel":
+        return cls(
+            id=notification.id,
+            organization_id=notification.organization_id,
+            user_id=notification.user_id,
+            type=notification.type,
+            title=notification.title,
+            body=notification.body,
+            resource_type=notification.resource_type,
+            resource_id=notification.resource_id,
+            channel=notification.channel,
+            template_id=notification.template_id,
+            is_read=notification.is_read,
+            read_at=notification.read_at,
+            archived=notification.archived,
+            created_at=notification.created_at,
+        )

@@ -26,11 +26,13 @@ const contentSchema = z.object({
   body: z.string().max(50000, 'Content is too long').optional().default(''),
 });
 
+type FormData = z.infer<typeof contentSchema>;
+
 export default function NewContentPage() {
   const router = useRouter();
   const { orgId } = useOrg();
   const createContent = useCreateContent();
-  const { formData, errors, handleChange, handleSubmit: withValidation } = useFormValidation(contentSchema, {
+  const { formData, errors, handleChange, handleSubmit: withValidation } = useFormValidation<FormData>(contentSchema, {
     title: '',
     content_type: 'blog',
     body: '',

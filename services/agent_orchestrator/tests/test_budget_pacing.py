@@ -8,9 +8,9 @@ from datetime import date
 from uuid import UUID, uuid4
 
 import pytest
-from apps.api.app.domain.entities.campaigns.campaign import Campaign
-from apps.api.app.domain.entities.campaigns.campaign_budget import CampaignBudget
-from apps.api.app.domain.services.campaigns.budget_pacing import (
+from app.domain.entities.campaigns.campaign import Campaign
+from app.domain.entities.campaigns.campaign_budget import CampaignBudget
+from app.domain.services.campaigns.budget_pacing import (
     BudgetPacingService,
     PacingStatus,
     PacingStrategy,

@@ -1,0 +1,68 @@
+import uuid
+from datetime import UTC, datetime
+
+from sqlalchemy import Boolean, DateTime, String, Text
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
+from sqlalchemy.orm import Mapped, mapped_column
+
+from app.domain.entities.content.content_template import ContentTemplate
+from app.infrastructure.db.base import Base
+
+
+class ContentTemplateModel(Base):
+    __tablename__ = "content_templates"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), nullable=False, index=True
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    content_type: Mapped[str] = mapped_column(String(50), default="blog", nullable=False)
+    description: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    sections: Mapped[list[dict]] = mapped_column(JSONB, default=list, nullable=False)
+    variables: Mapped[list[str]] = mapped_column(ARRAY(String), default=list, nullable=False)
+    system_prompt: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    is_builtin: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    created_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
+    )
+
+    def to_domain(self) -> ContentTemplate:
+        return ContentTemplate(
+            id=self.id,
+            organization_id=self.organization_id,
+            name=self.name,
+            content_type=self.content_type,
+            description=self.description,
+            sections=list(self.sections) if self.sections else [],
+            variables=list(self.variables) if self.variables else [],
+            system_prompt=self.system_prompt,
+            is_builtin=self.is_builtin,
+            created_by=self.created_by,
+            created_at=self.created_at.replace(tzinfo=None),
+            updated_at=self.updated_at.replace(tzinfo=None),
+        )
+
+    @classmethod
+    def from_domain(cls, template: ContentTemplate) -> "ContentTemplateModel":
+        return cls(
+            id=template.id,
+            organization_id=template.organization_id,
+            name=template.name,
+            content_type=template.content_type,
+            description=template.description,
+            sections=template.sections,
+            variables=template.variables,
+            system_prompt=template.system_prompt,
+            is_builtin=template.is_builtin,
+            created_by=template.created_by,
+            created_at=template.created_at,
+            updated_at=template.updated_at,
+        )

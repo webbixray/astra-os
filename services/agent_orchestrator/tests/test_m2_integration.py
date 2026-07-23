@@ -15,10 +15,10 @@ from app.domain.entities.advertising.ad_creative import (
     CreativeStatus,
     CreativeType,
 )
+from app.domain.entities.campaigns.campaign import Campaign
+from app.domain.entities.campaigns.campaign_budget import CampaignBudget
 from app.domain.events.event_bus import DomainEventType, EventBus
-from apps.api.app.domain.entities.campaigns.campaign import Campaign
-from apps.api.app.domain.entities.campaigns.campaign_budget import CampaignBudget
-from apps.api.app.domain.services.campaigns.budget_pacing import (
+from app.domain.services.campaigns.budget_pacing import (
     BudgetPacingService,
     PacingStatus,
     PacingStrategy,

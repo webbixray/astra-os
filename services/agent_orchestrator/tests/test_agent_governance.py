@@ -7,11 +7,8 @@ checks them against autonomy config before execution.
 from uuid import uuid4
 
 import pytest
-from apps.api.app.domain.entities.governance.autonomy import (
-    AutonomyConfig,
-    AutonomyLevel,
-)
 
+# Import from astra_agent_orchestrator package directly (it has its own governance module)
 from astra_agent_orchestrator.governance import (
     TOOL_TO_ACTION_MAP,
     GovernanceCheckResult,
@@ -19,6 +16,9 @@ from astra_agent_orchestrator.governance import (
     create_governance_middleware,
     map_tool_to_action,
 )
+
+# Import AutonomyConfig and AutonomyLevel from the local governance module
+from astra_agent_orchestrator.governance import AutonomyConfig, AutonomyLevel
 
 ORG_ID = uuid4()
 

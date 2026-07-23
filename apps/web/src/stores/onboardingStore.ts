@@ -183,7 +183,8 @@ export const useOnboardingStore = create<OnboardingState>()(
         const state = get();
         const currentIndex = ONBOARDING_STEPS.findIndex((s) => s.id === state.currentStep);
         if (currentIndex >= 0 && currentIndex < ONBOARDING_STEPS.length - 1) {
-          return ONBOARDING_STEPS[currentIndex + 1].id;
+          const nextStep = ONBOARDING_STEPS[currentIndex + 1];
+          if (nextStep) return nextStep.id;
         }
         return null;
       },

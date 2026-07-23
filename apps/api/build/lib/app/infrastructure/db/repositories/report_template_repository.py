@@ -1,0 +1,39 @@
+from uuid import UUID
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.domain.entities.reports.report_template import ReportTemplate
+from app.infrastructure.db.models.report_template import ReportTemplateModel
+
+
+class ReportTemplateRepository:
+    def __init__(self, session: AsyncSession):
+        self.session = session
+
+    async def save(self, template: ReportTemplate) -> ReportTemplate:
+        model = ReportTemplateModel.from_domain(template)
+        merged = await self.session.merge(model)
+        await self.session.flush()
+        return merged.to_domain()
+
+    async def find_by_id(self, template_id: UUID) -> ReportTemplate | None:
+        result = await self.session.execute(
+            select(ReportTemplateModel).where(ReportTemplateModel.id == template_id)
+        )
+        model = result.scalar_one_or_none()
+        return model.to_domain() if model is not None else None
+
+    async def find_by_organization(self, org_id: UUID) -> list[ReportTemplate]:
+        result = await self.session.execute(
+            select(ReportTemplateModel)
+            .where(ReportTemplateModel.organization_id == org_id)
+            .order_by(ReportTemplateModel.name)
+        )
+        return [m.to_domain() for m in result.scalars().all()]
+
+    async def delete(self, template_id: UUID) -> None:
+        model = await self.session.get(ReportTemplateModel, template_id)
+        if model is not None:
+            await self.session.delete(model)
+            await self.session.flush()

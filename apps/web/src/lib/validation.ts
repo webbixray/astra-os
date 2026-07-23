@@ -162,9 +162,10 @@ export function hasFieldError(errors: ValidationError[], field: string): boolean
 }
 
 import { useState } from 'react';
+import { z } from 'zod';
 
 export function useFormValidation<T extends Record<string, unknown>>(
-  schema: { parse: (data: T) => T; safeParse: (data: T) => { success: boolean; error?: { issues: Array<{ path: (string | number)[]; message: string }> } } },
+  schema: z.ZodSchema<T>,
   initialValues: T,
 ) {
   const [formData, setFormData] = useState<T>(initialValues);

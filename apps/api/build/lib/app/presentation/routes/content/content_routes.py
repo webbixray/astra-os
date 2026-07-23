@@ -1,0 +1,226 @@
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.application.use_cases.content.content_use_cases import (
+    CreateContentUseCase,
+    GetContentUseCase,
+    ListContentUseCase,
+    UpdateContentUseCase,
+)
+from app.domain.exceptions.domain_exceptions import EntityNotFoundError, ValidationError
+from app.infrastructure.db.repositories.content.content_repository import ContentRepositoryImpl
+from app.presentation.dependencies import get_db, pagination_params
+from app.presentation.middleware.auth import require_user_id
+from app.presentation.middleware.rbac import require_org_role
+from app.presentation.schemas.common import PaginatedResponse
+from app.presentation.schemas.responses import ContentResponse
+
+router = APIRouter()
+
+
+class CreateContentRequest(BaseModel):
+    organization_id: UUID
+    title: str
+    content_type: str = "blog"
+    campaign_id: UUID | None = None
+    body: str = ""
+    brand_profile_id: UUID | None = None
+
+
+class UpdateContentRequest(BaseModel):
+    title: str | None = None
+    body: str | None = None
+    status: str | None = None
+
+
+async def get_content_repo(db: AsyncSession = Depends(get_db)) -> ContentRepositoryImpl:
+    return ContentRepositoryImpl(db)
+
+
+async def get_create_use_case(
+    repo: ContentRepositoryImpl = Depends(get_content_repo),
+) -> CreateContentUseCase:
+    return CreateContentUseCase(repo)
+
+
+async def get_get_use_case(
+    repo: ContentRepositoryImpl = Depends(get_content_repo),
+) -> GetContentUseCase:
+    return GetContentUseCase(repo)
+
+
+async def get_list_use_case(
+    repo: ContentRepositoryImpl = Depends(get_content_repo),
+) -> ListContentUseCase:
+    return ListContentUseCase(repo)
+
+
+async def get_update_use_case(
+    repo: ContentRepositoryImpl = Depends(get_content_repo),
+) -> UpdateContentUseCase:
+    return UpdateContentUseCase(repo)
+
+
+@router.post("", status_code=status.HTTP_201_CREATED, summary="Create new content")
+async def create_content(
+    request: CreateContentRequest,
+    use_case: CreateContentUseCase = Depends(get_create_use_case),
+    user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
+) -> ContentResponse:
+    await require_org_role(request.organization_id, "member", user_id, db)
+    try:
+        content = await use_case.execute(
+            organization_id=request.organization_id,
+            title=request.title,
+            content_type=request.content_type,
+            created_by=user_id,
+            campaign_id=request.campaign_id,
+            body=request.body,
+            brand_profile_id=request.brand_profile_id,
+        )
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
+    return ContentResponse(
+        id=content.id,
+        campaign_id=content.campaign_id,
+        organization_id=content.organization_id,
+        title=content.title,
+        content_type=content.content_type,
+        body=content.body,
+        status=content.status,
+        brand_profile_id=content.brand_profile_id,
+        generated_by_ai=content.generated_by_ai,
+        version=content.version,
+        scheduled_at=content.scheduled_at,
+        published_at=content.published_at,
+        created_by=content.created_by,
+        created_at=content.created_at,
+        updated_at=content.updated_at,
+    )
+
+
+@router.get("/{content_id}", summary="Get content by ID")
+async def get_content(
+    content_id: UUID,
+    use_case: GetContentUseCase = Depends(get_get_use_case),
+    user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
+) -> ContentResponse:
+    try:
+        content = await use_case.execute(content_id=content_id)
+        await require_org_role(content.organization_id, "viewer", user_id, db)
+    except EntityNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Content not found"
+        ) from None
+    return ContentResponse(
+        id=content.id,
+        campaign_id=content.campaign_id,
+        organization_id=content.organization_id,
+        title=content.title,
+        content_type=content.content_type,
+        body=content.body,
+        status=content.status,
+        brand_profile_id=content.brand_profile_id,
+        generated_by_ai=content.generated_by_ai,
+        version=content.version,
+        scheduled_at=content.scheduled_at,
+        published_at=content.published_at,
+        created_by=content.created_by,
+        created_at=content.created_at,
+        updated_at=content.updated_at,
+    )
+
+
+@router.get("", summary="List content items")
+async def list_content(
+    org_id: UUID = Query(..., alias="organization_id"),
+    status: str | None = Query(None),
+    use_case: ListContentUseCase = Depends(get_list_use_case),
+    user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
+    pagination: dict = Depends(pagination_params),
+) -> PaginatedResponse[ContentResponse]:
+    await require_org_role(org_id, "viewer", user_id, db)
+    contents = await use_case.execute(org_id=org_id, status=status)
+    items = [
+        ContentResponse(
+            id=c.id,
+            campaign_id=c.campaign_id,
+            organization_id=c.organization_id,
+            title=c.title,
+            content_type=c.content_type,
+            body=c.body,
+            status=c.status,
+            brand_profile_id=c.brand_profile_id,
+            generated_by_ai=c.generated_by_ai,
+            version=c.version,
+            scheduled_at=c.scheduled_at,
+            published_at=c.published_at,
+            created_by=c.created_by,
+            created_at=c.created_at,
+            updated_at=c.updated_at,
+        )
+        for c in contents
+    ]
+    total = len(items)
+    page = pagination["page"]
+    limit = pagination["limit"]
+    return PaginatedResponse(
+        data=items,
+        total=total,
+        page=page,
+        limit=limit,
+        pages=max(1, (total + limit - 1) // limit),
+    )
+
+
+@router.patch("/{content_id}", summary="Update content by ID")
+async def update_content(
+    content_id: UUID,
+    request: UpdateContentRequest,
+    get_use_case: GetContentUseCase = Depends(get_get_use_case),
+    update_use_case: UpdateContentUseCase = Depends(get_update_use_case),
+    user_id: UUID = Depends(require_user_id),
+    db: AsyncSession = Depends(get_db),
+) -> ContentResponse:
+    try:
+        existing = await get_use_case.execute(content_id=content_id)
+        await require_org_role(existing.organization_id, "member", user_id, db)
+        content = await update_use_case.execute(
+            content_id=content_id,
+            title=request.title,
+            body=request.body,
+            status=request.status,
+        )
+    except EntityNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Content not found"
+        ) from None
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from None
+    return ContentResponse(
+        id=content.id,
+        campaign_id=content.campaign_id,
+        organization_id=content.organization_id,
+        title=content.title,
+        content_type=content.content_type,
+        body=content.body,
+        status=content.status,
+        brand_profile_id=content.brand_profile_id,
+        generated_by_ai=content.generated_by_ai,
+        version=content.version,
+        scheduled_at=content.scheduled_at,
+        published_at=content.published_at,
+        created_by=content.created_by,
+        created_at=content.created_at,
+        updated_at=content.updated_at,
+    )

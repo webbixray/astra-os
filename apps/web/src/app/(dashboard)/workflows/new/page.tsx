@@ -22,7 +22,7 @@ export default function NewWorkflowPage() {
   const router = useRouter();
   const { orgId } = useOrg();
   const createWorkflow = useCreateWorkflow();
-  const { formData, errors, handleChange, handleSubmit } = useFormValidation(workflowSchema, {
+  const { formData, errors, handleChange, handleSubmit } = useFormValidation<FormData>(workflowSchema, {
     name: '',
     description: '',
   });

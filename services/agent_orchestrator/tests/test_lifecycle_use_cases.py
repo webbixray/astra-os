@@ -14,8 +14,8 @@ from app.application.use_cases.campaigns.lifecycle_use_cases import (
     PauseCampaignUseCase,
     ResumeCampaignUseCase,
 )
+from app.domain.entities.campaigns.campaign import Campaign
 from app.domain.exceptions.domain_exceptions import ValidationError
-from apps.api.app.domain.entities.campaigns.campaign import Campaign
 
 # ── Helpers ──────────────────────────────────────────────────────────
 
