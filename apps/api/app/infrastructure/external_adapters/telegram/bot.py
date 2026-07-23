@@ -151,6 +151,19 @@ class GovernanceMiddleware:
 
     async def _check_governance(self, org_id: UUID, action: str, user_id: int) -> bool:
         """Check if action is allowed by governance."""
+        from app.application.use_cases.governance.approval_use_cases import (
+            CreateApprovalRequestUseCase,
+        )
+        from app.application.use_cases.governance.autonomy_use_cases import (
+            CheckAgentActionUseCase,
+        )
+        from app.infrastructure.db.repositories.governance.approval_repository import (
+            ApprovalRequestRepositoryImpl as ApprovalRepositoryImpl,
+        )
+        from app.infrastructure.db.repositories.governance.autonomy_repository import (
+            AutonomyConfigRepositoryImpl as AutonomyRepositoryImpl,
+        )
+
         try:
             async with self.bot._session_factory() as session:
                 autonomy_repo = AutonomyRepositoryImpl(session)
@@ -509,6 +522,10 @@ class TelegramBot:
 
     async def get_ad_campaign_repo(self):
         """Get ad campaign repository."""
+        from app.infrastructure.db.repositories.campaigns.sync_repository import (
+            AdCampaignRepoImpl as AdCampaignRepositoryImpl,
+        )
+
         async with self._session_factory() as session:
             yield AdCampaignRepositoryImpl(session)
 

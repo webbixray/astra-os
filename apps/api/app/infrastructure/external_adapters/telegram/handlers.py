@@ -312,6 +312,13 @@ async def callback_campaign_list(callback: CallbackQuery, bot: "TelegramBot"):
 
     try:
         async with bot._session_factory() as session:
+            from app.application.use_cases.campaigns.campaign_use_cases import (
+                ListCampaignsUseCase,
+            )
+            from app.infrastructure.db.repositories.campaigns.campaign_repository import (
+                CampaignRepositoryImpl,
+            )
+
             campaign_repo = CampaignRepositoryImpl(session)
             use_case = ListCampaignsUseCase(campaign_repo)
             campaigns = await use_case.execute(ctx.organization_id)
@@ -422,6 +429,13 @@ async def process_campaign_goal(message: Message, state: FSMContext, bot: "Teleg
 
     try:
         async with bot._session_factory() as session:
+            from app.application.use_cases.campaigns.campaign_use_cases import (
+                CreateCampaignUseCase,
+            )
+            from app.infrastructure.db.repositories.campaigns.campaign_repository import (
+                CampaignRepositoryImpl,
+            )
+
             campaign_repo = CampaignRepositoryImpl(session)
             use_case = CreateCampaignUseCase(campaign_repo)
 
@@ -527,11 +541,23 @@ async def process_content_topic(message: Message, state: FSMContext, bot: "Teleg
     try:
         async with bot._session_factory() as session:
             # Get content generation service
+            from app.infrastructure.db.repositories.prompt_repository import (
+                SystemPromptRepositoryImpl,
+            )
+
             prompt_repo = SystemPromptRepositoryImpl(session)
             prompt_manager = PromptManager(repository=prompt_repo)
             content_service = ContentGenerationService(prompt_manager=prompt_manager)
 
             # Get template for content type
+            from app.domain.entities.content.brand_voice import BrandVoice
+            from app.infrastructure.db.repositories.brand_voice_repository import (
+                BrandVoiceRepository,
+            )
+            from app.infrastructure.db.repositories.content_template_repository import (
+                ContentTemplateRepository,
+            )
+
             template_repo = ContentTemplateRepository(session)
             voice_repo = BrandVoiceRepository(session)
 
@@ -582,6 +608,11 @@ async def process_content_topic(message: Message, state: FSMContext, bot: "Teleg
             sections = result.get("sections", {})
 
             # Save content to workspace
+            from app.domain.entities.content.content import Content
+            from app.infrastructure.db.repositories.content.content_repository import (
+                ContentRepositoryImpl,
+            )
+
             content_repo = ContentRepositoryImpl(session)
             # Get creator ID (first member of org)
             from app.infrastructure.db.repositories.organizations.organization_repository import (
@@ -657,6 +688,16 @@ async def callback_analytics(callback: CallbackQuery, bot: "TelegramBot"):
 
     try:
         async with bot._session_factory() as session:
+            from app.application.use_cases.analytics.analytics_service import (
+                AnalyticsService,
+            )
+            from app.infrastructure.db.repositories.campaigns.campaign_repository import (
+                CampaignRepositoryImpl,
+            )
+            from app.infrastructure.db.repositories.content.content_repository import (
+                ContentRepositoryImpl,
+            )
+
             campaign_repo = CampaignRepositoryImpl(session)
             content_repo = ContentRepositoryImpl(session)
             service = AnalyticsService(campaign_repo, content_repo)
@@ -797,6 +838,13 @@ async def process_knowledge_query(message: Message, state: FSMContext, bot: "Tel
 
     try:
         async with bot._session_factory() as session:
+            from app.application.use_cases.knowledge.knowledge_service import (
+                KnowledgeGraphService,
+            )
+            from app.infrastructure.external_adapters.knowledge.graph_store import (
+                GraphStore,
+            )
+
             graph_store = GraphStore()
             service = KnowledgeGraphService(graph_store)
             result = await service.query_knowledge(
