@@ -76,3 +76,10 @@ docker-compose.prod*.yml
 # Database files
 *.db
 *.sqlite3
+
+# Build artifacts
+apps/api/build/
+
+*.db
+
+*.db
