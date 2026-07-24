@@ -41,6 +41,7 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  // Use webpack instead of Turbopack (required for custom webpack config)
   webpack(config) {
     config.optimization.splitChunks = {
       ...config.optimization.splitChunks,
